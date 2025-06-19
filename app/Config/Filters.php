@@ -50,6 +50,8 @@ class Filters extends BaseConfig
                     'notifica/*',
                     'wsceqweb',
                     'wsceqweb/*',
+                    'workanalise',
+                    'workanalise/*',
                 ]
             ],
             // 'honeypot',

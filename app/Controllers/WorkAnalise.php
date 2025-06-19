@@ -1,62 +1,46 @@
 <?php
 
-// === Definições obrigatórias do CodeIgniter ===
-define('APPPATH', realpath(__DIR__ . '/../../app') . DIRECTORY_SEPARATOR);
-define('ROOTPATH', realpath(__DIR__ . '/../../') . DIRECTORY_SEPARATOR);
-define('SYSTEMPATH', realpath(__DIR__ . '/../../vendor/codeigniter4/framework/system') . DIRECTORY_SEPARATOR);
-define('WRITEPATH', realpath(__DIR__ . '/../../writable') . DIRECTORY_SEPARATOR);
-define('APP_NAMESPACE', 'App');
+namespace App\Controllers;
 
-// Define caminho do autoload do Composer
-define('COMPOSER_PATH', ROOTPATH . 'vendor/autoload.php');
-
-// Carrega o autoload do Composer
-require COMPOSER_PATH;
-
-// === Autoloader do CodeIgniter ===
-require_once SYSTEMPATH . 'Autoloader/Autoloader.php';
-require_once SYSTEMPATH . 'Config/BaseService.php';
-
-$loader = new \CodeIgniter\Autoloader\Autoloader();
-$loader->initialize(new \Config\Autoload(), new \Config\Modules());
-$loader->register();
-// === Importa Models e Classes do projeto ===
 use App\Models\Microb\MicrobAnaliseModel;
 use App\Models\Produt\ProdutProdutoModel;
 use App\Models\Produt\ProdutLoteModel;
-use App\Models\Estoque\EstoqTipoMovimentacaoModel;
-use App\Controllers\BuscasSapiens;
+use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 use App\Libraries\SoapSapiens;
+use App\Controllers\BaseController;
+use App\Controllers\BuscasSapiens;
 
-// === Instancia Models e Bibliotecas ===
-$analise        = new MicrobAnaliseModel();
-$produto        = new ProdutProdutoModel();
-$lote           = new ProdutLoteModel();
-$busca          = new BuscasSapiens();
-$tipomovimento  = new EstoqTipoMovimentacaoModel();
+class WorkAnalise extends BaseController
+{
+    public function index()
+    {
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+        echo "Iniciando WorkAnalise...<br>";
 
-echo "Worker iniciado com sucesso...\n";
+        $analise        = new MicrobAnaliseModel();
+        $produto        = new ProdutProdutoModel();
+        $lote           = new ProdutLoteModel();
+        $tipomovimento  = new EstoquTipoMovimentacaoModel();
+        $busca          = new BuscasSapiens();
 
-// === Loop contínuo ===
-while (true) {
-    try {
         $saldoestObjs = $busca->buscaEstoqueDeposito('QUA', '');
         $saldoest = is_array($saldoestObjs) ? $saldoestObjs : iterator_to_array($saldoestObjs);
-
         if (empty($saldoest)) {
-            echo "Sem saldo. Aguardando próximo ciclo (5 min)...\n";
-            sleep(300);
-            continue;
+            echo "Sem saldo encontrado.\n";
+            return;
         }
 
         $saldoestFiltrado = array_filter($saldoest, function ($item) {
             return !(($item->codigoLote === 'N/A' && $item->estoqueDeposito == 0) ||
                      ($item->codigoLote !== 'N/A' && $item->quantidadeEstoque == 0));
         });
+        echo count($saldoestFiltrado)." Produtos no Estoque Quarentena...<br>";
 
-        $saldoestArr         = array_map(fn($obj) => (array)$obj, array_values($saldoestFiltrado));
-        $codigoProdutoArray  = array_column($saldoestArr, 'codigoProduto');
-        $codigoLoteArray     = array_column($saldoestArr, 'codigoLote');
+        $saldoestArr = array_map(fn($obj) => (array) $obj, array_values($saldoestFiltrado));
+        $codigoProdutoArray = array_column($saldoestArr, 'codigoProduto');
+        $codigoLoteArray    = array_column($saldoestArr, 'codigoLote');
 
         $prodsArr = $produto->getProdutoCodLista($codigoProdutoArray, 'S');
         $lotesArr = $lote->getLoteIn($codigoLoteArray);
@@ -80,6 +64,7 @@ while (true) {
             $prodproc   = $saldo['codigoProduto'];
             $loteproc   = $saldo['codigoLote'];
             $quantidade = str_replace(['.', ','], '', $saldo['quantidadeEstoque']);
+            echo " Produto ".$prodproc." Lote ".$loteproc." ...<br>";
 
             if (!isset($prods[$prodproc]) || $prods[$prodproc]['cla_micro'] !== 'S') {
                 continue;
@@ -169,10 +154,6 @@ while (true) {
             echo count($lotesToUpdate) . " lotes atualizados.\n";
         }
 
-    } catch (\Throwable $e) {
-        echo "Erro: " . $e->getMessage() . "\n";
+        echo "WorkAnalise finalizado.<br>";
     }
-
-    echo "Aguardando 5 minutos para o próximo ciclo...\n";
-    sleep(300);
 }
