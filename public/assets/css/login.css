@@ -1,0 +1,14 @@
+.bg-login{
+    /* border-right: 2px solid #022457; */
+    /* border-radius: 0.75vw; */
+    color: #022457;
+    transition: all 0.35s ease 0s;
+    -webkit-transition: all 0.35s ease 0s;
+    -moz-transition: all 0.35s ease 0s;
+    overflow:hidden;	 
+}
+
+.bg-white{
+    background-color: #ffffff;
+}
+

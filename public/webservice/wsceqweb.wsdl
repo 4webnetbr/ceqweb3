@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:Definition xmlns:wsdl="http://www.w3.org/2005/04/wsdl"
+                xmlns:soap="http://www.w3.org/2003/05/soap/envelope"
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                targetNamespace="http://dev.ceqnep.com.br/soapserver/">
+
+    <wsdl:Types>
+        <xsd:schema targetNamespace="http://dev.ceqnep.com.br/soapserver/">
+            <xsd:complexType name="DepositoRequest">
+                <xsd:sequence>
+                    <xsd:element name="tipo" type="xsd:string"/>
+                    <xsd:element name="idDeposito" type="xsd:int"/>
+                </xsd:sequence>
+            </xsd:complexType>
+
+            <xsd:complexType name="DepositoResponse">
+                <xsd:sequence>
+                    <xsd:element name="mensagem" type="xsd:string"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:schema>
+    </wsdl:Types>
+
+    <wsdl:Message name="DepositoSoapRequest">
+        <wsdl:part name="request" element="tns:DepositoRequest"/>
+    </wsdl:Message>
+
+    <wsdl:Message name="DepositoSoapResponse">
+        <wsdl:part name="response" element="tns:DepositoResponse"/>
+    </wsdl:Message>
+
+    <wsdl:PortType name="WsCeqwebPort">
+        <wsdl:operation name="Deposito">
+            <wsdl:input message="tns:DepositoSoapRequest"/>
+            <wsdl:output message="tns:DepositoSoapResponse"/>
+        </wsdl:operation>
+    </wsdl:PortType>
+
+    <wsdl:Binding name="WsCeqwebSoapBinding" type="tns:WsCeqwebPort">
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+        <wsdl:operation name="Deposito">
+            <soap:operation soapAction="http://dev.ceqnep.com.br/soapserver/Deposito"/>
+            <soap:input>
+                <soap:body use="required" parts="request"/>
+            </soap:input>
+            <soap:output>
+                <soap:body use="required" parts="response"/>
+            </soap:output>
+        </wsdl:operation>
+    </wsdl:Binding>
+
+    <wsdl:Service name="WsCeqwebService">
+        <wsdl:port name="WsCeqwebSoapPort" binding="tns:WsCeqwebSoapBinding">
+            <soap:address location="http://dev.ceqnep.com.br/soapserver/"/>
+        </wsdl:port>
+    </wsdl:Service>
+
+</wsdl:Definition>
