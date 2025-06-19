@@ -1,53 +1,28 @@
-#-------------------------
-# Operating Specific Junk Files
-#-------------------------
-
-# OS X
+# ------------------------
+# SO - Lixo do sistema
+# ------------------------
 .DS_Store
 .AppleDouble
 .LSOverride
-
-# OS X Thumbnails
-._*
-
-# Windows image file caches
 Thumbs.db
 ehthumbs.db
 Desktop.ini
-
-# Recycle Bin used on file shares
 $RECYCLE.BIN/
-
-# Windows Installer files
-*.cab
-*.msi
-*.msm
-*.msp
-
-# Windows shortcuts
-*.lnk
-
-# Linux
-*~
-
-# KDE directory preferences
+.Trash-*
 .directory
 
-# Linux trash folder which might appear on any partition or disk
-.Trash-*
+# ------------------------
+# Arquivos temporários
+# ------------------------
+*.log
+*.bak
+*.tmp
+*.swp
+*~
 
-#-------------------------
-# Environment Files
-#-------------------------
-# These should never be under version control,
-# as it poses a security risk.
-.env
-.vagrant
-Vagrantfile
-
-#-------------------------
-# Temporary Files
-#-------------------------
+# ------------------------
+# Pastas de cache e sessão
+# ------------------------
 writable/cache/*
 !writable/cache/index.html
 
@@ -61,66 +36,47 @@ writable/uploads/*
 !writable/uploads/index.html
 
 writable/debugbar/*
-!writable/debugbar/.gitkeep
 
-php_errors.log
-
-#-------------------------
-# User Guide Temp Files
-#-------------------------
-user_guide_src/build/*
-user_guide_src/cilexer/build/*
-user_guide_src/cilexer/dist/*
-user_guide_src/cilexer/pycilexer.egg-info/*
-
-#-------------------------
-# Test Files
-#-------------------------
-tests/coverage*
-
-# Don't save phpunit under version control.
-phpunit
-
-#-------------------------
-# Composer
-#-------------------------
-vendor/
-
-#-------------------------
-# IDE / Development Files
-#-------------------------
-
-# Modules Testing
-_modules/*
-
-# phpenv local config
-.php-version
-
-# Jetbrains editors (PHPStorm, etc)
+# ------------------------
+# Ambiente e config local
+# ------------------------
+.env
+.vscode/
 .idea/
 *.iml
+.php-version
+node_modules/
+vendor/
+composer.lock
+package-lock.json
 
-# NetBeans
-/nbproject/
-/build/
-/nbbuild/
-/dist/
-/nbdist/
-/nbactions.xml
-/nb-configuration.xml
-/.nb-gradle/
+# ------------------------
+# PHP e PHPUnit
+# ------------------------
+.phpunit.result.cache
+phpunit.xml
+phpunit*.xml
+php_errors.log
+coverage/
+tests/coverage*
 
-# Sublime Text
-*.tmlanguage.cache
-*.tmPreferences.cache
-*.stTheme.cache
+# ------------------------
+# Frameworks e IDEs
+# ------------------------
+nbproject/
+build/
+nbbuild/
+dist/
+nbdist/
+nbactions.xml
+nb-configuration.xml
+.nb-gradle/
 *.sublime-workspace
 *.sublime-project
-.phpintel
+
+# ------------------------
+# Outros diretórios não versionáveis
+# ------------------------
+_modules/
+results/
 /api/
-
-# Visual Studio Code
-.vscode/
-
-/results/
-/phpunit*.xml
