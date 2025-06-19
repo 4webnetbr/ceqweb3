@@ -1,159 +1,134 @@
 <?php
-// Carrega o autoloader do Composer
-require __DIR__ . '/../../vendor/autoload.php';
 
-// Carrega os caminhos do CI4
-require_once __DIR__ . '/../../app/Config/Paths.php';
-$paths = new Config\Paths();
+// === Definições obrigatórias do CodeIgniter ===
+define('APPPATH', realpath(__DIR__ . '/../../app') . DIRECTORY_SEPARATOR);
+define('ROOTPATH', realpath(__DIR__ . '/../../') . DIRECTORY_SEPARATOR);
+define('SYSTEMPATH', realpath(__DIR__ . '/../../vendor/codeigniter4/framework/system') . DIRECTORY_SEPARATOR);
+define('WRITEPATH', realpath(__DIR__ . '/../../writable') . DIRECTORY_SEPARATOR);
+define('APP_NAMESPACE', 'App');
 
-// Bootstrap do CodeIgniter
-require_once realpath($paths->systemDirectory . 'bootstrap.php');
+// Define caminho do autoload do Composer
+define('COMPOSER_PATH', ROOTPATH . 'vendor/autoload.php');
 
-// Inicializa o framework (sem executar uma requisição web)
-$context = CodeIgniter\CodeIgniter::createContext();
-$app = new CodeIgniter\CodeIgniter($context);
+// Carrega o autoload do Composer
+require COMPOSER_PATH;
+
+// === Autoloader do CodeIgniter ===
+require_once SYSTEMPATH . 'Autoloader/Autoloader.php';
+require_once SYSTEMPATH . 'Config/BaseService.php';
+
+$loader = new \CodeIgniter\Autoloader\Autoloader();
+$loader->initialize(new \Config\Autoload(), new \Config\Modules());
+$loader->register();
+// === Importa Models e Classes do projeto ===
+use App\Models\Microb\MicrobAnaliseModel;
+use App\Models\Produt\ProdutProdutoModel;
+use App\Models\Produt\ProdutLoteModel;
+use App\Models\Estoque\EstoqTipoMovimentacaoModel;
+use App\Controllers\BuscasSapiens;
+use App\Libraries\SoapSapiens;
+
+// === Instancia Models e Bibliotecas ===
 $analise        = new MicrobAnaliseModel();
 $produto        = new ProdutProdutoModel();
 $lote           = new ProdutLoteModel();
 $busca          = new BuscasSapiens();
-$tipomovimento  = new EstoquTipoMovimentacaoModel();
+$tipomovimento  = new EstoqTipoMovimentacaoModel();
 
-$app->initialize();
+echo "Worker iniciado com sucesso...\n";
 
-// Agora você pode usar qualquer recurso do CI4
-
-use App\Controllers\BuscasSapiens;
-
+// === Loop contínuo ===
 while (true) {
-    $saldoestObjs = $busca->buscaEstoqueDeposito('QUA', '');
-    $saldoest = is_array($saldoestObjs) ? $saldoestObjs : iterator_to_array($saldoestObjs);
-    if (empty($saldoest)) {
-        echo json_encode(['data' => []]);
-        return;
-    }
-    $saldoestFiltrado = array_filter($saldoest, function ($item) {
-        // Remove o item se:
-        // (codigoLote == 'N/A' && estoqueDeposito == 0) ou (codigoLote != 'N/A' && quantidadeEstoque == 0)
-        return !(($item->codigoLote == 'N/A' && $item->estoqueDeposito == 0) ||
-            ($item->codigoLote != 'N/A' && $item->quantidadeEstoque == 0));
-    });
-    // reindexar o array (opcional):
-    $saldoestFiltrado = array_values($saldoestFiltrado);
-    // Converte todos os objetos para array de uma vez
-    $saldoestArr = array_map(function ($obj) {
-        return (array) $obj;
-    }, $saldoestFiltrado);
+    try {
+        $saldoestObjs = $busca->buscaEstoqueDeposito('QUA', '');
+        $saldoest = is_array($saldoestObjs) ? $saldoestObjs : iterator_to_array($saldoestObjs);
 
-    $codigoProdutoArray = array_column($saldoestArr, 'codigoProduto');
-    $codigoLoteArray    = array_column($saldoestArr, 'codigoLote');
-    // debug($codigoLoteArray);
-
-    $prodsArr   = $produto->getProdutoCodLista($codigoProdutoArray, 'S');
-    $lotesArr   = $lote->getLoteIn($codigoLoteArray);
-    // debug($lotesArr);
-    $analises   = $analise->getAnaliseCod();
-    // debug($analises);
-
-    // Reindexa os arrays para acesso rápido
-    $prods  = array_column($prodsArr, null, 'pro_codpro');
-    $lotes  = array_column($lotesArr, null, 'lot_lote');
-    // debug($lotes);
-    // exit;
-    $analisesAssoc = [];
-    foreach ($analises as $analise) {
-        // Se o objeto vier como stdClass, converte para array
-        if (is_object($analise)) {
-            $analise = (array)$analise;
-        }
-        $chave = $analise['pro_codpro'] . '-' . $analise['lot_lote'];
-        $analisesAssoc[$chave] = $analise;
-    }
-
-    $totalProdutos = count($saldoestArr);
-
-    // Obtém o tipo de movimentação apenas uma vez
-    $movimData = $tipomovimento->getTipoMovimentacao(5);
-    $movim     = isset($movimData[0]) ? $movimData[0] : null;
-
-    // Arrays para processamento em lote (caso seus métodos suportem)
-    $analisesToSave = [];
-    $lotesToUpdate  = [];
-    $geramovimentacao = false;
-
-    foreach ($saldoestArr as $saldo) {
-        $prodproc   = $saldo['codigoProduto'];
-        $loteproc   = $saldo['codigoLote'];
-        $quantidade = str_replace(['.', ','], '', $saldo['quantidadeEstoque']);
-
-        // envia_msg_ws($this->data['controler'], "Processando Produto $prodproc Lote $loteproc", 'MsgServer', session()->get('usu_id'), 1);
-
-        // Verifica se o produto existe e se requer análise (cla_micro == 'S')
-        if (!isset($prods[$prodproc]) || $prods[$prodproc]['cla_micro'] !== 'S') {
+        if (empty($saldoest)) {
+            echo "Sem saldo. Aguardando próximo ciclo (5 min)...\n";
+            sleep(300);
             continue;
         }
 
-        $prod = $prods[$prodproc];
-        $lote = $lotes[$loteproc] ?? [
-            'lot_lote'     => $saldo['codigoLote'],
-            'lot_entrada'  => $saldo['entrada'],
-            'lot_validade' => $saldo['validade'],
-            'stt_id'       => null,
-        ];
-        $lote['lot_entrada'] = $saldo['entrada'];
+        $saldoestFiltrado = array_filter($saldoest, function ($item) {
+            return !(($item->codigoLote === 'N/A' && $item->estoqueDeposito == 0) ||
+                     ($item->codigoLote !== 'N/A' && $item->quantidadeEstoque == 0));
+        });
 
-        $analiseKey = $prodproc . '-' . $loteproc;
-        // debug($analisesAssoc);
-        // debug($analiseKey);
-        $analis = $analisesAssoc[$analiseKey] ?? null;
-        // debug($analis);
+        $saldoestArr         = array_map(fn($obj) => (array)$obj, array_values($saldoestFiltrado));
+        $codigoProdutoArray  = array_column($saldoestArr, 'codigoProduto');
+        $codigoLoteArray     = array_column($saldoestArr, 'codigoLote');
 
-        // Se lote bloqueado e sem análise ou com status reprovada (16)
-        if ($lote['stt_id'] == 8) {
-            if (is_null($analis) || $analis['stt_id'] == 16) {
-                $analisesToSave[] = [
-                    'pro_id'   => $prod['pro_id'],
-                    'lot_id'   => $lote['lot_id'],
-                    'ana_qtde' => $quantidade,
-                    'ana_data' => date('Y-m-d'),
-                    'stt_id'   => 10, // ANÁLISE BLOQUEADA
-                ];
-            } else {
-                $geramovimentacao = true;
-            }
-            // debug($analisesToSave);
+        $prodsArr = $produto->getProdutoCodLista($codigoProdutoArray, 'S');
+        $lotesArr = $lote->getLoteIn($codigoLoteArray);
+        $analises = $analise->getAnaliseCod();
+        $movimData = $tipomovimento->getTipoMovimentacao(5);
+        $movim = $movimData[0] ?? null;
+
+        $prods = array_column($prodsArr, null, 'pro_codpro');
+        $lotes = array_column($lotesArr, null, 'lot_lote');
+
+        $analisesAssoc = [];
+        foreach ($analises as $a) {
+            $a = (array) $a;
+            $analisesAssoc[$a['pro_codpro'] . '-' . $a['lot_lote']] = $a;
         }
-        // Se lote liberado
-        elseif ($lote['stt_id'] == 9) {
-            // Se não tem analise ou analise Não Realizada(13) ou Reprovada(16)
-            if (is_null($analis) || in_array($analis['stt_id'], [13, 16])) {
-                // cria nova analise
-                $analisesToSave[] = [
-                    'pro_id'   => $prod['pro_id'],
-                    'lot_id'   => $lote['lot_id'],
-                    'ana_qtde' => $quantidade,
-                    'ana_data' => date('Y-m-d'),
-                    'stt_id'   => 10, // ANÁLISE BLOQUEADA
-                ];
-                // muda o status do lote para Bloqueado
-                $lotesToUpdate[] = [
-                    'lot_id' => $lote['lot_id'],
-                    'stt_id' => 8, // LOTE BLOQUEADO
-                ];
-            } else {
-                $geramovimentacao = true;
+
+        $analisesToSave = [];
+        $lotesToUpdate  = [];
+
+        foreach ($saldoestArr as $saldo) {
+            $prodproc   = $saldo['codigoProduto'];
+            $loteproc   = $saldo['codigoLote'];
+            $quantidade = str_replace(['.', ','], '', $saldo['quantidadeEstoque']);
+
+            if (!isset($prods[$prodproc]) || $prods[$prodproc]['cla_micro'] !== 'S') {
+                continue;
             }
-        }
-        if ($geramovimentacao) {
-            if ($analis && $analis['stt_id'] == 15) {
-                // se existe análise com status APROVADA (15)
-                // envia_msg_ws(
-                //     $this->data['controler'],
-                //     "Lote {$saldo['codigoLote']} Análise Aprovada, Movimenta Estoque",
-                //     'MsgServer',
-                //     session()->get('usu_id'),
-                //     1
-                // );
-                // GERA MOVIMENTAÇÃO DA QUARENTENA PARA O DEP GERAL (5)
+
+            $prod = $prods[$prodproc];
+            $loteInfo = $lotes[$loteproc] ?? [
+                'lot_lote'     => $loteproc,
+                'lot_entrada'  => $saldo['entrada'],
+                'lot_validade' => $saldo['validade'],
+                'stt_id'       => null,
+            ];
+            $loteInfo['lot_entrada'] = $saldo['entrada'];
+
+            $analiseKey = $prodproc . '-' . $loteproc;
+            $analis = $analisesAssoc[$analiseKey] ?? null;
+            $geramovimentacao = false;
+
+            if ($loteInfo['stt_id'] == 8) {
+                if (is_null($analis) || $analis['stt_id'] == 16) {
+                    $analisesToSave[] = [
+                        'pro_id'   => $prod['pro_id'],
+                        'lot_id'   => $loteInfo['lot_id'],
+                        'ana_qtde' => $quantidade,
+                        'ana_data' => date('Y-m-d'),
+                        'stt_id'   => 10,
+                    ];
+                } else {
+                    $geramovimentacao = true;
+                }
+            } elseif ($loteInfo['stt_id'] == 9) {
+                if (is_null($analis) || in_array($analis['stt_id'], [13, 16])) {
+                    $analisesToSave[] = [
+                        'pro_id'   => $prod['pro_id'],
+                        'lot_id'   => $loteInfo['lot_id'],
+                        'ana_qtde' => $quantidade,
+                        'ana_data' => date('Y-m-d'),
+                        'stt_id'   => 10,
+                    ];
+                    $lotesToUpdate[] = [
+                        'lot_id' => $loteInfo['lot_id'],
+                        'stt_id' => 8,
+                    ];
+                } else {
+                    $geramovimentacao = true;
+                }
+            }
+
+            if ($geramovimentacao && $analis && $analis['stt_id'] == 15) {
                 if ($movim) {
                     (new SoapSapiens())->transfProdutosSapiens(
                         $prod['pro_codpro'],
@@ -161,44 +136,43 @@ while (true) {
                         $movim['dep_codorigem'],
                         date('d/m/Y'),
                         $quantidade,
-                        $lote['lot_lote'],
+                        $loteInfo['lot_lote'],
                         $movim['dep_coddestino']
                     );
                 }
-                // muda o status do lote para Liberado
                 $lotesToUpdate[] = [
-                    'lot_id' => $lote['lot_id'],
-                    'stt_id' => 9, // LOTE LIBERADO
+                    'lot_id' => $loteInfo['lot_id'],
+                    'stt_id' => 9,
                 ];
             }
         }
-    }
 
-    // Salva as análises em lote, se possível
-    if (!empty($analisesToSave)) {
-        if (method_exists($analise, 'saveBatch')) {
-            $analise->saveBatch($analisesToSave);
-        } else {
-            foreach ($analisesToSave as $data) {
-                $analise->save($data);
+        if (!empty($analisesToSave)) {
+            if (method_exists($analise, 'saveBatch')) {
+                $analise->saveBatch($analisesToSave);
+            } else {
+                foreach ($analisesToSave as $data) {
+                    $analise->save($data);
+                }
             }
+            echo count($analisesToSave) . " análises salvas.\n";
         }
-        // envia_msg_ws($this->data['controler'], "Atualizando Análises", 'MsgServer', session()->get('usu_id'), 1);
-        // $this->analise->atualizaEvento();
-    }
 
-    // Atualiza os lotes em lote, se suportado
-    if (!empty($lotesToUpdate)) {
-        if (method_exists($lote, 'updateBatch')) {
-            // debug($lotesToUpdate, true);
-            $lote->updateBatch($lotesToUpdate,'lot_id');
-        } else {
-            foreach ($lotesToUpdate as $data) {
-                $lote->save($data);
+        if (!empty($lotesToUpdate)) {
+            if (method_exists($lote, 'updateBatch')) {
+                $lote->updateBatch($lotesToUpdate, 'lot_id');
+            } else {
+                foreach ($lotesToUpdate as $data) {
+                    $lote->save($data);
+                }
             }
+            echo count($lotesToUpdate) . " lotes atualizados.\n";
         }
+
+    } catch (\Throwable $e) {
+        echo "Erro: " . $e->getMessage() . "\n";
     }
 
-    // Espera 60 segundos antes de repetir
+    echo "Aguardando 5 minutos para o próximo ciclo...\n";
     sleep(300);
 }

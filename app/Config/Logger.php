@@ -146,5 +146,13 @@ class Logger extends BaseConfig
         //     */
         //     'messageType' => 0,
         // ],
+        \App\Log\Handlers\WorkerHandler::class => [
+            'handles' => ['info', 'error', 'debug'],
+            'fileExtension'   => 'log',
+            'filePermissions' => 0644,
+            'path'            => WRITEPATH . 'logs/',
+            'filenameFormat'  => 'workanalise-{date}',  // Arquivos como workanalise-2025-06-18.log
+            'dateFormat'      => 'Y-m-d H:i:s',
+        ],
     ];
 }

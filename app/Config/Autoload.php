@@ -41,6 +41,7 @@ class Autoload extends AutoloadConfig
      */
     public $psr4 = [
         APP_NAMESPACE => APPPATH, // For custom app namespace
+        'App'    => APPPATH,
         'Config'      => APPPATH . 'Config',
         'Setup'       => APPPATH . 'Setup',
         'NuSOAP\NS' => APPPATH . '/third_party/NuSOAP/lib/',

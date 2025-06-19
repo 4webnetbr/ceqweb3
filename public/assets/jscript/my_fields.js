@@ -2211,11 +2211,6 @@ function mudaObrigatorio(obj, regra, fields) {
       for (v = 0; v < campos.length; v++) {
         campos[v] = escIdColchetes(campos[v]);
         jQuery("#" + campos[v]).attr("required", "required");
-        // jQuery('#' + campos[v]).attr('readonly', false);
-        // jQuery('#' + campos[v]).attr('disabled', false);
-        // if (jQuery('#' + campos[v].tagName == "select")) {
-        //     jQuery('#' + campos[v]).selectpicker();
-        // }
       }
     } else {
       campos = escIdColchetes(campos);
