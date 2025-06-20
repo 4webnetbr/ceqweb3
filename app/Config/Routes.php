@@ -218,9 +218,9 @@ $routes->get('/OcoTipoOcorrencia', 'Ocorrencia\OcoTipoOcorrencia::index');
 $routes->get('/OcoTipoOcorrencia/(:any)', 'Ocorrencia\OcoTipoOcorrencia::$1');
 $routes->post('/OcoTipoOcorrencia/(:any)', 'Ocorrencia\OcoTipoOcorrencia::$1');
 
-$routes->match(['get', 'post'], '/WsCeqweb/(:any)', 'Ws\WsCeqweb::$1');
-$routes->match(['get', 'post'], '/WsCeqweb/(:any)/(:any)', 'Ws\WsCeqweb::$1::2');
-$routes->match(['get', 'post'], '/WsCeqweb/(:any)/(:any)/(:any)', 'Ws\WsCeqweb::$1::2::3');
+$routes->match(['GET', 'POST'], '/WsCeqweb/(:any)', 'Ws\WsCeqweb::$1');
+$routes->match(['GET', 'POST'], '/WsCeqweb/(:any)/(:any)', 'Ws\WsCeqweb::$1::2');
+$routes->match(['GET', 'POST'], '/WsCeqweb/(:any)/(:any)/(:any)', 'Ws\WsCeqweb::$1::2::3');
 /*
  * --------------------------------------------------------------------
  * Additional Routing

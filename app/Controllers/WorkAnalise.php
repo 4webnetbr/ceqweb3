@@ -136,7 +136,6 @@ class WorkAnalise extends BaseController
         }
 
         echo count($analisesToSave). " Análises criadas \n";
-        $notifica->gravaNotifica('Analise', '', 'Teste de Notificação de Analise', 'C');
         
         if (!empty($analisesToSave)) {
             if (method_exists($analise, 'saveBatch')) {
@@ -148,7 +147,7 @@ class WorkAnalise extends BaseController
             }
             $msgsocket  = count($analisesToSave). " Análises criadas";
 
-            $notifica->gravaNotifica('Analise', '', $msgsocket, 'C');
+            $notifica->gravaNotifica('Micro\Analise', '', $msgsocket, 'C');
 
             // echo count($analisesToSave) . " análises salvas.\n";
         }
