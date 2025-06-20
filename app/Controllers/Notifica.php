@@ -49,23 +49,33 @@ class Notifica extends BaseController {
                         $tipo  = $notif->not_tipo;        
                         $metod = 'edit';
                         $class = "App\\Controllers\\".$notif->not_controler;
-                        $pos = strrpos($notif->not_controler, "\\") ;
-                        $controler = substr($notif->not_controler, $pos+1);
+                        $pos = strrpos($notif->not_controler, "\\");
+                        if($pos != ''){
+                            $controler = substr($notif->not_controler, $pos+1);
+                        } else {
+                            $controler = $notif->not_controler;
+                            // $class = "App\\Controllers\\".$notif->not_controler."\\";
+                        }
                         // debug($notif, true);
-                        $methods = get_class_methods($class);
-                        // debug($methods, true);
-                        if(in_array('show', $methods)){
-                            $metod = 'show';
+                        // debug($class, true);
+                        if($notif->not_id_registro != ''){
+                            $methods = get_class_methods("App\\Controllers\\".$notif->not_controler);
+                            debug($methods, true);
+                            if(in_array('show', $methods)){
+                                $metod = 'show';
+                            }
+                            if($tipo == 'E'){
+                                $metod = 'delete';
+                            }
+                            // debug($controler, true);
+                            if($controler == 'Produto'){
+                                $prods = $this->modprodutos->getProdutoCod($notif->not_id_registro);
+                                $notif->not_id_registro = $prods[0]['pro_id'];
+                            }
+                            $link = base_url($controler.'/'.$metod.'/'.$notif->not_id_registro);
+                        } else {
+                            $link = base_url($controler);
                         }
-                        if($tipo == 'E'){
-                            $metod = 'delete';
-                        }
-                        // debug($controler, true);
-                        if($controler == 'Produto'){
-                            $prods = $this->modprodutos->getProdutoCod($notif->not_id_registro);
-                            $notif->not_id_registro = $prods[0]['pro_id'];
-                        }
-                        $link = base_url($controler.'/'.$metod.'/'.$notif->not_id_registro);
                         // debug($link);
                         $lstnotif .= "<div class='".(++$count%2 ? "even" : "odd") ." p-1 border-2 border-bottom border-dark'>";
                         $lstnotif .= "<div class='fst-italic fs-7'>".data_br($notif->not_data)."</div>";

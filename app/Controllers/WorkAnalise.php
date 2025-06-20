@@ -9,6 +9,7 @@ use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 use App\Libraries\SoapSapiens;
 use App\Controllers\BaseController;
 use App\Controllers\BuscasSapiens;
+use App\Libraries\Notificacao;
 
 class WorkAnalise extends BaseController
 {
@@ -17,18 +18,20 @@ class WorkAnalise extends BaseController
         if (ob_get_level()) {
             ob_end_clean();
         }
-        echo "Iniciando WorkAnalise...<br>";
+        $inicio = date('d/m/Y H:i:s');
+        echo "$inicio Iniciando WorkAnalise... \n";
 
         $analise        = new MicrobAnaliseModel();
         $produto        = new ProdutProdutoModel();
         $lote           = new ProdutLoteModel();
         $tipomovimento  = new EstoquTipoMovimentacaoModel();
         $busca          = new BuscasSapiens();
+        $notifica       = new Notificacao();
 
         $saldoestObjs = $busca->buscaEstoqueDeposito('QUA', '');
         $saldoest = is_array($saldoestObjs) ? $saldoestObjs : iterator_to_array($saldoestObjs);
         if (empty($saldoest)) {
-            echo "Sem saldo encontrado.\n";
+            echo "Sem saldo encontrado. \n";
             return;
         }
 
@@ -36,7 +39,7 @@ class WorkAnalise extends BaseController
             return !(($item->codigoLote === 'N/A' && $item->estoqueDeposito == 0) ||
                      ($item->codigoLote !== 'N/A' && $item->quantidadeEstoque == 0));
         });
-        echo count($saldoestFiltrado)." Produtos no Estoque Quarentena...<br>";
+        echo count($saldoestFiltrado)." Produtos no Estoque Quarentena... \n";
 
         $saldoestArr = array_map(fn($obj) => (array) $obj, array_values($saldoestFiltrado));
         $codigoProdutoArray = array_column($saldoestArr, 'codigoProduto');
@@ -64,7 +67,7 @@ class WorkAnalise extends BaseController
             $prodproc   = $saldo['codigoProduto'];
             $loteproc   = $saldo['codigoLote'];
             $quantidade = str_replace(['.', ','], '', $saldo['quantidadeEstoque']);
-            echo " Produto ".$prodproc." Lote ".$loteproc." ...<br>";
+            echo " Produto ".$prodproc." Lote ".$loteproc." ...\n";
 
             if (!isset($prods[$prodproc]) || $prods[$prodproc]['cla_micro'] !== 'S') {
                 continue;
@@ -132,6 +135,9 @@ class WorkAnalise extends BaseController
             }
         }
 
+        echo count($analisesToSave). " Análises criadas \n";
+        $notifica->gravaNotifica('Analise', '', 'Teste de Notificação de Analise', 'C');
+        
         if (!empty($analisesToSave)) {
             if (method_exists($analise, 'saveBatch')) {
                 $analise->saveBatch($analisesToSave);
@@ -140,9 +146,14 @@ class WorkAnalise extends BaseController
                     $analise->save($data);
                 }
             }
-            echo count($analisesToSave) . " análises salvas.\n";
+            $msgsocket  = count($analisesToSave). " Análises criadas";
+
+            $notifica->gravaNotifica('Analise', '', $msgsocket, 'C');
+
+            // echo count($analisesToSave) . " análises salvas.\n";
         }
 
+        echo count($lotesToUpdate). " Lotes Atualizados \n";
         if (!empty($lotesToUpdate)) {
             if (method_exists($lote, 'updateBatch')) {
                 $lote->updateBatch($lotesToUpdate, 'lot_id');
@@ -151,9 +162,10 @@ class WorkAnalise extends BaseController
                     $lote->save($data);
                 }
             }
-            echo count($lotesToUpdate) . " lotes atualizados.\n";
+            // echo count($lotesToUpdate) . " lotes atualizados.\n";
         }
 
-        echo "WorkAnalise finalizado.<br>";
+        $final = date('d/m/Y H:i:s');
+        echo "$final WorkAnalise finalizado \n\n";
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Controllers\Ws;
 
 use App\Controllers\BuscasSapiens;
+use App\Libraries\Notificacao;
 use App\Models\CommonModel;
 use App\Models\Config\ConfigPerfilItemModel;
 use App\Models\Estoqu\EstoquDepositoModel;
@@ -28,6 +29,7 @@ class WsCeqweb extends ResourceController
     public $mode_fabricante;
     public $mode_lote;
     public $common;
+    public $notifica;
 
     public function __construct()
     {
@@ -41,6 +43,9 @@ class WsCeqweb extends ResourceController
         $this->mode_fabricante  = new ProdutFabricanteModel();
         $this->mode_lote        = new ProdutLoteModel();
         $this->common           = new CommonModel();
+
+        $this->notifica         = new Notificacao();
+
         helper('funcoes');
     }
 
@@ -62,7 +67,7 @@ class WsCeqweb extends ResourceController
                 }
             }
             if ($msgsocket != '') {
-                $this->gravaNotifica('Estoque\Deposito', $idDeposito, $msgsocket, $tipo);
+                $this->notifica->gravaNotifica('Estoque\Deposito', $idDeposito, $msgsocket, $tipo);
             }
             // Chama o método Integra da Classe Depósito para atualizar a tabela de depósitos local
             $this->integraDeposito();
@@ -74,7 +79,7 @@ class WsCeqweb extends ResourceController
                 // Cria uma notificação avisando que foi incluído um novo depósito
                 //Ao clicar na notificação, o usuário será redirecionado para a tela de Consulta do Depósito 
                 //com o ID do Depósito incluído
-                $this->gravaNotifica('Estoque\Deposito', $idDeposito, $msgsocket, $tipo);
+                $this->notifica->gravaNotifica('Estoque\Deposito', $idDeposito, $msgsocket, $tipo);
             }
         }
         cache()->clean();
@@ -109,7 +114,7 @@ class WsCeqweb extends ResourceController
                 }
                 // debug('MsgSocket '.$msgsocket);
                 if ($msgsocket != '') {
-                    $gravaNotifica = $this->gravaNotifica('Produto\Produto', $codPro, $msgsocket, $tipo);
+                    $gravaNotifica = $this->notifica->gravaNotifica('Produto\Produto', $codPro, $msgsocket, $tipo);
                     var_dump($gravaNotifica);
                 }
             } else if ($tipo == 'E') {
@@ -120,7 +125,7 @@ class WsCeqweb extends ResourceController
                     // Cria uma notificação avisando que foi incluído um novo Produto
                     //Ao clicar na notificação, o usuário será redirecionado para a tela de Consulta do Produto 
                     //com o ID do Produto incluído
-                    $this->gravaNotifica('Produto\Produto', $codPro, $msgsocket, $tipo);
+                    $this->notifica->gravaNotifica('Produto\Produto', $codPro, $msgsocket, $tipo);
                 }
             }
             cache()->clean();
@@ -166,7 +171,7 @@ class WsCeqweb extends ResourceController
                     log_message('info', 'Msg Socket: ' . $msgsocket);
                     // debug('MsgSocket '.$msgsocket);
                     if ($msgsocket != '') {
-                        $gravaNotifica = $this->gravaNotifica('Produto\Lote', $codLot, $msgsocket, $tipo);
+                        $gravaNotifica = $this->notifica->gravaNotifica('Produto\Lote', $codLot, $msgsocket, $tipo);
                         // var_dump($gravaNotifica);
                     }
                 }
@@ -563,48 +568,6 @@ class WsCeqweb extends ResourceController
         }
     }
 
-    function gravaNotifica($controler, $registro, $msg, $tipo)
-    {
-        $usuario  = 0;
-        $userorig = 'Sapiens';
-        $pos = strrpos($controler, "\\");
-        $nomecontrol = substr($controler, $pos + 1);
-        log_message('info', 'Controler ' . $controler);
-        log_message('info', 'Posição ' . $pos);
-        log_message('info', 'NomeControl ' . $nomecontrol);
-        // debug($controler);
-
-        $usuariospermissoes = $this->mode_perfil->getPermissaoTelaUsuario(false, false, false, $nomecontrol);
-        log_message('info', 'Usuários ' . json_encode($usuariospermissoes));
-        if (count($usuariospermissoes) > 0) {
-            $texto = $msg . ' em ' . data_br(date('Y-m-d H:i:s')) . ' por: ' . $userorig;
-            for ($up = 0; $up < count($usuariospermissoes); $up++) {
-                $usu_dest = $usuariospermissoes[$up]['usu_id'];
-                $permissoes = $usuariospermissoes[$up]['pit_permissao'];
-                log_message('info', 'Usuario ' . $usuario);
-                log_message('info', 'Permissoes ' . $permissoes);
-                // debug($usuario);
-                // debug($usu_dest);
-                if ($usu_dest != $usuario  && str_contains($permissoes, 'N')) { // se não for o mesmo usuário que alterou e o usuário tem permissão de notificação
-                    // insere a nova notificação
-                    $insNot =  $this->mode_notifica->insertNotifica($controler, $texto, $registro, $usuario, $usu_dest, $tipo);
-                    log_message('info', 'insNot ' . var_dump($insNot));
-                    // var_dump($insNot);
-                    envia_msg_ws($controler, $msg, 'Servidor', $usu_dest, $registro);
-                }
-            }
-        }
-        $usuariospermissoes = $this->mode_perfil->getPermissaoTelaUsuario(false, false, false, $nomecontrol);
-        if (count($usuariospermissoes) > 0) {
-            for ($up = 0; $up < count($usuariospermissoes); $up++) {
-                $usuario = $usuariospermissoes[$up];
-                log_message('info', 'Usuario ' . $usuario);
-                envia_msg_ws($controler, $msg, 'Servidor', $usuario, $registro);
-            }
-        }
-
-        return (json_encode([]));
-    }
 
 
     /**
