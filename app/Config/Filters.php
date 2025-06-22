@@ -21,7 +21,8 @@ class Filters extends BaseConfig
         'honeypot'      => Honeypot::class,
         'invalidchars'  => InvalidChars::class,
         'secureheaders' => SecureHeaders::class,
-        'loginFilter'    => \App\Filters\loginFilter::class,
+        'loginFilter'   => \App\Filters\loginFilter::class,
+        'limpezaAuto'   => \App\Filters\LimpezaAutomatica::class,
     ];
 
     /**
@@ -54,6 +55,7 @@ class Filters extends BaseConfig
                     'workanalise/*',
                 ]
             ],
+            'limpezaAuto',
             // 'honeypot',
             // 'csrf',
         ],
