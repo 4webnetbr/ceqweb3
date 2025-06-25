@@ -55,7 +55,9 @@ class BuscasSapiens extends BaseController
         $soapfab = new SoapSapiens('ceqweb_integra');
         // debug($soapdep, false);
         $ret_fabs = $soapfab->fabricanteSapiens('ConsultarFabricante');
-
+        if(isset($ret_fabs->erro)){
+            $ret_fabs->retorno = [];
+        }
         return $ret_fabs->retorno;
     }
 

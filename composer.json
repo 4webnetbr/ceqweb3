@@ -11,8 +11,8 @@
     },
 	"require": {
         "php": "^7.4 || ^8.2",
-        "cboden/ratchet": "^0.4",
-        "codeigniter4/framework": "4.6",
+        "cboden/ratchet": "v0.5.x-dev",
+        "codeigniter4/framework": "4.6.1",
         "textalk/websocket": "^1.5"
     },
 	"require-dev": {

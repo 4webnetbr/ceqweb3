@@ -11,17 +11,27 @@ class SoapSapiens
     public function __construct($servico = false)
     {
         if ($servico) {
+            $options = [
+                'connection_timeout' => 5, // segundos
+                'exceptions' => true,      // permite capturar falhas com try/catch
+                'trace' => true            // útil para depuração (opcional)
+            ];
             $serv = 'http://hc170915cqn3007.cloudhialinx.com.br:12030/g5-senior-services/sapiens_Synccom_' . $servico . '?wsdl';
             // debug($serv, true);
-            $this->soapc = new SoapClient($serv);
+            $this->soapc = new SoapClient($serv, $options);
             // debug($this->soapc);
         }
     }
 
     public function transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes)
     {
+        $options = [
+            'connection_timeout' => 5, // segundos
+            'exceptions' => true,      // permite capturar falhas com try/catch
+            'trace' => true            // útil para depuração (opcional)
+        ];
         #Instanciando o SoapClient com o WSDL o qual vamos acessar
-        $client = new SoapClient('http://hc170915cqn3007.cloudhialinx.com.br:12030/g5-senior-services/sapiens_Synccom_senior_g5_co_mcm_est_estoques?wsdl');
+        $client = new SoapClient('http://hc170915cqn3007.cloudhialinx.com.br:12030/g5-senior-services/sapiens_Synccom_senior_g5_co_mcm_est_estoques?wsdl', $options);
         #Operação a ser executada
         $function = 'TransferenciaProdutos';
         #Montando o payload de requisição
@@ -68,10 +78,27 @@ class SoapSapiens
         $options = array('location' => 'http://services.senior.com.br');
 
         #Chamada do serviço
-        $result = $client->__soapCall($function, $parameters);
+        try {
 
-        log_message('info', 'TransferenciaProdutos parametros ' . json_encode($parameters));
-        log_message('info', 'TransferenciaProdutos resposta ' . json_encode($result));
+            $result = $client->__soapCall($function, $parameters);
+
+            log_message('info', 'TransferenciaProdutos parametros ' . json_encode($parameters));
+            log_message('info', 'TransferenciaProdutos resposta ' . json_encode($result));
+
+            // sucesso
+            log_message('info', 'SOAP retorno OK');
+
+        } catch (\SoapFault $e) {
+            // falha de conexão ou erro na resposta
+            log_message('error', 'Erro SOAP: ' . $e->getMessage());
+
+            // se quiser, pode lançar exceção ou retornar erro customizado
+            return $this->response->setStatusCode(500)->setJSON([
+                'erro' => 'Falha na comunicação com o serviço SOAP',
+                'mensagem' => $e->getMessage()
+            ]);
+        }
+
 
         // echo 'Response: ';
         // echo "<pre>";
@@ -225,14 +252,25 @@ class SoapSapiens
         );
         #Sobrescrevendo endpoint do serviço
 
-        #Chamada do serviço
-        $result = $this->soapc->__soapCall($function, $parameters);
-        // echo 'Response: ';
-        // echo "<pre>";
-        // print_r($result);
-        // echo "</pre>";
-        $this->soapc = null;
-        return $result;
+        try {
+            $result = $this->soapc->__soapCall($function, $parameters);
+            log_message('info', 'SOAP retorno OK');
+            $this->soapc = null;
+            return $result;
+
+            // sucesso
+
+        } catch (\SoapFault $e) {
+            // falha de conexão ou erro na resposta
+            log_message('error', 'Erro SOAP: ' . $e->getMessage());
+
+            // se quiser, pode lançar exceção ou retornar erro customizado
+            $ret = [
+                'erro' => 'Falha na comunicação com o serviço SOAP',
+                'mensagem' => $e->getMessage()
+            ];
+            return (object) $ret;
+        }
     }
 
     public function produtosSapiens($funcao, $codEmp = 1, $codPro = '')
@@ -253,14 +291,25 @@ class SoapSapiens
         }
         #Sobrescrevendo endpoint do serviço
 
-        #Chamada do serviço
-        $result = $this->soapc->__soapCall($function, $parameters);
-        // echo 'Response: ';
-        // echo "<pre>";
-        // print_r($result);
-        // echo "</pre>";
-        $this->soapc = null;
-        return $result;
+        try {
+            $result = $this->soapc->__soapCall($function, $parameters);
+            log_message('info', 'SOAP retorno OK');
+            $this->soapc = null;
+            return $result;
+
+            // sucesso
+
+        } catch (\SoapFault $e) {
+            // falha de conexão ou erro na resposta
+            log_message('error', 'Erro SOAP: ' . $e->getMessage());
+
+            // se quiser, pode lançar exceção ou retornar erro customizado
+            $ret = [
+                'erro' => 'Falha na comunicação com o serviço SOAP',
+                'mensagem' => $e->getMessage()
+            ];
+            return (object) $ret;
+        }
     }
 
     public function lotesSapiens($funcao, $codLot = '')
@@ -276,16 +325,26 @@ class SoapSapiens
         if ($codLot != '') {
             $parameters['parameters']['codLot'] = $codLot;
         }
-        #Sobrescrevendo endpoint do serviço
-        // debug($parameters, true);
-        #Chamada do serviço
-        $result = $this->soapc->__soapCall($function, $parameters);
-        // echo 'Response: ';
-        // echo "<pre>";
-        // print_r($result);
-        // echo "</pre>";
-        $this->soapc = null;
-        return $result;
+
+        try {
+            $result = $this->soapc->__soapCall($function, $parameters);
+            log_message('info', 'SOAP retorno OK');
+            $this->soapc = null;
+            return $result;
+
+            // sucesso
+
+        } catch (\SoapFault $e) {
+            // falha de conexão ou erro na resposta
+            log_message('error', 'Erro SOAP: ' . $e->getMessage());
+
+            // se quiser, pode lançar exceção ou retornar erro customizado
+            $ret = [
+                'erro' => 'Falha na comunicação com o serviço SOAP',
+                'mensagem' => $e->getMessage()
+            ];
+            return (object) $ret;
+        }
     }
 
     public function estoquePorDeposito($deposito, $codPro = false)
@@ -307,15 +366,25 @@ class SoapSapiens
             $parameters['parameters']['codPro'] = $codPro;
         }
 
-        #Chamada do serviço
-        $result = $this->soapc->__soapCall($function, $parameters);
-        // echo 'Response: ';
-        // echo "<pre>";
-        // print_r($result);
-        // echo "</pre>";
-        $this->soapc = null;
+        try {
+            $result = $this->soapc->__soapCall($function, $parameters);
+            log_message('info', 'SOAP retorno OK');
+            $this->soapc = null;
+            return $result;
 
-        return $result;
+            // sucesso
+
+        } catch (\SoapFault $e) {
+            // falha de conexão ou erro na resposta
+            log_message('error', 'Erro SOAP: ' . $e->getMessage());
+
+            // se quiser, pode lançar exceção ou retornar erro customizado
+            $ret = [
+                'erro' => 'Falha na comunicação com o serviço SOAP',
+                'mensagem' => $e->getMessage()
+            ];
+            return (object) $ret;
+        }
     }
 
     public function transacoesEstoque($funcao)
@@ -333,14 +402,25 @@ class SoapSapiens
         );
         #Sobrescrevendo endpoint do serviço
 
-        #Chamada do serviço
-        $result = $this->soapc->__soapCall($function, $parameters);
-        // echo 'Response: ';
-        // echo "<pre>";
-        // print_r($result);
-        // echo "</pre>";
-        $this->soapc = null;
-        return $result;
+        try {
+            $result = $this->soapc->__soapCall($function, $parameters);
+            log_message('info', 'SOAP retorno OK');
+            $this->soapc = null;
+            return $result;
+
+            // sucesso
+
+        } catch (\SoapFault $e) {
+            // falha de conexão ou erro na resposta
+            log_message('error', 'Erro SOAP: ' . $e->getMessage());
+
+            // se quiser, pode lançar exceção ou retornar erro customizado
+            $ret = [
+                'erro' => 'Falha na comunicação com o serviço SOAP',
+                'mensagem' => $e->getMessage()
+            ];
+            return (object) $ret;
+        }
     }
 
     public function saldoEstoqueSapiensLista()
@@ -361,8 +441,24 @@ class SoapSapiens
             )
         );
         #Chamada do serviço
-        $result = $this->soapc->__soapCall($function, $parameters);
+        try {
+            $result = $this->soapc->__soapCall($function, $parameters);
+            log_message('info', 'SOAP retorno OK');
+            $this->soapc = null;
+            return $result;
 
-        return $result;
+            // sucesso
+
+        } catch (\SoapFault $e) {
+            // falha de conexão ou erro na resposta
+            log_message('error', 'Erro SOAP: ' . $e->getMessage());
+
+            // se quiser, pode lançar exceção ou retornar erro customizado
+            $ret = [
+                'erro' => 'Falha na comunicação com o serviço SOAP',
+                'mensagem' => $e->getMessage()
+            ];
+            return (object) $ret;
+        }
     }
 }

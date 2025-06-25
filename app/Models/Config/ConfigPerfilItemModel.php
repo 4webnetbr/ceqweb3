@@ -75,7 +75,7 @@ class ConfigPerfilItemModel extends Model
         
         $ret = $builder->get()->getResultArray();
         // debug($this->db->getLastQuery());        
-        log_message('info','SQL '.$this->db->getLastQuery());
+        // log_message('info','SQL '.$this->db->getLastQuery());
 
         return $ret;
     }

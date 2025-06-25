@@ -17,54 +17,51 @@ class Notificacao {
 
     function gravaNotifica($controler, $registro, $msg, $tipo)
     {
-        $this->mode_notifica    = new NotificaMonModel();
-        $this->mode_perfil      = new ConfigPerfilItemModel();
-        // echo "Grava Notifica \n";
-        $usuario  = 0;
-        $userorig = 'Sapiens';
+        $this->mode_notifica = new NotificaMonModel();
+        $this->mode_perfil   = new ConfigPerfilItemModel();
+
+        $usuarioOrigem = 0; // Representa o sistema (Sapiens)
+        $userOrigemNome = 'Sapiens';
+
+        // Extrai o nome do controller sem namespace
         $pos = strrpos($controler, "\\");
-        // echo "posicao ".$pos."\n";
-        if($pos != ''){
-            $nomecontrol = substr($controler, $pos + 1);
-        } else {
-            $nomecontrol = $controler;
-        }
-        // echo "nomecontrol ".$nomecontrol."\n";
-        log_message('info', 'Controler ' . $controler);
-        log_message('info', 'Posição ' . $pos);
-        log_message('info', 'NomeControl ' . $nomecontrol);
-        // debug($controler);
+        $nomeControl = ($pos !== false) ? substr($controler, $pos + 1) : $controler;
 
-        $usuariospermissoes = $this->mode_perfil->getPermissaoTelaUsuario(false, false, false, $nomecontrol);
-        log_message('info', 'Usuários ' . json_encode($usuariospermissoes));
-        if (count($usuariospermissoes) > 0) {
-            $texto = $msg . ' em ' . data_br(date('Y-m-d H:i:s')) . ' por: ' . $userorig;
-            for ($up = 0; $up < count($usuariospermissoes); $up++) {
-                $usu_dest = $usuariospermissoes[$up]['usu_id'];
-                $permissoes = $usuariospermissoes[$up]['pit_permissao'];
-                log_message('info', 'Usuario ' . $usuario);
-                log_message('info', 'Permissoes ' . $permissoes);
-                // debug($usuario);
-                // debug($usu_dest);
-                if ($usu_dest != $usuario  && str_contains($permissoes, 'N')) { // se não for o mesmo usuário que alterou e o usuário tem permissão de notificação
-                    // insere a nova notificação
-                    $insNot =  $this->mode_notifica->insertNotifica($controler, $texto, $registro, $usuario, $usu_dest, $tipo);
-                    log_message('info', 'insNot ' . var_dump($insNot));
-                    // var_dump($insNot);
-                    envia_msg_ws($controler, $msg, 'Servidor', $usu_dest, $registro);
+        log_message('info', 'Controller: ' . $controler);
+        log_message('info', 'NomeControl: ' . $nomeControl);
+
+        $usuarios = $this->mode_perfil->getPermissaoTelaUsuario(false, false, false, $nomeControl);
+        log_message('info', 'Usuários encontrados: ' . json_encode($usuarios));
+
+        if (!empty($usuarios)) {
+            $dataHora = data_br(date('Y-m-d H:i:s'));
+            $mensagemCompleta = "{$msg} em {$dataHora} por: {$userOrigemNome}";
+
+            foreach ($usuarios as $usu) {
+                $usuDest = $usu['usu_id'];
+                $permissao = $usu['pit_permissao'];
+
+                log_message('info', "Usuário Destino: {$usuDest} | Permissão: {$permissao}");
+
+                // Apenas se não for o mesmo e tiver permissão de notificação
+                if ($usuDest != $usuarioOrigem && str_contains($permissao, 'N')) {
+                    $result = $this->mode_notifica->insertNotifica(
+                        $controler,
+                        $mensagemCompleta,
+                        $registro,
+                        $usuarioOrigem,
+                        $usuDest,
+                        $tipo
+                    );
+                    log_message('info', 'Notificação inserida: ' . var_export($result, true));
                 }
-            }
-        }
-        $usuariospermissoes = $this->mode_perfil->getPermissaoTelaUsuario(false, false, false, $nomecontrol);
-        if (count($usuariospermissoes) > 0) {
-            for ($up = 0; $up < count($usuariospermissoes); $up++) {
-                $usuario = $usuariospermissoes[$up];
-                log_message('info', 'Usuario ' . $usuario);
-                envia_msg_ws($controler, $msg, 'Servidor', $usuario, $registro);
+
+                // Sempre envia a mensagem via WebSocket
+                envia_msg_ws($controler, $msg, 'Servidor', $usuDest, $registro);
             }
         }
 
-        return (json_encode([]));
+        return json_encode([]);
     }
 
     public function verNotifica(){

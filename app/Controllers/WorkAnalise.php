@@ -136,6 +136,8 @@ class WorkAnalise extends BaseController
         }
 
         echo count($analisesToSave). " Análises criadas \n";
+
+        $msgsocket = "";
         
         if (!empty($analisesToSave)) {
             if (method_exists($analise, 'saveBatch')) {
@@ -146,8 +148,6 @@ class WorkAnalise extends BaseController
                 }
             }
             $msgsocket  = count($analisesToSave). " Análises criadas";
-
-            $notifica->gravaNotifica('Micro\Analise', '', $msgsocket, 'C');
 
             // echo count($analisesToSave) . " análises salvas.\n";
         }
@@ -166,5 +166,9 @@ class WorkAnalise extends BaseController
 
         $final = date('d/m/Y H:i:s');
         echo "$final WorkAnalise finalizado \n\n";
+
+        if($msgsocket != ""){
+            $notifica->gravaNotifica('Micro\Analise', '', $msgsocket, 'C');
+        }
     }
 }
