@@ -69,6 +69,7 @@ $title ??= $controler;
   <section class="content"><?= $this->renderSection('content'); ?></section>
   <section class="manutencao"><?= $this->renderSection('manutencao'); ?></section>
   <section class="footer"><?= $this->renderSection('footer'); ?></section>
+  <section class="scripts"></section>
 
   <?= view('strut/vw_modal'); ?>
 

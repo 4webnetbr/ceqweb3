@@ -92,7 +92,7 @@ if ($avatar != '') {
       ?>
         <div class="accordion accordion-item accordion-body ms-2 py-1 px-0 h-auto bg-blue-claro">
         <a id="<?=strtolower($opcao['tel_controler']);?>" href="<?=base_url($opcao['tel_controler']);?>" 
-                class="text-body-emphasis">
+                class="text-body-emphasis" >
           <div id="<?=strtolower($opcao['tel_controler']);?>" data-menu='' class='nav-dropdown-menu mt-0 ms-1 mb-1'>
             <div class='align-items-center rounded-circle p-0 me-2 text-center float-start' 
                   style='width:1.65rem; height:1.65rem;margin-top: 0.15rem !important'>
@@ -133,7 +133,7 @@ if ($avatar != '') {
                     $subopc = $opcao['niv1'][$key];
                     if ($subopc['men_hierarquia'] == '4') { // é Opção do Menu
                     ?>
-                      <a id="<?=strtolower($subopc['tel_controler']);?>" href="<?=base_url($subopc['tel_controler']);?>" class="text-body-emphasis">
+                      <a id="<?=strtolower($subopc['tel_controler']);?>" href="<?=base_url($subopc['tel_controler']);?>" class="text-body-emphasis" >
                         <div id="<?=strtolower($subopc['tel_controler']);?>" data-menu='accordion1'  data-collapse='collapse<?=$opcao['men_id'];?>' class='nav-dropdown-menu mt-0 ms-1 mb-1'>
                           <div class='align-items-center rounded-circle p-0 me-2 text-center float-start'  
                                 style='width:1.65rem; height:1.65rem;'>
@@ -166,7 +166,7 @@ if ($avatar != '') {
                                   $subsub = $subopc['niv2'][$key2];
                                   $onclic = base_url($subsub['tel_controler']);
                                   ?>
-                                  <a id="<?=strtolower($subsub['tel_controler']);?>" href="<?=$onclic;?>" class="text-body-emphasis">
+                                  <a id="<?=strtolower($subsub['tel_controler']);?>" href="<?=$onclic;?>" class="text-body-emphasis" >
                                     <div id="<?=strtolower($subsub['tel_controler']);?>" data-submenu='accordion<?=$cont_accord;?>' data-collapse='collapse<?=$subopc['men_id'];?>' class='nav-dropdown-menu mt-0 ms-1 mb-1'>
                                       <div class='align-items-center rounded-circle p-0 me-2 text-center float-start'  style='width:1.45rem; height:1.45rem;'>
                                         <i class='<?=$subsub['men_icone'];?>'></i>

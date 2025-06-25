@@ -1502,3 +1502,70 @@ function executaAjaxWait(urldest, tipo = "json", dados = {}, funcao = "") {
     });
   });
 }
+
+function carregarPaginaComSecoes(url, adicionarNoHistorico = true) {
+  jQuery("#loader").show();
+
+  jQuery.ajax({
+    url: url,
+    method: "GET",
+    dataType: "html",
+    success: function (html) {
+      const temp = jQuery("<div>").html(html);
+
+      const secoes = [
+        "header",
+        "menu",
+        "content",
+        "manutencao",
+        "footer",
+        "scripts",
+      ];
+
+      secoes.forEach(function (secao) {
+        const nova = temp.find("section." + secao);
+        const atual = jQuery("section." + secao);
+
+        if (nova.length && atual.length) {
+          atual.html(nova.html());
+        }
+      });
+
+      if (adicionarNoHistorico) {
+        history.pushState(null, "", url);
+      }
+
+      executarScriptsInline(temp.find("section.scripts"));
+    },
+    error: function (xhr, status, error) {
+      console.error("Erro ao carregar página:", error);
+      alert("Erro ao carregar a página.");
+    },
+    complete: function () {
+      jQuery("#loader").hide();
+    },
+  });
+}
+
+function executarScriptsInline($scriptSection) {
+  if (!$scriptSection.length) return;
+
+  $scriptSection.find("script").each(function () {
+    const $oldScript = jQuery(this);
+    const newScript = document.createElement("script");
+
+    if ($oldScript.attr("src")) {
+      newScript.src = $oldScript.attr("src");
+    } else {
+      newScript.textContent = $oldScript.html();
+    }
+
+    document.body.appendChild(newScript);
+    document.body.removeChild(newScript);
+  });
+}
+
+// Suporte ao botão voltar/avançar
+window.addEventListener("popstate", function () {
+  carregarPaginaComSecoes(location.href, false);
+});
