@@ -30,7 +30,7 @@ if (strlen($ajuda) > 5) {
 
 // }
 ?>
-<div id='title' class='title col-12 px-lg-4 px-1 bg-danger-subtle menuaberto '>
+<div id='title' class='title col-12 px-lg-4 px-1 bg-danger-subtle '>
   <div class='titulo col-lg-6 col-7 float-start text-nowrap'>
     <div class='d-block float-start col-1' style='font-size: calc(1.275rem + 1.1vw);margin-top: -.3rem;'>
       <?= $icone; ?>
