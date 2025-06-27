@@ -1118,9 +1118,9 @@ class Analise extends BaseController
                             'tmo_id'       => intval($post['tmo_id']),
                             'stt_id'       => $status,
                         ];
-                        $movs[] = [
+                        $movs[] = [ // MOVIMENTA A QUANTIDADE MICRO, COM A MOVIMENTAÇÃO QUE FOI ESCOLHIDA PELO USUÁRIO
                             'id'  => intval($post['tmo_id']),
-                            'qt'  => intval($post['ana_qtde']),
+                            'qt'  => intval($post['ana_qtde_micro']),
                             'msg' => 'Análise liberada'
                         ];
                         // Atualização do lote para liberado
