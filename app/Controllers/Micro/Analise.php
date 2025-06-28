@@ -1099,9 +1099,9 @@ class Analise extends BaseController
                             'tmo_id'       => intval($post['tmo_id']),
                             'stt_id'       => $status,
                         ];
-                        $movs[] = [
+                        $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
                             'id'  => intval($post['tmo_id']),
-                            'qt'  => intval($post['ana_qtde']),
+                            // 'qt'  => ???,
                             'msg' => 'Análise reprovada'
                         ];
                         // Atualização do lote para bloqueado
@@ -1148,6 +1148,11 @@ class Analise extends BaseController
                         $sqlAna = [
                             'ana_id' => intval($post['ana_id']),
                             'stt_id' => $status,
+                        ];
+                        $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
+                            'id'  => intval($post['tmo_id']),
+                            // 'qt'  => ???,
+                            'msg' => 'Análise reprovada'
                         ];
                         // Atualização do lote para bloqueado
                         $sqlLot = [
