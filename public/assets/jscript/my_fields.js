@@ -647,6 +647,7 @@ function mostraOcultaCampo(obj, regra, fields) {
   valor = jQuery('input[name="' + nomecampo + '"]:checked').val();
   campos = fields.split(",");
   if (valor == regra) {
+    // MOSTRA O CAMPO
     jQuery.each(campos, function (key, value) {
       value = value.replaceAll("[", "\\[");
       value = value.replaceAll("]", "\\]");
@@ -684,6 +685,7 @@ function mostraOcultaCampo(obj, regra, fields) {
       }
     });
   } else {
+    // OCULTA O CAMPO
     jQuery.each(campos, function (key, value) {
       value = value.replaceAll("[", "\\[");
       value = value.replaceAll("]", "\\]");
@@ -1693,6 +1695,37 @@ function readURL(input, id, largura, altura) {
           .height(altura);
       };
       reader.readAsDataURL(file);
+    }
+  }
+}
+
+function validarArquivoPorAccept(el) {
+  const file = el.files[0];
+
+  if (file) {
+    const accept = (el.getAttribute("accept") || "").toLowerCase();
+    const acceptedList = accept.split(",").map((item) => item.trim());
+
+    const fileName = file.name.toLowerCase();
+    const fileExtension = "." + fileName.split(".").pop();
+    const fileType = file.type;
+
+    const extensaoValida = acceptedList.includes(fileExtension);
+    const tipoValido = acceptedList.includes(fileType);
+
+    if (!extensaoValida && !tipoValido) {
+      boxAlert(
+        `Apenas arquivos dos tipos permitidos (${acceptedList.join(
+          ", "
+        )}) são aceitos.`,
+        true,
+        "",
+        true,
+        1,
+        false,
+        "Atenção"
+      );
+      el.value = "";
     }
   }
 }

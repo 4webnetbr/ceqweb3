@@ -341,8 +341,14 @@ class MyCampo
         $respf .= $campo;
 
         if($grouppos == 'arquivo' ){
-            $respf .= "<div id='nome_arquivo_img_" . $this->nome . "' class='text-break border p-1 mb-2' style='width: auto;'></div>";
-            $respf .= "<div id='view_img_" . $this->nome . "' class='show img-thumbnail ' >";
+            $respf .= "<div id='nome_arquivo_img_" . $this->nome . "' class='text-break border p-1 mb-2' style='width: auto;' >$this->valor</div>";
+            if($this->funcBlur != ''){
+                $this->funcBlur = str_replace("'", '"', $this->funcBlur);
+                $respf .= "<div id='view_img_" . $this->nome . "' class='show img-thumbnail ' onclick='".$this->funcBlur."'>";
+                $respf .= "<div class='text-black'>Clique para Visualizar</div>";
+            } else {
+                $respf .= "<div id='view_img_" . $this->nome . "' class='show img-thumbnail ' >";
+            }
             $respf .= "<img id='img_" . $this->nome . "' src='" . $this->selecionado . "' for='" . $this->id . "' class='img-thumbnail sempadding' alt='' style='width:" . $this->size . "px;' />";
             $respf .= "</div>";
             $respf .= "</label>";
@@ -1590,15 +1596,19 @@ class MyCampo
         $this->field = array(
             'name'          => $this->nome,
             'id'            => $this->id,
-            'data-file-type'    => '.pdf,.docx',
-            'accept'        => '.pdf,.docx',
+            'data-file-type'    => (isset($this->tipoArq))?$this->tipoArq:'.pdf,.docx',
+            'accept'        => (isset($this->tipoArq))?$this->tipoArq:'.pdf,.docx',
             'style'         => "display:none",
             'class'         => ""
         );
         if ($this->leitura !== true) {
-            $groupant .= "<label id='lbl_$this->id' class='btn btn-primary' 
-                        style='white-space: normal;width:" . $this->size . "px; padding:0.8em;'>
-                                <i class=\"fas fa-file\"></i> Clique para selecionar Arquivo de $this->label";
+            $groupant .= "<label id='lbl_$this->id' class='btn btn-primary' style='white-space: normal;width:" . $this->size . "px; padding:0.8em;'>";
+            if($this->valor == ''){
+                $groupant .= "<i class=\"fas fa-file\"></i> Clique para selecionar Arquivo de $this->label";
+            } else {
+                $groupant .= "<i class=\"fas fa-file\"></i> Clique para SUBSTITUIR o Arquivo de $this->label";
+            }
+                                
             $grouppos = 'arquivo';
         }
 

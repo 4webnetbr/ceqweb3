@@ -32,11 +32,14 @@ class Analise extends BaseController
     {
         $this->data         = session()->getFlashdata('dados_tela');
         $this->permissao    = $this->data['permissao'];
-        $this->analise      = new MicrobAnaliseModel();
-        $this->produto      = new ProdutProdutoModel();
-        $this->lote         = new ProdutLoteModel();
-        $this->tipomovimento         = new EstoquTipoMovimentacaoModel();
-        $this->common       = new CommonModel();
+
+        /** @var \App\Models\Microb\MicrobAnaliseModel */
+        $this->analise      = model(MicrobAnaliseModel::class);
+        
+        $this->lote         = model(ProdutLoteModel::class);
+        $this->produto      = model(ProdutProdutoModel::class);
+        $this->tipomovimento         = model(EstoquTipoMovimentacaoModel::class);
+        $this->common       = model(CommonModel::class);
 
         if ($this->data['erromsg'] != '') {
             $this->__erro();
@@ -640,9 +643,8 @@ class Analise extends BaseController
             $campos[2][] = $fields3['ana_liberar'];
             $campos[2][] = $fields3['ana_reprovar'];
 
-            if ($status !== 12) {
-                $campos[2][] = $fields3['tmo_id'];
-            }
+            $campos[2][] = $fields3['tmo_id'];
+            $campos[2][] = $fields3['tmo_id_rep'];
         }
 
         // Script JavaScript dinâmico
@@ -652,6 +654,25 @@ class Analise extends BaseController
                 mostraOcultaCampo('cla_metodanalise', 'S', 'ana_lotemb');
             </script>
         SCRIPT;
+
+        if($dados['ana_liberar'] == 'S'){
+            $script .= <<<SCRIPT
+                <script>
+                    mostraOcultaCampo('ana_liberar','S','tmo_id');
+                    mostraOcultaCampo('ana_liberar','N','tmo_id_rep');
+                    mudaObrigatorio('ana_liberar','S','tmo_id')
+                </script>
+            SCRIPT;
+        }
+        if($dados['ana_reprovar'] == 'S'){
+            $script .= <<<SCRIPT
+                <script>
+                    mostraOcultaCampo('ana_reprovar','S','tmo_id_rep');
+                    mostraOcultaCampo('ana_reprovar','N','tmo_id');
+                    mudaObrigatorio('ana_liberar','S','tmo_id');
+                </script>
+            SCRIPT;
+        }
 
         // Prepara dados da view
         $this->data['secoes']      = $secao;
@@ -693,6 +714,8 @@ class Analise extends BaseController
             $sql_ana = [
                 'ana_id'    => $ana_id,
                 'ana_laudo' => $ana_laudo,
+                'ana_liberar' => $postado['ana_liberar'],
+                'ana_reprovar' => $postado['ana_reprovar'],
                 'stt_id'    => 15, // Aprovado
             ];
 
@@ -765,274 +788,6 @@ class Analise extends BaseController
         echo json_encode($ret);
     }
 
-    // public function finalizar()
-    // {
-    //     $ret = [];
-    //     $postado = $this->request->getPost();
-    //     // debug($postado, true);
-    //     $ret['erro'] = false;
-    //     $erros = [];
-    //     if ($postado['ana_liberar'] == 'S') {
-    //         $status = 15; // status APROVADA
-    //         $sql_ana = [
-    //             'ana_id'    => intval($postado['ana_id']),
-    //             'ana_laudo' => $postado['ana_laudo'],
-    //             'stt_id'    => $status,
-    //         ];
-    //         if (isset($postado['tmo_id'])) {
-    //             $sql_ana['tmo_id']    = intval($postado['tmo_id']);
-    //         }
-    //     }
-    //     $files = $this->request->getFiles();
-    //     // debug($files,true);
-    //     if ($files['ana_arqlaudo']->getSize() > 0) {
-    //         $arquivo = $files['ana_arqlaudo']->getPathName();
-    //         $tamanho = $files['ana_arqlaudo']->getSize();
-    //         $exte    = $files['ana_arqlaudo']->getExtension();
-    //         $tipo    = mime_content_type($arquivo);
-    //         $nome    = $files['ana_arqlaudo']->getName();
-
-    //         $arqstring = file_get_contents($arquivo);
-    //         $base64orig = base64_encode($arqstring);
-    //         $base64 = 'data: ' . mime_content_type($arquivo) . ';base64,' . $base64orig;
-    //         // debug($base64,true);
-    //         $arqs['arq_nome'] = $nome;
-    //         $arqs['arq_exte'] = $exte;
-    //         $arqs['arq_tipo'] = $tipo;
-    //         $arqs['arq_size'] = $tamanho;
-    //         $registro = intval($postado['ana_id']);
-
-    //         $arqdb       = new ArquivoMonModel();
-    //         $arq = $arqdb->insertArquivo('Analisa', 'ArqLaudo', $registro, $arqs, $base64);
-    //         if (!$arq) {
-    //             $ret['erro'] = true;
-    //             $ret['msg'] = 'Não foi possível gravar o Arquivo ' . $nome . ', Verifique!';
-    //         }
-    //     } else {
-    //         $ret['erro'] = true;
-    //         $ret['msg'] = 26;
-    //     }
-    //     if (!$ret['erro']) {
-    //         if (!$this->analise->save($sql_ana)) {
-    //             $ret['erro'] = true;
-    //             $erros = $this->common->errors();
-    //         }
-    //     }
-    //     if ($ret['erro']) {
-    //         if (!is_numeric($ret['msg'])) {
-    //             if (count($erros) > 0 && is_numeric($erros[0])) {
-    //                 $ret['msg'] = $erros[0];
-    //             } else {
-    //                 $ret['msg']  .= 'Não foi possível gravar os Dados da Analise, Verifique!<br><br>';
-    //                 foreach ($erros as $erro) {
-    //                     $ret['msg'] .= $erro . '<br>';
-    //                 }
-    //             }
-    //         }
-    //     } else {
-    //         cache()->clean();
-    //         $ret['msg']  = 'Dados da Analise gravado com Sucesso!!!';
-    //         session()->setFlashdata('msg', $ret['msg']);
-    //         $ret['url']  = site_url($this->data['controler']);
-    //         // $this->analise->atualizaEvento();
-    //     }
-    //     echo json_encode($ret);
-    //     cache()->clean();
-    //     exit;
-    // }
-
-    /**
-     * Gravação
-     * store
-     *
-     * @return void
-     */
-    // public function store()
-    // {
-    //     $ret = [];
-    //     $postado = $this->request->getPost();
-    //     // debug($postado, true);
-    //     $ret['erro'] = false;
-    //     $erros = [];
-    //     $movs  = [];
-    //     if ($postado['stt_id'] == 10) { // ESTAVA BLOQUEADO
-    //         $cont = count($movs);
-    //         $movs[$cont]['id'] = 4;
-    //         $movs[$cont]['qt'] = intval($postado['ana_qtde_micro']);
-    //         $movs[$cont]['msg'] = ' enviado para Análise';
-    //         $sql_ana = [
-    //             'ana_id'    => intval($postado['ana_id']),
-    //             'ana_qtde_micro'    => intval($postado['ana_qtde_micro']),
-    //             'stt_id'    => 11, // status PENDENTE
-    //         ];
-    //     } else if ($postado['stt_id'] == 11) { // ESTAVA PENDENDTE
-    //         if ($postado['ana_liberarsemmicro'] == 'N') {
-    //             $status = 14; // status REALIZADA
-    //             $sql_ana = [
-    //                 'ana_id'    => intval($postado['ana_id']),
-    //                 'ana_lotemb' => $postado['ana_lotemb'],
-    //                 'ana_datalotemb' => $postado['ana_datalotemb'],
-    //                 'stt_id'    => $status,
-    //             ];
-    //         } else {
-    //             $status = 13; // status NÃO REALIZADO
-    //             $sql_ana = [
-    //                 'ana_id'    => intval($postado['ana_id']),
-    //                 'stt_id'    => $status,
-    //             ];
-    //             $cont = count($movs);
-    //             $movs[$cont]['id'] = 5;
-    //             $movs[$cont]['qt'] = intval($postado['ana_qtde']);
-    //             $movs[$cont]['msg'] = ' liberado sem Micro';
-    //             $cont = count($movs);
-    //             $movs[$cont]['id'] = 6;
-    //             $movs[$cont]['qt'] = intval($postado['ana_qtde_micro']);
-    //             $movs[$cont]['msg'] = ' liberado sem Micro';
-    //         }
-    //     } else if ($postado['stt_id'] == 14) { // ESTAVA REALIZADA
-    //         if ($postado['ana_reprovar'] == 'S') {
-    //             $status = 16; // status REPROVADA
-    //             $sql_ana = [
-    //                 'ana_id'    => intval($postado['ana_id']),
-    //                 'ana_lotemb' => $postado['ana_lotemb'],
-    //                 'ana_reprovar' => $postado['ana_reprovar'],
-    //                 'tmo_id'    => intval($postado['tmo_id']),
-    //                 'stt_id'    => $status,
-    //             ];
-    //             $cont = count($movs);
-    //             $movs[$cont]['id'] = intval($postado['tmo_id']);
-    //             $movs[$cont]['qt'] = intval($postado['ana_qtde']);
-    //             $movs[$cont]['msg'] = ' Análise reprovada';
-    //         }
-    //         if ($postado['ana_liberar'] == 'S') {
-    //             $status = 12; // status EM ANDAMENTO
-    //             $sql_ana = [
-    //                 'ana_id'    => intval($postado['ana_id']),
-    //                 'ana_lotemb' => $postado['ana_lotemb'],
-    //                 'ana_liberar' => $postado['ana_liberar'],
-    //                 'tmo_id'    => intval($postado['tmo_id']),
-    //                 'stt_id'    => $status,
-    //             ];
-    //             $cont = count($movs);
-    //             $movs[$cont]['id'] = intval($postado['tmo_id']);
-    //             $movs[$cont]['qt'] = intval($postado['ana_qtde']);
-    //             $movs[$cont]['msg'] = ' Análise liberada';
-    //         }
-    //     }
-    //     $this->analise->transBegin();
-    //     try {
-    //         // Gravação da etiqueta
-    //         if (!$this->analise->save($sql_ana)) {
-    //             throw new \Exception(implode(' ', $this->analise->errors()));
-    //         }
-
-    //         if (count($movs) > 0) {
-    //             cache()->clean();
-    //             $this->geraMovimento($movs, $postado);
-    //         }
-    //         if ($postado['stt_id'] == 11) { // ESTAVA PENDENTE
-    //             if ($postado['ana_liberarsemmicro'] == 'S') {
-    //                 // ATUALIZA O LOTE PARA LIBERADO
-    //                 $sql_lot = [
-    //                     'lot_id' => $postado['lot_id'],
-    //                     'stt_id'   => 9 // LOTE LIBERADO
-    //                 ];
-    //                 // $this->lote->save($sql_lot);
-    //             }
-    //         } else if ($postado['stt_id'] == 14) { // ESTAVA REALIZADO
-    //             if ($postado['ana_liberar'] == 'S') {
-    //                 $sql_lot = [
-    //                     'lot_id' => $postado['lot_id'],
-    //                     'stt_id'   => 9 // LOTE LIBERADO
-    //                 ];
-    //                 // debug($sql_lot);
-    //                 // $this->lote->save($sql_lot);
-    //             }
-    //             if ($postado['ana_reprovar'] == 'S') {
-    //                 $sql_lot = [
-    //                     'lot_id' => $postado['lot_id'],
-    //                     'stt_id'   => 8 // LOTE BLOQUEADO
-    //                 ];
-    //                 // $this->lote->save($sql_lot);
-    //             }
-    //         } else if ($postado['stt_id'] == 12) { // ESTAVA EM ANDAMENTO
-    //             if ($postado['ana_reprovar'] == 'N') {
-    //                 $files = $this->request->getFiles();
-    //                 // debug($files,true);
-    //                 if ($files['ana_arqlaudo']->getSize() > 0) {
-    //                     $arquivo = $files['ana_arqlaudo']->getPathName();
-    //                     $tamanho = $files['ana_arqlaudo']->getSize();
-    //                     $exte    = $files['ana_arqlaudo']->getExtension();
-    //                     $tipo    = mime_content_type($arquivo);
-    //                     $nome    = $files['ana_arqlaudo']->getName();
-
-    //                     $arqstring = file_get_contents($arquivo);
-    //                     $base64orig = base64_encode($arqstring);
-    //                     $base64 = 'data: ' . mime_content_type($arquivo) . ';base64,' . $base64orig;
-    //                     // debug($base64,true);
-    //                     $arqs['arq_nome'] = $nome;
-    //                     $arqs['arq_exte'] = $exte;
-    //                     $arqs['arq_tipo'] = $tipo;
-    //                     $arqs['arq_size'] = $tamanho;
-    //                     $registro = intval($postado['ana_id']);
-
-    //                     $arqdb       = new ArquivoMonModel();
-    //                     $arq = $arqdb->insertArquivo('Analisa', 'ArqLaudo', $registro, $arqs, $base64);
-    //                     if (!$arq) {
-    //                         $ret['erro'] = true;
-    //                         $ret['msg'] = 'Não foi possível gravar o Arquivo ' . $nome . ', Verifique!';
-    //                         echo json_encode($ret);
-    //                         exit;
-    //                     }
-    //                 }
-    //             }
-    //             if ($postado['ana_reprovar'] == 'S') {
-    //                 $sql_lot = [
-    //                     'lot_id' => $postado['lot_id'],
-    //                     'stt_id'   => 8 // LOTE BLOQUEADO
-    //                 ];
-    //                 // $this->lote->save($sql_lot);
-    //             }
-    //             $this->lote->transBegin();
-    //             try {
-    //                 // Gravação da etiqueta
-    //                 if (!$this->lote->save($sql_lot)) {
-    //                     throw new \Exception(implode(' ', $this->lote->errors()));
-    //                 }
-    //             } catch (\Exception $e) {
-    //                 // Em caso de erro, reverte a transação
-    //                 $ret['erro'] = true;
-    //                 $ret['msg'] = $e->getMessage();
-    //             }
-    //         }
-    //     } catch (\Exception $e) {
-    //         // Em caso de erro, reverte a transação
-    //         $ret['erro'] = true;
-    //         $ret['msg'] = $e->getMessage();
-    //     }
-    //     if ($ret['erro']) {
-    //         $this->analise->transRollback();
-    //         $this->lote->transRollback();
-    //         if (is_numeric($erros[0])) {
-    //             $ret['msg'] = $erros[0];
-    //         } else {
-    //             $ret['msg']  = 'Não foi possível gravar os Dados da Analise, Verifique!<br><br>';
-    //             foreach ($erros as $erro) {
-    //                 $ret['msg'] .= $erro . '<br>';
-    //             }
-    //         }
-    //     } else {
-    //         $this->analise->transCommit();
-    //         $this->lote->transCommit();
-    //         cache()->clean();
-    //         $ret['msg']  = 'Dados da Analise gravado com Sucesso!!!';
-    //         session()->setFlashdata('msg', $ret['msg']);
-    //         $ret['url']  = site_url($this->data['controler']);
-    //         // $this->analise->atualizaEvento();
-    //     }
-    //     echo json_encode($ret);
-    // }
-
     public function store()
     {
         $ret = ['erro' => false];
@@ -1072,13 +827,15 @@ class Analise extends BaseController
                             'ana_id' => intval($post['ana_id']),
                             'stt_id' => $status,
                         ];
+                        // gera movimentação do tipo MOV5 (5) da quantidade total do lote
                         $movs[] = [
                             'id'  => 5,
                             'qt'  => intval($post['ana_qtde']),
                             'msg' => 'liberado sem Micro'
                         ];
+                        // gera movimentação cadastrada da quantidade micro
                         $movs[] = [
-                            'id'  => 6,
+                            'id'  => intval($post['tmo_id']),
                             'qt'  => intval($post['ana_qtde_micro']),
                             'msg' => 'liberado sem Micro'
                         ];
@@ -1095,13 +852,31 @@ class Analise extends BaseController
                         $sqlAna = [
                             'ana_id'       => intval($post['ana_id']),
                             'ana_lotemb'   => $post['ana_lotemb'],
-                            'ana_reprovar' => $post['ana_reprovar'],
+                            'ana_liberar'  => $post['ana_liberar'],
+                            'ana_reprovar'  => $post['ana_reprovar'],
                             'tmo_id'       => intval($post['tmo_id']),
+                            'tmo_id_rep'       => intval($post['tmo_id_rep']),
                             'stt_id'       => $status,
                         ];
+                        // BUSCAR DEPÓSITO DE ORIGEM 
+                        $mov = $this->tipomovimento->getTipoMovimentacao($post['tmo_id_rep']);
+                        $deporig = $mov[0]['dep_codorigem'];
+                        // BUSCAR PRODUTO 
+                        $produto = $this->produto->getProduto($post['pro_id'], false)[0];
+                        $codpro = $produto['pro_codpro'];
+
+                        // BUSCAR SALDO DO DEPÓSITO DE ORIGEM
+                        $busca = new BuscasSapiens();
+                        $saldoest = $busca->buscaEstoqueDeposito($deporig, $codpro);
+
                         $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
-                            'id'  => intval($post['tmo_id']),
-                            // 'qt'  => ???,
+                            'id'  => intval($post['tmo_id_rep']),
+                            'qt'  => $saldoest,
+                            'msg' => 'Análise reprovada'
+                        ];
+                        $movs[] = [ // GERA MOVIMENTACAO MOV7 (7) DA QUANTIDADE MICRO
+                            'id'  => 7,
+                            'qt'  => intval($post['ana_qtde_micro']),
                             'msg' => 'Análise reprovada'
                         ];
                         // Atualização do lote para bloqueado
@@ -1115,8 +890,22 @@ class Analise extends BaseController
                             'ana_id'       => intval($post['ana_id']),
                             'ana_lotemb'   => $post['ana_lotemb'],
                             'ana_liberar'  => $post['ana_liberar'],
+                            'ana_reprovar'  => $post['ana_reprovar'],
                             'tmo_id'       => intval($post['tmo_id']),
+                            'tmo_id_rep'       => intval($post['tmo_id_rep']),
                             'stt_id'       => $status,
+                        ];
+                        // gera movimentação do tipo MOV5 (5) da quantidade total do lote
+                        $movs[] = [
+                            'id'  => 5,
+                            'qt'  => intval($post['ana_qtde']),
+                            'msg' => 'Análise liberada'
+                        ];
+                        // gera movimentação cadastrada da quantidade micro
+                        $movs[] = [
+                            'id'  => intval($post['tmo_id']),
+                            'qt'  => intval($post['ana_qtde_micro']),
+                            'msg' => 'Análise liberada'
                         ];
                         $movs[] = [ // MOVIMENTA A QUANTIDADE MICRO, COM A MOVIMENTAÇÃO QUE FOI ESCOLHIDA PELO USUÁRIO
                             'id'  => intval($post['tmo_id']),
@@ -1144,9 +933,11 @@ class Analise extends BaseController
                         // 'stt_id' => $status,
                     ];
                     if ($post['ana_reprovar'] == 'S') {
-                        $status = 16; // Reprovador
+                        $status = 16; // Reprovado
                         $sqlAna = [
                             'ana_id' => intval($post['ana_id']),
+                            'ana_liberar'  => $post['ana_liberar'],
+                            'ana_reprovar'  => $post['ana_reprovar'],
                             'stt_id' => $status,
                         ];
                         $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO

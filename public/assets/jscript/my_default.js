@@ -474,7 +474,8 @@ function redireciona(url) {
  * Abre a URL fornecida numa nova Janela
  * @param {string} url - URL de destino
  */
-function redirec_blank(url) {
+function redirec_blank(url, event = null) {
+  if (event) event.stopPropagation(); // Para cliques dentro de labels ou outros elementos
   window.open(url, "_blank");
 }
 
@@ -1502,4 +1503,3 @@ function executaAjaxWait(urldest, tipo = "json", dados = {}, funcao = "") {
     });
   });
 }
-

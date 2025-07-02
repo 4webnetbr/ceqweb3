@@ -100,7 +100,7 @@ class MicrobAnaliseModel extends Model
     public function getListaAnalise($ana_id = false, $stt_id = false)
     {
         $db = db_connect('dbProduto');
-        $builder = $db->table('vw_pro_mic_analise_relac');
+        $builder = $db->table('vw_pro_mic_analise_relac_v2');
 
         $builder->select('*');
         if ($ana_id) {
@@ -408,23 +408,35 @@ class MicrobAnaliseModel extends Model
                 $arquivo = buscaTipoArquivo($arqlaudo);
                 $nome_arq = (isset($arqlaudo->arq_nome)) ? $arqlaudo->arq_nome : '';
                 $id         = (string)$arqlaudo->_id;
-                $link             = base_url("/Showfile/" . $id);
-                $redir             = "redirec_blank('$link')";
+                $link              = base_url("/Showfile/" . $id);
+                $redir             = "redirec_blank('$link', event)";
                 $arq->funcChan     = $redir;
                 $arq->valor        = $nome_arq;
                 $arq->selecionado  = $arquivo;
                 $arq->classep      = 'btn-outline-success';
-                $arq->i_cone  = '<div class="align-items-center py-1 text-start float-start font-weight-bold" style="">
-                <i class="fa-solid fa-file" style="font-size: 2rem;" aria-hidden="true"></i></div>';
-                $arq->i_cone  .= '<div class="align-items-start txt-bt-manut">Ver Arquivo do Laudo<br>'.$nome_arq.'</div>';
-                $arq->place       = 'Ver Arquivo';
-                $arq->label       = 'Ver Arquivo';
-                $ret['ana_arqlaudo']    = $arq->crBotao();
+                // $arq->i_cone  = '<div class="align-items-center py-1 text-start float-start font-weight-bold" style="">'
+                // <i class="fa-solid fa-file" style="font-size: 2rem;" aria-hidden="true"></i></div>';
+                if($dados['stt_id'] == 15){
+                    $arq->i_cone = "<div id='view_img_" . $id . "' class='show img-thumbnail border border-1' >";
+                    $arq->i_cone .= "<img id='img_" . $id . "' src='" . $arquivo . "'  class='img-thumbnail sempadding' alt='' style='width:" . $arq->size . "px;' />";
+                    $arq->i_cone .= "</div>";
+                    $arq->i_cone  .= '<div class="align-items-start txt-bt-manut">Ver Arquivo do Laudo<br>'.$nome_arq.'</div>';
+                    $ret['ana_arqlaudo']    = $arq->crLabel().$arq->crBotao();
+                } else if($dados['stt_id'] != 15){
+                    $arq->leitura  = $show;
+                    $arq->tipoArq  = '.pdf';
+                    $arq->valor        = $nome_arq;
+                    $arq->selecionado  = $arquivo;
+                    $arq->funcChan    = "validarArquivoPorAccept(this);readURL(this, 'img_$arq->id', $arq->size, $arq->tamanho)";
+                    $arq->funcBlur    = $redir;
+                    $ret['ana_arqlaudo'] = $arq->crArquivo();
+                }
                 // debug($arq);
             } else {
                 $arq->leitura  = $show;
+                $arq->tipoArq  = '.pdf';
                 $arq->selecionado  = "/assets/uploads/tipo_arquivo/vazio.png";
-                $arq->funcChan    = "readURL(this, 'img_$arq->id', $arq->size, $arq->tamanho)";
+                $arq->funcChan    = "validarArquivoPorAccept(this);readURL(this, 'img_$arq->id', $arq->size, $arq->tamanho)";
                 $ret['ana_arqlaudo']    = $arq->crArquivo();
             }
         }
@@ -451,7 +463,7 @@ class MicrobAnaliseModel extends Model
         $lib->valor    = $lib->selecionado    = $liberar;
         $lib->leitura  = $show;
         $lib->opcoes   = $simnao;
-        $lib->funcChan = "reprovar(this,'ana_reprovar');reprovar(this,'ana_liberarsemmicro');mudaObrigatorio(this,'S','tmo_id')";
+        $lib->funcChan = "reprovar(this,'ana_reprovar');reprovar(this,'ana_liberarsemmicro');mostraOcultaCampo('ana_liberar','S','tmo_id');mostraOcultaCampo('ana_liberar','N','tmo_id_rep');mudaObrigatorio(this,'S','tmo_id')";
         $lib->dispForm = '2col';
         $ret['ana_liberar']    = $lib->cr2opcoes();
 
@@ -468,17 +480,26 @@ class MicrobAnaliseModel extends Model
         $rep->leitura  = $show;
         $rep->opcoes   = $simnao;
         $rep->dispForm = '2col';
-        $rep->funcChan = "reprovar(this,'ana_liberar');reprovar(this,'ana_liberarsemmicro');mudaObrigatorio(this,'S','tmo_id')";
+        $rep->funcChan = "reprovar(this,'ana_liberar');reprovar(this,'ana_liberarsemmicro');mostraOcultaCampo('ana_reprovar','S','tmo_id_rep');mostraOcultaCampo('ana_reprovar','N','tmo_id');mudaObrigatorio(this,'S','tmo_id_rep')";
         $ret['ana_reprovar']    = $rep->cr2opcoes();
+        // debug($dados['tmo_id']);
 
         $opc_mov           = $opcoes->getListaOpcoes('dbEstoque', 'est_tipo_movimentacao', ['tmo_nome', 'tmo_id'], 'tmo_id = ' . $dados['tmo_id']);
         $movi               =  new MyCampo('pro_mic_analise', 'tmo_id');
-        $movi->valor = $movi->selecionado = isset($dados['tmo_id']) ? $dados['tmo_id'] : '';
-        $movi->leitura  = $show;
+        $movi->valor        = ($reprovar=='N')?$movi->selecionado = isset($dados['tmo_id']) ? $dados['tmo_id'] : 'N':'N';
+        $movi->leitura      = $show;
         $movi->largura      = 60;
         $movi->opcoes       = $opc_mov;
         $movi->obrigatorio  = false;
         $ret['tmo_id']      = $movi->crSelect();
+
+        $movi               =  new MyCampo('pro_mic_analise', 'tmo_id_rep');
+        $movi->valor        = ($reprovar=='S')?$movi->selecionado = isset($dados['tmo_id_rep']) ? $dados['tmo_id_rep'] : 'N':'N';
+        $movi->leitura      = $show;
+        $movi->largura      = 60;
+        $movi->opcoes       = $opc_mov;
+        $movi->obrigatorio  = false;
+        $ret['tmo_id_rep']      = $movi->crSelect();
 
         return $ret;
     }
