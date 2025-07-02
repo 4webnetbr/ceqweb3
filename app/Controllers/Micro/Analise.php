@@ -868,12 +868,13 @@ class Analise extends BaseController
                         // BUSCAR SALDO DO DEPÓSITO DE ORIGEM
                         $busca = new BuscasSapiens();
                         $saldoest = $busca->buscaEstoqueDeposito($deporig, $codpro);
-
-                        $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
-                            'id'  => intval($post['tmo_id_rep']),
-                            'qt'  => $saldoest,
-                            'msg' => 'Análise reprovada'
-                        ];
+                        if($saldoest->quantidadeEstoque > 0){
+                            $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
+                                'id'  => intval($post['tmo_id_rep']),
+                                'qt'  => $saldoest->quantidadeEstoque,
+                                'msg' => 'Análise reprovada'
+                            ];
+                        }
                         $movs[] = [ // GERA MOVIMENTACAO MOV7 (7) DA QUANTIDADE MICRO
                             'id'  => 7,
                             'qt'  => intval($post['ana_qtde_micro']),
@@ -903,11 +904,6 @@ class Analise extends BaseController
                         ];
                         // gera movimentação cadastrada da quantidade micro
                         $movs[] = [
-                            'id'  => intval($post['tmo_id']),
-                            'qt'  => intval($post['ana_qtde_micro']),
-                            'msg' => 'Análise liberada'
-                        ];
-                        $movs[] = [ // MOVIMENTA A QUANTIDADE MICRO, COM A MOVIMENTAÇÃO QUE FOI ESCOLHIDA PELO USUÁRIO
                             'id'  => intval($post['tmo_id']),
                             'qt'  => intval($post['ana_qtde_micro']),
                             'msg' => 'Análise liberada'
@@ -1063,7 +1059,7 @@ class Analise extends BaseController
             $depori = $movim[0]['dep_codorigem'];
             $depdes = $movim[0]['dep_coddestino'];
 
-            // DESCOMENTAR AQUI QDO FOR PRA  MOVIMENTAR EFETIVAMENTE
+            // TODO DESCOMENTAR AQUI QDO FOR PRA  MOVIMENTAR EFETIVAMENTE
             // $soaptrf = new SoapSapiens();
             // $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes);        
         }

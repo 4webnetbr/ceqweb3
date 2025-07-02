@@ -157,7 +157,7 @@ class AnaRequisicao extends BaseController
         }
         $dados_analise = $dados_analise[0];
         $lotemb = $dados_analise['ana_lotemb'];
-        // debug($lotemb, true);
+        // debug($lotemb);
         $dados_requisi = $this->analise->getAnaliseLotemb($lotemb);
         // debug($dados_requisi, true);
 

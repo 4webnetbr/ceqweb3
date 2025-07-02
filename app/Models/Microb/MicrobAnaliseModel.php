@@ -176,6 +176,8 @@ class MicrobAnaliseModel extends Model
             $builder->where('TRIM(ana_lotemb)', trim($lote));
             $builder->orWhere('ana_lotemb', NULL);
             $builder->groupEnd();
+            
+            $builder->where('req_id', NULL);
             $builder->where('stt_id', 14);
         }
 
