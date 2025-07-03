@@ -925,6 +925,8 @@ class Analise extends BaseController
                     // $status = 12; // Continua EM ANDAMENTO
                     $sqlAna = [
                         'ana_id' => intval($post['ana_id']),
+                        'tmo_id'       => intval($post['tmo_id']),
+                        'tmo_id_rep'       => intval($post['tmo_id_rep']),
                         'ana_lotemb'   => $post['ana_lotemb'],
                         // 'stt_id' => $status,
                     ];
@@ -934,14 +936,32 @@ class Analise extends BaseController
                             'ana_id' => intval($post['ana_id']),
                             'ana_liberar'  => $post['ana_liberar'],
                             'ana_reprovar'  => $post['ana_reprovar'],
+                            'tmo_id'       => intval($post['tmo_id']),
+                            'tmo_id_rep'       => intval($post['tmo_id_rep']),
                             'stt_id' => $status,
                         ];
-                        $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
-                            'id'  => intval($post['tmo_id']),
-                            // 'qt'  => ???,
+                        // BUSCAR DEPÓSITO DE ORIGEM 
+                        $mov = $this->tipomovimento->getTipoMovimentacao($post['tmo_id_rep']);
+                        $deporig = $mov[0]['dep_codorigem'];
+                        // BUSCAR PRODUTO 
+                        $produto = $this->produto->getProduto($post['pro_id'], false)[0];
+                        $codpro = $produto['pro_codpro'];
+
+                        // BUSCAR SALDO DO DEPÓSITO DE ORIGEM
+                        $busca = new BuscasSapiens();
+                        $saldoest = $busca->buscaEstoqueDeposito($deporig, $codpro);
+                        if(count($saldoest) > 0 && $saldoest[0]->quantidadeEstoque > 0){
+                            $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
+                                'id'  => intval($post['tmo_id_rep']),
+                                'qt'  => $saldoest[0]->quantidadeEstoque,
+                                'msg' => 'Análise reprovada'
+                            ];
+                        }
+                        $movs[] = [ // GERA MOVIMENTACAO MOV7 (7) DA QUANTIDADE MICRO
+                            'id'  => 7,
+                            'qt'  => intval($post['ana_qtde_micro']),
                             'msg' => 'Análise reprovada'
                         ];
-                        // Atualização do lote para bloqueado
                         $sqlLot = [
                             'lot_id' => $post['lot_id'],
                             'stt_id' => 8, // LOTE BLOQUEADO

@@ -45,7 +45,9 @@ class MicrobAnaliseModel extends Model
         'ana_descmetodo',
         'req_id',
         'ana_liberar',
-        'ana_reprovar'
+        'ana_reprovar',
+        'tmo_id',
+        'tmo_id_rep'
 
     ];
 
@@ -423,6 +425,7 @@ class MicrobAnaliseModel extends Model
                     $arq->i_cone .= "<img id='img_" . $id . "' src='" . $arquivo . "'  class='img-thumbnail sempadding' alt='' style='width:" . $arq->size . "px;' />";
                     $arq->i_cone .= "</div>";
                     $arq->i_cone  .= '<div class="align-items-start txt-bt-manut">Ver Arquivo do Laudo<br>'.$nome_arq.'</div>';
+                    $arq->place = '';
                     $ret['ana_arqlaudo']    = $arq->crLabel().$arq->crBotao();
                 } else if($dados['stt_id'] != 15){
                     $arq->leitura  = $show;
@@ -486,20 +489,21 @@ class MicrobAnaliseModel extends Model
         $ret['ana_reprovar']    = $rep->cr2opcoes();
         // debug($dados['tmo_id']);
 
-        $opc_mov           = $opcoes->getListaOpcoes('dbEstoque', 'est_tipo_movimentacao', ['tmo_nome', 'tmo_id'], 'tmo_id = ' . $dados['tmo_id']);
+        $opc_mov           = $opcoes->getListaOpcoes('dbEstoque', 'est_tipo_movimentacao', ['tmo_nome', 'tmo_id']);
         $movi               =  new MyCampo('pro_mic_analise', 'tmo_id');
-        $movi->valor        = ($reprovar=='N')?$movi->selecionado = isset($dados['tmo_id']) ? $dados['tmo_id'] : 'N':'N';
+        $movi->valor        = $movi->selecionado = ($liberar=='S')?isset($dados['tmo_id']) ? $dados['tmo_id'] : '':'';
         $movi->leitura      = $show;
         $movi->largura      = 60;
         $movi->opcoes       = $opc_mov;
         $movi->obrigatorio  = false;
         $ret['tmo_id']      = $movi->crSelect();
 
+        $opc_mov_rep           = $opcoes->getListaOpcoes('dbEstoque', 'est_tipo_movimentacao', ['tmo_nome', 'tmo_id']);
         $movi               =  new MyCampo('pro_mic_analise', 'tmo_id_rep');
-        $movi->valor        = ($reprovar=='S')?$movi->selecionado = isset($dados['tmo_id_rep']) ? $dados['tmo_id_rep'] : 'N':'N';
+        $movi->valor        = $movi->selecionado = $reprovar=='S'?isset($dados['tmo_id_rep'])?$dados['tmo_id_rep']:'' : '';
         $movi->leitura      = $show;
         $movi->largura      = 60;
-        $movi->opcoes       = $opc_mov;
+        $movi->opcoes       = $opc_mov_rep;
         $movi->obrigatorio  = false;
         $ret['tmo_id_rep']      = $movi->crSelect();
 
