@@ -136,7 +136,9 @@
         }
         ?>
     </form>
-    <div id="pdfContainer" class="col-4 border border-4 border-black float-start d-inline h-100 mt-5"></div>
+    <div class="col-4 border border-4 border-black float-start d-inline h-100 mt-5">
+        <embed id="pdfPreview" width="100%" height="600px" type="application/pdf">
+    </div>
 </div>
 <script src="<?= base_url('assets/jscript/my_fields.js'); ?>"></script>
 <script src="<?= base_url('assets/jscript/bootstrap-select.js'); ?>"></script>

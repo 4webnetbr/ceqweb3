@@ -189,46 +189,56 @@ class CfgLayoutEtiq extends BaseController
     {
         $ret = [];
         $postado = $this->request->getPost();
+        $erros = [];
 
         // Inicia a transação
         $this->layetiqueta->transBegin();
 
-        try {
-            if (!$this->layetiqueta->save($postado)) {
-                throw new \Exception('Erro ao salvar os dados.');
-            }
-
-            // Commit se tudo der certo
-            $this->layetiqueta->transCommit();
-            cache()->clean();
-
-            $ret['erro'] = false;
-            $ret['msg']  = 'Layout gravado com Sucesso!!!';
-            session()->setFlashdata('msg', $ret['msg']);
-            $ret['url']  = site_url($this->data['controler']);
-        } catch (\Exception $e) {
-            // Se houver erro, faz rollback
-            $this->layetiqueta->transRollback();
-
-            $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível gravar o Layout, Verifique!<br><br>';
-
-            $erros = $this->layetiqueta->errors();
-            if (!empty($erros)) {
-                foreach ($erros as $erro) {
-                    $ret['msg'] .= $erro . '<br>';
-                    if (is_numeric($erro)) {
-                        $ret['msg'] = $erro;
-                    }
-                }
-                // foreach ($erros as $erro) {
-                //     $ret['msg'] .= (ctype_digit($erro)) ? $erro : $erro . '<br>';
-                // }
-            } else {
-                $ret['msg'] .= $e->getMessage(); // Mensagem genérica do erro
+        if (empty($postado['let_id'])) {
+            $exists = $this->common->verificaUnico($this->etiqueta, 'let_nome', $postado['let_nome'], 'let_id', $postado['let_id']);
+            if ($exists > 0) {
+                $ret['erro'] = true;
+                $ret['msg'] = 8;
+                $erros = [8];
             }
         }
+        if(count($erros) == 0){
+            try {
+                if (!$this->layetiqueta->save($postado)) {
+                    throw new \Exception('Erro ao salvar os dados.');
+                }
 
+                // Commit se tudo der certo
+                $this->layetiqueta->transCommit();
+                cache()->clean();
+
+                $ret['erro'] = false;
+                $ret['msg']  = 'Layout gravado com Sucesso!!!';
+                session()->setFlashdata('msg', $ret['msg']);
+                $ret['url']  = site_url($this->data['controler']);
+            } catch (\Exception $e) {
+                // Se houver erro, faz rollback
+                $this->layetiqueta->transRollback();
+
+                $ret['erro'] = true;
+                $ret['msg']  = 'Não foi possível gravar o Layout, Verifique!<br><br>';
+
+                $erros = $this->layetiqueta->errors();
+                if (!empty($erros)) {
+                    foreach ($erros as $erro) {
+                        $ret['msg'] .= $erro . '<br>';
+                        if (is_numeric($erro)) {
+                            $ret['msg'] = $erro;
+                        }
+                    }
+                    // foreach ($erros as $erro) {
+                    //     $ret['msg'] .= (ctype_digit($erro)) ? $erro : $erro . '<br>';
+                    // }
+                } else {
+                    $ret['msg'] .= $e->getMessage(); // Mensagem genérica do erro
+                }
+            }
+        }
         echo json_encode($ret);
     }
 }

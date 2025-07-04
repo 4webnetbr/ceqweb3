@@ -82,8 +82,10 @@ $routes->get('/Showfile/(:any)', 'Showfile::show/$1');
 $routes->post('/Showfile/(:any)', 'Showfile::show/$1');
 
 $routes->get('/CriaEtiqueta', 'CriaEtiqueta::emiteEtiqueta');
-$routes->get('/CriaEtiqueta/(:any)', 'CriaEtiqueta::emiteEtiqueta/$1');
-$routes->post('/CriaEtiqueta/(:any)', 'CriaEtiqueta::emiteEtiqueta/$1');
+$routes->get('/CriaEtiqueta/emiteEtiqueta/(:any)', 'CriaEtiqueta::emiteEtiqueta/$1');
+$routes->post('/CriaEtiqueta/emiteEtiqueta/(:any)', 'CriaEtiqueta::emiteEtiqueta/$1');
+$routes->get('/CriaEtiqueta/previewEtiquetaViaAjax/(:any)', 'CriaEtiqueta::previewEtiquetaViaAjax/$1');
+$routes->post('/CriaEtiqueta/previewEtiquetaViaAjax/(:any)', 'CriaEtiqueta::previewEtiquetaViaAjax/$1');
 
 $routes->get('/CfgCor', 'Config\CfgCor::index');
 $routes->get('/CfgCor/(:any)', 'Config\CfgCor::$1');

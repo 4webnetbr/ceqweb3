@@ -60,7 +60,7 @@ class CfgEtiqueta extends BaseController
         // if (!$etiqt = cache('etiqt')) {
         $campos = montaColunasCampos($this->data, 'etq_id');
         $dados_etiqt = $this->etiqueta->getEtiqueta();
-        $base_url = base_url('/CriaEtiqueta/');
+        $base_url = base_url('/CriaEtiqueta/emiteEtiqueta/');
 
         foreach ($dados_etiqt as &$etq) {
             $url_ati = $base_url . $etq['etq_id'];
@@ -192,7 +192,8 @@ class CfgEtiqueta extends BaseController
         $this->data['campos']     = $campos;
         $this->data['displ']     = $displ;
         $this->data['destino']    = 'store';
-        $this->data['script'] = "<script>acerta_botoes_rep('campos_para_etiqueta')</script>";
+        $base_url = base_url('/CriaEtiqueta/previewEtiquetaViaAjax');
+        $this->data['script'] = "<script>acerta_botoes_rep('campos_para_etiqueta');carregarPDF('".$base_url."')</script>";
 
         echo view('vw_edicao_etiqueta', $this->data);
     }
@@ -249,6 +250,7 @@ class CfgEtiqueta extends BaseController
     {
         $ret = [];
         $ret['erro'] = false;
+        $erros = [];
         $postado = $this->request->getPost();
         // $db = \Config\Database::connect();
         $this->etiqueta->transBegin();
@@ -261,8 +263,6 @@ class CfgEtiqueta extends BaseController
                 $ret['msg'] = 8;
                 $erros = [8];
             }
-        } else {
-            $update = true;
         }
         if(count($erros) == 0){
             try {
@@ -340,7 +340,6 @@ class CfgEtiqueta extends BaseController
                 $ret['msg'] = $e->getMessage();
             }
         }
-    }
         echo json_encode($ret);
     }
 }

@@ -270,20 +270,57 @@ function busca_dados_material(orig, obj, url, base) {
 }
 
 function carregarPDF(urlpdf) {
+  const campos = [];
+
+  jQuery('select[name^="etc_campo["]').each(function () {
+    const index = jQuery(this)
+      .attr("name")
+      .match(/\[(\d+)\]/)[1];
+
+    let campo = {
+      etc_campo: jQuery(`select[name="etc_campo[${index}]"]`).val(),
+      etc_codbar:
+        jQuery(`input[name="etc_codbar[${index}]"]:checked`).val() || "N",
+      etc_rotulo: jQuery(`input[name="etc_rotulo[${index}]"]`).val(),
+      etc_caracteres: jQuery(`input[name="etc_caracteres[${index}]"]`).val(),
+      etc_linhas: jQuery(`input[name="etc_linhas[${index}]"]`).val(),
+      etc_colunas: jQuery(`input[name="etc_colunas[${index}]"]`).val(),
+      etc_fonte: jQuery(`select[name="etc_fonte[${index}]"]`).val(),
+      etc_tamanho: jQuery(`input[name="etc_tamanho[${index}]"]`).val(),
+      etc_alinhamento: jQuery(`select[name="etc_alinhamento[${index}]"]`).val(),
+      etc_negrito:
+        jQuery(`input[name="etc_negrito[${index}]"]:checked`).val() || "N",
+      etc_italico:
+        jQuery(`input[name="etc_italico[${index}]"]:checked`).val() || "N",
+      etc_sublinhado:
+        jQuery(`input[name="etc_sublinhado[${index}]"]:checked`).val() || "N",
+    };
+
+    if (campo.etc_campo !== null && campo.etc_campo !== "") {
+      campos.push(campo);
+    }
+  });
+
+  const let_id = jQuery('select[name="let_id"]').val();
+  const tel_id = jQuery('select[name="tel_id"]').val();
+
   jQuery.ajax({
     url: urlpdf,
-    method: "GET",
+    method: "POST",
+    contentType: "application/json",
+    data: JSON.stringify({
+      let_id: let_id,
+      tel_id: tel_id,
+      campos: campos,
+    }),
     xhrFields: {
       responseType: "blob",
     },
-    success: function (data) {
-      const url = URL.createObjectURL(data);
-      jQuery("#pdfContainer").html(
-        `<embed src="${url}" width="100%" height="600px" type="application/pdf">`
-      );
-    },
-    error: function (err) {
-      console.error("Erro ao carregar o PDF:", err);
+    success: function (blob) {
+      const pdfBlob = new Blob([blob], { type: "application/pdf" });
+
+      const url = URL.createObjectURL(pdfBlob);
+      jQuery("#pdfPreview").attr("src", url);
     },
   });
 }

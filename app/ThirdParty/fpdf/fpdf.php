@@ -743,6 +743,39 @@ class FPDF
 		$this->x = $this->lMargin;
 	}
 
+	function MultiCellLimited($w, $h, $txt, $border=0, $align='L', $fill=false, $maxLines = 2, $maxCharsPerLine = 24)
+	{
+		// Remove quebras e normaliza
+		$txt = preg_replace('/\s+/', ' ', trim($txt));
+		$txt = substr($txt, 0, $maxLines * $maxCharsPerLine);
+		$lines = str_split($txt, $maxCharsPerLine);
+		$lines = array_slice($lines, 0, $maxLines);
+
+		foreach ($lines as $i => $line) {
+			// Define borda só na primeira e última linha, se necessário
+			$lineBorder = 0;
+			if ($border) {
+				if ($maxLines == 1) {
+					$lineBorder = 1;
+				} elseif ($i == 0) {
+					$lineBorder = 'TLR';
+				} elseif ($i == count($lines) - 1) {
+					$lineBorder = 'BLR';
+				} else {
+					$lineBorder = 'LR';
+				}
+			}
+
+			$this->Cell($w, $h, $line, $lineBorder, 2, $align, $fill);
+		}
+
+		// Preenche linhas em branco se houver menos que o máximo
+		for ($i = count($lines); $i < $maxLines; $i++) {
+			$lineBorder = $border ? ($i == $maxLines - 1 ? 'BLR' : 'LR') : 0;
+			$this->Cell($w, $h, '', $lineBorder, 2, $align, $fill);
+		}
+	}
+
 	function Write($h, $txt, $link = '')
 	{
 		// Output text in flowing mode

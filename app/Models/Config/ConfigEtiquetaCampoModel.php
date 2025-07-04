@@ -172,6 +172,7 @@ class ConfigEtiquetaCampoModel extends Model
                 }
             }
         }
+        $base_url = base_url('/CriaEtiqueta/previewEtiquetaViaAjax');
 
         $etc_campo              = new MyCampo('cfg_etiqueta_campo', 'etc_campo');
         $etc_campo->valor       = (isset($dados['etc_campo'])) ? $dados['etc_campo'] : '';
@@ -182,6 +183,7 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_campo->urlbusca    = base_url(('buscas/busca_campo_tela'));
         $etc_campo->pai         = 'tel_id';
         $etc_campo->dispForm    = "col-5";
+        $etc_campo->funcChan    = "carregarPDF('".$base_url."')";
         $ret['etc_campo']       = $etc_campo->crDepende();
 
         $etc_codbar             = new MyCampo('cfg_etiqueta_campo', 'etc_codbar');
@@ -192,6 +194,7 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_codbar->leitura    = $show;
         $etc_codbar->ordem       = $pos;
         $etc_codbar->dispForm   = "col-5";
+        $etc_codbar->funcChan    = "carregarPDF('".$base_url."')";
         $ret['etc_codbar']      = $etc_codbar->cr2opcoes();
 
         $etc_rotulo             =  new MyCampo('cfg_etiqueta_campo', 'etc_rotulo');
@@ -200,7 +203,8 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_rotulo->ordem       = $pos;
         $etc_rotulo->leitura    = $show;
         $etc_rotulo->largura     = 30;
-        $etc_rotulo->dispForm    = "col-3";
+        $etc_rotulo->dispForm    = "col-4";
+        $etc_rotulo->funcChan    = "carregarPDF('".$base_url."')";
         $ret['etc_rotulo']      = $etc_rotulo->crInput();
 
         $etc_caract             =  new MyCampo('cfg_etiqueta_campo', 'etc_caracteres');
@@ -209,6 +213,7 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_caract->leitura    = $show;
         $etc_caract->ordem       = $pos;
         $etc_caract->dispForm    = "col-3";
+        $etc_caract->funcChan    = "carregarPDF('".$base_url."')";
         $ret['etc_caracteres']  = $etc_caract->crInput();
 
         $etc_linhas             =  new MyCampo('cfg_etiqueta_campo', 'etc_linhas');
@@ -220,6 +225,7 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_linhas->leitura    = $show;
         $etc_linhas->ordem       = $pos;
         $etc_linhas->dispForm    = "col-3";
+        $etc_linhas->funcChan    = "carregarPDF('".$base_url."')";
         $ret['etc_linhas']      = $etc_linhas->crInput();
 
         $etc_colunas            =  new MyCampo('cfg_etiqueta_campo', 'etc_colunas');
@@ -231,7 +237,8 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_colunas->obrigatorio = true;
         $etc_colunas->leitura     = $show;
         $etc_colunas->ordem       = $pos;
-        $etc_colunas->dispForm    = "col-3";
+        $etc_colunas->dispForm    = "col-2";
+        $etc_colunas->funcChan    = "carregarPDF('".$base_url."')";
         $ret['etc_colunas']     = $etc_colunas->crInput();
 
 
@@ -249,6 +256,7 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_fonte->largura     = 25;
         $etc_fonte->ordem       = $pos;
         $etc_fonte->dispForm    = "col-4";
+        $etc_fonte->funcChan    = "carregarPDF('".$base_url."')";
         $ret['etc_fonte']       = $etc_fonte->crSelect();
 
         $etc_taman              =  new MyCampo('cfg_etiqueta_campo', 'etc_tamanho');
@@ -262,6 +270,7 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_taman->largura     = 20;
         $etc_taman->ordem       = $pos;
         $etc_taman->dispForm    = "col-4";
+        $etc_taman->funcChan    = "carregarPDF('".$base_url."')";
         $ret['etc_tamanho']     = $etc_taman->crInput();
 
         $opc_alinhamento['L'] = 'Esquerda';
@@ -276,6 +285,7 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_alinh->largura     = 25;
         $etc_alinh->ordem       = $pos;
         $etc_alinh->dispForm    = "col-4";
+        $etc_alinh->funcChan    = "carregarPDF('".$base_url."')";
         $ret['etc_alinhamento'] = $etc_alinh->crSelect();
 
         $etc_negrito            = new MyCampo('cfg_etiqueta_campo', 'etc_negrito', false);
@@ -287,6 +297,7 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_negrito->ordem       = $pos;
         $etc_negrito->classep        = 'mb2';
         $etc_negrito->dispForm    = "col-4";
+        $etc_negrito->funcChan    = "carregarPDF('".$base_url."')";
         $ret['etc_negrito']     = $etc_negrito->cr2opcoes();
 
         $etc_italico            = new MyCampo('cfg_etiqueta_campo', 'etc_italico');
@@ -297,6 +308,7 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_italico->leitura   = $show;
         $etc_italico->ordem       = $pos;
         $etc_italico->dispForm    = "col-4";
+        $etc_italico->funcChan    = "carregarPDF('".$base_url."')";
         $ret['etc_italico']     = $etc_italico->cr2opcoes();
 
         $etc_sublinhado            = new MyCampo('cfg_etiqueta_campo', 'etc_sublinhado');
@@ -307,6 +319,7 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_sublinhado->leitura   = $show;
         $etc_sublinhado->ordem       = $pos;
         $etc_sublinhado->dispForm    = "col-4";
+        $etc_sublinhado->funcChan    = "carregarPDF('".$base_url."')";
         $ret['etc_sublinhado']     = $etc_sublinhado->cr2opcoes();
 
         $atrib['data-index'] = $pos;
