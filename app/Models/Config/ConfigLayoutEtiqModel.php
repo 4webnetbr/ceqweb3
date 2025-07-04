@@ -37,7 +37,7 @@ class ConfigLayoutEtiqModel extends Model
 
 
     protected $validationRules = [
-        'let_nome'          => 'required|min_length[5]|max_length[50]|isUniqueValue[default.cfg_layout_etiqueta.let_nome, let_id]',
+        'let_nome'          => 'required|min_length[5]|max_length[50]',
         'let_altura'        => 'required|integer|max_length[4]|min_length[1]',
         'let_largura'       => 'required|integer|max_length[4]|min_length[1]',
         'let_colunas'       => 'required|integer|max_length[2]|min_length[1]',
@@ -54,7 +54,6 @@ class ConfigLayoutEtiqModel extends Model
             'required' => 'O campo Nome é Obrigatório',
             'min_length' => 'O campo Nome exige pelo menos 5 Caracteres.',
             'max_length' => 'O campo deve ter no máximo 50 Caracteres. ',
-            'isUniqueValue' =>  '8'
         ],
         'let_altura' => [
             'required' => 'Altura é Obrigatório',

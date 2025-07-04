@@ -68,7 +68,7 @@ class CfgEtiqueta extends BaseController
             $etq['acao_person'] = [
                 "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' 
             data-mdb-toggle='tooltip' data-mdb-placement='top' 
-            title='Imprimir Etiquetas' onclick='redirec_blank(\"$url_ati\",\"Imprimir Etiqueta\")'>
+            title='Imprimir Etiquetas' onclick='redirec_blank(\"$url_ati\",event)'>
             <i class='fa-solid fa-print'></i></button>"
             ];
         }
@@ -125,7 +125,7 @@ class CfgEtiqueta extends BaseController
         $this->data['destino']    = 'store';
         $this->data['script'] = "<script>acerta_botoes_rep('campos_para_etiqueta')</script>";
 
-        echo view('vw_edicao', $this->data);
+        echo view('vw_edicao_etiqueta', $this->data);
     }
     /**
      * Edição
@@ -194,7 +194,7 @@ class CfgEtiqueta extends BaseController
         $this->data['destino']    = 'store';
         $this->data['script'] = "<script>acerta_botoes_rep('campos_para_etiqueta')</script>";
 
-        echo view('vw_edicao', $this->data);
+        echo view('vw_edicao_etiqueta', $this->data);
     }
 
     public function addCampo($ind)
@@ -253,81 +253,94 @@ class CfgEtiqueta extends BaseController
         // $db = \Config\Database::connect();
         $this->etiqueta->transBegin();
 
-        try {
-            // Gravação da etiqueta
-            if (!$this->etiqueta->save($postado)) {
-                throw new \Exception(implode(' ', $this->etiqueta->errors()));
+                // Verifica se é uma inclusão ou atualização
+        if (empty($postado['etq_id'])) {
+            $exists = $this->common->verificaUnico($this->etiqueta, 'etq_nome', $postado['etq_nome'], 'etq_id', $postado['etq_id']);
+            if ($exists > 0) {
+                $ret['erro'] = true;
+                $ret['msg'] = 8;
+                $erros = [8];
             }
-
-            // Pega o ID da etiqueta recém-gravada
-            $etq_id = isset($postado['etq_id']) && !empty($postado['etq_id']) ? $postado['etq_id'] : $this->etiqueta->getInsertID();
-
-            // Verifica se o ID é válido antes de tentar deletar
-            if (empty($etq_id)) {
-                throw new \Exception('Erro: Não foi possível obter o ID da etiqueta.');
-            }
-
-            // Gravação dos campos da etiqueta
-            if (!empty($postado['etc_campo']) && is_array($postado['etc_campo'])) {
-                $dadosCampos = [];
-                $data_atua = date('Y-m-d H:i:s');
-
-                // debug($postado);
-                foreach ($postado['etc_campo'] as $indice => $campo) {
-                    $dadosCampos[] = [
-                        'etq_id'            => $etq_id,
-                        'etc_campo'         => $campo,
-                        'etc_codbar'        => $postado['etc_codbar'][$indice] ?? null,
-                        'etc_rotulo'        => $postado['etc_rotulo'][$indice] ?? null,
-                        'etc_caracteres'    => $postado['etc_caracteres'][$indice] ?? null,
-                        'etc_linhas'        => $postado['etc_linhas'][$indice] ?? null,
-                        'etc_colunas'       => $postado['etc_colunas'][$indice] ?? null,
-                        'etc_fonte'         => $postado['etc_fonte'][$indice] ?? null,
-                        'etc_tamanho'       => $postado['etc_tamanho'][$indice] ?? null,
-                        'etc_alinhamento'   => $postado['etc_alinhamento'][$indice] ?? null,
-                        'etc_negrito'       => $postado['etc_negrito'][$indice] ?? null,
-                        'etc_italico'       => $postado['etc_italico'][$indice] ?? null,
-                        'etc_sublinhado'    => $postado['etc_sublinhado'][$indice] ?? null,
-                        'etc_atualizado'    => $data_atua
-                    ];
+        } else {
+            $update = true;
+        }
+        if(count($erros) == 0){
+            try {
+                // Gravação da etiqueta
+                if (!$this->etiqueta->save($postado)) {
+                    throw new \Exception(implode(' ', $this->etiqueta->errors()));
                 }
 
-                if (!empty($dadosCampos)) {
-                    // debug($dadosCampos, true);
-                    $this->etiquetaCampo->transBegin();
-                    try {
-                        $this->etiquetaCampo->insertBatch($dadosCampos);
-                    } catch (\Exception $e) {
-                        // Em caso de erro, reverte a transação
-                        $this->etiquetaCampo->transRollback();
-                        $ret['erro'] = true;
-                        $ret['msg'] = $e->getMessage();
+                // Pega o ID da etiqueta recém-gravada
+                $etq_id = isset($postado['etq_id']) && !empty($postado['etq_id']) ? $postado['etq_id'] : $this->etiqueta->getInsertID();
+
+                // Verifica se o ID é válido antes de tentar deletar
+                if (empty($etq_id)) {
+                    throw new \Exception('Erro: Não foi possível obter o ID da etiqueta.');
+                }
+
+                // Gravação dos campos da etiqueta
+                if (!empty($postado['etc_campo']) && is_array($postado['etc_campo'])) {
+                    $dadosCampos = [];
+                    $data_atua = date('Y-m-d H:i:s');
+
+                    // debug($postado);
+                    foreach ($postado['etc_campo'] as $indice => $campo) {
+                        $dadosCampos[] = [
+                            'etq_id'            => $etq_id,
+                            'etc_campo'         => $campo,
+                            'etc_codbar'        => $postado['etc_codbar'][$indice] ?? null,
+                            'etc_rotulo'        => $postado['etc_rotulo'][$indice] ?? null,
+                            'etc_caracteres'    => $postado['etc_caracteres'][$indice] ?? null,
+                            'etc_linhas'        => $postado['etc_linhas'][$indice] ?? null,
+                            'etc_colunas'       => $postado['etc_colunas'][$indice] ?? null,
+                            'etc_fonte'         => $postado['etc_fonte'][$indice] ?? null,
+                            'etc_tamanho'       => $postado['etc_tamanho'][$indice] ?? null,
+                            'etc_alinhamento'   => $postado['etc_alinhamento'][$indice] ?? null,
+                            'etc_negrito'       => $postado['etc_negrito'][$indice] ?? null,
+                            'etc_italico'       => $postado['etc_italico'][$indice] ?? null,
+                            'etc_sublinhado'    => $postado['etc_sublinhado'][$indice] ?? null,
+                            'etc_atualizado'    => $data_atua
+                        ];
+                    }
+
+                    if (!empty($dadosCampos)) {
+                        // debug($dadosCampos, true);
+                        $this->etiquetaCampo->transBegin();
+                        try {
+                            $this->etiquetaCampo->insertBatch($dadosCampos);
+                        } catch (\Exception $e) {
+                            // Em caso de erro, reverte a transação
+                            $this->etiquetaCampo->transRollback();
+                            $ret['erro'] = true;
+                            $ret['msg'] = $e->getMessage();
+                        }
                     }
                 }
-            }
-            if (!$ret['erro']) {
-                // Se tudo deu certo, finaliza a transação
-                $this->etiqueta->transCommit();
-                $this->etiquetaCampo->transCommit();
+                if (!$ret['erro']) {
+                    // Se tudo deu certo, finaliza a transação
+                    $this->etiqueta->transCommit();
+                    $this->etiquetaCampo->transCommit();
 
-                $this->common->deleteReg("default", "cfg_etiqueta_campo", "etq_id = " . $etq_id . " AND etc_atualizado < '" . $data_atua . "'");
+                    $this->common->deleteReg("default", "cfg_etiqueta_campo", "etq_id = " . $etq_id . " AND etc_atualizado < '" . $data_atua . "'");
 
-                $ret['erro'] = false;
-                $ret['msg'] = 'Etiqueta salva com sucesso!';
-                session()->setFlashdata('msg', $ret['msg']);
-                $ret['url']  = site_url($this->data['controler']);
-            } else {
+                    $ret['erro'] = false;
+                    $ret['msg'] = 'Etiqueta salva com sucesso!';
+                    session()->setFlashdata('msg', $ret['msg']);
+                    $ret['url']  = site_url($this->data['controler']);
+                } else {
+                    $this->etiqueta->transRollback();
+                    $ret['erro'] = true;
+                    $ret['msg'] = $e->getMessage();
+                }
+            } catch (\Exception $e) {
+                // Em caso de erro, reverte a transação
                 $this->etiqueta->transRollback();
                 $ret['erro'] = true;
                 $ret['msg'] = $e->getMessage();
             }
-        } catch (\Exception $e) {
-            // Em caso de erro, reverte a transação
-            $this->etiqueta->transRollback();
-            $ret['erro'] = true;
-            $ret['msg'] = $e->getMessage();
         }
-
+    }
         echo json_encode($ret);
     }
 }

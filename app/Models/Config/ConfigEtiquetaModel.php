@@ -32,7 +32,7 @@ class ConfigEtiquetaModel extends Model
 
 
     protected $validationRules = [
-        'etq_nome'          => 'required|min_length[5]|max_length[50]|isUniqueValue[default.cfg_etiqueta.etq_nome, etq_id]',
+        'etq_nome'          => 'required|min_length[5]|max_length[50]',
         'let_id'            => 'required',
         'mod_id'            => 'required',
         'tel_id'            => 'required',
@@ -41,7 +41,6 @@ class ConfigEtiquetaModel extends Model
     protected $validationMessages = [
         'etq_nome' => [
             'required' => 'O campo Nome é Obrigatório',
-            'isUniqueValue' => '8',
             'min_length' => 'O campo Nome exige pelo menos 5 Caracteres.',
             'max_length' => 'O campo deve ter no máximo 50 Caracteres. '
         ],
