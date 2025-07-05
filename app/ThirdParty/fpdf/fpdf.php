@@ -745,34 +745,46 @@ class FPDF
 
 	function MultiCellLimited($w, $h, $txt, $border=0, $align='L', $fill=false, $maxLines = 2, $maxCharsPerLine = 24)
 	{
-		// Remove quebras e normaliza
+		// Limpa e limita o texto
 		$txt = preg_replace('/\s+/', ' ', trim($txt));
 		$txt = substr($txt, 0, $maxLines * $maxCharsPerLine);
 		$lines = str_split($txt, $maxCharsPerLine);
 		$lines = array_slice($lines, 0, $maxLines);
 
+		$totalLines = count($lines);
+
 		foreach ($lines as $i => $line) {
-			// Define borda só na primeira e última linha, se necessário
-			$lineBorder = 0;
+			$isFirst = ($i == 0);
+			$isLast = ($i == $totalLines - 1);
+
+			// Define bordas
 			if ($border) {
 				if ($maxLines == 1) {
 					$lineBorder = 1;
-				} elseif ($i == 0) {
+				} elseif ($isFirst) {
 					$lineBorder = 'TLR';
-				} elseif ($i == count($lines) - 1) {
+				} elseif ($isLast) {
 					$lineBorder = 'BLR';
 				} else {
 					$lineBorder = 'LR';
 				}
+			} else {
+				$lineBorder = 0;
 			}
 
-			$this->Cell($w, $h, $line, $lineBorder, 2, $align, $fill);
+			// Última linha -> ln = 0, senão ln = 2 (quebra linha)
+			$ln = $isLast ? 0 : 2;
+
+			$this->Cell($w, $h, $line, $lineBorder, $ln, $align, $fill);
 		}
 
-		// Preenche linhas em branco se houver menos que o máximo
-		for ($i = count($lines); $i < $maxLines; $i++) {
-			$lineBorder = $border ? ($i == $maxLines - 1 ? 'BLR' : 'LR') : 0;
-			$this->Cell($w, $h, '', $lineBorder, 2, $align, $fill);
+		// Preenche linhas vazias, se necessário
+		for ($i = $totalLines; $i < $maxLines; $i++) {
+			$isLast = ($i == $maxLines - 1);
+			$lineBorder = $border ? ($isLast ? 'BLR' : 'LR') : 0;
+			// $ln = $isLast ? 0 : 2;
+
+			$this->Cell($w, $h, '', $lineBorder, $ln, $align, $fill);
 		}
 	}
 

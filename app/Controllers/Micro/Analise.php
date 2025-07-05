@@ -629,10 +629,10 @@ class Analise extends BaseController
             $campos[1][] = $fields2['ana_lotemb'];
             $campos[1][] = $fields2['ana_datalotemb'];
 
-            if ($status === 12 || $status === 15) { // EM ANDAMENTO ou APROVADA
+            if ($status === 12 || $status === 15 || $status === 16) { // EM ANDAMENTO ou APROVADA ou REPROVADA
                 $campos[1][] = $fields2['ana_laudo'];
                 $campos[1][] = $fields2['ana_arqlaudo'];
-                if ($status === 12){ // EM ANDAMENTO
+                if ($status === 12 || $status === 16){ // EM ANDAMENTO
                     $this->data['botao'] = $fields['bt_finalizar'];
                 }
             }
@@ -709,6 +709,7 @@ class Analise extends BaseController
             return;
         }
 
+        $sql_ana = [];
         // Prepara os dados para salvar se aprovado
         if (($postado['ana_liberar'] ?? '') === 'S') {
             $sql_ana = [
@@ -760,9 +761,11 @@ class Analise extends BaseController
             }
 
             // Salva dados da análise
-            if (!$this->analise->save($sql_ana)) {
-                $erros = $this->common->errors();
-                throw new \Exception("Erro ao salvar dados da análise.");
+            if(count($sql_ana)){
+                if (!$this->analise->save($sql_ana)) {
+                    $erros = $this->common->errors();
+                    throw new \Exception("Erro ao salvar dados da análise.");
+                }
             }
 
             $db->transCommit();
@@ -866,16 +869,23 @@ class Analise extends BaseController
                         $codpro = $produto['pro_codpro'];
 
                         // BUSCAR SALDO DO DEPÓSITO DE ORIGEM
+                        $qtia = 0;
                         $busca = new BuscasSapiens();
                         $saldoest = $busca->buscaEstoqueDeposito($deporig, $codpro);
-                        if($saldoest->quantidadeEstoque > 0){
-                            $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
-                                'id'  => intval($post['tmo_id_rep']),
-                                'qt'  => $saldoest->quantidadeEstoque,
-                                'msg' => 'Análise reprovada'
-                            ];
+                        if(count($saldoest)> 0){
+                            for($s=0;$s<count($saldoest);$s++){
+                                if($saldoest[$s]->codigoLote == $post['lot_lote'] ){
+                                    $qtia = $saldoest[$s]->quantidadeEstoque;
+                                    break;
+                                }
+                            }
                         }
-                        $movs[] = [ // GERA MOVIMENTACAO MOV7 (7) DA QUANTIDADE MICRO
+                        $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
+                            'id'  => intval($post['tmo_id_rep']),
+                            'qt'  => $qtia,
+                            'msg' => 'Análise reprovada'
+                        ];
+                       $movs[] = [ // GERA MOVIMENTACAO MOV7 (7) DA QUANTIDADE MICRO
                             'id'  => 7,
                             'qt'  => intval($post['ana_qtde_micro']),
                             'msg' => 'Análise reprovada'
@@ -948,15 +958,22 @@ class Analise extends BaseController
                         $codpro = $produto['pro_codpro'];
 
                         // BUSCAR SALDO DO DEPÓSITO DE ORIGEM
+                        $qtia = 0;
                         $busca = new BuscasSapiens();
                         $saldoest = $busca->buscaEstoqueDeposito($deporig, $codpro);
-                        if(count($saldoest) > 0 && $saldoest[0]->quantidadeEstoque > 0){
-                            $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
-                                'id'  => intval($post['tmo_id_rep']),
-                                'qt'  => $saldoest[0]->quantidadeEstoque,
-                                'msg' => 'Análise reprovada'
-                            ];
+                        if(count($saldoest)> 0){
+                            for($s=0;$s<count($saldoest);$s++){
+                                if($saldoest[$s]['codigoLote'] == $post['lot_lote'] ){
+                                    $qtia = $saldoest[$s]['quantidadeEstoque'];
+                                    break;
+                                }
+                            }
                         }
+                        $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
+                            'id'  => intval($post['tmo_id_rep']),
+                            'qt'  => $qtia,
+                            'msg' => 'Análise reprovada'
+                        ];
                         $movs[] = [ // GERA MOVIMENTACAO MOV7 (7) DA QUANTIDADE MICRO
                             'id'  => 7,
                             'qt'  => intval($post['ana_qtde_micro']),
