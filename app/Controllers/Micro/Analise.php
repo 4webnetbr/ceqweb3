@@ -1096,9 +1096,12 @@ class Analise extends BaseController
             $depori = $movim[0]['dep_codorigem'];
             $depdes = $movim[0]['dep_coddestino'];
 
-            // TODO DESCOMENTAR AQUI QDO FOR PRA  MOVIMENTAR EFETIVAMENTE
-            // $soaptrf = new SoapSapiens();
-            // $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes);        
+            log_message('info', 'Movimento '.json_encode($movim));
+
+
+            // DESCOMENTAR AQUI QDO FOR PRA  MOVIMENTAR EFETIVAMENTE
+            $soaptrf = new SoapSapiens();
+            $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes);        
         }
     }
 }
