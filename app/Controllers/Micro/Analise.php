@@ -820,6 +820,7 @@ class Analise extends BaseController
                         $sqlAna = [
                             'ana_id'       => intval($post['ana_id']),
                             'ana_lotemb'   => $post['ana_lotemb'],
+                            'ana_liberarsemmicro'   => $post['ana_liberarsemmicro'],
                             'ana_datalotemb' => $post['ana_datalotemb'],
                             'ana_descmetodo' => $post['ana_descmetodo'],
                             'stt_id'       => $status,
@@ -828,17 +829,18 @@ class Analise extends BaseController
                         $status = 13; // NÃO REALIZADA
                         $sqlAna = [
                             'ana_id' => intval($post['ana_id']),
+                            'ana_liberarsemmicro'   => $post['ana_liberarsemmicro'],
                             'stt_id' => $status,
                         ];
                         // gera movimentação do tipo MOV5 (5) da quantidade total do lote
                         $movs[] = [
                             'id'  => 5,
-                            'qt'  => intval($post['ana_qtde']),
+                            'qt'  => intval($post['ana_qtde']) - intval($post['ana_qtde_micro']),
                             'msg' => 'liberado sem Micro'
                         ];
-                        // gera movimentação cadastrada da quantidade micro
+                        // gera movimentação MOV6 da quantidade micro
                         $movs[] = [
-                            'id'  => intval($post['tmo_id']),
+                            'id'  => 6,
                             'qt'  => intval($post['ana_qtde_micro']),
                             'msg' => 'liberado sem Micro'
                         ];
@@ -909,7 +911,7 @@ class Analise extends BaseController
                         // gera movimentação do tipo MOV5 (5) da quantidade total do lote
                         $movs[] = [
                             'id'  => 5,
-                            'qt'  => intval($post['ana_qtde']),
+                            'qt'  => intval($post['ana_qtde']) -intval($post['ana_qtde_micro']),
                             'msg' => 'Análise liberada'
                         ];
                         // gera movimentação cadastrada da quantidade micro
@@ -963,8 +965,8 @@ class Analise extends BaseController
                         $saldoest = $busca->buscaEstoqueDeposito($deporig, $codpro);
                         if(count($saldoest)> 0){
                             for($s=0;$s<count($saldoest);$s++){
-                                if($saldoest[$s]['codigoLote'] == $post['lot_lote'] ){
-                                    $qtia = $saldoest[$s]['quantidadeEstoque'];
+                                if($saldoest[$s]->codigoLote == $post['lot_lote'] ){
+                                    $qtia = $saldoest[$s]->quantidadeEstoque;
                                     break;
                                 }
                             }
@@ -1095,13 +1097,14 @@ class Analise extends BaseController
             $codtns = $movim[0]['tmo_transacao_erp'];
             $depori = $movim[0]['dep_codorigem'];
             $depdes = $movim[0]['dep_coddestino'];
+            $valida = data_br($postado['lot_validade']);
 
             log_message('info', 'Movimento '.json_encode($movim));
 
 
             // DESCOMENTAR AQUI QDO FOR PRA  MOVIMENTAR EFETIVAMENTE
             $soaptrf = new SoapSapiens();
-            $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes);        
+            $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
         }
     }
 }

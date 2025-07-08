@@ -23,7 +23,7 @@ class SoapSapiens
         }
     }
 
-    public function transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes)
+    public function transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida)
     {
         $options = [
             'connection_timeout' => 5, // segundos
@@ -65,6 +65,7 @@ class SoapSapiens
                     'codLot'   => array(
                         'codLot'   => $codlot,
                         'qtdEst'   => $qtdmov,
+                        'datVlt'   => $valida,
                     ),
                 ),
             )

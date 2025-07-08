@@ -178,10 +178,9 @@ class MicrobAnaliseModel extends Model
             $builder->where('TRIM(ana_lotemb)', trim($lote));
             $builder->orWhere('ana_lotemb', NULL);
             $builder->groupEnd();
-            
-            $builder->where('req_id', NULL);
-            $builder->where('stt_id', 14);
         }
+        $builder->where('req_id', NULL);
+        $builder->where('stt_id', 14);
 
         $ret = $builder->get()->getResultArray();
         $sql = $this->db->getLastQuery();
@@ -318,7 +317,8 @@ class MicrobAnaliseModel extends Model
 
         $aqtd               =  new MyCampo('pro_mic_analise', 'ana_qtde');
         $aqtd->valor        = $dados['ana_qtde'];
-        $aqtd->leitura      = true;
+        $aqtd->maximo       = 99999;
+        $aqtd->leitura      = $show;
         $aqtd->largura      = 20;
         $ret['ana_qtde']    = $aqtd->crInput();
 

@@ -93,6 +93,7 @@ jQuery(document).ready(function () {
   });
 
   jQuery("#bt_salvar").on("click", function (event) {
+    bloqueiaTela();
     const controller = jQuery("#controler").val();
 
     if (controller === "requisicao") {

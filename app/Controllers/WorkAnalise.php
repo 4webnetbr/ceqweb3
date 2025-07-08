@@ -125,7 +125,8 @@ class WorkAnalise extends BaseController
                         date('d/m/Y'),
                         $quantidade,
                         $loteInfo['lot_lote'],
-                        $movim['dep_coddestino']
+                        $movim['dep_coddestino'],
+                        data_br($loteInfo['lot_validade'])
                     );
                 }
                 $lotesToUpdate[] = [
