@@ -126,7 +126,7 @@ class Produto extends BaseController
      */
     public function show($id)
     {
-        $this->edit($id, true);
+        return $this->edit($id, true);
     }
 
     /**
@@ -139,6 +139,7 @@ class Produto extends BaseController
     public function edit($id, $show = false)
     {
         $dados_produtos = $this->produtos->getListaProduto($id)[0] ?? null;
+        // debug($dados_produtos, true);
 
         if (!$dados_produtos) {
             throw new \RuntimeException('Produto não encontrado.');
@@ -157,7 +158,7 @@ class Produto extends BaseController
         $campos[0][] = $fields['pro_codpro'];
         $campos[0][] = $fields['ori_codOri'];
         $campos[0][] = $fields['pro_id'];
-        $campos[0][] = $fields['fam_codFam'];
+        $campos[0][] = $fields['fam_codFam']; 
         $campos[0][] = $fields['pro_ctrlot'];
         $campos[0][] = $fields['pro_despro'];
         $campos[0][] = $fields['cla_id'];
@@ -170,7 +171,7 @@ class Produto extends BaseController
         $dados_ceq_produto = $this->produtos->getProdutoCeqweb($id)[0] ?? ['prc_cplpro' => $dados_produtos['pro_cplpro']];
         $dados_ceq_produto['produto'] = $dados_produtos;
         $fieldceq = $this->produtos->defCamposCeqweb($dados_ceq_produto, $show);
-
+        // debug($fieldceq);
         $secao[1] = 'Dados Estoque';
         $campos[1] = [
             $fieldceq['prc_id'],
@@ -187,29 +188,28 @@ class Produto extends BaseController
             $fieldceq['prc_deposito'],
             $fieldceq['prc_cor_etiqueta_mist'],
         ];
-
         $displ = [];
-
+        
         // Gestão de Estoque
         if ($dados_produtos['cla_gestaoestoque'] === 'S') {
             $secao[2] = 'Gestão de Estoque';
             $displ[2] = 'tabela';
             $campos[2] = [];
-
+            
             $dados_est_produto = $this->produtos->getProdutoEstoque($id);
-
+            
             if (count($dados_est_produto) === 0) {
                 $dados_est_produto[] = $dados_produtos;
             }
-
+            
             foreach ($dados_est_produto as $index => $estoque) {
                 $fieldest = $this->produtos->defCamposEstoque($estoque, $index, $show);
                 $linha = [];
-
+                
                 $linha[] = $fieldest['pre_id'];
                 $linha[] = $fieldest['dep_codDep'];
                 $linha[] = $fieldest['pre_gestaoestoque'];
-
+                
                 // Estoque Mínimo
                 $linha[] = "<div id='div_est_minimo[$index]' class='border border-2 col-6 d-inline-block mt-4 float-start pb-1' style='clear: left'>";
                 $linha[] = "<span class='col-3 bg-white border border-1 px-1 d-block position-relative' style='top: -12px;margin-bottom: -10px;left: 10px;'>Estoque Mínimo</span>";
@@ -218,7 +218,7 @@ class Produto extends BaseController
                 $linha[] = $fieldest['pre_minimo'];
                 $linha[] = "</div>";
                 $linha[] = "</div>";
-
+                
                 // Estoque Máximo
                 $linha[] = "<div id='div_est_maximo[$index]' class='border border-2 col-6 d-inline-block mt-4 float-start pb-1'>";
                 $linha[] = "<span class='col-3 bg-white border border-1 px-1 d-block position-relative' style='top: -12px;margin-bottom: -10px;left: 10px;'>Estoque Máximo</span>";
@@ -228,7 +228,7 @@ class Produto extends BaseController
                 $linha[] = $fieldest['pre_maximo'];
                 $linha[] = "</div>";
                 $linha[] = "</div>";
-
+                
                 // Outros campos
                 $linha[] = "<div class='border border-0 col-12 d-inline-block mt-4 float-start pb-1'>";
                 $linha[] = $fieldest['pre_sugerida'];
@@ -240,23 +240,23 @@ class Produto extends BaseController
                 $linha[] = $fieldest['pre_undlote'];
                 $linha[] = $fieldest['pre_undmisturador'];
                 $linha[] = "</div>";
-
+                
                 // Botões
                 $linha[] = $show ? '' : $fieldest['bt_add'];
                 $linha[] = $show ? '' : $fieldest['bt_del'];
-
+                
                 $campos[2][$index] = $linha;
             }
         }
-
+        
         // Script JS
         $script = "<script>
-            acerta_botoes_rep('gestao_de_estoque');
-            mostraOcultaCampo('prc_etiq_misturador','S','prc_cor_etiqueta_mist,prc_codbar');
-            mostraOcultaCampo('prc_etiq_produto','S','prc_cor_etiqueta_prod');
-
-            mostraOcultaCampoTodos('pre_mindiaanterior','N','pre_minimo');
-
+        acerta_botoes_rep('gestao_de_estoque');
+        mostraOcultaCampo('prc_etiq_misturador','S','prc_cor_etiqueta_mist,prc_codbar');
+        mostraOcultaCampo('prc_etiq_produto','S','prc_cor_etiqueta_prod');
+        
+        mostraOcultaCampoTodos('pre_mindiaanterior','N','pre_minimo');
+        
             mostraOcultaCampoTodos('pre_maxdiaanterior','S','pre_porcmaximo');
             mostraOcultaCampoTodos('pre_maxdiaanterior','N','pre_maximo');
 
@@ -267,6 +267,7 @@ class Produto extends BaseController
 
             mostraOcultaDivTodos('pre_gestaoestoque','S','div_est_minimo,div_est_maximo');
         </script>";
+        
 
         $this->data['secoes']       = $secao;
         $this->data['campos']       = $campos;
@@ -275,7 +276,6 @@ class Produto extends BaseController
         $this->data['script']       = $script;
         $this->data['desc_edicao']  = $dados_produtos['pro_despro'];
         $this->data['log']          = buscaLog('pro_produto', $id);
-
         return view('vw_edicao', $this->data);
     }
 

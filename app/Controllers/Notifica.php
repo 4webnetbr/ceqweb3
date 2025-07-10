@@ -60,7 +60,7 @@ class Notifica extends BaseController {
                         // debug($class, true);
                         if($notif->not_id_registro != ''){
                             $methods = get_class_methods("App\\Controllers\\".$notif->not_controler);
-                            debug($methods, true);
+                            // debug($methods, true);
                             if(in_array('show', $methods)){
                                 $metod = 'show';
                             }
