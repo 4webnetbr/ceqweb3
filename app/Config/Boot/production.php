@@ -12,6 +12,15 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE &
 
 /*
  |--------------------------------------------------------------------------
+ | DEBUG BACKTRACES
+ |--------------------------------------------------------------------------
+ | If true, this constant will tell the error screens to display debug
+ | backtraces along with the other error information. If you would
+ | prefer to not see this, set this value to false.
+ */
+defined('SHOW_DEBUG_BACKTRACE') || define('SHOW_DEBUG_BACKTRACE', false);
+/*
+ |--------------------------------------------------------------------------
  | DEBUG MODE
  |--------------------------------------------------------------------------
  | Debug mode is an experimental flag that can allow changes throughout
