@@ -2,6 +2,7 @@
 
 namespace App\Libraries;
 
+use App\Models\MovimMonModel;
 use SoapClient;
 
 class SoapSapiens
@@ -78,6 +79,8 @@ class SoapSapiens
 
         $options = array('location' => 'http://services.senior.com.br');
 
+        $msgretorno = '';
+        $status = '';
         #Chamada do serviço
         try {
 
@@ -86,11 +89,15 @@ class SoapSapiens
             log_message('info', 'TransferenciaProdutos parametros ' . json_encode($parameters));
             log_message('info', 'TransferenciaProdutos resposta ' . json_encode($result));
 
+            $msgretorno = $result;
+            $status = 'OK';
             // sucesso
             log_message('info', 'SOAP retorno OK');
 
         } catch (\SoapFault $e) {
             // falha de conexão ou erro na resposta
+            $msgretorno = $e->getMessage();
+            $status = 'Erro';
             log_message('error', 'Erro SOAP: ' . $e->getMessage());
 
             // se quiser, pode lançar exceção ou retornar erro customizado
@@ -99,6 +106,10 @@ class SoapSapiens
                 'mensagem' => $e->getMessage()
             ]);
         }
+
+        $movdb = new MovimMonModel();
+        $movim = $movdb->insertMovimento($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida, $status, $msgretorno);
+
 
 
         // echo 'Response: ';
