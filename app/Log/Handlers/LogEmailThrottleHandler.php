@@ -2,82 +2,79 @@
 
 namespace App\Log\Handlers;
 
-use CodeIgniter\Log\Handlers\HandlerInterface;
-use Config\Services;
 use Throwable;
+use CodeIgniter\Email\Email;
+use Config\Cache as CacheConfig;
+use Config\Email as EmailConfig;
+use CodeIgniter\Cache\Handlers\FileHandler;
+use CodeIgniter\Log\Handlers\HandlerInterface;
 
 class LogEmailThrottleHandler implements HandlerInterface
 {
     protected array $config;
     protected string $emailTo;
-    protected string $dateFormat = 'Y-m-d H:i:s';
+    protected string $dateFormat = 'd-m-Y H:i:s';
 
     public function __construct(array $config)
     {
-        $this->config  = $config;
-        $this->emailTo = $config['to'] ?? 'admin@example.com';
+        $this->config = $config;
+        $this->emailTo = $config['to'] ?? 'douglasjf1973@gmail.com';
     }
 
     public function handle($level, $message): bool
     {
         try {
             $level = strtoupper($level);
-            $date  = date($this->dateFormat);
-            $text  = $message instanceof Throwable
+            $dataatual  = date($this->dateFormat);
+
+            // Captura mensagem do log
+            $text = $message instanceof Throwable
                 ? $message->__toString()
                 : (string) $message;
 
-            // Protege o acesso aos serviços
-            try {
-                $request = Services::request();
-                log_message('info', 'Request '.json_encode($request));
-                $session = Services::session();
-                log_message('info', 'Session '.json_encode($session));
-                $router  = Services::router();
-                log_message('info', 'Router '.json_encode($router));
+            // Informações básicas
+            $ip        = $_SERVER['REMOTE_ADDR'] ?? 'desconhecido';
+            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'indefinido';
+            $uri       = $_SERVER['REQUEST_URI'] ?? 'indefinido';
+            $method    = $_SERVER['REQUEST_METHOD'] ?? 'indefinido';
+            $module    = explode('/', trim($uri, '/'))[0] ?? 'indefinido';
 
-                $ip         = $request->getIPAddress() ?? 'n/d';
-                $userAgent  = $request->getUserAgent() ?? 'n/d';
-                $uri        = $request->getUri();
-                $path       = $uri->getPath() ?? 'n/d';
-                $module     = $uri->getSegment(1) ?? 'n/d';
-                $controller = method_exists($router, 'controllerName') ? $router->controllerName() : 'n/d';
-                $method     = method_exists($router, 'methodName') ? $router->methodName() : 'n/d';
+            // Dados do usuário
+            $usuId   = $_SESSION['usu_id'] ?? 'não identificado';
+            $usuNome = $_SESSION['usu_nome'] ?? 'não identificado';
 
-                $usuId      = $session->get('usu_id') ?? 'n/d';
-                $usuNome    = $session->get('usu_nome') ?? 'n/d';
-            } catch (Throwable $e) {
-                // fallback em caso de erro de inicialização de serviços
-                $ip = $userAgent = $path = $module = $controller = $method = $usuId = $usuNome = 'n/d';
-            }
+            // Cache (evitar repetições)
+            // Instancia o handler de cache diretamente
+            $cacheConfig = new CacheConfig();
+            $cache = new FileHandler($cacheConfig);
 
-            // Throttle: bloqueia logs repetidos
-            $cacheKey    = 'log_email_hash_' . md5($level . '_' . $ip . '_' . $module);
+            // Criação da chave e verificação do hash
+            $cacheKey = 'log_email_hash_' . md5($level . '_' . $ip . '_' . $module);
             $currentHash = md5($level . $text);
-            $cache       = Services::cache();
-            $lastHash    = $cache->get($cacheKey);
+            $lastHash = $cache->get($cacheKey);
 
             if ($currentHash === $lastHash) {
-                return false;
+                log_message('info', 'Erro Repetido '.json_encode($lastHash));
+                return false; // Log repetido, ignora envio
             }
 
-            $cache->save($cacheKey, $currentHash, 600); // 10 minutos
-
-            // Carrega config de email explicitamente
-            $emailConfig = config('Email');
-            $email = Services::email($emailConfig, false);
-
-            $email->setFrom($emailConfig->fromEmail, $emailConfig->fromName);
+            // Salva o novo hash com tempo de expiração
+            $cache->save($cacheKey, $currentHash, 600);
+            // Envio do e-mail
+            $emailConfig = new EmailConfig();
+            // log_message('info', 'EmailConfig '.json_encode($emailConfig));
+            $email = new Email($emailConfig);
+            // log_message('info', 'Email '.json_encode($email));
+            
             $email->setTo($this->emailTo);
-            $email->setSubject("[$level][$module][$ip] Log automático em $date");
+            $email->setSubject("CeqWeb3 Log automático em $dataatual - [$level]");
 
             $body = <<<HTML
 <b>Nível:</b> $level<br>
-<b>Data:</b> $date<br>
+<b>Data:</b> $dataatual<br>
 <b>IP:</b> $ip<br>
-<b>Módulo:</b> $module<br>
-<b>URI:</b> $path<br>
-<b>Controller:</b> $controller<br>
+<b>Controler:</b> $module<br>
+<b>URI:</b> $uri<br>
 <b>Método:</b> $method<br>
 <b>User-Agent:</b> $userAgent<br><br>
 
@@ -91,14 +88,16 @@ HTML;
 
             $email->setMessage($body);
 
-            if (! $email->send()) {
+            $enviar = $email->send();
+
+            if (!$enviar) {
                 file_put_contents(WRITEPATH . 'logs/email-handler-error.log', $email->printDebugger(['headers', 'subject', 'body']) . PHP_EOL, FILE_APPEND);
                 return false;
             }
-
+            // log_message('info', 'Enviar '.json_encode($enviar));
             return true;
         } catch (Throwable $e) {
-            file_put_contents(WRITEPATH . 'logs/email-handler-error.log', $e->__toString() . PHP_EOL, FILE_APPEND);
+            file_put_contents(WRITEPATH . 'logs/email-handler-exception.log', $e->__toString() . PHP_EOL, FILE_APPEND);
             return false;
         }
     }

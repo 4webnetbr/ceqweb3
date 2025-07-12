@@ -125,7 +125,6 @@ class CfgPerfil extends BaseController
         $this->data['campos2']  = $campos2;
         $this->data['destino']  = 'store';
 
-        throw new \RuntimeException('Erro simulado: falha proposital.');
         echo view('vw_edicao_perfil', $this->data);
     }
 
