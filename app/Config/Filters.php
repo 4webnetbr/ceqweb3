@@ -53,6 +53,8 @@ class Filters extends BaseConfig
                     'wsceqweb/*',
                     'workanalise',
                     'workanalise/*',
+                    'home',
+                    'home/*'
                 ]
             ],
             'limpezaAuto',

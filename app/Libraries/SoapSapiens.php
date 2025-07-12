@@ -89,7 +89,7 @@ class SoapSapiens
             log_message('info', 'TransferenciaProdutos parametros ' . json_encode($parameters));
             log_message('info', 'TransferenciaProdutos resposta ' . json_encode($result));
 
-            $msgretorno = $result;
+            $msgretorno = $result->memsagemRetorno;
             $status = 'OK';
             // sucesso
             log_message('info', 'SOAP retorno OK');

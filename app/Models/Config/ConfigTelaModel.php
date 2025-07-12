@@ -206,10 +206,10 @@ class ConfigTelaModel extends Model
      */
     public function defCampos($dados, $show = false, $tabela = '', $view = '')
     {
-        $this->dicionario = new ConfigDicDadosModel();
-        $this->usuario   = new ConfigUsuarioModel();
-        $this->modulo    = new ConfigModuloModel();
-        $this->common    = new CommonModel();
+        $dicionario = new ConfigDicDadosModel();
+        // $usuario   = new ConfigUsuarioModel();
+        $modulo    = new ConfigModuloModel();
+        // $common    = new CommonModel();
 
         $ret = [];
         $id         = new MyCampo('cfg_tela', 'tel_id');
@@ -218,7 +218,7 @@ class ConfigTelaModel extends Model
 
         $opc_mod = [];
         // if (isset($dados['mod_id'])){
-        $opc_mods = $this->modulo->getModulo();
+        $opc_mods = $modulo->getModulo();
         $opc_mod  = array_column($opc_mods, 'mod_nome', 'mod_id');
         // }
 
@@ -337,7 +337,7 @@ class ConfigTelaModel extends Model
         $camp           = new MyCampo();
         $camp->label    = 'Campos da Tabela';
         if ($tabela != '') {
-            $campos_tab = $this->dicionario->getCampos($tabela);
+            $campos_tab = $dicionario->getCampos($tabela);
             $camp->valor    = campos_tabela($campos_tab);
         }
         $ret['tel_camp'] = $camp->crShow();
@@ -345,7 +345,7 @@ class ConfigTelaModel extends Model
         $camp           = new MyCampo();
         $camp->label    = 'Campos da Visão Principal';
         if ($view != '') {
-            $campos_view = $this->dicionario->getCampos($view);
+            $campos_view = $dicionario->getCampos($view);
             $camp->valor    = campos_tabela($campos_view);
         }
         $ret['tel_camp_view'] = $camp->crShow();
@@ -353,7 +353,7 @@ class ConfigTelaModel extends Model
         $trel           = new MyCampo();
         $trel->label    = 'Tabelas Relacionadas';
         if ($tabela != '') {
-            $relac = $this->dicionario->getRelacionamentos($tabela);
+            $relac = $dicionario->getRelacionamentos($tabela);
             $trel->valor    = relacion_tabela($relac);
         }
         $ret['tel_trel'] = $trel->crShow();

@@ -151,6 +151,10 @@ $routes->get('/SaldoEstoque', 'Estoque\SaldoEstoque::index');
 $routes->get('/SaldoEstoque/(:any)', 'Estoque\SaldoEstoque::$1');
 $routes->post('/SaldoEstoque/(:any)', 'Estoque\SaldoEstoque::$1');
 
+$routes->get('/Movimento', 'Estoque\Movimento::index');
+$routes->get('/Movimento/(:any)', 'Estoque\Movimento::$1');
+$routes->post('/Movimento/(:any)', 'Estoque\Movimento::$1');
+
 
 $routes->get('/Deposito', 'Estoque\Deposito::index');
 $routes->get('/Deposito/(:any)', 'Estoque\Deposito::$1');
@@ -223,6 +227,11 @@ $routes->post('/OcoTipoOcorrencia/(:any)', 'Ocorrencia\OcoTipoOcorrencia::$1');
 $routes->match(['GET', 'POST'], '/WsCeqweb/(:any)', 'Ws\WsCeqweb::$1');
 $routes->match(['GET', 'POST'], '/WsCeqweb/(:any)/(:any)', 'Ws\WsCeqweb::$1::2');
 $routes->match(['GET', 'POST'], '/WsCeqweb/(:any)/(:any)/(:any)', 'Ws\WsCeqweb::$1::2::3');
+
+
+$routes->get('teste-handler', 'Home::testarEmailHandler');
+$routes->get('teste-email', 'Home::testeEmailManual');
+
 /*
  * --------------------------------------------------------------------
  * Additional Routing

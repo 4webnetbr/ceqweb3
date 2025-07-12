@@ -18,6 +18,15 @@ class CfgMenu extends BaseController
     public $tela;
     public $modulo;
 
+    public $men_id;
+    public $men_hier;
+    public $men_mpai;
+    public $men_subm;
+    public $men_etiq;
+    public $men_icon;
+    public $men_modu;
+    public $men_tela;
+
     public function __construct()
     {
         $this->data      = session()->getFlashdata('dados_tela');
@@ -54,9 +63,9 @@ class CfgMenu extends BaseController
         $order->place    = 'Ordenar o Menu';
         $order->funcChan = 'redireciona(\'CfgMenu/ordenar/\')';
         $order->classep  = 'btn-outline-info bt-manut btn-sm mb-2 float-end add';
-        $this->bt_order = $order->crBotao();
+        $bt_order = $order->crBotao();
 
-        $this->data['botao'] = $this->bt_order;
+        $this->data['botao'] = $bt_order;
 
         echo view('vw_lista', $this->data);
     }

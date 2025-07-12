@@ -57,15 +57,14 @@ class MovimMonModel {
 
 	function getMovimentos() {
 		try {
+			$filter =[];
             $options = [
-                // 'projection' => ['_id' => 0],
-                'sort' => ['not_data' => -1],
-				'distinct' => ["not_id_registro"],
+                'sort' => ['mov_datmov' => -1],
             ];            
-			$query = new \MongoDB\Driver\Query($options);
+			$query = new \MongoDB\Driver\Query($filter, $options);
 
 			$result = $this->conn->executeQuery($this->database . '.' . $this->collection, $query);
-			
+			// debug($result, true);
 			return $result->toArray();
 			
 		} catch(\MongoDB\Driver\Exception\RuntimeException $ex) {

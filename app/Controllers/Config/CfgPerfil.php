@@ -16,6 +16,19 @@ class CfgPerfil extends BaseController
     public $perfilitem;
     public $tela;
 
+    public $prf_id;
+    public $prf_nome;
+    public $prf_dashboard;
+    public $prf_descricao;
+    public $pit_modu;
+    public $pit_tela;
+    public $pit_all;
+    public $pit_consulta;
+    public $pit_adicao;
+    public $pit_edicao;
+    public $pit_exclusao;
+    public $pit_notifica;
+
     public function __construct()
     {
         $this->data         = session()->getFlashdata('dados_tela');
@@ -112,6 +125,7 @@ class CfgPerfil extends BaseController
         $this->data['campos2']  = $campos2;
         $this->data['destino']  = 'store';
 
+        throw new \RuntimeException('Erro simulado: falha proposital.');
         echo view('vw_edicao_perfil', $this->data);
     }
 

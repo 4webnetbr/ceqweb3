@@ -12,8 +12,8 @@ class Home extends BaseController
     public $novopedido;
 
 	public function __construct(){
-		$this->data  = session()->getFlashdata('dados_tela');
-        $this->permissao = $this->data['permissao'];
+		// $this->data  = session()->getFlashdata('dados_tela');
+        // $this->permissao = $this->data['permissao'];
         if($this->data['erromsg'] != ''){
             $this->__erro();
         }
@@ -185,5 +185,19 @@ class Home extends BaseController
         echo json_encode($r);
         // return $r;
     }
+
+    public function testarEmailHandler()
+{
+    try {
+        $handler = new \App\Log\Handlers\LogEmailThrottleHandler([
+            'handles' => ['error'],
+            'to' => 'seuteste@gmail.com',
+        ]);
+        return '✅ Classe instanciada com sucesso!';
+    } catch (\Throwable $e) {
+        return '❌ Erro ao instanciar classe:<br><pre>' . $e->__toString() . '</pre>';
+    }
+}
+
 
 }

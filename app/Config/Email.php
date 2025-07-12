@@ -6,8 +6,8 @@ use CodeIgniter\Config\BaseConfig;
 
 class Email extends BaseConfig
 {
-    public string $fromEmail  = '';
-    public string $fromName   = '';
+    public string $fromEmail  = 'ferreiras.rn@gmail.com';
+    public string $fromName   = 'Sistema de Logs';
     public string $recipients = '';
 
     /**
@@ -18,45 +18,45 @@ class Email extends BaseConfig
     /**
      * The mail sending protocol: mail, sendmail, smtp
      */
-    public string $protocol = 'mail';
+    public string $protocol = 'smtp';
 
     /**
-     * The server path to Sendmail.
+     * The server path to Sendmail (ignored for SMTP)
      */
     public string $mailPath = '/usr/sbin/sendmail';
 
     /**
      * SMTP Server Address
      */
-    public string $SMTPHost = '';
+    public string $SMTPHost = 'smtp.gmail.com';
 
     /**
      * SMTP Username
      */
-    public string $SMTPUser = '';
+    public string $SMTPUser = 'ferreiras.rn@gmail.com';
 
     /**
-     * SMTP Password
+     * SMTP Password (senha de app do Gmail)
      */
-    public string $SMTPPass = '';
+    public string $SMTPPass = 'novk ellb sqgp lfct'; // substitua por sua senha de app real
 
     /**
-     * SMTP Port
+     * SMTP Port (Gmail TLS)
      */
-    public int $SMTPPort = 25;
+    public int $SMTPPort = 587;
 
     /**
      * SMTP Timeout (in seconds)
      */
-    public int $SMTPTimeout = 5;
+    public int $SMTPTimeout = 10;
 
     /**
      * Enable persistent SMTP connections
      */
-    public bool $SMTPKeepAlive = false;
+    public bool $SMTPKeepAlive = true;
 
     /**
-     * SMTP Encryption. Either tls or ssl
+     * SMTP Encryption: 'tls' ou 'ssl'
      */
     public string $SMTPCrypto = 'tls';
 
@@ -71,9 +71,9 @@ class Email extends BaseConfig
     public int $wrapChars = 76;
 
     /**
-     * Type of mail, either 'text' or 'html'
+     * Type of mail: 'text' ou 'html'
      */
-    public string $mailType = 'text';
+    public string $mailType = 'html';
 
     /**
      * Character set (utf-8, iso-8859-1, etc.)
@@ -83,7 +83,7 @@ class Email extends BaseConfig
     /**
      * Whether to validate the email address
      */
-    public bool $validate = false;
+    public bool $validate = true;
 
     /**
      * Email Priority. 1 = highest. 5 = lowest. 3 = normal
@@ -91,17 +91,17 @@ class Email extends BaseConfig
     public int $priority = 3;
 
     /**
-     * Newline character. (Use “\r\n” to comply with RFC 822)
+     * Newline character (use “\r\n” to comply with RFC 822)
      */
     public string $CRLF = "\r\n";
 
     /**
-     * Newline character. (Use “\r\n” to comply with RFC 822)
+     * Newline character (use “\r\n” to comply with RFC 822)
      */
     public string $newline = "\r\n";
 
     /**
-     * Enable BCC Batch Mode.
+     * Enable BCC Batch Mode
      */
     public bool $BCCBatchMode = false;
 
@@ -111,7 +111,7 @@ class Email extends BaseConfig
     public int $BCCBatchSize = 200;
 
     /**
-     * Enable notify message from server
+     * Enable notify message from server (DSN)
      */
     public bool $DSN = false;
 }
