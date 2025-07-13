@@ -38,6 +38,7 @@ class LogEmailThrottleHandler implements HandlerInterface
             $uri       = $_SERVER['REQUEST_URI'] ?? 'indefinido';
             $method    = $_SERVER['REQUEST_METHOD'] ?? 'indefinido';
             $module    = explode('/', trim($uri, '/'))[0] ?? 'indefinido';
+            $baseURL = config('App')->baseURL;
 
             // Dados do usuário
             $usuId   = $_SESSION['usu_id'] ?? 'não identificado';
@@ -76,7 +77,7 @@ class LogEmailThrottleHandler implements HandlerInterface
 <b>Controler:</b> $module<br>
 <b>URI:</b> $uri<br>
 <b>Método:</b> $method<br>
-<b>User-Agent:</b> $userAgent<br><br>
+<b>Ambiente:</b>$baseURL<br><br>
 
 <b>Usuário logado:</b><br>
 ID: $usuId<br>
