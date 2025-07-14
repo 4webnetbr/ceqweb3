@@ -995,44 +995,53 @@ class Analise extends BaseController
             // Inicia a transação
             $this->analise->transBegin();
 
-            // Salva dados da análise
-            if (!$this->analise->save($sqlAna)) {
-                throw new \Exception(implode(' ', $this->analise->errors()));
-            }
-
             // Gera movimentos se existirem
             if (!empty($movs)) {
                 cache()->clean();
-                $this->geraMovimento($movs, $post);
+                $movim = $this->geraMovimento($movs, $post);
+                if($movim->tipoRetorno === 1){
+                    $ret['erro'] = true;
+                    $ret['msg'] = $movim->memsagemRetorno;
+                    // Rollback em ambas transações
+                    $this->analise->transRollback();
+                }
             }
+            
+            if(!$ret['erro']){
+                // Salva dados da análise
+                if (!$this->analise->save($sqlAna)) {
+                    throw new \Exception(implode(' ', $this->analise->errors()));
+                }
 
-            // Trata upload e processamento de arquivo quando estiver EM ANDAMENTO e não for reprovação
-            if ($post['stt_id'] == 12 && $post['ana_reprovar'] != 'S') {
-                $files = $this->request->getFiles();
-                if (isset($files['ana_arqlaudo']) && $files['ana_arqlaudo']->getSize() > 0) {
-                    $uploadRet = $this->processaArquivoLaudo($files['ana_arqlaudo'], $post['ana_id']);
-                    if ($uploadRet !== true) {
-                        throw new \Exception($uploadRet);
+
+                // Trata upload e processamento de arquivo quando estiver EM ANDAMENTO e não for reprovação
+                if ($post['stt_id'] == 12 && $post['ana_reprovar'] != 'S') {
+                    $files = $this->request->getFiles();
+                    if (isset($files['ana_arqlaudo']) && $files['ana_arqlaudo']->getSize() > 0) {
+                        $uploadRet = $this->processaArquivoLaudo($files['ana_arqlaudo'], $post['ana_id']);
+                        if ($uploadRet !== true) {
+                            throw new \Exception($uploadRet);
+                        }
                     }
                 }
-            }
 
-            // Atualiza o lote, se necessário
-            if ($sqlLot) {
-                // Inicia transação para lote
-                $this->lote->transBegin();
-                if (!$this->lote->save($sqlLot)) {
-                    throw new \Exception(implode(' ', $this->lote->errors()));
+                // Atualiza o lote, se necessário
+                if ($sqlLot) {
+                    // Inicia transação para lote
+                    $this->lote->transBegin();
+                    if (!$this->lote->save($sqlLot)) {
+                        throw new \Exception(implode(' ', $this->lote->errors()));
+                    }
+                    $this->lote->transCommit();
                 }
-                $this->lote->transCommit();
-            }
 
-            // Commit final
-            $this->analise->transCommit();
-            cache()->clean();
-            $ret['msg'] = 'Dados da Analise gravados com Sucesso!!!';
-            session()->setFlashdata('msg', $ret['msg']);
-            $ret['url'] = site_url($this->data['controler']);
+                // Commit final
+                $this->analise->transCommit();
+                cache()->clean();
+                $ret['msg'] = 'Dados da Analise gravados com Sucesso!!!';
+                session()->setFlashdata('msg', $ret['msg']);
+                $ret['url'] = site_url($this->data['controler']);
+            }
         } catch (\Exception $e) {
             $ret['erro'] = true;
             $ret['msg'] = $e->getMessage();
@@ -1104,7 +1113,9 @@ class Analise extends BaseController
 
             // DESCOMENTAR AQUI QDO FOR PRA  MOVIMENTAR EFETIVAMENTE
             $soaptrf = new SoapSapiens();
-            $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
+            $movimenta = $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
+            debug($movimenta);
+            return $movimenta;
         }
     }
 }

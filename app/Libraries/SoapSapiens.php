@@ -89,8 +89,11 @@ class SoapSapiens
             log_message('info', 'TransferenciaProdutos parametros ' . json_encode($parameters));
             log_message('info', 'TransferenciaProdutos resposta ' . json_encode($result));
 
-            $msgretorno = $result->memsagemRetorno;
             $status = 'OK';
+            $msgretorno = $result->memsagemRetorno;
+            if($result->tipoRetorno == 1){
+                $status = 'Erro';
+            }
             // sucesso
             log_message('info', 'SOAP retorno OK');
 
@@ -110,12 +113,8 @@ class SoapSapiens
         $movdb = new MovimMonModel();
         $movim = $movdb->insertMovimento($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida, $status, $msgretorno);
 
-
-
-        // echo 'Response: ';
-        // echo "<pre>";
-        // print_r($result);
-        // echo "</pre>";
+        debug($result);
+        return $result;
     }
 
 

@@ -77,16 +77,17 @@ class Movimento extends BaseController
             $dadosCombinados = [];
 
             foreach ($movimentos as $mov) {
+                // debug($mov);
                 $depori = $mov->mov_depori;
                 $depdes = $mov->mov_depdes;
                 $produto = $mov->mov_produto;
                 $transac = $mov->mov_codtns;
 
                 // Consulta no MariaDB pelo ID
-                $deporigem = $deposits[$depori];
-                $depdestino = $deposits[$depdes];
-                $transacao = $transacs[$transac];
-                $desproduto = $produtos[$produto];
+                $deporigem = $deposits[$depori] ?? '';
+                $depdestino = $deposits[$depdes] ?? '';
+                $transacao = $transacs[$transac] ?? '';
+                $desproduto = $produtos[$produto] ?? '';
 
                 $dadosCombinados[] = [
                     '_id'       => $mov->_id,
@@ -103,7 +104,7 @@ class Movimento extends BaseController
                     'deporigem' => $deporigem,
                     'depdestino' => $depdestino,
                     'transacao' => $transacao,
-                    'desproduto' => $desproduto,
+                    'desproduto' => $mov->mov_produto.' - '.$desproduto,
                 ];
             }
 
