@@ -89,12 +89,22 @@ class Movimento extends BaseController
                 $transacao = $transacs[$transac] ?? '';
                 $desproduto = $produtos[$produto] ?? '';
 
+                $id = $mov->_id;
+                $oid = (string) $id;
+
+                $url_edit = base_url($this->data['controler'].'/edit/'.$oid);
+                $botaoedt = "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' 
+            data-mdb-toggle='tooltip' data-mdb-placement='top' 
+            title='Imprimir Requisição' onclick='openPDFModal(\"$url_edit\",\"Imprimir Requisição\")'>
+            <i class='fa-solid fa-print'></i></button>";
+                $botaoedt = '';
+
                 $dadosCombinados[] = [
-                    '_id'       => $mov->_id,
+                    '_id'       => $oid,
                     'mov_produto'       => $mov->mov_produto,
                     'mov_codtns'       => $mov->mov_codtns,
                     'mov_depori'       => $mov->mov_depori,
-                    'mov_datmov'       => $mov->mov_datmov,
+                    'mov_datmov'       => data_br($mov->mov_data),
                     'mov_qtdmov'       => $mov->mov_qtdmov,
                     'mov_codlot'       => $mov->mov_codlot,
                     'mov_depdes'       => $mov->mov_depdes,
@@ -105,8 +115,15 @@ class Movimento extends BaseController
                     'depdestino' => $depdestino,
                     'transacao' => $transacao,
                     'desproduto' => $mov->mov_produto.' - '.$desproduto,
+                    'acao_person' => [$botaoedt],
                 ];
+                // debug($mov->_id, true);
+                $this->data['exclusao'] = false; // não tem exclusão
+                $this->data['edicao'] = false; // não tem edição
+
             }
+
+            // debug($dadosCombinados, true);
 
             $campos = montaColunasCampos($this->data, '_id');
             $movimentos = [
@@ -116,26 +133,9 @@ class Movimento extends BaseController
         echo json_encode($movimentos);
     }
 
-    public function show($id){
-        $integ = new WsCeqweb();
-        $integ->integraDeposito();
-
-		$dados_depositos = $this->depositos->getDeposito($id);
-        $fields = $this->depositos->defCampos($dados_depositos[0], true);
-
-        $secao[0] = 'Dados Gerais'; 
-        $campos[0][0] = $fields['dep_codDep']; 
-        $campos[0][1] = $fields['dep_desDep'];
-        $campos[0][2] = $fields['dep_aceNeg'];
-        $campos[0][3] = $fields['dep_codDescricao'];
-        
-		$this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
-        $this->data['destino']    = 'store';
-        // BUSCAR DADOS DO LOG
-        $this->data['log'] = buscaLog('est_sap_deposito', $id);
-
-        echo view('vw_edicao', $this->data);
+    public function edit($id){
+        echo "Entrei na Edição";
+        // echo view('vw_edicao', $this->data);
     }
 
 }
