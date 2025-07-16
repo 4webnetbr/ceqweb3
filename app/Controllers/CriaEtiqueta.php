@@ -305,42 +305,18 @@ class CriaEtiqueta extends BaseController
         foreach ($dados as $registro) {
             $x = $this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal));
             $y = $this->topo + ($linhaAtual * ($this->altura + $this->vertical));
-                    $this->pdf->Rect($x, $y, $this->largura, $this->altura);
+            $this->pdf->Rect($x, $y, $this->largura, $this->altura);
 
             $ocupoularg = 0;
 
             foreach ($camp as $propCamp) {
                 $this->pdf->SetY($y);
-                $caracteres = intval($propCamp['etc_caracteres'])??100;
+                $caracteres = intval($propCamp['etc_caracteres'])??30;
 
-                if ($propCamp['etc_campo'] == '0') {
-                    $ocupado = $this->largura * ($ocupoularg / 100);
-                    $x = $this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal)) + $ocupado;
-                    $this->pdf->SetX($x);
-
-                    $estilo = '';
-                    if ($propCamp['etc_negrito'] === "S") $estilo .= "B";
-                    if ($propCamp['etc_italico'] === "S") $estilo .= "I";
-                    if ($propCamp['etc_sublinhado'] === "S") $estilo .= "U";
-
-                    $this->pdf->SetFont($propCamp['etc_fonte'], $estilo, $propCamp['etc_tamanho']);
-                    $conteudo = trim($propCamp['etc_rotulo']);
-                    $tamconte = $this->largura * ($propCamp['etc_colunas'] / 100);
-                    $altucont = intval($propCamp['etc_tamanho'] / 3)+2;
-                    $this->pdf->Cell($tamconte, $altucont, utf8_decode($conteudo), 0, 0, $propCamp['etc_alinhamento']);
-
-                    $ocupoularg += $propCamp['etc_colunas'];
-                    if ($ocupoularg >= 90) {
-                        $this->pdf->Cell(10, $altucont, '', 0, 1, 'E');
-                        $ocupoularg = 0;
-                        $y = $this->pdf->getY();
-                    }
-
-                } elseif ($propCamp['etc_campo'] == '1') {
+                if ($propCamp['etc_campo'] == '1') { // Linha Horizontal
                     $x = $this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal));
                     $this->pdf->Line($x, $y, $x + $this->largura, $y);
                     $y = $this->pdf->getY();
-
                 } elseif ($propCamp['etc_codbar'] === 'S') {
                     $x = $this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal));
                     if($caracteres == 0){
@@ -362,12 +338,9 @@ class CriaEtiqueta extends BaseController
                     $this->pdf->SetX($x);
                     $alturalinha = ($propCamp['etc_tamanho'] / 8) * 3; // 8 é o tamanho padrão
                     $estilo = '';
-                    if ($propCamp['etc_rotulo'] != 'Sem Rótulo') { // TEM RÓTULO
+                    $rotulo = '';
+                    if ($propCamp['etc_rotulo'] != 'Sem Rótulo' && $propCamp['etc_rotulo'] != '.') { // TEM RÓTULO
                         $rotulo = trim($propCamp['etc_rotulo']);
-                        $tamconte = $this->largura * ($propCamp['etc_colunas'] / 100) * 0.3;
-                        // $altucont = intval($propCamp['etc_tamanho'] / 3)+3;
-                        $this->pdf->SetFont($propCamp['etc_fonte'], '', $propCamp['etc_tamanho']);
-                        $this->pdf->Cell($tamconte, $alturalinha, utf8_decode($rotulo), 0, 0, $propCamp['etc_alinhamento']);
                     }
 
                     if ($propCamp['etc_negrito'] === "S") $estilo .= "B";
@@ -375,27 +348,40 @@ class CriaEtiqueta extends BaseController
                     if ($propCamp['etc_sublinhado'] === "S") $estilo .= "U";
 
                     $this->pdf->SetFont($propCamp['etc_fonte'], $estilo, $propCamp['etc_tamanho']);
-                    $conteudo = trim(substr($registro[$propCamp['etc_campo']], 0, $caracteres));
-                    $tamconte = $this->largura * ($propCamp['etc_colunas'] / 100);
-                    if ($propCamp['etc_rotulo'] != 'Sem Rótulo') {
-                        $tamconte *= 0.7;
-                    }
 
-                    $altucont = ($propCamp['etc_tamanho'] / 3)+1;
+                    if ($propCamp['etc_campo'] == '0') { // Texto Livre
+                        $rotulo = '';
+                        $conteudo = trim($propCamp['etc_rotulo']);
+                    } else if ($propCamp['etc_campo'] == '2') { // Data Atual
+                        $data = data_br(date('Y-m-d'));
+                        $conteudo = $data;
+                    } else if ($propCamp['etc_campo'] == '3') { // Data e Hora Atual
+                        $data = data_br(date('Y-m-d H:i:s'));
+                        $conteudo = $data;
+                    } else {
+                        $conteudo = trim(substr($registro[$propCamp['etc_campo']], 0, $caracteres));
+                    }
+                    $conteudo = $rotulo .' '. $conteudo;
+                    $tamconte = ($this->largura * ($propCamp['etc_colunas'] / 100));
+                    // $x = $this->esquerda;
+                    if($propCamp['etc_alinhamento'] === 'D'){
+                        $x = $this->largura - ($this->largura * ($propCamp['etc_colunas'] / 100));
+                    }
+                    $this->pdf->SetX($x);
                     $linhas = intval($propCamp['etc_linhas']); 
                     if ($linhas > 1) {
-                        $conteudo = trim($registro[$propCamp['etc_campo']]);
+                        // $conteudo = trim($registro[$propCamp['etc_campo']]);
                         $this->pdf->MultiCellLimited($tamconte, $alturalinha, utf8_decode($conteudo), 0,$propCamp['etc_alinhamento'],false,$linhas, $caracteres);
                     } else {
                         $this->pdf->Cell($tamconte, $alturalinha, utf8_decode($conteudo), 0, 0, $propCamp['etc_alinhamento']);
                     }
-                    $X = $this->pdf->GetX();
-                    $ocupoularg += $propCamp['etc_colunas'];
-                    if ($ocupoularg >= 90) {
-                        $this->pdf->Cell(10, $alturalinha, '', 0, 1, 'E');
-                        $ocupoularg = 0;
-                        $y = $this->pdf->getY();
-                    }
+                }
+                $x = $this->pdf->GetX();
+                $ocupoularg += $propCamp['etc_colunas'];
+                if ($ocupoularg >= 90) {
+                    $this->pdf->Cell(10, $alturalinha, '', 0, 1, 'E');
+                    $ocupoularg = 0;
+                    $y = $this->pdf->getY();
                 }
             }
 

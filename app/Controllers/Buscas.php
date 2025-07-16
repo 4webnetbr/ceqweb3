@@ -474,6 +474,12 @@ class Buscas extends BaseController
                     $ret[$c]['id']      = 1;
                     $ret[$c]['text']    = 'Linha Horizontal';
                     $c++;
+                    $ret[$c]['id']      = 2;
+                    $ret[$c]['text']    = 'Data Atual';
+                    $c++;
+                    $ret[$c]['id']      = 3;
+                    $ret[$c]['text']    = 'Data e Hora Atual';
+                    $c++;
                     $ret[$c]['id']      = -10;
                     $ret[$c]['text']    = '';
                     $c++;
