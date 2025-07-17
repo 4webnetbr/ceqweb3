@@ -1450,6 +1450,12 @@ function altera_index(obj, ind_a, ind_n) {
       id_depois = id_antes.replace(ind_a, ind_n);
       console.log("Depois " + id_depois);
       jQuery(obj[i]).attr("data-selec", id_depois.toString());
+    } else if (obj[i].getAttribute("data-refer") != undefined) {
+      id_antes = obj[i].getAttribute("data-refer").toString();
+      console.log("Antes " + id_antes);
+      id_depois = id_antes.replace(ind_a, ind_n);
+      console.log("Depois " + id_depois);
+      jQuery(obj[i]).attr("data-refer", id_depois.toString());
     }
     id_antes = obj[i].id.toString();
     console.log("Antes " + id_antes);

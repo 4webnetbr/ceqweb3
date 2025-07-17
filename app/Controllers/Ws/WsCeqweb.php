@@ -160,7 +160,7 @@ class WsCeqweb extends ResourceController
                     'stt_id'        => $status
                 ];
                 log_message('info', 'SQL Lote: ' . json_encode($sql_lote));
-                if ($this->mode_lote->insert($sql_lote)) {
+                if ($this->mode_lote->save($sql_lote)) {
                     // Cria uma notificação avisando que foi incluído um novo Lote
                     //Ao clicar na notificação, o usuário será redirecionado para a tela de Consulta de Lotes
                     //com o ID do Lote incluído

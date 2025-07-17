@@ -816,17 +816,17 @@ class Analise extends BaseController
             $this->analise->transBegin();
 
             // Gera movimentos se existirem
-            if (!empty($movs)) {
-                cache()->clean();
-                $movim = $this->geraMovimento($movs, $post);
-                // debug($movim, true);
-                if($movim->tipoRetorno > 1){
-                    $ret['erro'] = true;
-                    $ret['msg'] = $movim->mensagemRetorno;
-                    // Rollback em ambas transações
-                    $this->analise->transRollback();
-                }
-            }
+            // if (!empty($movs)) {
+            //     cache()->clean();
+            //     $movim = $this->geraMovimento($movs, $post);
+            //     // debug($movim, true);
+            //     if($movim->tipoRetorno > 1){
+            //         $ret['erro'] = true;
+            //         $ret['msg'] = $movim->mensagemRetorno;
+            //         // Rollback em ambas transações
+            //         $this->analise->transRollback();
+            //     }
+            // }
             
             if(!$ret['erro']){
                 // Salva dados da análise
@@ -861,6 +861,20 @@ class Analise extends BaseController
                 cache()->clean();
                 $ret['msg'] = 'Dados da Analise gravados com Sucesso!!!';
                 session()->setFlashdata('msg', $ret['msg']);
+
+                if($post['stt_id'] == 10){ // ESTAVA BLOQUEADO
+                    $dados = $this->analise->getListaAnalise($post['ana_id'])[0] ?? null;
+
+                    $numetiquetas = (int) $dados['ana_qtde_micro'];
+                    $dados = array_fill(0, $numetiquetas, $dados);
+                    $chave = uniqid('etq_');
+                    cache()->save($chave, $dados, 60); // 1 minuto
+
+                    $link = base_url('/CriaEtiqueta/emiteEtiqueta/22/'.$chave);
+                    session()->setFlashdata('modal', $link);
+                    session()->setFlashdata('modal-title', 'Imprimir Etiqueta');
+                }
+
                 $ret['url'] = site_url($this->data['controler']);
             }
         } catch (\Exception $e) {
@@ -933,10 +947,11 @@ class Analise extends BaseController
 
 
             // DESCOMENTAR AQUI QDO FOR PRA  MOVIMENTAR EFETIVAMENTE
-            $soaptrf = new SoapSapiens();
-            $movimenta = $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
-            // debug($movimenta, true);
-            return $movimenta;
+            // $soaptrf = new SoapSapiens();
+            // $movimenta = $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
+            // // debug($movimenta, true);
+            // return $movimenta;
         }
     }
+
 }

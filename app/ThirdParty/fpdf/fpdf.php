@@ -743,19 +743,88 @@ class FPDF
 		$this->x = $this->lMargin;
 	}
 
-	function MultiCellLimited($w, $h, $txt, $border=0, $align='L', $fill=false, $maxLines = 2, $maxCharsPerLine = 24)
+	// function MultiCellLimited($w, $h, $txt, $border=0, $align='L', $fill=false, $maxLines = 2, $maxCharsPerLine = 24)
+	// {
+	// 	// Limpa e limita o texto
+	// 	$txt = preg_replace('/\s+/', ' ', trim($txt));
+	// 	$txt = substr($txt, 0, $maxLines * $maxCharsPerLine);
+	// 	$lines = str_split($txt, $maxCharsPerLine);
+	// 	$lines = array_slice($lines, 0, $maxLines);
+
+	// 	$totalLines = count($lines);
+
+	// 	foreach ($lines as $i => $line) {
+	// 		$isFirst = ($i == 0);
+	// 		$isLast = ($i == $totalLines - 1);
+
+	// 		// Define bordas
+	// 		if ($border) {
+	// 			if ($maxLines == 1) {
+	// 				$lineBorder = 1;
+	// 			} elseif ($isFirst) {
+	// 				$lineBorder = 'TLR';
+	// 			} elseif ($isLast) {
+	// 				$lineBorder = 'BLR';
+	// 			} else {
+	// 				$lineBorder = 'LR';
+	// 			}
+	// 		} else {
+	// 			$lineBorder = 0;
+	// 		}
+
+	// 		// Última linha -> ln = 0, senão ln = 2 (quebra linha)
+	// 		$ln = $isLast ? 0 : 2;
+
+	// 		$this->Cell($w, $h, $line, $lineBorder, $ln, $align, $fill);
+	// 	}
+
+	// 	// Preenche linhas vazias, se necessário
+	// 	for ($i = $totalLines; $i < $maxLines; $i++) {
+	// 		$isLast = ($i == $maxLines - 1);
+	// 		$lineBorder = $border ? ($isLast ? 'BLR' : 'LR') : 0;
+	// 		// $ln = $isLast ? 0 : 2;
+
+	// 		$this->Cell($w, $h, '', $lineBorder, $ln, $align, $fill);
+	// 	}
+	// }
+
+	function MultiCellLimited($w, $h, $txt, $border = 0, $align = 'L', $fill = false, $maxLines = 2)
 	{
-		// Limpa e limita o texto
+		// Limpa texto
 		$txt = preg_replace('/\s+/', ' ', trim($txt));
-		$txt = substr($txt, 0, $maxLines * $maxCharsPerLine);
-		$lines = str_split($txt, $maxCharsPerLine);
-		$lines = array_slice($lines, 0, $maxLines);
 
+		$lines = [];
+		$buffer = '';
+
+		for ($i = 0; $i < strlen($txt); $i++) {
+			$buffer .= $txt[$i];
+
+			// Se o buffer estourar a largura, envia como linha
+			if ($this->GetStringWidth($buffer) > $w) {
+				// Remove último caractere que causou o estouro
+				$line = substr($buffer, 0, -1);
+				$lines[] = $line;
+				$buffer = $txt[$i]; // reinicia com o caractere que estourou
+			}
+
+			// Para se já alcançou o limite de linhas
+			if (count($lines) >= $maxLines) {
+				break;
+			}
+		}
+
+		// Adiciona o que sobrou
+		if (count($lines) < $maxLines && $buffer !== '') {
+			$lines[] = $buffer;
+		}
+
+		// Garante que terá exatamente $maxLines linhas
 		$totalLines = count($lines);
+		for ($i = 0; $i < $maxLines; $i++) {
+			$line = $lines[$i] ?? '';
 
-		foreach ($lines as $i => $line) {
-			$isFirst = ($i == 0);
-			$isLast = ($i == $totalLines - 1);
+			$isFirst = ($i === 0);
+			$isLast = ($i === $maxLines - 1);
 
 			// Define bordas
 			if ($border) {
@@ -772,19 +841,9 @@ class FPDF
 				$lineBorder = 0;
 			}
 
-			// Última linha -> ln = 0, senão ln = 2 (quebra linha)
 			$ln = $isLast ? 0 : 2;
 
 			$this->Cell($w, $h, $line, $lineBorder, $ln, $align, $fill);
-		}
-
-		// Preenche linhas vazias, se necessário
-		for ($i = $totalLines; $i < $maxLines; $i++) {
-			$isLast = ($i == $maxLines - 1);
-			$lineBorder = $border ? ($isLast ? 'BLR' : 'LR') : 0;
-			// $ln = $isLast ? 0 : 2;
-
-			$this->Cell($w, $h, '', $lineBorder, $ln, $align, $fill);
 		}
 	}
 

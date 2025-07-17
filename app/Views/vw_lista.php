@@ -14,13 +14,6 @@
 
 <?= $this->section('content'); ?>
 <div id='content' class='container page-content bg-light m-0'>
-  <?
-  if (session()->getFlashdata('modal')) {
-    $link = session()->getFlashdata('modal');    
-    $titu = session()->getFlashdata('modal-title');    
-    echo "<script>openPDFModal(\"" . $link . "\", \"" . $titu . "\");</script>";
-  }
-  ?>
   <div class="table-responsive col-12">
     <table id="table" class="display compact table table-sm table-info table-striped table-hover table-borderless col-12">
       <thead class="table-default col-12 overflow-x-auto">
@@ -54,4 +47,13 @@
   montaListaDados('table', '<?= $url_lista; ?>');
   salvaPagina();
 </script>
+
+  <?
+  if (session()->getFlashdata('modal')) {
+    $link = session()->getFlashdata('modal');    
+    $titu = session()->getFlashdata('modal-title');    
+    echo "<script>openPDFModal(\"" . $link . "\", \"" . $titu . "\");</script>";
+  }
+  ?>
+
 <?= $this->endSection(); ?>
