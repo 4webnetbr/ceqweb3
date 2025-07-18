@@ -52,7 +52,11 @@ $routes->setDefaultNamespace('App\Controllers');
 $routes->setDefaultController('login');
 $routes->setDefaultMethod('index');
 $routes->setTranslateURIDashes(true);
-$routes->set404Override();
+$routes->set404Override(function () {
+    log_message('critical', 'Rota 404 chamada: {uri}', ['uri' => current_url()]);
+    return service('response')->respond(['error' => 'Rota não encontrada'], 404);
+});
+
 $routes->setAutoRoute(true);
 
 // The Auto Routing (Legacy) is very dangerous. It is easy to create vulnerable apps
