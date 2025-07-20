@@ -133,9 +133,9 @@ class WsCeqweb extends ResourceController
         return $this->respond(200);
     }
 
-    public function SapLote($tipo, $codOri, $codBar, $codErp, $codLot, $datVal)
+    public function SapLote($tipo, $codOri, $codBar, $codErp, $codLot, $datVal, $datEnt)
     {
-        log_message('info', 'Parametros: ' . $tipo . ' - ' . $codOri . ' - ' . $codBar . ' - ' . $codErp . ' - ' . $codLot . ' - ' . $datVal);
+        log_message('info', 'Parametros: ' . $tipo . ' - ' . $codOri . ' - ' . $codBar . ' - ' . $codErp . ' - ' . $codLot . ' - ' . $datVal . ' - ' . $datEnt);
         // VERIFICA SE A ORIGEM INTERESSA PARA O CEQWEB
         $origem = new ProdutOrigemModel();
         $temori = $origem->getOrigem($codOri);
@@ -148,31 +148,32 @@ class WsCeqweb extends ResourceController
                 if (isset($micro[0]['cla_micro']) && $micro[0]['cla_micro'] == 'S') {
                     $status = 8;
                 }
-                // Chama o método Integra para atualizar a tabela local
-                // $integra = $this->integraLote($codBar, $codErp, $codLot, $datVal, $status);
-                $hoje = new DateTime();
-                $sql_lote = [
-                    'lot_codbar'    => $codBar,
-                    'lot_codpro'    => $codErp,
-                    'lot_lote'      => $codLot,
-                    'lot_entrada'   => $hoje->format('Y-m-d H:i'),
-                    'lot_validade'  => $datVal,
-                    'stt_id'        => $status
-                ];
-                log_message('info', 'SQL Lote: ' . json_encode($sql_lote));
-                if ($this->mode_lote->save($sql_lote)) {
-                    // Cria uma notificação avisando que foi incluído um novo Lote
-                    //Ao clicar na notificação, o usuário será redirecionado para a tela de Consulta de Lotes
-                    //com o ID do Lote incluído
-                    $msgsocket = '';
-                    if ($tipo == 'I') {
-                        $msgsocket  = "O Lote $codLot do Produto $codErp foi incluído!";
-                    }
-                    log_message('info', 'Msg Socket: ' . $msgsocket);
-                    // debug('MsgSocket '.$msgsocket);
-                    if ($msgsocket != '') {
-                        $gravaNotifica = $this->notifica->gravaNotifica('Produto\Lote', $codLot, $msgsocket, $tipo);
-                        // var_dump($gravaNotifica);
+                // VERIFICA SE O LOTE JÁ EXISTE
+                $existe = $this->mode_lote->getLoteCodbar($codBar);
+                if(empty($existe)){
+                    $sql_lote = [
+                        'lot_codbar'    => $codBar,
+                        'lot_codpro'    => $codErp,
+                        'lot_lote'      => $codLot,
+                        'lot_entrada'   => $datEnt,
+                        'lot_validade'  => $datVal,
+                        'stt_id'        => $status
+                    ];
+                    log_message('info', 'SQL Lote: ' . json_encode($sql_lote));
+                    if ($this->mode_lote->save($sql_lote)) {
+                        // Cria uma notificação avisando que foi incluído um novo Lote
+                        //Ao clicar na notificação, o usuário será redirecionado para a tela de Consulta de Lotes
+                        //com o ID do Lote incluído
+                        $msgsocket = '';
+                        if ($tipo == 'I') {
+                            $msgsocket  = "O Lote $codLot do Produto $codErp foi incluído!";
+                        }
+                        log_message('info', 'Msg Socket: ' . $msgsocket);
+                        // debug('MsgSocket '.$msgsocket);
+                        if ($msgsocket != '') {
+                            $gravaNotifica = $this->notifica->gravaNotifica('Produto\Lote', $codLot, $msgsocket, $tipo);
+                            // var_dump($gravaNotifica);
+                        }
                     }
                 }
             }
