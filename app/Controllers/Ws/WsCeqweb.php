@@ -141,8 +141,8 @@ class WsCeqweb extends ResourceController
         $temori = $origem->getOrigem($codOri);
         log_message('info', 'tem Origem: ' . json_encode($temori));
         if ($temori) {
-            // se o tipo for 'I' // Inclusão
-            if ($tipo == 'I' || $tipo == 'A') {
+            // se o tipo for 'I' // Inclusão // por enquanto só tem tipo I
+            if ($tipo == 'I') {
                 $micro = $this->mode_produto->getProdutoCod($codErp);
                 $status = 9;
                 if (isset($micro[0]['cla_micro']) && $micro[0]['cla_micro'] == 'S') {
