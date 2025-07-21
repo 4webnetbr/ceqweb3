@@ -78,9 +78,10 @@ class CriaPdf2025 extends BaseController
             }
             $posy = 47 + 20 + (5 * count($requis));
             $this->pdf->Rect(10, $posy, 190, 8);
-            $this->pdf->SetY($posy);
+            $this->pdf->SetY($posy+1);
             $this->pdf->SetFont('Arial', '', 9);
-            $this->pdf->Cell(190, 8, utf8_decode($req['cla_rodape']), 0, 0, 'L');
+            // $this->pdf->Cell(190, 8, utf8_decode($req['cla_rodape']), 0, 0, 'L');
+            $this->pdf->MultiCell(190, 2, utf8_decode($req['cla_rodape']), 0,'L');
 
             $this->pdf->AliasNbPages();
 
