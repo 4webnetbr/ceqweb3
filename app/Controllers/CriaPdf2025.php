@@ -37,7 +37,8 @@ class CriaPdf2025 extends BaseController
             $this->pdf->SetFont('Arial', '', 14);
             $this->pdf->Rect(10, 10, 190, 12);
             $this->pdf->Image('assets/images/logo-back.png', 11, 10, 15);
-            $this->pdf->EtiqTexto('', $req['cla_cabecalho'], 'Arial', 11, 12, 0, 0, 1, 'R');
+            $this->pdf->EtiqTexto('', $req['cla_cabecalho'], 'Arial', 11, 6, 0, 0, 1, 'R');
+            $this->pdf->EtiqTexto('', 'N° '.$req['req_id'], 'Arial', 10, 5, 0, 0, 1, 'R');
             $this->pdf->SetFont('Arial', '', 12);
             $this->pdf->ln(4);
             $this->pdf->Rect(10, 10, 190, 37);
@@ -77,11 +78,11 @@ class CriaPdf2025 extends BaseController
                 $this->pdf->EtiqTexto('', data_br($reqi['lot_validade']), 'Arial', 8, 5, 20, 0, 1, 'L');
             }
             $posy = 47 + 20 + (5 * count($requis));
-            $this->pdf->Rect(10, $posy, 190, 8);
+            $this->pdf->Rect(10, $posy, 190, 14);
             $this->pdf->SetY($posy+1);
             $this->pdf->SetFont('Arial', '', 9);
             // $this->pdf->Cell(190, 8, utf8_decode($req['cla_rodape']), 0, 0, 'L');
-            $this->pdf->MultiCell(190, 2, utf8_decode($req['cla_rodape']), 0,'L');
+            $this->pdf->MultiCell(190, 4, utf8_decode($req['cla_rodape']), 0,'L');
 
             $this->pdf->AliasNbPages();
 
