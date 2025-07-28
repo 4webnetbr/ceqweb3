@@ -140,6 +140,10 @@ class AteRequisicao extends BaseController
         echo view('vw_edicao', $this->data);
     }
 
+    public function show($id){
+        $this->edit($id);
+    }
+
     /**
      * Edição
      * edit
@@ -163,39 +167,38 @@ class AteRequisicao extends BaseController
         $campos[0][count($campos[0])] = $fields['req_data'];
         $campos[0][count($campos[0])] = $fields['req_dataentrega'];
         $campos[0][count($campos[0])] = $fields['tmo_id'];
-        $campos[0][count($campos[0])] = $fields['req_repetedias'];
-        $campos[0][count($campos[0])] = $fields['req_deporigem'];
-        $campos[0][count($campos[0])] = $fields['req_depdestino'];
-        $campos[0][count($campos[0])] = $fields['req_consdiaanterior'];
-        $campos[0][count($campos[0])] = $fields['req_medconsumodias'];
-        $campos[0][count($campos[0])] = $fields['req_meddias'];
-        $campos[0][count($campos[0])] = $fields['req_percseguranca'];
-        $campos[0][count($campos[0])] = $fields['pro_id'];
-        $campos[0][count($campos[0])] = $fields['req_observacao'];
-        $campos[0][count($campos[0])] = $fields['bt_carregar'];
+        // $campos[0][count($campos[0])] = $fields['req_repetedias'];
+        // $campos[0][count($campos[0])] = $fields['req_deporigem'];
+        // $campos[0][count($campos[0])] = $fields['req_depdestino'];
+        // $campos[0][count($campos[0])] = $fields['req_consdiaanterior'];
+        // $campos[0][count($campos[0])] = $fields['req_medconsumodias'];
+        // $campos[0][count($campos[0])] = $fields['req_meddias'];
+        // $campos[0][count($campos[0])] = $fields['req_percseguranca'];
+        // $campos[0][count($campos[0])] = $fields['pro_id'];
+        // $campos[0][count($campos[0])] = $fields['req_observacao'];
+        // $campos[0][count($campos[0])] = $fields['bt_carregar'];
 
         $secao[1] = 'Produtos';
         $campos[1][0] = ''; // mesma estrutura do add()
 
-        $envr          = new MyCampo();
-        $envr->nome    = 'bt_envia';
-        $envr->id      = 'bt_envia';
-        $envr->i_cone  = '<div class="align-items-center py-1 text-start float-start font-weight-bold" style="">
-                            <i class="fa-regular fa-paper-plane" style="font-size: 2rem;" aria-hidden="true"></i></div>';
-        $envr->i_cone  .= '<div class="align-items-start txt-bt-manut">Enviar Requisição</div>';
-        $envr->place    = 'Enviar Requisição';
-        $envr->funcChan = 'enviarRequisicoes(1)';
-        $envr->classep  = 'btn-success bt-manut btn-sm mb-2 float-end';
-        $this->bt_envia = $envr->crBotao();
+        // $envr          = new MyCampo();
+        // $envr->nome    = 'bt_envia';
+        // $envr->id      = 'bt_envia';
+        // $envr->i_cone  = '<div class="align-items-center py-1 text-start float-start font-weight-bold" style="">
+        //                     <i class="fa-regular fa-paper-plane" style="font-size: 2rem;" aria-hidden="true"></i></div>';
+        // $envr->i_cone  .= '<div class="align-items-start txt-bt-manut">Enviar Requisição</div>';
+        // $envr->place    = 'Enviar Requisição';
+        // $envr->funcChan = 'enviarRequisicoes(1)';
+        // $envr->classep  = 'btn-success bt-manut btn-sm mb-2 float-end';
+        // $this->bt_envia = $envr->crBotao();
 
-        $this->data['botao'] = $this->bt_envia;
+        // $this->data['botao'] = $this->bt_envia;
 
         $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['secoes']    = $secao;
         $this->data['campos']    = $campos;
         $this->data['destino']   = 'store'; // ou 'update' se você for criar
         $this->data['scripts']   = 'my_requisicao';
-        $this->data['script']    = "<script>jQuery('#bt_carregar').trigger('click');mostraOcultaCampo('req_consdiaanterior', 'N', 'req_medconsumodias,req_meddias');mudaCheck2opcoes('req_consdiaanterior', 'req_medconsumodias');</script>";
 
         echo view('vw_edicao', $this->data);
     }

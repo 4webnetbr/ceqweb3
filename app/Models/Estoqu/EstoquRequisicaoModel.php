@@ -141,16 +141,19 @@ class EstoquRequisicaoModel extends Model
         $ret = [];
         $simnao['S'] = 'Sim';
         $simnao['N'] = 'Não';
-        $id           =  new MyCampo('est_requisicao', 'req_id', false);
-        $id->valor    = (isset($dados['req_id'])) ? $dados['req_id'] : '';
-        $id->leitura  = $show;
-        $ret['req_id']    = $id->crOculto();
+        $id                 =  new MyCampo('est_requisicao', 'req_id', true);
+        $id->valor          = (isset($dados['req_id'])) ? str_pad($dados['req_id'], 6, '0', STR_PAD_LEFT) : '';
+        $id->leitura        = true;
+        $id->tipo           = 'text';
+        $id->dispForm       = 'linha';
+        $id->classep        = 'mb3';
+        $ret['req_id']    = $id->crInput();
 
         $hoje = new DateTime();
         $data                 = new MyCampo('est_requisicao', 'req_data', false);
         $data->valor          = (isset($dados['req_data'])) ? $dados['req_data'] : $hoje->format('Y-m-d');
         $data->leitura        = true;
-        $data->dispForm       = 'col-6';
+        $data->dispForm       = 'col-6 linha';
         $data->classep        = 'mb3';
         $ret['req_data']          = $data->crInput();
 
@@ -158,10 +161,9 @@ class EstoquRequisicaoModel extends Model
         $data = new DateTime();
         $entr                 = new MyCampo('est_requisicao', 'req_dataentrega', false);
         $entr->valor          = (isset($dados['req_dataentrega'])) ? $dados['req_dataentrega'] : '';
-        $entr->leitura        = $show;
+        $entr->leitura        = true;
         $entr->datamin         = $data->format('Y-m-d');
-        $entr->obrigatorio    = true;
-        $entr->dispForm       = 'col-6';
+        $entr->dispForm       = 'col-6 linha';
         $entr->classep        = 'mb3';
         $entr->funcBlur       = 'validaDataMinima(this)';
         $ret['req_dataentrega']   = $entr->crInput();
@@ -172,12 +174,12 @@ class EstoquRequisicaoModel extends Model
 
         $tmov                 = new MyCampo('est_requisicao', 'tmo_id', false);
         $tmov->valor          = (isset($dados['tmo_id'])) ? $dados['tmo_id'] : '';
-        $tmov->obrigatorio    = true;
+        $tmov->leitura        = true;
         $tmov->selecionado    = [$tmov->valor];
         $tmov->opcoes         = $opc_tipomov;
         $tmov->largura        = 50;
         $tmov->funcChan       = "buscaTipoMovimentacao(this,'req_deporigem','req_depdestino')";
-        $tmov->dispForm       = 'col-6';
+        $tmov->dispForm       = 'linha';
         $ret['tmo_id'] = $tmov->crSelect();
 
         $mudi                 = new MyCampo('est_requisicao', 'req_repetedias', false);
