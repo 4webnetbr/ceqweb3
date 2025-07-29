@@ -195,7 +195,7 @@ a .men_nome,
 .accordion-button::after {
     content: "\f0a5";
     right: 1rem;
-    font-family: 'Font Awesome 6 Free';
+    font-family: 'Font Awesome 7 Free';
     -webkit-transform: rotate(0deg);
     -o-transform: rotate(0deg);
     transform: rotate(0deg);
@@ -208,7 +208,7 @@ a .men_nome,
 .accordion-button:not(.collapsed)::after {
     content: "\f0a5";
     right: 3.5rem;
-    font-family: 'Font Awesome 6 Free';
+    font-family: 'Font Awesome 7 Free';
     -webkit-transform: rotate(-450deg);
     -o-transform: rotate(-450deg);
     transform: rotate(-450deg);

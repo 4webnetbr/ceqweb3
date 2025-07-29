@@ -658,7 +658,7 @@ div.msgprocessando>div:last-child>div {
     /* content: "\f0a5"; */
     /* content: "";
     right: 3.5rem;
-    font-family: 'Font Awesome 6 Free';
+    font-family: 'Font Awesome 7 Free';
     background-image: none;
     transition: var(--bs-accordion-btn-icon-transition);
     border-top: 0;
@@ -671,7 +671,7 @@ div.msgprocessando>div:last-child>div {
     /* content: "\f0a5"; */
     /* content: "";
     right: 3.5rem;
-    font-family: 'Font Awesome 6 Free';
+    font-family: 'Font Awesome 7 Free';
     -webkit-transform: rotate(-450deg);
     -o-transform: rotate(-450deg);
     transform: rotate(-450deg);

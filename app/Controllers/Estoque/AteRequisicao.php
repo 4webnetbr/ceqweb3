@@ -153,7 +153,7 @@ class AteRequisicao extends BaseController
      */
     public function edit($id)
     {
-        $requisicao = $this->requisicao->find($id);
+        $requisicao = $this->requisicao->getRequisicao($id)[0];
 
         if (!$requisicao) {
             session()->setFlashdata('erromsg', 'Requisição não encontrada.');
@@ -178,6 +178,8 @@ class AteRequisicao extends BaseController
         // $campos[0][count($campos[0])] = $fields['req_observacao'];
         // $campos[0][count($campos[0])] = $fields['bt_carregar'];
 
+        $produtos = $this->requisicao->getRequisicaoProdutos($id);
+        debug($produtos);
         $secao[1] = 'Produtos';
         $campos[1][0] = ''; // mesma estrutura do add()
 

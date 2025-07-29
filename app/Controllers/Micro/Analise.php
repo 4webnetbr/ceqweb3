@@ -107,7 +107,7 @@ class Analise extends BaseController
                     "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' 
             data-mdb-toggle='tooltip' data-mdb-placement='top' 
             title='Imprimir Requisição' onclick='openPDFModal(\"$url_ati\",\"Imprimir Requisição\")'>
-            <i class='fa-solid fa-print'></i></button>"
+            <i class='fas fa-print'></i></button>"
                 ];
             }
         }
@@ -231,7 +231,7 @@ class Analise extends BaseController
     //                 "<button class='btn btn-outline-danger btn-sm border-0 mx-0 fs-0 float-end' 
     //                 data-mdb-toggle='tooltip' data-mdb-placement='top' 
     //                 title='Imprimir Requisição' onclick='openPDFModal(\"$url_ati\",\"Imprimir Requisição\")'>
-    //                 <i class='fa-solid fa-print'></i></button>"
+    //                 <i class='fas fa-print'></i></button>"
     //             ];
     //         }
     //     }
@@ -377,7 +377,7 @@ class Analise extends BaseController
                     "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' data-mdb-toggle='tooltip' 
                     data-mdb-placement='top' title='Imprimir Requisição' onclick='openPDFModal(\"" .
                     $url_ati .
-                    "\",\"Imprimir Requisição\")'><i class='fa-solid fa-print'></i></button>";
+                    "\",\"Imprimir Requisição\")'><i class='fas fa-print'></i></button>";
 
                 $dados_analise[$da]['acao_person'] = [$imprimir];
             }

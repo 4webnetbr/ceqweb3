@@ -25,6 +25,7 @@ $title ??= $controler;
   <!-- Estilos padrão do sistema -->
   <link rel="stylesheet" href="<?= base_url('assets/css/default.css'); ?>">
   <link rel="stylesheet" href="<?= base_url('assets/css/menu.css'); ?>">
+  <link rel="stylesheet" href="<?=base_url('assets/fontawesome/css/all.css');?>">
 
   <!-- Estilos adicionais (dinâmicos) -->
   <?php if (!empty($styles)) : ?>
@@ -36,11 +37,12 @@ $title ??= $controler;
   <!-- Scripts principais -->
   <script src="<?= base_url('assets/jscript/jquery-3.6.3.js'); ?>"></script>
   <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" crossorigin="anonymous"></script>
-  <script src="https://kit.fontawesome.com/da32fd0a5b.js" crossorigin="anonymous"></script>
+  <!-- <script src="https://kit.fontawesome.com/da32fd0a5b.js" crossorigin="anonymous"></script> -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/6.0.0/bootbox.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 
   <!-- Scripts customizados -->
+  <script src="<?=base_url('assets/fontawesome/js/all.min.js');?>" defer></script>
   <script src="<?= base_url('assets/jscript/my_default.js'); ?>"></script>
   <script src="<?= base_url('assets/jscript/my_menu.js'); ?>"></script>
   <script src="<?= base_url('assets/jscript/my_wsconn.js'); ?>"></script>

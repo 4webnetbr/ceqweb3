@@ -285,7 +285,7 @@ h3 strong {
 }
 
 .buttons-copy::after {
-  font-family: 'Font Awesome 5 Free';
+  font-family: 'Font Awesome 7 Free';
   /* essential for enabling glyphicon */
   content: "\f24d";
   /* adjust as needed, taken from bootstrap.css */
@@ -294,7 +294,7 @@ h3 strong {
 }
 
 .buttons-excel::after {
-  font-family: 'Font Awesome 5 Free';
+  font-family: 'Font Awesome 7 Free';
   /* essential for enabling glyphicon */
   content: "\f1c3";
   /* adjust as needed, taken from bootstrap.css */
@@ -303,7 +303,7 @@ h3 strong {
 }
 
 .buttons-pdf::after {
-  font-family: 'Font Awesome 5 Free';
+  font-family: 'Font Awesome 7 Free';
   /* essential for enabling glyphicon */
   content: "\f1c1";
   /* adjust as needed, taken from bootstrap.css */
@@ -312,7 +312,7 @@ h3 strong {
 }
 
 .buttons-print::after {
-  font-family: FontAwesome;
+  font-family: 'Font Awesome 7 Free';
   /* essential for enabling glyphicon */
   content: "\f02f";
   /* adjust as needed, taken from bootstrap.css */

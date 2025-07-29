@@ -91,6 +91,12 @@ $routes->post('/CriaEtiqueta/emiteEtiqueta/(:any)', 'CriaEtiqueta::emiteEtiqueta
 $routes->get('/CriaEtiqueta/previewEtiquetaViaAjax/(:any)', 'CriaEtiqueta::previewEtiquetaViaAjax/$1');
 $routes->post('/CriaEtiqueta/previewEtiquetaViaAjax/(:any)', 'CriaEtiqueta::previewEtiquetaViaAjax/$1');
 
+$routes->get('/CriaEtiquetaZPL', 'CriaEtiquetaZPL::emiteEtiqueta');
+$routes->get('/CriaEtiquetaZPL/emiteEtiqueta/(:any)', 'CriaEtiquetaZPL::emiteEtiqueta/$1');
+$routes->post('/CriaEtiquetaZPL/emiteEtiqueta/(:any)', 'CriaEtiquetaZPL::emiteEtiqueta/$1');
+$routes->get('/CriaEtiquetaZPL/previewEtiquetaViaAjax/(:any)', 'CriaEtiquetaZPL::previewZPL/$1');
+$routes->post('/CriaEtiquetaZPL/previewEtiquetaViaAjax/(:any)', 'CriaEtiquetaZPL::previewZPL/$1');
+
 $routes->get('/CfgCor', 'Config\CfgCor::index');
 $routes->get('/CfgCor/(:any)', 'Config\CfgCor::$1');
 $routes->post('/CfgCor/(:any)', 'Config\CfgCor::$1');

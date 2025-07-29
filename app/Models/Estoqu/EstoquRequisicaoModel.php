@@ -153,7 +153,7 @@ class EstoquRequisicaoModel extends Model
         $data                 = new MyCampo('est_requisicao', 'req_data', false);
         $data->valor          = (isset($dados['req_data'])) ? $dados['req_data'] : $hoje->format('Y-m-d');
         $data->leitura        = true;
-        $data->dispForm       = 'col-6 linha';
+        $data->dispForm       = 'col-6';
         $data->classep        = 'mb3';
         $ret['req_data']          = $data->crInput();
 
@@ -163,9 +163,9 @@ class EstoquRequisicaoModel extends Model
         $entr->valor          = (isset($dados['req_dataentrega'])) ? $dados['req_dataentrega'] : '';
         $entr->leitura        = true;
         $entr->datamin         = $data->format('Y-m-d');
-        $entr->dispForm       = 'col-6 linha';
+        $entr->dispForm       = 'col-6';
         $entr->classep        = 'mb3';
-        $entr->funcBlur       = 'validaDataMinima(this)';
+        // $entr->funcBlur       = 'validaDataMinima(this)';
         $ret['req_dataentrega']   = $entr->crInput();
 
         $tipomovs = new EstoquTipoMovimentacaoModel();
@@ -179,7 +179,7 @@ class EstoquRequisicaoModel extends Model
         $tmov->opcoes         = $opc_tipomov;
         $tmov->largura        = 50;
         $tmov->funcChan       = "buscaTipoMovimentacao(this,'req_deporigem','req_depdestino')";
-        $tmov->dispForm       = 'linha';
+        $tmov->dispForm       = 'col-6';
         $ret['tmo_id'] = $tmov->crSelect();
 
         $mudi                 = new MyCampo('est_requisicao', 'req_repetedias', false);
@@ -188,8 +188,8 @@ class EstoquRequisicaoModel extends Model
         $mudi->minimo         = 0;
         $mudi->step           = 1;
         $mudi->maximo         = 10;
-        $mudi->classep        = 'mb2';
-        $mudi->dispForm       = 'col-6';
+        // $mudi->classep        = 'mb3';
+        $mudi->dispForm       = 'col-6 mb-2';
         $ret['req_repetedias']          = $mudi->crInput();
 
         $depositos = new EstoquDepositoModel();

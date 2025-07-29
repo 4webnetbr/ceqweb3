@@ -19,6 +19,7 @@ class CriaEtiqueta extends BaseController
     public $common;
     public $tela;
     public $pdf;
+    public $alturaFinal;
     // Configuração das etiquetas
     private $largura    = 70; // Largura da etiqueta (mm)
     private $altura     = 35;  // Altura da etiqueta (mm)
@@ -444,161 +445,336 @@ class CriaEtiqueta extends BaseController
     //         ->setBody($output);
     // }
 
-    private function renderEtiquetas(array $dados, array $camp, array $tamanho, bool $exibirBorda = true)
-    {
-        $this->pdf = new MyPdf2025(false, false, $tamanho);
-        $this->pdf->Add_Page('P', $tamanho, 0);
-        $this->pdf->SetMargins(0, 0, 0);
+    // private function renderEtiquetas(array $dados, array $camp, array $tamanho, bool $exibirBorda = true)
+    // {
+    //     $this->pdf = new MyPdf2025(false, false, $tamanho);
+    //     $this->pdf->Add_Page('P', $tamanho, 0);
+    //     $this->pdf->SetMargins(0, 0, 0);
 
-        $colunaAtual = 0;
-        $linhaAtual = 0;
+    //     $colunaAtual = 0;
+    //     $linhaAtual = 0;
 
-        foreach ($dados as $registro) {
-            $x = $this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal));
-            $y = $this->topo + ($linhaAtual * ($this->altura + $this->vertical));
+    //     foreach ($dados as $registro) {
+    //         $x = $this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal));
+    //         $y = $this->topo + ($linhaAtual * ($this->altura + $this->vertical));
 
-            if ($exibirBorda) {
-                $this->pdf->Rect($x, $y, $this->largura, $this->altura);
-            }
+    //         if ($exibirBorda) {
+    //             $this->pdf->Rect($x, $y, $this->largura, $this->altura);
+    //         }
 
-            $ocupoularg = 0;
+    //         $ocupoularg = 0;
 
-            foreach ($camp as $propCamp) {
-                $this->pdf->SetY($y);
-                $caracteres = intval($propCamp['etc_caracteres']) ?? 30;
+    //         foreach ($camp as $propCamp) {
+    //             $this->pdf->SetY($y);
+    //             $caracteres = intval($propCamp['etc_caracteres']) ?? 30;
 
-                if ($propCamp['etc_campo'] == '1') {
-                    $x = $this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal));
-                    $larg = $this->largura * ($propCamp['etc_colunas'] / 100);
-                    $this->pdf->Line($x, $y, $x + $larg, $y);
-                    $alturalinha = (1 / 8) * 3;
-                    $propCamp['etc_colunas'] = 100;
+    //             if ($propCamp['etc_campo'] == '1') {
+    //                 $x = $this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal));
+    //                 $larg = $this->largura * ($propCamp['etc_colunas'] / 100);
+    //                 $this->pdf->Line($x, $y, $x + $larg, $y);
+    //                 $alturalinha = (1 / 8) * 3;
+    //                 $propCamp['etc_colunas'] = 100;
 
-                } elseif ($propCamp['etc_codbar'] === 'S') {
-                    $x = $this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal));
-                    if ($caracteres == 0) $caracteres = 10;
+    //             } elseif ($propCamp['etc_codbar'] === 'S') {
+    //                 $x = $this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal));
+    //                 if ($caracteres == 0) $caracteres = 10;
 
-                    $conteudo = trim(substr($registro[$propCamp['etc_campo']] ?? '', 0, $caracteres));
-                    if (strlen($conteudo) == 0) $conteudo = str_repeat('0', $caracteres);
+    //                 $conteudo = trim(substr($registro[$propCamp['etc_campo']] ?? '', 0, $caracteres));
+    //                 if (strlen($conteudo) == 0) $conteudo = str_repeat('0', $caracteres);
 
-                    $tamconte = $this->largura * ($propCamp['etc_colunas'] / 100);
-                    $altconte = intval($propCamp['etc_tamanho']) + 2;
-                    $left = $x + (((100 - $propCamp['etc_colunas']) / 2) * ($this->largura / 100));
+    //                 $tamconte = $this->largura * ($propCamp['etc_colunas'] / 100);
+    //                 $altconte = intval($propCamp['etc_tamanho']) + 2;
+    //                 $left = $x + (((100 - $propCamp['etc_colunas']) / 2) * ($this->largura / 100));
 
-                    $this->pdf->Code128($left, $y, $conteudo, $tamconte, $altconte);
-                    $y = $this->pdf->getY() + $altconte;
+    //                 $this->pdf->Code128($left, $y, $conteudo, $tamconte, $altconte);
+    //                 $y = $this->pdf->getY() + $altconte;
 
-                    $alturalinha = $altconte;
-                    $propCamp['etc_colunas'] = 100;
+    //                 $alturalinha = $altconte;
+    //                 $propCamp['etc_colunas'] = 100;
 
+    //             } else {
+    //                 $alturalinha = ($propCamp['etc_tamanho'] / 8) * 3;
+    //                 $ocupado = $this->largura * ($ocupoularg / 100);
+    //                 $espacodisponivel = $this->largura * ($propCamp['etc_colunas'] / 100);
+
+    //                 $total = $ocupado + $espacodisponivel;
+    //                 if ($total > $this->largura) {
+    //                     $espacodisponivel = $this->largura - $ocupado;
+    //                     if ($espacodisponivel < 5) {
+    //                         $this->pdf->Cell(10, $alturalinha, '', 0, 1, 'E');
+    //                         $ocupado = 0;
+    //                         $espacodisponivel = $this->largura * ($propCamp['etc_colunas'] / 100);
+    //                         $y = $this->pdf->getY();
+    //                     }
+    //                 }
+
+    //                 $baseX = $this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal));
+
+    //                 if ($propCamp['etc_alinhamento'] === 'R') {
+    //                     $x = $baseX + $this->largura - $espacodisponivel + 1;
+    //                 } elseif ($propCamp['etc_alinhamento'] === 'C') {
+    //                     $x = $baseX + $ocupado;
+    //                 } else { // Alinhamento à esquerda (ou padrão)
+    //                     $x = $baseX + $ocupado - 1;
+    //                 }
+
+    //                 $this->pdf->SetX($x);
+
+    //                 $estilo = '';
+    //                 if ($propCamp['etc_negrito'] === 'S') $estilo .= 'B';
+    //                 if ($propCamp['etc_italico'] === 'S') $estilo .= 'I';
+    //                 if ($propCamp['etc_sublinhado'] === 'S') $estilo .= 'U';
+
+    //                 $this->pdf->SetFont($propCamp['etc_fonte'], $estilo, $propCamp['etc_tamanho']);
+
+    //                 $rotulo = ($propCamp['etc_rotulo'] != 'Sem Rótulo' && $propCamp['etc_rotulo'] != '.') ? trim($propCamp['etc_rotulo']) : '';
+    //                 $conteudo = '';
+
+    //                 if ($propCamp['etc_campo'] == '0') {
+    //                     $rotulo = '';
+    //                     $conteudo = trim($propCamp['etc_rotulo']);
+    //                     $propCamp['etc_linhas'] = 1;
+
+    //                 } elseif ($propCamp['etc_campo'] == '2') {
+    //                     $conteudo = data_br(date('Y-m-d'));
+    //                     $propCamp['etc_linhas'] = 1;
+
+    //                 } elseif ($propCamp['etc_campo'] == '3') {
+    //                     $conteudo = data_br(date('Y-m-d H:i:s'));
+    //                     $propCamp['etc_linhas'] = 1;
+
+    //                 } else {
+    //                     $conteudo = trim(substr($registro[$propCamp['etc_campo']] ?? '', 0, $caracteres));
+    //                 }
+
+    //                 $conteudo = trim($rotulo . ' ' . $conteudo);
+
+    //                 $linhas = intval($propCamp['etc_linhas']); 
+    //                 if ($linhas > 1) {
+    //                     $conteudo = trim($registro[$propCamp['etc_campo']]);
+    //                     $this->pdf->MultiCellLimited($espacodisponivel, $alturalinha, utf8_decode($conteudo), 0,$propCamp['etc_alinhamento'],false,$linhas, $caracteres);
+    //                 } else {
+    //                     $maxWidth = $espacodisponivel;
+    //                     $conteudoOriginal = utf8_decode($conteudo);
+    //                     $conteudoFinal = $conteudoOriginal;
+
+    //                     while ($this->pdf->GetStringWidth($conteudoFinal) > $maxWidth) {
+    //                         $conteudoFinal = substr($conteudoFinal, 0, -1); // Remove último caractere
+    //                         if (strlen($conteudoFinal) <= 3) break; // Evita cortar demais
+    //                     }
+
+    //                     if ($conteudoFinal !== $conteudoOriginal) {
+    //                         $conteudoFinal = rtrim($conteudoFinal);
+    //                     }
+    //                     if ($propCamp['etc_alinhamento'] === 'R') {
+    //                         $x = (($this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal))) + $this->largura) - $espacodisponivel + 1;
+    //                         $this->pdf->SetX($x);
+    //                         $propCamp['etc_colunas'] = 100;
+    //                     }
+
+    //                     $this->pdf->Cell($espacodisponivel, $alturalinha, $conteudoFinal, 0, 0, $propCamp['etc_alinhamento']);
+    //                     // $this->pdf->Cell($espacodisponivel, $alturalinha, "'".$propCamp['etc_alinhamento']."'", 0, 0, "'".$propCamp['etc_alinhamento']."'");
+    //                 }
+    //             }
+
+    //             $ocupoularg += $propCamp['etc_colunas'];
+    //             if ($ocupoularg >= 90) {
+    //                 $this->pdf->Cell(10, $alturalinha, '', 0, 1, 'E');
+    //                 $ocupoularg = 0;
+    //                 $y = $this->pdf->getY();
+    //             }
+    //         }
+
+    //         $colunaAtual++;
+    //         if ($colunaAtual == $this->colunas) {
+    //             $colunaAtual = 0;
+    //             $linhaAtual++;
+    //         }
+
+    //         if ($linhaAtual >= $this->linhas) {
+    //             $this->pdf->Add_Page('P', $tamanho, 0);
+    //             $colunaAtual = 0;
+    //             $linhaAtual = 0;
+    //         }
+    //     }
+
+    //     $this->pdf->AliasNbPages();
+    // }
+
+private function renderEtiquetas(array $dados, array $camp, array $tamanho, bool $exibirBorda = true)
+{
+    // Altura inicial exagerada para renderização contínua
+    $alturaTemporaria = 5000;
+
+    // 1. Criar PDF temporário para medir altura usada
+    $largurafinal   = ($this->colunas * $this->largura) + (($this->colunas - 1) * $this->horizontal) + ($this->esquerda + $this->direita);
+    $this->pdf = new MyPdf2025(false, false, [$largurafinal, $alturaTemporaria]);
+    $this->pdf->Add_Page('P', [$largurafinal, $alturaTemporaria], 0);
+    $this->pdf->SetMargins(0, 0, 0);
+    $this->pdf->SetAutoPageBreak(false, 0);
+
+    $tamanho[0] = $largurafinal;
+    $tamanho[1] = $alturaTemporaria;
+    // Medir altura final usada
+    // $this->pdf->StartTransaction();
+    $this->renderConteudoInterno($dados, $camp, $exibirBorda);
+
+    // $this->pdf->RollbackTransaction();
+
+    // 2. Criar novo PDF com altura final real
+    // $largurafinal   = ($this->colunas * $this->largura) + (($this->colunas - 1) * $this->horizontal) + ($this->esquerda + $this->direita);
+    // $largurafinal   = 10;
+    // debug($largurafinal, true);
+    $this->pdf = new MyPdf2025(false, false, [$largurafinal, $this->alturaFinal]);
+    $orienta = 'P';
+    if($largurafinal > $this->alturaFinal){
+        $orienta = 'L';
+    }
+    $this->pdf->Add_Page($orienta, [$largurafinal, $this->alturaFinal], 0);
+    $this->pdf->SetMargins(0, 0, 0);
+    $this->pdf->SetAutoPageBreak(false, 0);
+
+    // debug($largurafinal, true);
+
+    // 3. Renderizar de novo com altura exata
+    $this->renderConteudoInterno($dados, $camp, $exibirBorda);
+    $this->pdf->AliasNbPages();
+}
+
+private function renderConteudoInterno(array $dados, array $camp, bool $exibirBorda = true)
+{
+    $colunaAtual = 0;
+    $y = $this->topo;
+    $ultimoY = 0;
+    $totalEtiquetas = count($dados);
+    $etiquetaIndex = 0;
+
+    foreach ($dados as $registro) {
+        $x = $this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal));
+
+        if ($exibirBorda) {
+            $this->pdf->Rect($x, $y, $this->largura, $this->altura);
+        }
+
+        $ocupoularg = 0;
+        $campoY = $y;
+
+        foreach ($camp as $propCamp) {
+            $this->pdf->SetY($campoY);
+            $caracteres = intval($propCamp['etc_caracteres']) ?? 30;
+
+            if ($propCamp['etc_campo'] == '1') {
+                $larg = $this->largura * ($propCamp['etc_colunas'] / 100);
+                $this->pdf->Line($x, $campoY, $x + $larg, $campoY);
+                $alturalinha = (1 / 8) * 3;
+                $propCamp['etc_colunas'] = 100;
+
+            } elseif ($propCamp['etc_codbar'] === 'S') {
+                if ($caracteres == 0) $caracteres = 10;
+                $conteudo = trim(substr($registro[$propCamp['etc_campo']] ?? '', 0, $caracteres));
+                if (strlen($conteudo) == 0) $conteudo = str_repeat('0', $caracteres);
+
+                $tamconte = $this->largura * ($propCamp['etc_colunas'] / 100);
+                $altconte = intval($propCamp['etc_tamanho']) + 2;
+                $left = $x + (((100 - $propCamp['etc_colunas']) / 2) * ($this->largura / 100));
+
+                $this->pdf->Code128($left, $campoY, $conteudo, $tamconte, $altconte);
+                $campoY += $altconte;
+
+                $alturalinha = $altconte;
+                $propCamp['etc_colunas'] = 100;
+
+            } else {
+                $alturalinha = ($propCamp['etc_tamanho'] / 8) * 3;
+                $ocupado = $this->largura * ($ocupoularg / 100);
+                $espacodisponivel = $this->largura * ($propCamp['etc_colunas'] / 100);
+
+                if (($ocupado + $espacodisponivel) > $this->largura) {
+                    $espacodisponivel = $this->largura - $ocupado;
+                    if ($espacodisponivel < 5) {
+                        $this->pdf->Cell(10, $alturalinha, '', 0, 1, 'E');
+                        $ocupado = 0;
+                        $espacodisponivel = $this->largura * ($propCamp['etc_colunas'] / 100);
+                        $campoY = $this->pdf->getY();
+                    }
+                }
+
+                $baseX = $this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal));
+                $x = match ($propCamp['etc_alinhamento']) {
+                    'R' => $baseX + $this->largura - $espacodisponivel + 1,
+                    'C' => $baseX + $ocupado,
+                    default => $baseX + $ocupado - 1,
+                };
+
+                $this->pdf->SetX($x);
+
+                $estilo = '';
+                if ($propCamp['etc_negrito'] === 'S') $estilo .= 'B';
+                if ($propCamp['etc_italico'] === 'S') $estilo .= 'I';
+                if ($propCamp['etc_sublinhado'] === 'S') $estilo .= 'U';
+
+                $this->pdf->SetFont($propCamp['etc_fonte'], $estilo, $propCamp['etc_tamanho']);
+
+                $rotulo = ($propCamp['etc_rotulo'] != 'Sem Rótulo' && $propCamp['etc_rotulo'] != '.') ? trim($propCamp['etc_rotulo']) : '';
+                $conteudo = '';
+
+                if ($propCamp['etc_campo'] == '0') {
+                    $rotulo = '';
+                    $conteudo = trim($propCamp['etc_rotulo']);
+                    $propCamp['etc_linhas'] = 1;
+                } elseif ($propCamp['etc_campo'] == '2') {
+                    $conteudo = data_br(date('Y-m-d'));
+                    $propCamp['etc_linhas'] = 1;
+                } elseif ($propCamp['etc_campo'] == '3') {
+                    $conteudo = data_br(date('Y-m-d H:i:s'));
+                    $propCamp['etc_linhas'] = 1;
                 } else {
-                    $alturalinha = ($propCamp['etc_tamanho'] / 8) * 3;
-                    $ocupado = $this->largura * ($ocupoularg / 100);
-                    $espacodisponivel = $this->largura * ($propCamp['etc_colunas'] / 100);
-
-                    $total = $ocupado + $espacodisponivel;
-                    if ($total > $this->largura) {
-                        $espacodisponivel = $this->largura - $ocupado;
-                        if ($espacodisponivel < 5) {
-                            $this->pdf->Cell(10, $alturalinha, '', 0, 1, 'E');
-                            $ocupado = 0;
-                            $espacodisponivel = $this->largura * ($propCamp['etc_colunas'] / 100);
-                            $y = $this->pdf->getY();
-                        }
-                    }
-
-                    $baseX = $this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal));
-
-                    if ($propCamp['etc_alinhamento'] === 'R') {
-                        $x = $baseX + $this->largura - $espacodisponivel + 1;
-                    } elseif ($propCamp['etc_alinhamento'] === 'C') {
-                        $x = $baseX + $ocupado;
-                    } else { // Alinhamento à esquerda (ou padrão)
-                        $x = $baseX + $ocupado - 1;
-                    }
-
-                    $this->pdf->SetX($x);
-
-                    $estilo = '';
-                    if ($propCamp['etc_negrito'] === 'S') $estilo .= 'B';
-                    if ($propCamp['etc_italico'] === 'S') $estilo .= 'I';
-                    if ($propCamp['etc_sublinhado'] === 'S') $estilo .= 'U';
-
-                    $this->pdf->SetFont($propCamp['etc_fonte'], $estilo, $propCamp['etc_tamanho']);
-
-                    $rotulo = ($propCamp['etc_rotulo'] != 'Sem Rótulo' && $propCamp['etc_rotulo'] != '.') ? trim($propCamp['etc_rotulo']) : '';
-                    $conteudo = '';
-
-                    if ($propCamp['etc_campo'] == '0') {
-                        $rotulo = '';
-                        $conteudo = trim($propCamp['etc_rotulo']);
-                        $propCamp['etc_linhas'] = 1;
-
-                    } elseif ($propCamp['etc_campo'] == '2') {
-                        $conteudo = data_br(date('Y-m-d'));
-                        $propCamp['etc_linhas'] = 1;
-
-                    } elseif ($propCamp['etc_campo'] == '3') {
-                        $conteudo = data_br(date('Y-m-d H:i:s'));
-                        $propCamp['etc_linhas'] = 1;
-
-                    } else {
-                        $conteudo = trim(substr($registro[$propCamp['etc_campo']] ?? '', 0, $caracteres));
-                    }
-
-                    $conteudo = trim($rotulo . ' ' . $conteudo);
-
-                    $linhas = intval($propCamp['etc_linhas']); 
-                    if ($linhas > 1) {
-                        $conteudo = trim($registro[$propCamp['etc_campo']]);
-                        $this->pdf->MultiCellLimited($espacodisponivel, $alturalinha, utf8_decode($conteudo), 0,$propCamp['etc_alinhamento'],false,$linhas, $caracteres);
-                    } else {
-                        $maxWidth = $espacodisponivel;
-                        $conteudoOriginal = utf8_decode($conteudo);
-                        $conteudoFinal = $conteudoOriginal;
-
-                        while ($this->pdf->GetStringWidth($conteudoFinal) > $maxWidth) {
-                            $conteudoFinal = substr($conteudoFinal, 0, -1); // Remove último caractere
-                            if (strlen($conteudoFinal) <= 3) break; // Evita cortar demais
-                        }
-
-                        if ($conteudoFinal !== $conteudoOriginal) {
-                            $conteudoFinal = rtrim($conteudoFinal);
-                        }
-                        if ($propCamp['etc_alinhamento'] === 'R') {
-                            $x = (($this->esquerda + ($colunaAtual * ($this->largura + $this->horizontal))) + $this->largura) - $espacodisponivel + 1;
-                            $this->pdf->SetX($x);
-                            $propCamp['etc_colunas'] = 100;
-                        }
-
-                        $this->pdf->Cell($espacodisponivel, $alturalinha, $conteudoFinal, 0, 0, $propCamp['etc_alinhamento']);
-                        // $this->pdf->Cell($espacodisponivel, $alturalinha, "'".$propCamp['etc_alinhamento']."'", 0, 0, "'".$propCamp['etc_alinhamento']."'");
-                    }
+                    $conteudo = trim(substr($registro[$propCamp['etc_campo']] ?? '', 0, $caracteres));
                 }
 
-                $ocupoularg += $propCamp['etc_colunas'];
-                if ($ocupoularg >= 90) {
-                    $this->pdf->Cell(10, $alturalinha, '', 0, 1, 'E');
-                    $ocupoularg = 0;
-                    $y = $this->pdf->getY();
+                $conteudo = trim($rotulo . ' ' . $conteudo);
+                $linhas = intval($propCamp['etc_linhas']);
+
+                if ($linhas > 1) {
+                    $conteudo = trim($registro[$propCamp['etc_campo']]);
+                    $this->pdf->MultiCellLimited($espacodisponivel, $alturalinha, utf8_decode($conteudo), 0, $propCamp['etc_alinhamento'], false, $linhas, $caracteres);
+                    $campoY = $this->pdf->getY();
+                } else {
+                    $conteudoOriginal = utf8_decode($conteudo);
+                    $conteudoFinal = $conteudoOriginal;
+
+                    while ($this->pdf->GetStringWidth($conteudoFinal) > $espacodisponivel) {
+                        $conteudoFinal = substr($conteudoFinal, 0, -1);
+                        if (strlen($conteudoFinal) <= 3) break;
+                    }
+
+                    $this->pdf->Cell($espacodisponivel, $alturalinha, $conteudoFinal, 0, 0, $propCamp['etc_alinhamento']);
+                    $campoY += $alturalinha;
                 }
             }
 
-            $colunaAtual++;
-            if ($colunaAtual == $this->colunas) {
-                $colunaAtual = 0;
-                $linhaAtual++;
-            }
-
-            if ($linhaAtual >= $this->linhas) {
-                $this->pdf->Add_Page('P', $tamanho, 0);
-                $colunaAtual = 0;
-                $linhaAtual = 0;
+            $ocupoularg += $propCamp['etc_colunas'];
+            if ($ocupoularg >= 90) {
+                $this->pdf->Cell(10, $alturalinha, '', 0, 1, 'E');
+                $ocupoularg = 0;
+                $campoY = $this->pdf->getY();
             }
         }
 
-        $this->pdf->AliasNbPages();
+        $colunaAtual++;
+        $etiquetaIndex++;
+
+        // Salta para a próxima linha apenas se completar todas as colunas
+        if ($colunaAtual >= $this->colunas || $etiquetaIndex === $totalEtiquetas) {
+            $colunaAtual = 0;
+            $y += $this->altura + $this->vertical;
+        }
+
+        $ultimoY = max($ultimoY, $y);
     }
+    $this->alturaFinal = $ultimoY;
+    // return $ultimoY;
+}
 
     public function emiteEtiqueta($etq_id, $chave = false)
     {
@@ -622,6 +798,7 @@ class CriaEtiqueta extends BaseController
         $tamanho[0] = ($this->largura * $this->colunas) + ($this->horizontal * ($this->colunas - 1)) + $this->esquerda + $this->direita;
         $tamanho[1] = $this->topo + ($this->altura * $this->linhas) + ($this->vertical * $this->linhas) + $this->rodape + $this->altura;
 
+
         $modelo = ($chave === false);
 
         if ($modelo) {
@@ -632,7 +809,7 @@ class CriaEtiqueta extends BaseController
             if (!empty($telas['tel_model'])) {
                 $model = $telas['tel_model'];
                 $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
-                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields);
+                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 20);
             }
         } else {
             $dados = cache()->get($chave);
@@ -679,9 +856,6 @@ class CriaEtiqueta extends BaseController
         $this->colunas    = $etq['let_colunas'];
         $this->linhas     = $etq['let_linhas'];
 
-        $tamanho[0] = ($this->largura * $this->colunas) + ($this->horizontal * ($this->colunas - 1)) + $this->esquerda + $this->direita;
-        $tamanho[1] = $this->topo + ($this->altura * $this->linhas) + ($this->vertical * $this->linhas) + $this->rodape + $this->altura;
-
         $dados = [];
         $telas = $this->tela->getTelaId($tel_id)[0];
 
@@ -689,8 +863,14 @@ class CriaEtiqueta extends BaseController
             $model = $telas['tel_model'];
             $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
             $fields = array_filter(array_column($camp, 'etc_campo'), fn($f) => $f !== '0' && $f !== '1');
-            $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields);
+            $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 10);
         }
+
+        $tamanho[0]   = ($this->colunas * $this->largura) + (($this->colunas - 1) * $this->horizontal) + ($this->esquerda + $this->direita);
+
+        // $tamanho[0] = ($this->largura * $this->colunas) + ($this->horizontal * ($this->colunas - 1)) + $this->esquerda + $this->direita;
+        $tamanho[1] = $this->topo + ($this->altura * $this->linhas) + ($this->vertical * $this->linhas) + $this->rodape + $this->altura;
+        // debug($tamanho, true);
 
         $this->renderEtiquetas($dados, $camp, $tamanho, true);
 

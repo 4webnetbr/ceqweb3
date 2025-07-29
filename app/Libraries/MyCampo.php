@@ -256,10 +256,13 @@ class MyCampo
             $label['style'] = "white-space: normal;width:$this->largura;padding:0.8em;";
             $label_text .= "<i class='fa fa-file-archive-o'></i> Selecionar Arquivo";
         }
-        if ($this->dispForm == 'linha') {
+        if (str_contains($this->dispForm, 'linha')) {
             $ret = "<div class='col-2 col-lg-2 d-block'>";
+            if(str_contains($this->dispForm, '2col')){
+                $ret = "<div class='col-4 col-lg-4 d-block'>";
+            }
             // } elseif ($this->dispForm != 'linha' || $this->tipo == 'editor') {
-        } elseif ($this->dispForm != 'linha') {
+        } elseif (!str_contains($this->dispForm, 'linha')) {
             $ret = "<div class='col-12 col-lg-12 d-block'>";
         }
         if (isset($this->objeto) && $this->objeto == 'cr2opcoes' && $this->dispForm == '2col') {
@@ -284,19 +287,20 @@ class MyCampo
         $respf = '';
         $colunas = '';
         $mb = 'mb-0 mt-2';
-        if ($this->dispForm == 'linha' || $this->tipo == 'editor') {
+        if (str_contains($this->dispForm, 'linha') || $this->tipo == 'editor') {
             $colunas = "col-12 col-lg-12";
-        } elseif ($this->dispForm == '2col') {
+        }
+        if (str_contains($this->dispForm, '2col')) {
             $colunas = "col-6 col-lg-6";
             if (isset($this->objeto) && $this->objeto == 'cr2opcoes') {
                 $mb = 'my-3';
             }
-        } elseif ($this->dispForm == '3col') {
+        } elseif (str_contains($this->dispForm, '3col')) {
             $colunas = "col-4 col-lg-4";
-        } elseif ($this->dispForm == '4col') {
+        } elseif (str_contains($this->dispForm, '4col')) {
             $colunas = "col-3 col-lg-3";
         }
-        if (substr($this->dispForm, 0, 3) == 'col') { // se for especificado em colunas variáveis
+        if (str_contains($this->dispForm, 'col-')) { // se for especificado em colunas variáveis
             $colunas = $this->dispForm;
             $mb = 'mb-1';
         }

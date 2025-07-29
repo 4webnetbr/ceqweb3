@@ -67,8 +67,8 @@
     "searchBuilder": {
         "add": "Adicionar Condição",
         "button": {
-            "0": "<i class='fa fa-filter' aria-hidden='true'></i> ",
-            "_": "<i class='fa fa-filter' aria-hidden='true'></i> (%d)"
+            "0": "<i class='fas fa-filter' aria-hidden='true'></i> ",
+            "_": "<i class='fas fa-filter' aria-hidden='true'></i> (%d)"
         },
         "clearAll": "Limpar Tudo",
         "condition": "Condição",

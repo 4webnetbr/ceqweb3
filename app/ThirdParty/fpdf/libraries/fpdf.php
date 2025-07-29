@@ -1100,6 +1100,7 @@ protected function _beginpage($orientation, $size, $rotation)
 		$size = $this->DefPageSize;
 	else
 		$size = $this->_getpagesize($size);
+
 	if($orientation!=$this->CurOrientation || $size[0]!=$this->CurPageSize[0] || $size[1]!=$this->CurPageSize[1])
 	{
 		// New size or orientation

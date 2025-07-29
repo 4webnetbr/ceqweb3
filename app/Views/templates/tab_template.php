@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="<?=base_url('assets/css/default.css?nocache='.time());?>">
   <!-- Estilos personalizados -->
     <link rel="stylesheet" href="<?=base_url('assets/css/menu.css?nocache='.time());?>">
+  <link rel="stylesheet" href="<?=base_url('assets/fontawesome/css/all.css');?>">
   <?php
     if(isset($styles) && strlen($styles)>0){
       $styles = explode(',',$styles);
@@ -39,9 +40,10 @@
   <!-- JQUERY -->
     <script src="<?=base_url('assets/jscript/jquery-3.6.3.js');?>"></script>
   <!-- Scripts personalizados -->
-  <script src="https://kit.fontawesome.com/da32fd0a5b.js" crossorigin="ceqnep.com.br"></script>
+  <!-- <script src="https://kit.fontawesome.com/da32fd0a5b.js" crossorigin="ceqnep.com.br"></script> -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/6.0.0/bootbox.min.js" integrity="sha512-oVbWSv2O4y1UzvExJMHaHcaib4wsBMS5tEP3/YkMP6GmkwRJAa79Jwsv+Y/w7w2Vb/98/Xhvck10LyJweB8Jsw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
+  <script src="<?=base_url('assets/fontawesome/js/all.min.js');?>" defer></script>
     <script src="<?=base_url('assets/jscript/my_default.js');?>"></script>
     <script src="<?=base_url('assets/jscript/my_menu.js');?>"></script>
   <?php

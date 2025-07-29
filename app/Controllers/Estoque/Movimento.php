@@ -96,7 +96,7 @@ class Movimento extends BaseController
                 $botaoedt = "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' 
             data-mdb-toggle='tooltip' data-mdb-placement='top' 
             title='Imprimir Requisição' onclick='openPDFModal(\"$url_edit\",\"Imprimir Requisição\")'>
-            <i class='fa-solid fa-print'></i></button>";
+            <i class='fas fa-print'></i></button>";
                 $botaoedt = '';
 
                 $dadosCombinados[] = [

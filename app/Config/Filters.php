@@ -44,6 +44,8 @@ class Filters extends BaseConfig
                     'criapdf2025/*',
                     'criaetiqueta',
                     'criaetiqueta/*',
+                    'criaetiquetaZPL',
+                    'criaetiquetaZPL/*',
                     'showfile',
                     'showfile/*',
                     'assets/*',
