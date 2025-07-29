@@ -60,7 +60,7 @@ class CfgEtiqueta extends BaseController
         // if (!$etiqt = cache('etiqt')) {
         $campos = montaColunasCampos($this->data, 'etq_id');
         $dados_etiqt = $this->etiqueta->getEtiqueta();
-        $base_url = base_url('/CriaEtiquetaZPL/emiteEtiqueta/');
+        $base_url = base_url('/CriaEtiqueta/emiteEtiqueta/');
 
         foreach ($dados_etiqt as &$etq) {
             $url_ati = $base_url . $etq['etq_id'];
@@ -192,8 +192,7 @@ class CfgEtiqueta extends BaseController
         $this->data['campos']     = $campos;
         $this->data['displ']     = $displ;
         $this->data['destino']    = 'store';
-        // $base_url = base_url('/CriaEtiqueta/previewEtiquetaViaAjax');
-        $base_url = base_url('/CriaEtiquetaZPL/previewZPL');
+        $base_url = base_url('/CriaEtiqueta/previewEtiquetaViaAjax');
         $this->data['script'] = "<script>acerta_botoes_rep('campos_para_etiqueta');carregarPDF('".$base_url."')</script>";
 
         echo view('vw_edicao_etiqueta', $this->data);

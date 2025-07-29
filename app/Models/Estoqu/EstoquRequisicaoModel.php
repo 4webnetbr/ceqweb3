@@ -119,7 +119,7 @@ class EstoquRequisicaoModel extends Model
     public function getRequisicaoProdutos($req_id = false)
     {
         $db = db_connect('dbEstoque');
-        $builder = $db->table('est_requisicao_produto');
+        $builder = $db->table('vw_est_requisicao_produto_relac');
         $builder->select('*');
         if ($req_id) {
             $builder->where('req_id', $req_id);
@@ -281,13 +281,28 @@ class EstoquRequisicaoModel extends Model
         $prod->opcoes         = [];
         $ret['pro_id']        = $prod->crSelbusca();
 
-        $btca            = new MyCampo();
-        $btca->nome      = "bt_carregar";
-        $btca->id        = "bt_carregar";
-        $btca->i_cone    = "<i class='fas fa-refresh fs-3'></i> <scan class='mx-3'>Carregar Produtos</scan>";
-        $btca->label     = $btca->place     = "Carregar Produtos";
-        $btca->classep   = "btn-outline-success btn-sm align-items-center d-flex m-3";
-        $btca->funcChan  = "carregarProdutos('" . base_url("Requisicao/produtos/") . "','produtos',this)";
+        $codb                 = new MyCampo('pro_sap_lote', 'lot_codbar', false);
+        $codb->valor          = '';
+        $codb->leitura        = false;
+        $codb->classep        = 'mb2';
+        $codb->dispForm       = 'col-6';
+        $codb->funcBlur       = 'validaCodBar(this)';
+        $ret['lot_codbar']      = $codb->crInput();
+
+        $qtia                 = new MyCampo('est_requisicao_produto', 'rep_quantia', false);
+        $qtia->valor          = '0';
+        $qtia->leitura        = false;
+        $qtia->classep        = 'mb2';
+        $qtia->dispForm       = 'col-6';
+        $ret['rep_quantia']      = $qtia->crInput();
+
+        $btca                 = new MyCampo();
+        $btca->nome           = "bt_carregar";
+        $btca->id             = "bt_carregar";
+        $btca->i_cone         = "<i class='fas fa-refresh fs-3'></i> <scan class='mx-3'>Carregar Produtos</scan>";
+        $btca->label          = $btca->place     = "Carregar Produtos";
+        $btca->classep        = "btn-outline-success btn-sm align-items-center d-flex m-3";
+        $btca->funcChan       = "carregarProdutos('" . base_url("Requisicao/produtos/") . "','produtos',this)";
         $ret['bt_carregar']   = $btca->crBotao();
 
         return $ret;

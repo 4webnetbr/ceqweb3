@@ -89,13 +89,6 @@ class CriaEtiquetaZPL extends BaseController
 
             $x = $xBase + $ocupado;
 
-            if ($propCamp['etc_campo'] == '1') {
-                $zpl .= "^FO{$x},{$y}^GB{$espacoLargura},1,1^FS\n";
-                $y += 4;
-                $ocupouLargura = 0;
-                continue;
-            }
-
             if ($propCamp['etc_codbar'] === 'S') {
                 $conteudo = substr(trim($registro[$propCamp['etc_campo']] ?? ''), 0, $caracteres);
                 if ($conteudo === "") {
@@ -109,26 +102,29 @@ class CriaEtiquetaZPL extends BaseController
                 continue;
             }
 
-            $estilo = "";
-            if ($propCamp['etc_negrito'] === 'S') $estilo .= 'B';
-            if ($propCamp['etc_italico'] === 'S') $estilo .= 'I';
-            if ($propCamp['etc_sublinhado'] === 'S') $estilo .= 'U';
+            $rotulo = ($propCamp['etc_rotulo'] !== 'Sem Rótulo' && $propCamp['etc_rotulo'] !== '.') ? trim($propCamp['etc_rotulo']) . ' ' : '';
+            $conteudo = $rotulo;
+
+            if ($propCamp['etc_campo'] == '0') {
+                $conteudo .= trim($propCamp['etc_rotulo']);
+            } elseif ($propCamp['etc_campo'] == '2') {
+                $conteudo .= date('d/m/Y');
+            } elseif ($propCamp['etc_campo'] == '3') {
+                $conteudo .= date('d/m/Y H:i');
+            } else {
+                $conteudo .= substr(trim($registro[$propCamp['etc_campo']] ?? ''), 0, $caracteres);
+            }
+
+            if (intval($propCamp['etc_linhas']) > 1) {
+                $conteudo = substr($conteudo, 0, $caracteres);
+            }
 
             $fonte = strtoupper(substr($propCamp['etc_fonte'], 0, 1)) ?: 'A';
             $tamanho = intval($propCamp['etc_tamanho']) ?: 10;
             $alturaFonte = $tamanho * 3;
             $larguraFonte = $tamanho * 2;
 
-            if ($propCamp['etc_campo'] == '0') {
-                $conteudo = trim($propCamp['etc_rotulo']);
-            } elseif ($propCamp['etc_campo'] == '2') {
-                $conteudo = date('d/m/Y');
-            } elseif ($propCamp['etc_campo'] == '3') {
-                $conteudo = date('d/m/Y H:i');
-            } else {
-                $rotulo = ($propCamp['etc_rotulo'] != 'Sem Rótulo' && $propCamp['etc_rotulo'] != '.') ? trim($propCamp['etc_rotulo']) . ': ' : '';
-                $conteudo = $rotulo . substr(trim($registro[$propCamp['etc_campo']] ?? ''), 0, $caracteres);
-            }
+            $conteudo = substr($conteudo, 0, floor($espacoLargura / $larguraFonte));
 
             $alinhamento = strtoupper($propCamp['etc_alinhamento'] ?? 'L');
             if ($alinhamento === 'C') {
@@ -137,7 +133,7 @@ class CriaEtiquetaZPL extends BaseController
                 $x += ($espacoLargura - strlen($conteudo) * $larguraFonte);
             }
 
-            $zpl .= "^FO{$x},{$y}^A{$fonte},{$alturaFonte},{$larguraFonte}^FD{$conteudo}^FS\n";
+            $zpl .= "^FO{$x},{$y}^A0,{$alturaFonte},{$larguraFonte}^FD{$conteudo}^FS\n";
             $y += $alturaFonte + 2;
 
             $ocupouLargura += $colunas;

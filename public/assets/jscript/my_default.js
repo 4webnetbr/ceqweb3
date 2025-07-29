@@ -812,7 +812,9 @@ function boxAlert(
       className: "rubberBand animated",
       callback: function () {
         if (!erro) {
-          redireciona(url);
+          if (url != "") {
+            redireciona(url);
+          }
         }
       },
     });

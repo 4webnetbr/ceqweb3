@@ -167,8 +167,9 @@ class AteRequisicao extends BaseController
         $campos[0][count($campos[0])] = $fields['req_data'];
         $campos[0][count($campos[0])] = $fields['req_dataentrega'];
         $campos[0][count($campos[0])] = $fields['tmo_id'];
-        // $campos[0][count($campos[0])] = $fields['req_repetedias'];
-        // $campos[0][count($campos[0])] = $fields['req_deporigem'];
+        $campos[0][count($campos[0])] = "<div class='col-6'>.</div>";
+        $campos[0][count($campos[0])] = $fields['lot_codbar'];
+        $campos[0][count($campos[0])] = $fields['rep_quantia'];
         // $campos[0][count($campos[0])] = $fields['req_depdestino'];
         // $campos[0][count($campos[0])] = $fields['req_consdiaanterior'];
         // $campos[0][count($campos[0])] = $fields['req_medconsumodias'];
@@ -179,9 +180,9 @@ class AteRequisicao extends BaseController
         // $campos[0][count($campos[0])] = $fields['bt_carregar'];
 
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
-        debug($produtos);
-        $secao[1] = 'Produtos';
-        $campos[1][0] = ''; // mesma estrutura do add()
+        // debug($produtos);
+        // $secao[1] = 'Produtos';
+        $campos[0][count($campos[0])] = view('partials/pw_produtos_requisicao',['produtos' => $produtos]); // mesma estrutura do add()
 
         // $envr          = new MyCampo();
         // $envr->nome    = 'bt_envia';

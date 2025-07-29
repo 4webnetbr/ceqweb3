@@ -172,8 +172,7 @@ class ConfigEtiquetaCampoModel extends Model
                 }
             }
         }
-        // $base_url = base_url('/CriaEtiqueta/previewEtiquetaViaAjax');
-        $base_url = base_url('/CriaEtiquetaZPL/previewZPL');
+        $base_url = base_url('/CriaEtiqueta/previewEtiquetaViaAjax');
 
         $etc_campo              = new MyCampo('cfg_etiqueta_campo', 'etc_campo');
         $etc_campo->valor       = (isset($dados['etc_campo'])) ? $dados['etc_campo'] : '';
