@@ -286,6 +286,9 @@ class EstoquRequisicaoModel extends Model
         $codb->leitura        = false;
         $codb->classep        = 'mb2';
         $codb->dispForm       = 'col-6';
+        $codb->tamanho        = '30';
+        $codb->largura        = '30';
+        $codb->size           = '30';
         $codb->funcBlur       = 'validaCodBar(this)';
         $ret['lot_codbar']      = $codb->crInput();
 
@@ -325,6 +328,39 @@ class EstoquRequisicaoModel extends Model
         $prod->urlbusca         = base_url('buscas/buscaProdutoClasse');
         $ret['pro_id']          = $prod->crDependeMultiplo();
 
+        return $ret;
+    }
+    public function defCamposProdutoAte($dados = false, $show = false)
+    {
+        $ret = [];
+
+        $canc                 = new MyCampo('est_requisicao_produto', 'rep_cancelada', false);
+        $canc->id = $canc->nome = "rep_cancelada_".$dados['rep_id'];
+        $canc->valor          = 0;
+        $canc->label          = '';
+        $canc->leitura        = false;
+        $canc->classep        = 'mb2';
+        $canc->size           = 15;
+        $canc->minimo           = 0;
+        $canc->maximo           = $dados['rep_quantia'];
+        $canc->dispForm       = 'col-1';
+        $ret['rep_cancelada']      = $canc->crInput();
+
+        $aten                 = new MyCampo('est_requisicao_produto', 'rep_atendida', false);
+        $aten->id = $aten->nome = "rep_atendida_".$dados['rep_id'];
+        $aten->valor          = 0;
+        $aten->label          = '';
+        $aten->leitura        = true;
+        if($dados['pre_cbfabricante'] == 'N' && $dados['pre_undfabricante'] == 'N'){
+            $aten->leitura        = false;
+        }
+        $aten->classep        = 'mb2';
+        $aten->dispForm       = 'col-1';
+        $aten->size           = 15;
+        $aten->tamanho           = 15;
+        $aten->minimo           = 0;
+        $aten->maximo           = $dados['rep_quantia'];
+        $ret['rep_atendida']      = $aten->crInput();
         return $ret;
     }
 }

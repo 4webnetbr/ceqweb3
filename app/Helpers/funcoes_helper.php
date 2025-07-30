@@ -782,3 +782,12 @@ function buscaTipoArquivo($dados)
     }
     return $imgarquivo;
 }
+
+
+function extrairCodBarFab($str) {
+    $pos = strpos($str, '789');
+    if ($pos === false) {
+        return null;
+    }
+    return substr($str, $pos, 13);
+}

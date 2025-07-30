@@ -326,48 +326,58 @@ function carregarPDF(urlpdf) {
 }
 
 function validaCodBar(obj) {
-  codbar = obj.value;
-  var tdCodbar = jQuery("#" + codbar);
+  codbar = extrairCodBarFab(obj.value);
+  if (codbar.length > 0) {
+    var tdCodbar = jQuery("#" + codbar);
 
-  if (tdCodbar.length) {
-    // Encontra a <tr> pai
-    var linha = tdCodbar.closest("tr");
+    if (tdCodbar.length) {
+      // Encontra a <tr> pai
+      var linha = tdCodbar.closest("tr");
 
-    // Extrai o ID base (assumindo que o codbar está na mesma linha do stt_169)
-    var idBase = linha.find('div[id^="stt_"]').attr("id").split("_")[1];
-    var cbfab = jQuery("#cbfab_" + idBase).val();
-    var cblot = jQuery("#cblot_" + idBase).val();
-    if (cbfab == "N" && cblot == "S") {
-      // lote do PRODUTO
-      // Monta os IDs completos
-      var qtde = jQuery("#qt_" + idBase).text();
-      var atendida = jQuery("#at_" + idBase).text();
-      var saldo = jQuery("#sl_" + idBase).text();
-      var unlot = jQuery("#undlot_" + idBase).val();
-      var cfreq = jQuery("#cfreq_" + idBase).val();
+      // Extrai o ID base (assumindo que o codbar está na mesma linha do stt_169)
+      var idBase = linha.find('div[id^="stt_"]').attr("id").split("_")[1];
+      var cbfab = jQuery("#cbfab_" + idBase).val();
+      var cblot = jQuery("#cblot_" + idBase).val();
+      if (cbfab == "N" && cblot == "S") {
+        // lote do PRODUTO
+        // Monta os IDs completos
+        var qtde = jQuery("#qt_" + idBase).text();
+        var atendida = jQuery("#at_" + idBase).text();
+        var saldo = jQuery("#sl_" + idBase).text();
+        var unlot = jQuery("#undlot_" + idBase).val();
+        var cfreq = jQuery("#cfreq_" + idBase).val();
 
-      atendida++;
-      saldo--;
+        atendida++;
+        saldo--;
 
-      jQuery("#at_" + idBase).text(atendida);
-      jQuery("#sl_" + idBase).text(saldo);
+        jQuery("#at_" + idBase).text(atendida);
+        jQuery("#sl_" + idBase).text(saldo);
 
-      if (atendida > 0 && atendida < qtde) {
-        fundo = "bg-warning";
-      } else if (atendida == qtde) {
-        fundo = "bg-success";
-      } else if (atendida > qtde) {
-        fundo = "bg-danger";
+        if (atendida > 0 && atendida < qtde) {
+          fundo = "bg-warning";
+        } else if (atendida == qtde) {
+          fundo = "bg-success";
+        } else if (atendida > qtde) {
+          fundo = "bg-danger";
+        }
+        jQuery("#stt_" + idBase).removeClass("bg-white");
+        jQuery("#stt_" + idBase).removeClass("bg-warning");
+        jQuery("#stt_" + idBase).removeClass("bg-success");
+        jQuery("#stt_" + idBase).removeClass("bg-danger");
+        jQuery("#stt_" + idBase).addClass(fundo);
+      } else {
+        var unfab = jQuery("#undfab_" + idBase).val();
       }
-      jQuery("#stt_" + idBase).removeClass("bg-white");
-      jQuery("#stt_" + idBase).removeClass("bg-warning");
-      jQuery("#stt_" + idBase).removeClass("bg-success");
-      jQuery("#stt_" + idBase).removeClass("bg-danger");
-      jQuery("#stt_" + idBase).addClass(fundo);
     } else {
-      var unfab = jQuery("#undfab_" + idBase).val();
+      boxAlert(10, false, "", true, 1, false);
     }
-  } else {
-    boxAlert(10, false, "", true, 1, false);
   }
+}
+
+function extrairCodBarFab(str) {
+  const pos = str.indexOf("789");
+  if (pos === -1) {
+    return str;
+  }
+  return str.substring(pos, pos + 13);
 }

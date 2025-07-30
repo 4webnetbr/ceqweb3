@@ -283,18 +283,20 @@ class Produto extends BaseController
     {
         if ($tipo == 1) {
             $dad_atin = [
-                'pro_ativo' => 'A'
+                'pro_ativo' => 'A',
+                'stt_id'    => 3  // status inativo
             ];
             $tipotxt = [27, 'Ativado'];
         } else {
             $dad_atin = [
-                'pro_ativo' => 'I'
+                'pro_ativo' => 'I',
+                'stt_id'    => 20  // status inativo
             ];
             $tipotxt = [14, 'Inativado'];
         }
-        $podeinativar = $this->produtos->getProdutoEstoque($id);
+        // $podeinativar = $this->produtos->getProdutoEstoque($id);
         $ret = [];
-        if (count($podeinativar) > 0) {
+        // if (count($podeinativar) > 0) {
             try {
                 $this->produtos->update($id, $dad_atin);
                 $ret['erro'] = false;
@@ -303,11 +305,11 @@ class Produto extends BaseController
                 $ret['erro'] = true;
                 $ret['msg']  = $tipotxt[0];
             }
-        } else {
-            $ret['erro'] = true;
-            // $ret['msg']  = "Não foi possível " . $tipotxt[0] . " o Produto, Verifique!<br><br>";
-            $ret['msg']  = $tipotxt[0];
-        }
+        // } else {
+        //     $ret['erro'] = true;
+        //     // $ret['msg']  = "Não foi possível " . $tipotxt[0] . " o Produto, Verifique!<br><br>";
+        //     $ret['msg']  = $tipotxt[0];
+        // }
         echo json_encode($ret);
     }
 

@@ -82,6 +82,7 @@ class AnaRequisicao extends BaseController
             ];
         }
         $this->data['edicao'] = false;
+        $this->data['exclusao'] = false;
         $anarequis = [
             'data' => montaListaColunas($this->data, 'req_id', $dados_tela, $campos[1]),
         ];
@@ -174,16 +175,20 @@ class AnaRequisicao extends BaseController
         }
 
         $texto = "<div class='col-12 float-start d-block mt-5'>";
+        $texto .= "<div class='row row border border-2'>";
         $texto .= "<div class='col-4 float-start fw-bold'>Produto</div>";
         $texto .= "<div class='col-4 float-start fw-bold'>Fabricante</div>";
         $texto .= "<div class='col-2 float-start fw-bold'>Lote</div>";
         $texto .= "<div class='col-2 float-start fw-bold'>Validade</div>";
+        $texto .= "</div>";
         for ($p = 0; $p < count($dados_requisi); $p++) {
             $prod = $dados_requisi[$p];
+            $texto .= "<div class='row border border-1'>";
             $texto .= "<div class='col-4 float-start'>" . $prod['pro_despro'] . "</div>";
             $texto .= "<div class='col-4 float-start'>" . $prod['fab_apeFab'] . "</div>";
             $texto .= "<div class='col-2 float-start'>" . $prod['lot_lote'] . "</div>";
             $texto .= "<div class='col-2 float-start'>" . data_br($prod['lot_validade']) . "</div>";
+            $texto .= "</div>";
         }
         $texto .= "</div>";
         $campos[0][$prox] = $texto;

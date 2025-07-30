@@ -78,6 +78,9 @@ class Lote extends BaseController
         // $integ->integraLote();
 
         $dados_lotes = $this->lotes->getLote($id);
+        if(count($dados_lotes) == 0){
+            $dados_lotes = $this->lotes->getLoteSearch($id);
+        }
         // debug($dados_lotes, true);
         if (count($dados_lotes) > 0) {
             $fields = $this->lotes->defCampos($dados_lotes[0], true);
@@ -99,8 +102,9 @@ class Lote extends BaseController
 
             echo view('vw_edicao', $this->data);
         } else {
+            
             $msg  = 'LOTE não Encontrado, ou não disponível!!!';
-            session()->setFlashdata('msg', 25);
+            session()->setFlashdata('msg', $msg);
             $this->index();
         }
     }

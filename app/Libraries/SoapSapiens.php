@@ -2,8 +2,8 @@
 
 namespace App\Libraries;
 
-use App\Models\MovimMonModel;
 use SoapClient;
+use App\Models\MovimMonModel;
 
 class SoapSapiens
 {
@@ -88,6 +88,7 @@ class SoapSapiens
 
             log_message('info', 'TransferenciaProdutos parametros ' . json_encode($parameters));
             log_message('info', 'TransferenciaProdutos resposta ' . json_encode($result));
+            // debug($result, true);
             $status = 'OK';
             $msgretorno = $result->mensagemRetorno;
             if($result->tipoRetorno > 1){
@@ -98,7 +99,7 @@ class SoapSapiens
 
         } catch (\SoapFault $e) {
             // falha de conexão ou erro na resposta
-            $msgretorno = $e->getMessage();
+            $msgretorno = 'Erro SOAP: ' . $e->getMessage();
             $status = 'Erro';
             log_message('error', 'Erro SOAP: ' . $e->getMessage());
 
@@ -111,10 +112,80 @@ class SoapSapiens
 
         $movdb = new MovimMonModel();
         $movim = $movdb->insertMovimento($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida, $status, $msgretorno);
-
         return $result;
     }
 
+    public function movimProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida)
+    {
+        $options = [
+            'connection_timeout' => 5, // segundos
+            'exceptions' => true,      // permite capturar falhas com try/catch
+            'trace' => true            // útil para depuração (opcional)
+        ];
+        #Instanciando o SoapClient com o WSDL o qual vamos acessar
+        $client = new SoapClient('http://hc170915cqn3007.cloudhialinx.com.br:12030/g5-senior-services/sapiens_Synccom_senior_g5_co_mcm_est_estoques?wsdl', $options);
+        #Operação a ser executada
+        $function = 'MovimentarEstoque';
+        #Montando o payload de requisição
+        $parameters = array(
+            'user'            => 'IntCeqweb',
+            'password'        => 'soPR#JOV@omVs',
+            'encryption'      => 0,
+            'parameters'      => array(
+                'dadosGerais' => array(
+                    'codEmp'   => 1,
+                    'codFil'   => 1,
+                    'codPro'   => $codpro,
+                    'codDer'   => '',
+                    'codTns'   => $codtns,
+                    'codDep'   => $depori,
+                    'codTns'   => $codtns,
+                    'codLot'   => $codlot,
+                    'qtdMov'   => $qtdmov,
+                    'datMov'   => $datmov,
+                ),
+            ),
+        );
+        #Sobrescrevendo endpoint do serviço
+        // $arguments = array('MovimentarEstoque' => array($parameters));
+
+        // $options = array('location' => 'http://services.senior.com.br');
+
+        $msgretorno = '';
+        $status = '';
+        #Chamada do serviço
+        try {
+
+            $result = $client->__soapCall($function, $parameters);
+
+            log_message('info', 'MovimentarEstoque parametros ' . json_encode($parameters));
+            log_message('info', 'MovimentarEstoque resposta ' . json_encode($result));
+            // debug($result, true);
+            $status = 'OK';
+            $msgretorno = $result->mensagemRetorno;
+            if($result->tipoRetorno > 1){
+                $status = 'Erro';
+            }
+            // sucesso
+            log_message('info', 'SOAP retorno OK');
+
+        } catch (\SoapFault $e) {
+            // falha de conexão ou erro na resposta
+            $msgretorno = 'Erro SOAP: ' . $e->getMessage();
+            $status = 'Erro';
+            log_message('error', 'Erro SOAP: ' . $e->getMessage());
+
+            // se quiser, pode lançar exceção ou retornar erro customizado
+            return $this->response->setStatusCode(500)->setJSON([
+                'erro' => 'Falha na comunicação com o serviço SOAP',
+                'mensagem' => $e->getMessage()
+            ]);
+        }
+
+        $movdb = new MovimMonModel();
+        $movim = $movdb->insertMovimento($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida, $status, $msgretorno);
+        return $result;
+    }
 
     public function clientesSapiens()
     {

@@ -153,6 +153,19 @@ class EstoquTipoMovimentacaoModel extends Model
         return $builder->get()->getResultArray();
     }
 
+    public function getTipoMovimentacaoTemPermissao($tmo_id = false, $prf_id = false)
+    {
+        if(!$tmo_id || !$prf_id){
+            return false;
+        }
+        $db = db_connect('dbEstoque');
+        $builder = $db->table('est_tipo_movimentacao_permissao');
+        $builder->select('*');
+        $builder->where('tmo_id', $tmo_id);
+        $builder->where('prf_id', $prf_id);
+        return $builder->get()->getResultArray();
+    }
+
     public function defCampos($dados = false, $show = false)
     {
         $ret = [];
