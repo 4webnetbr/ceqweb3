@@ -326,52 +326,93 @@ function carregarPDF(urlpdf) {
 }
 
 function validaCodBar(obj) {
-  codbar = extrairCodBarFab(obj.value);
+  codbar = obj.value;
   if (codbar.length > 0) {
     var tdCodbar = jQuery("#" + codbar);
 
     if (tdCodbar.length) {
       // Encontra a <tr> pai
-      var linha = tdCodbar.closest("tr");
+      var linha = tdCodbar.closest("tr")[0]; // pega a linha
 
       // Extrai o ID base (assumindo que o codbar está na mesma linha do stt_169)
-      var idBase = linha.find('div[id^="stt_"]').attr("id").split("_")[1];
-      var cbfab = jQuery("#cbfab_" + idBase).val();
-      var cblot = jQuery("#cblot_" + idBase).val();
-      if (cbfab == "N" && cblot == "S") {
-        // lote do PRODUTO
-        // Monta os IDs completos
-        var qtde = jQuery("#qt_" + idBase).text();
-        var atendida = jQuery("#at_" + idBase).text();
-        var saldo = jQuery("#sl_" + idBase).text();
-        var unlot = jQuery("#undlot_" + idBase).val();
-        var cfreq = jQuery("#cfreq_" + idBase).val();
+      var idBase = linha.id;
 
-        atendida++;
-        saldo--;
-
-        jQuery("#at_" + idBase).text(atendida);
-        jQuery("#sl_" + idBase).text(saldo);
-
-        if (atendida > 0 && atendida < qtde) {
-          fundo = "bg-warning";
-        } else if (atendida == qtde) {
-          fundo = "bg-success";
-        } else if (atendida > qtde) {
-          fundo = "bg-danger";
-        }
-        jQuery("#stt_" + idBase).removeClass("bg-white");
-        jQuery("#stt_" + idBase).removeClass("bg-warning");
-        jQuery("#stt_" + idBase).removeClass("bg-success");
-        jQuery("#stt_" + idBase).removeClass("bg-danger");
-        jQuery("#stt_" + idBase).addClass(fundo);
-      } else {
-        var unfab = jQuery("#undfab_" + idBase).val();
+      var tipo = tdCodbar[0].dataset.id;
+      if (tipo == "cbFab") {
+        // SCANEOU CODIGO DO FABRICANTE
+        var ctafab = jQuery("#ctafb_" + idBase).val();
+        ctafab++;
+        jQuery("#ctafb_" + idBase).val(ctafab);
+      } else if (tipo == "cbLot") {
+        // SCANEOU CÓDIGO DO LOTE
+        var ctalot = jQuery("#ctalt_" + idBase).val();
+        ctalot++;
+        jQuery("#ctalt_" + idBase).val(ctalot);
+        jQuery("#rep_atendida_" + idBase).val(ctalot);
       }
+      var qtde = jQuery("#qt_" + idBase).text();
+      var canc = jQuery("#rep_cancelada_" + idBase).val();
+
+      var lf = jQuery("#fab_" + idBase).text();
+      var ctafab = jQuery("#ctafb_" + idBase).val();
+      var fabok = false;
+      if (lf == "SN" && ctafab > 0) {
+        jQuery("#fab_" + idBase).removeClass("border-secondary");
+        jQuery("#fab_" + idBase).addClass("border-success bg-success");
+        fabok = true;
+      } else if (lf == "SS") {
+        if (ctafab == qtde) {
+          fabok = true;
+          jQuery("#fab_" + idBase).removeClass("border-secondary");
+          jQuery("#fab_" + idBase).removeClass("border-warning bg-warning");
+          jQuery("#fab_" + idBase).addClass("border-success bg-success");
+        } else {
+          fabok = false;
+          jQuery("#fab_" + idBase).removeClass("border-secondary");
+          jQuery("#fab_" + idBase).addClass("border-warning bg-warning");
+        }
+      }
+      var lp = jQuery("#lot_" + idBase).text();
+      var ctalot = jQuery("#ctalt_" + idBase).val();
+      lotok = false;
+      if (lp == "SN" && ctalot > 0) {
+        jQuery("#lot_" + idBase).removeClass("border-secondary");
+        jQuery("#lot_" + idBase).addClass("border-success bg-success");
+        lotok = true;
+      } else if (lp == "SS") {
+        if (ctalot == qtde) {
+          lotok = true;
+          jQuery("#lot_" + idBase).removeClass("border-secondary");
+          jQuery("#lot_" + idBase).removeClass("border-warning bg-warning");
+          jQuery("#lot_" + idBase).addClass("border-success bg-success");
+        } else {
+          lotok = false;
+          jQuery("#lot_" + idBase).removeClass("border-secondary");
+          jQuery("#lot_" + idBase).addClass("border-warning bg-warning");
+        }
+      }
+
+      saldo = qtde - canc - ctalot;
+      jQuery("#sl_" + idBase).text(saldo);
+
+      fundo = "";
+      if ((ctafab > 0 || ctalot > 0) && (!lotok || !fabok)) {
+        fundo = "bg-warning";
+      } else if (lotok && fabok && canc == 0) {
+        fundo = "bg-success";
+      } else if (lotok && fabok && canc > 0) {
+        fundo = "bg-danger";
+      }
+      jQuery("#stt_" + idBase).removeClass("bg-white");
+      jQuery("#stt_" + idBase).removeClass("bg-warning");
+      jQuery("#stt_" + idBase).removeClass("bg-success");
+      jQuery("#stt_" + idBase).removeClass("bg-danger");
+      jQuery("#stt_" + idBase).addClass(fundo);
     } else {
       boxAlert(10, false, "", true, 1, false);
     }
   }
+  obj.value = "";
 }
 
 function extrairCodBarFab(str) {

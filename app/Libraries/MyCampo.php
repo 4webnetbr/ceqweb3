@@ -215,7 +215,7 @@ class MyCampo
                     $this->step   = 1;
                     $this->maximo = 100;
                     $this->size   = 10;
-                    $this->largura = 25;
+                    $this->largura = 20;
                     break;
                 case 'Decimal':
                     $this->objeto = 'input';
@@ -328,7 +328,7 @@ class MyCampo
         if (isset($this->largura) && $this->tipo != 'check' && $this->tipo != 'editor') {
             $auto = 'auto';
             $largura = $this->largura . 'ch';
-            if ($this->tipo == 'select') {
+            if ($this->tipo == 'select' || $this->tipo == 'number') {
                 $auto = $largura;
             }
             $respf .= "<div class='input-group mt-0 $hasvalid $disabled' style='width: $auto !important; max-width: $largura !important;'>";
@@ -879,8 +879,11 @@ class MyCampo
                     $this->field['style']     = 'text-align: right';
                     $this->field['aria-describedby']  = 'ig_' . $this->nome;
                     $this->field['class']     = $this->field['class'] . ' form-number';
-                    $groupant = "<div class='input-group-text input-group-addon down-num $pe' data-refer='$this->id' id='dw_$this->nome'><i class='fas fa-minus'></i></div>";
-                    $grouppos = "<div class='input-group-text input-group-append up-num $pe' data-refer='$this->id' id='up_$this->nome'><i class='fas fa-plus'></i></div>";
+                    $this->largura = $this->largura + 10;
+                    if(!$this->leitura){
+                        $groupant = "<div class='input-group-text input-group-addon down-num $pe' data-refer='$this->id' id='dw_$this->nome'><i class='fas fa-minus'></i></div>";
+                        $grouppos = "<div class='input-group-text input-group-append up-num $pe' data-refer='$this->id' id='up_$this->nome'><i class='fas fa-plus'></i></div>";
+                    }
                     break;
                 case 'number':
                     // $this->field['type']      = 'text';
@@ -893,8 +896,11 @@ class MyCampo
                     $this->field['pattern']   = '^[1-9][0-9]{0,' . $leng . '}$';
                     $this->field['style']     = 'text-align: right';
                     $this->field['class']     = $this->field['class'] . ' form-number';
-                    $groupant = "<div class='input-group-text input-group-addon down-num $pe' data-refer='$this->id' id='dw_$this->nome'><i class='fas fa-minus'></i></div>";
-                    $grouppos = "<div class='input-group-text input-group-append up-num $pe' data-refer='$this->id' id='up_$this->nome'><i class='fas fa-plus'></i></div>";
+                    $this->largura = $this->largura + 10;
+                    if(!$this->leitura){
+                        $groupant = "<div class='input-group-text input-group-addon down-num $pe' data-refer='$this->id' id='dw_$this->nome'><i class='fas fa-minus'></i></div>";
+                        $grouppos = "<div class='input-group-text input-group-append up-num $pe' data-refer='$this->id' id='up_$this->nome'><i class='fas fa-plus'></i></div>";
+                    }
                     break;
                 case 'moeda':
                     $this->field['type']      = 'text';

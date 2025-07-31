@@ -340,7 +340,6 @@ class EstoquRequisicaoModel extends Model
         $canc->label          = '';
         $canc->leitura        = false;
         $canc->classep        = 'mb2';
-        $canc->size           = 15;
         $canc->minimo           = 0;
         $canc->maximo           = $dados['rep_quantia'];
         $canc->dispForm       = 'col-1';
@@ -356,8 +355,6 @@ class EstoquRequisicaoModel extends Model
         }
         $aten->classep        = 'mb2';
         $aten->dispForm       = 'col-1';
-        $aten->size           = 15;
-        $aten->tamanho           = 15;
         $aten->minimo           = 0;
         $aten->maximo           = $dados['rep_quantia'];
         $ret['rep_atendida']      = $aten->crInput();

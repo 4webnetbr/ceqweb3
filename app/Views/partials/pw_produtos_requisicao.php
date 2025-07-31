@@ -35,9 +35,9 @@
                     </thead>
                     <tbody style="max-height: 45vh; overflow-y: auto;">
                         <?php foreach ($produtos as $produto): ?>
-                        <tr>
+                        <tr id='<?= $produto["rep_id"]?>'>
                             <td>
-                                <div id='stt_<?= $produto["rep_id"]?>' class='btn border border-1 bg-white' style='width: 10px; min-height: 10px'></div>
+                                <div id='stt_<?= $produto["rep_id"]?>' class='rounded-circle border border-1 bg-white' style='width: 25px; min-height: 25px'></div>
                             </td>
                             <!-- <td id='<?= $produto['lot_codbar'] ?>'><?= $produto['lot_codbar'] ?></td> -->
                             <td>
@@ -46,12 +46,14 @@
                                 <input type='hidden' id='cblot_<?= $produto["rep_id"]?>' value='<?= $produto["pre_cblote"]?>'></input>
                                 <input type='hidden' id='undlot_<?= $produto["rep_id"]?>' value='<?= $produto["pre_undlote"]?>'></input>
                                 <input type='hidden' id='cfreq_<?= $produto["rep_id"]?>' value='<?= $produto["prc_conf_req"]?>'></input>
+                                <input type='hidden' id='ctalt_<?= $produto["rep_id"]?>' value='0'></input>
+                                <input type='hidden' id='ctafb_<?= $produto["rep_id"]?>' value='0'></input>
                                 <?= $produto['pro_codpro'] ?></td>
                             <td class='text-start'><?= $produto['pro_despro'] ?></td>
-                            <td  id='<?= extrairCodBarFab($produto['pro_codbar_fabricante']) ?>' class='text-start'><?= $produto['fab_apeFab'] ?></td>
-                            <td><div id='fab_<?= $produto["rep_id"]?>' class='btn'><?= $produto['pre_cbfabricante'].$produto['pre_undfabricante'] ?></div></td>
-                            <td class='text-end'><?= $produto['lot_lote'] ?></td>
-                            <td><div id='lot_<?= $produto["rep_id"]?>' class='btn'><?= $produto['pre_cblote'].$produto['pre_undlote'] ?></div></td>
+                            <td  id='<?= $produto['pro_codbar_fabricante'] ?>' data-id='cbFab' class='text-start'><?= $produto['fab_apeFab'] ?></td>
+                            <td><div id='fab_<?= $produto["rep_id"]?>' class='rounded-circle border border-2 border-secondary p-1'><?= $produto['pre_cbfabricante'].$produto['pre_undfabricante'] ?></div></td>
+                            <td id='<?= $produto['lot_codbar'] ?>' data-id='cbLot' class='text-center'><?= $produto['lot_lote'] ?></td>
+                            <td><div id='lot_<?= $produto["rep_id"]?>' class='rounded-circle  border border-2 border-secondary p-1'><?= $produto['pre_cblote'].$produto['pre_undlote'] ?></div></td>
                             <td><?= data_br($produto['lot_validade']) ?></td>
                             <td><?= $produto['qtd_caixa'] ?></td>
                             <td id='qt_<?= $produto["rep_id"]?>'><?= $produto['rep_quantia'] ?></td>
