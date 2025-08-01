@@ -161,7 +161,7 @@ class EstoquRequisicaoModel extends Model
         $data = new DateTime();
         $entr                 = new MyCampo('est_requisicao', 'req_dataentrega', false);
         $entr->valor          = (isset($dados['req_dataentrega'])) ? $dados['req_dataentrega'] : '';
-        $entr->leitura        = true;
+        $entr->leitura        = $show;
         $entr->datamin         = $data->format('Y-m-d');
         $entr->dispForm       = 'col-6';
         $entr->classep        = 'mb3';
@@ -174,7 +174,7 @@ class EstoquRequisicaoModel extends Model
 
         $tmov                 = new MyCampo('est_requisicao', 'tmo_id', false);
         $tmov->valor          = (isset($dados['tmo_id'])) ? $dados['tmo_id'] : '';
-        $tmov->leitura        = true;
+        $tmov->leitura        = $show;
         $tmov->selecionado    = [$tmov->valor];
         $tmov->opcoes         = $opc_tipomov;
         $tmov->largura        = 50;

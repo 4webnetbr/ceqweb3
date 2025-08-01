@@ -141,7 +141,7 @@ class AteRequisicao extends BaseController
     }
 
     public function show($id){
-        $this->edit($id);
+        $this->edit($id, true);
     }
 
     /**
@@ -151,7 +151,7 @@ class AteRequisicao extends BaseController
      * @param mixed $id 
      * @return void
      */
-    public function edit($id)
+    public function edit($id, $show = false)
     {
         $requisicao = $this->requisicao->getRequisicao($id)[0];
 
@@ -161,7 +161,7 @@ class AteRequisicao extends BaseController
         }
 
         // Montar campos como no add()
-        $fields = $this->requisicao->defCampos($requisicao);
+        $fields = $this->requisicao->defCampos($requisicao, $show);
         $secao[0] = 'Dados Gerais';
         $campos[0][0] = $fields['req_id'];
         $campos[0][count($campos[0])] = $fields['req_data'];
