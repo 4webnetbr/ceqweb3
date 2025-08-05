@@ -147,7 +147,11 @@ class EstoquRequisicaoModel extends Model
         $id->tipo           = 'text';
         $id->dispForm       = 'linha';
         $id->classep        = 'mb3';
-        $ret['req_id']    = $id->crInput();
+        if($show){
+            $ret['req_id']      = $id->crInput();
+        } else {
+            $ret['req_id']      = $id->crOculto();
+        }
 
         $hoje = new DateTime();
         $data                 = new MyCampo('est_requisicao', 'req_data', false);

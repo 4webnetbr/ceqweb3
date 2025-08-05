@@ -141,6 +141,49 @@ class Requisicao extends BaseController
     }
 
     /**
+     * Consulta
+     * show
+     *
+     * @param mixed $id 
+     * @return void
+     */
+    public function show($id)
+    {
+        $requisicao = $this->requisicao->getRequisicao($id)[0];
+
+        if (!$requisicao) {
+            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
+            return redirect()->to(site_url($this->data['controler']));
+        }
+
+        // Montar campos como no add()
+        $fields = $this->requisicao->defCampos($requisicao, true);
+        $secao[0] = 'Dados Gerais';
+        $campos[0][0] = $fields['req_id'];
+        $campos[0][count($campos[0])] = $fields['req_data'];
+        $campos[0][count($campos[0])] = $fields['req_dataentrega'];
+        $campos[0][count($campos[0])] = $fields['tmo_id'];
+        $campos[0][count($campos[0])] = "<div class='col-6'>.</div>";
+        // $campos[0][count($campos[0])] = $fields['lot_codbar'];
+
+        $produtos = $this->requisicao->getRequisicaoProdutos($id);
+        // debug($produtos, true);
+        $data = [
+            'show' => true,
+            'produtos' => $produtos
+        ];
+
+        $campos[0][count($campos[0])] = view('partials/pw_produtos_requisicao',$data); // mesma estrutura do add()
+
+        $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['secoes']    = $secao;
+        $this->data['campos']    = $campos;
+        $this->data['destino']   = ''; // ou 'update' se você for criar
+        $this->data['scripts']   = 'my_requisicao';
+
+        echo view('vw_edicao', $this->data);
+    }
+    /**
      * Edição
      * edit
      *

@@ -3,6 +3,11 @@
     font-size: 10px;
   }
 </style>
+<?
+if(!isset($show)){
+    $show = false;
+}
+?>
 <div class="accordion" id="accProdutos">
     <div class="accordion-item">
         <h2 class="accordion-header border border-bottom-1" id="heading<?= $produtos[0]['req_id'] ?>">
@@ -17,7 +22,10 @@
                 <table class="table table-bordered table-sm text-center align-middle tabela-pequena">
                     <thead class="table-light">
                         <tr>
-                            <th>Status</th>
+                            <?
+                            if(!$show){?>
+                                <th>Status</th>
+                            <?}?>
                             <th>Cód.ERP</th>
                             <th>Descrição</th>
                             <th>Fabricante</th>
@@ -30,16 +38,21 @@
                             <th>Qtde. Cancelada</th>
                             <th>Qtde. Atendida</th>
                             <th>Saldo</th>
-                            <th>OCA</th>
+                            <?
+                            if(!$show){?>
+                                <th>OCA</th>
+                            <?}?>
                         </tr>
                     </thead>
                     <tbody style="max-height: 45vh; overflow-y: auto;">
                         <?php foreach ($produtos as $produto): ?>
                         <tr id='<?= $produto["rep_id"]?>'>
+                            <?
+                            if(!$show){?>
                             <td>
                                 <div id='stt_<?= $produto["rep_id"]?>' class='rounded-circle border border-1 bg-white' style='width: 25px; min-height: 25px'></div>
                             </td>
-                            <!-- <td id='<?= $produto['lot_codbar'] ?>'><?= $produto['lot_codbar'] ?></td> -->
+                            <?}?>
                             <td>
                                 <input type='hidden' id='cbfab_<?= $produto["rep_id"]?>' value='<?= $produto["pre_cbfabricante"]?>'></input>
                                 <input type='hidden' id='undfab_<?= $produto["rep_id"]?>' value='<?= $produto["pre_undfabricante"]?>'></input>
@@ -51,16 +64,26 @@
                                 <?= $produto['pro_codpro'] ?></td>
                             <td class='text-start'><?= $produto['pro_despro'] ?></td>
                             <td  id='<?= $produto['pro_codbar_fabricante'] ?>' data-id='cbFab' class='text-start'><?= $produto['fab_apeFab'] ?></td>
+                            <?if(!$show){?>
                             <td><div id='fab_<?= $produto["rep_id"]?>' class='rounded-circle border border-2 border-secondary p-1'><?= $produto['pre_cbfabricante'].$produto['pre_undfabricante'] ?></div></td>
-                            <td id='<?= $produto['lot_codbar'] ?>' data-id='cbLot' class='text-center'><?= $produto['lot_lote'] ?></td>
+                            <?} else {?>
+                                <td><div id='fab_<?= $produto["rep_id"]?>' class='p-1'><?= $produto['pre_cbfabricante'].$produto['pre_undfabricante'] ?></div></td>
+                            <?}?>
+                            <td id='<?= $produto['lot_codbar'] ?>' data-id='cbLot' class='text-start'><?= $produto['lot_lote'] ?></td>
+                            <?if(!$show){?>
                             <td><div id='lot_<?= $produto["rep_id"]?>' class='rounded-circle  border border-2 border-secondary p-1'><?= $produto['pre_cblote'].$produto['pre_undlote'] ?></div></td>
+                            <?} else {?>
+                                <td><div id='lot_<?= $produto["rep_id"]?>' class='p-1'><?= $produto['pre_cblote'].$produto['pre_undlote'] ?></div></td>
+                            <?}?>
                             <td><?= data_br($produto['lot_validade']) ?></td>
                             <td><?= $produto['qtd_caixa'] ?></td>
                             <td id='qt_<?= $produto["rep_id"]?>'><?= $produto['rep_quantia'] ?></td>
                             <td id='ca_<?= $produto["rep_id"]?>'><?= $produto['rep_cancelada'] ?></td>
                             <td id='at_<?= $produto["rep_id"]?>'><?= $produto['rep_atendida'] ?></td>
                             <td id='sl_<?= $produto["rep_id"]?>'><?= $produto['rep_quantia'] ?></td>
+                            <?if(!$show){?>
                             <td></td>
+                            <?}?>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>

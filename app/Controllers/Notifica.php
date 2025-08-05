@@ -67,10 +67,13 @@ class Notifica extends BaseController {
                             if($tipo == 'E'){
                                 $metod = 'delete';
                             }
-                            // debug($controler, true);
+                            // debug($controler);
+                            // debug($notif->not_id_registro);
                             if($controler == 'Produto'){
                                 $prods = $this->modprodutos->getProdutoCod($notif->not_id_registro);
-                                $notif->not_id_registro = $prods[0]['pro_id'];
+                                if($prods){
+                                    $notif->not_id_registro = $prods[0]['pro_id'];
+                                }
                             }
                             $link = base_url($controler.'/'.$metod.'/'.$notif->not_id_registro);
                         } else {
