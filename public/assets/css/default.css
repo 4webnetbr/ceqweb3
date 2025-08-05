@@ -253,6 +253,7 @@ a:hover {
 
 .titulo {
     padding-left: 4rem;
+    font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;
 }
 
 .container {
