@@ -329,7 +329,6 @@ function validaCodBar(obj) {
   codbar = obj.value;
   if (codbar.length > 0) {
     codbar = extrairCodBarFab(codbar);
-    alert(codbar);
     var tdCodbar = jQuery("#" + codbar);
 
     if (tdCodbar.length) {
@@ -415,6 +414,7 @@ function validaCodBar(obj) {
     }
   }
   obj.value = "";
+  obj.focus;
 }
 
 function extrairCodBarFab(str) {

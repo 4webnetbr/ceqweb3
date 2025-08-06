@@ -625,7 +625,7 @@ class Requisicao extends BaseController
                 $produto = $this->produtos->getProdutoCod($item['cod_erp']);
                 $lote = $this->lote->getLoteCodproLote($item['cod_erp'], $item['lote']);
 
-                if (!$produto || !$lote) {
+                if (!$produto || (!$lote && trim($item['lote']) != 'Sem Lote')) {                    
                     $ret['erro'] = true;
                     $ret['msg'] = "Produto ou lote não encontrado para o código: {$item['cod_erp']} ou lote: {$item['lote']}";
                     $db->transRollback();
@@ -636,7 +636,7 @@ class Requisicao extends BaseController
                 $rep = [
                     'req_id' => $req_id,
                     'pro_id' => $produto[0]['pro_id'],
-                    'lot_id' => $lote[0]['lot_id'],
+                    'lot_id' => $lote[0]['lot_id'] ?? null,
                     'rep_quantia' => $item['requisicao']
                 ];
 
