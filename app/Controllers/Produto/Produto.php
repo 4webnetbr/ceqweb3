@@ -328,10 +328,10 @@ class Produto extends BaseController
             $this->produtos->delete($id);
             $ret['erro'] = false;
             cache()->clean();
-            session()->setFlashdata('msg', 'Produto de Produto Excluída com Sucesso');
+            session()->setFlashdata('msg', 'Produto Excluído com Sucesso');
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
             $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível Excluir essa Produto de Produto Verifique!<br><br>';
+            $ret['msg']  = 'Não foi possível Excluir esse Produto Verifique!<br><br>';
         }
         echo json_encode($ret);
     }
