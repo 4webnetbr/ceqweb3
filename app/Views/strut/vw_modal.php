@@ -6,7 +6,7 @@
                 <h5 class="modal-title" id="myModalLabel">Novo Cadastro</h5>
                 <button type="button" class="btn-close border border-dark btn-outline-light" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="modal-body">
+            <div class="modal-body" id="modal-body" style='overflow: auto;'>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn border border-dark btn-dark" data-bs-dismiss="modal">[X] Fechar</button>

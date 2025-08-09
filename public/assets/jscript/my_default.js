@@ -627,20 +627,6 @@ async function openModal(url, titulo = false) {
     // document.onreadystatechange = function () {
     myModal.show();
   }
-  // jQuery.ajax({
-  //     url: url,
-  //     dataType: 'html',
-  //     success: function (data) {
-  //         jQuery('.modal-body').html(data);
-  //         var myModal = new bootstrap.Modal(document.getElementById("myModal"), {});
-  //         // document.onreadystatechange = function () {
-  //         myModal.show();
-  //         //   myModal.addEventListener('shown.bs.modal', () => {
-  //         //     myInput.focus()
-  //         //   })
-  //         // };
-  //     }
-  // });
 }
 
 /**
@@ -1504,5 +1490,68 @@ function executaAjaxWait(urldest, tipo = "json", dados = {}, funcao = "") {
         desBloqueiaTela();
       },
     });
+  });
+}
+
+function gerarEtiqueta(url) {
+  // url = '/etiqueta/emiteEtiqueta/' + etq_id;
+  openImgModal(url, "Impressão de Etiquetas ");
+}
+
+/**
+ * openPDFModal
+ * Abre o PDF informado na URL, numa Janela Modal
+ * @param {string} url - URL do PDF
+ * @param {string} titulo - titulo da Janela Modal
+ */
+async function openImgModal(url, titulo = false) {
+  jQuery.get(url, function (res) {
+    if (res.erro) {
+      boxAlert(res.erro, true, "");
+    } else {
+      if (titulo) {
+        jQuery("#myModalLabel").html(titulo);
+      }
+      // const data = JSON.parse(res);
+      imgRetornada =
+        "<img src='data:image/png;base64," +
+        res.imagem +
+        "' style='width:95%' />";
+      // jQuery('#img_etiqueta').attr('src', 'data:image/png;base64,' + data.imagem);
+      // jQuery('#modalEtiqueta').modal('show');
+
+      jQuery("#modal-body").html(imgRetornada);
+
+      // Selecionando o container do modal
+      const container = document.querySelector("#myModal"); // Supondo que 'myModal' seja o ID do seu modal
+
+      // Criando o modal do Bootstrap
+      const modal = new bootstrap.Modal(container);
+
+      // Adicionando a classe 'resize' ao corpo do modal
+      container.querySelector(".modal-content").classList.add("resize");
+
+      const etq_id = url.substring(url.lastIndexOf("/") + 1);
+
+      jQuery('.modal-footer button[data-bs-dismiss="modal"]')
+        .text("🖨️ Imprimir")
+        .removeAttr("data-bs-dismiss") // remove o fechar
+        .off("click") // remove eventos antigos
+        .on("click", function () {
+          imprimirEtiqueta(etq_id); // chama a função correta
+        });
+
+      modal.show();
+    }
+  });
+}
+
+function imprimirEtiqueta(etq_id) {
+  jQuery.get("/CriaEtiqueta/imprimeEtiqueta/" + etq_id, function (res) {
+    if (res.erro) {
+      alert(res.erro);
+    } else {
+      alert(res.status); // ou mostrar status no modal
+    }
   });
 }

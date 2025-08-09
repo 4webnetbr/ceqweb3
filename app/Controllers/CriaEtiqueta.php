@@ -776,56 +776,117 @@ private function renderConteudoInterno(array $dados, array $camp, bool $exibirBo
     // return $ultimoY;
 }
 
-    public function emiteEtiqueta($etq_id, $chave = false)
-    {
-        $etiq = $this->etiqueta->getEtiqueta($etq_id);
-        $camp = $this->etiquetaCampo->getEtiquetaCampo($etq_id);
+    // public function emiteEtiqueta($etq_id, $chave = false)
+    // {
+    //     $etiq = $this->etiqueta->getEtiqueta($etq_id);
+    //     $camp = $this->etiquetaCampo->getEtiquetaCampo($etq_id);
 
-        if (!$etiq) return;
+    //     if (!$etiq) return;
 
-        $etq = $etiq[0];
-        $this->largura    = $etq['let_largura'];
-        $this->altura     = $etq['let_altura'];
-        $this->esquerda   = $etq['let_marg_esquerda'];
-        $this->direita    = $etq['let_marg_direita'];
-        $this->topo       = $etq['let_marg_superior'];
-        $this->rodape     = $etq['let_marg_inferior'];
-        $this->horizontal = $etq['let_distancia_h'];
-        $this->vertical   = $etq['let_distancia_v'];
-        $this->colunas    = $etq['let_colunas'];
-        $this->linhas     = $etq['let_linhas'];
+    //     $etq = $etiq[0];
+    //     $this->largura    = $etq['let_largura'];
+    //     $this->altura     = $etq['let_altura'];
+    //     $this->esquerda   = $etq['let_marg_esquerda'];
+    //     $this->direita    = $etq['let_marg_direita'];
+    //     $this->topo       = $etq['let_marg_superior'];
+    //     $this->rodape     = $etq['let_marg_inferior'];
+    //     $this->horizontal = $etq['let_distancia_h'];
+    //     $this->vertical   = $etq['let_distancia_v'];
+    //     $this->colunas    = $etq['let_colunas'];
+    //     $this->linhas     = $etq['let_linhas'];
 
-        $tamanho[0] = ($this->largura * $this->colunas) + ($this->horizontal * ($this->colunas - 1)) + $this->esquerda + $this->direita;
-        $tamanho[1] = $this->topo + ($this->altura * $this->linhas) + ($this->vertical * $this->linhas) + $this->rodape + $this->altura;
+    //     $tamanho[0] = ($this->largura * $this->colunas) + ($this->horizontal * ($this->colunas - 1)) + $this->esquerda + $this->direita;
+    //     $tamanho[1] = $this->topo + ($this->altura * $this->linhas) + ($this->vertical * $this->linhas) + $this->rodape + $this->altura;
 
 
-        $modelo = ($chave === false);
+    //     $modelo = ($chave === false);
 
-        if ($modelo) {
-            $fields = array_column($camp, 'etc_campo');
-            $telid = $etq['tel_id'];
-            $telas = $this->tela->getTelaId($telid)[0];
+    //     if ($modelo) {
+    //         $fields = array_column($camp, 'etc_campo');
+    //         $telid = $etq['tel_id'];
+    //         $telas = $this->tela->getTelaId($telid)[0];
 
-            if (!empty($telas['tel_model'])) {
-                $model = $telas['tel_model'];
-                $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
-                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 20);
-            }
-        } else {
-            $dados = cache()->get($chave);
+    //         if (!empty($telas['tel_model'])) {
+    //             $model = $telas['tel_model'];
+    //             $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
+    //             $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 20);
+    //         }
+    //     } else {
+    //         $dados = cache()->get($chave);
+    //     }
+
+    //     $this->renderEtiquetas($dados, $camp, $tamanho, $modelo);
+
+    //     if($chave){
+    //         $output = $this->pdf->Output('S'); // 'S' retorna o PDF como string
+    //         $output = base64_encode($output);
+    //         echo json_encode(['pdf' => $output]); // Retorne um JSON
+    //     } else {
+    //         $this->response->setHeader('Content-Type', 'application/pdf');
+    //         $this->pdf->Output('etiqueta.pdf', 'I');
+    //     }
+    // }
+
+public function emiteEtiqueta($etq_id, $chave = false)
+{
+    $etiq = $this->etiqueta->getEtiqueta($etq_id);
+    $camp = $this->etiquetaCampo->getEtiquetaCampo($etq_id);
+
+    if (!$etiq) return;
+
+    $etq = $etiq[0];
+    $this->largura    = $etq['let_largura'];
+    $this->altura     = $etq['let_altura'];
+    $this->esquerda   = $etq['let_marg_esquerda'];
+    $this->direita    = $etq['let_marg_direita'];
+    $this->topo       = $etq['let_marg_superior'];
+    $this->rodape     = $etq['let_marg_inferior'];
+    $this->horizontal = $etq['let_distancia_h'];
+    $this->vertical   = $etq['let_distancia_v'];
+    $this->colunas    = $etq['let_colunas'];
+    $this->linhas     = $etq['let_linhas'];
+
+    $tamanho[0] = ($this->largura * $this->colunas) + ($this->horizontal * ($this->colunas - 1)) + $this->esquerda + $this->direita;
+    $tamanho[1] = $this->topo + ($this->altura * $this->linhas) + ($this->vertical * $this->linhas) + $this->rodape + $this->altura;
+
+    $modelo = ($chave === false);
+
+    if ($modelo) {
+        $fields = array_column($camp, 'etc_campo');
+        $telid = $etq['tel_id'];
+        $telas = $this->tela->getTelaId($telid)[0];
+
+        if (!empty($telas['tel_model'])) {
+            $model = $telas['tel_model'];
+            $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
+            $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 20);
         }
-
-        $this->renderEtiquetas($dados, $camp, $tamanho, $modelo);
-
-        if($chave){
-            $output = $this->pdf->Output('S'); // 'S' retorna o PDF como string
-            $output = base64_encode($output);
-            echo json_encode(['pdf' => $output]); // Retorne um JSON
-        } else {
-            $this->response->setHeader('Content-Type', 'application/pdf');
-            $this->pdf->Output('etiqueta.pdf', 'I');
-        }
+    } else {
+        $dados = cache()->get($chave);
     }
+
+    $this->renderEtiquetas($dados, $camp, $tamanho, $modelo);
+
+    // Arquivos de saída
+    $pdfPath = WRITEPATH . "etiqPdf/etiqueta_{$etq_id}.pdf";
+    $pngPath = WRITEPATH . "etiqPng/etiqueta_{$etq_id}.png";
+
+    // Salva PDF
+    $this->pdf->Output($pdfPath, 'F');
+
+    // Converte PDF → PNG
+    // Ex: convert -density 300 input.pdf -quality 100 output.png
+    $geraPNG = exec("convert -density 300 {$pdfPath} -quality 100 {$pngPath}");
+    // debug($geraPNG);
+
+    if (!file_exists($pngPath)) {
+        return $this->response->setJSON(['erro' => 'Falha ao converter para PNG']);
+    }
+
+    $imgBase64 = base64_encode(file_get_contents($pngPath));
+
+    return $this->response->setJSON(['imagem' => $imgBase64]);
+}
 
     public function previewEtiquetaViaAjax()
     {
@@ -881,4 +942,68 @@ private function renderConteudoInterno(array $dados, array $camp, bool $exibirBo
             ->setBody($output);
     }
 
+
+    public function imprimeEtiqueta($etq_id)
+    {
+        $ipZebra = '192.168.0.174'; // IP fixo da impressora na rede
+        $portaZebra = 9100;
+
+        $pngPath = WRITEPATH . "etiqPng/etiqueta_{$etq_id}.png";
+
+        // Verifica se o arquivo existe
+        if (!file_exists($pngPath)) {
+            return $this->response->setJSON(['erro' => 'Arquivo PNG da etiqueta não encontrado.']);
+        }
+
+        // Lê a imagem PNG
+        $image = file_get_contents($pngPath);
+
+        // Verifica se o conteúdo da imagem está válido
+        if (!$image || strlen($image) < 100) {
+            return $this->response->setJSON(['erro' => 'Imagem PNG inválida ou vazia.']);
+        }
+
+        // Converte PNG para ZPL via API do Labelary
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => 'http://api.labelary.com/v1/graphics',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                // Aqui você pode adicionar um Accept, mas ZPL é padrão
+                'Accept: application/zpl',
+            ],
+            CURLOPT_POSTFIELDS => [
+                'file' => new \CURLFile($pngPath, 'image/png', basename($pngPath))
+            ],
+        ]);
+
+        $zpl = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode != 200 || !$zpl) {
+            return $this->response->setJSON([
+                'erro' => 'Falha ao converter imagem para ZPL. Código: ' . $httpCode
+            ]);
+        }
+
+        // Envia o ZPL para a impressora Zebra via socket
+        $socket = fsockopen($ipZebra, $portaZebra, $errNo, $errStr, 5);
+        if (!$socket) {
+            return $this->response->setJSON([
+                'erro' => "Erro ao conectar na impressora: $errStr ($errNo)"
+            ]);
+        }
+
+        fwrite($socket, $zpl);
+        fclose($socket);
+
+        // Deleta o PNG após imprimir
+        if (file_exists($pngPath)) {
+            // unlink($pngPath);
+        }
+
+        return $this->response->setJSON(['status' => 'Etiqueta enviada com sucesso e imagem deletada.']);
+    }
 }
