@@ -137,7 +137,7 @@
         ?>
     </form>
     <div class="col-4 border border-4 border-black float-start d-inline h-100 mt-5">
-        <embed id="pdfPreview" width="100%" height="600px" type="application/pdf">
+        <div id="etqPreview" width="100%" height="600px"></div>
     </div>
 </div>
 <script src="<?= base_url('assets/jscript/my_fields.js'); ?>"></script>
@@ -165,7 +165,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fontawesome-iconpicker/3.2.0/css/fontawesome-iconpicker.min.css" integrity="sha512-BfgviGirSi7OFeVB2z9bxp856rzU1Tyy9Dtq2124oRUZSKXIQqpy+2LPuafc2zMd8dNUa+F7cpxbvUsZZXFltQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 
-<!-- <script src="<?= base_url('assets/jscript/my_consulta.js'); ?>"></script> -->
 <script>
     carregamentos_iniciais();
     jQuery("#form1").attr('data-alter', false);

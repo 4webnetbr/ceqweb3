@@ -627,6 +627,20 @@ async function openModal(url, titulo = false) {
     // document.onreadystatechange = function () {
     myModal.show();
   }
+  // jQuery.ajax({
+  //     url: url,
+  //     dataType: 'html',
+  //     success: function (data) {
+  //         jQuery('.modal-body').html(data);
+  //         var myModal = new bootstrap.Modal(document.getElementById("myModal"), {});
+  //         // document.onreadystatechange = function () {
+  //         myModal.show();
+  //         //   myModal.addEventListener('shown.bs.modal', () => {
+  //         //     myInput.focus()
+  //         //   })
+  //         // };
+  //     }
+  // });
 }
 
 /**
@@ -798,9 +812,7 @@ function boxAlert(
       className: "rubberBand animated",
       callback: function () {
         if (!erro) {
-          if (url != "") {
-            redireciona(url);
-          }
+          redireciona(url);
         }
       },
     });
@@ -1547,7 +1559,7 @@ async function openImgModal(url, titulo = false) {
 }
 
 function imprimirEtiqueta(etq_id) {
-  jQuery.get("/CriaEtiqueta/imprimeEtiqueta/" + etq_id, function (res) {
+  jQuery.get("/CriaEtiquetaZPL/imprimeEtiqueta/" + etq_id, function (res) {
     if (res.erro) {
       alert(res.erro);
     } else {

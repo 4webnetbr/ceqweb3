@@ -247,30 +247,11 @@ function busca_dados_material(orig, obj, url, base) {
       );
     }
   }
-  // jQuery.ajax({
-  //     type: 'POST',
-  //     async: false,
-  //     dataType: 'json',
-  //     url: url,
-  //     data: { campo: datarr },
-  //     success: function (retorno) {
-  //         // jQuery('#'+pref+'_unidade\\['+pos+'\\]').val(retorno.mat_unidade).change();
-  //         // jQuery('[name="'+pref+'_unidade\\['+pos+'\\]"]').selectpicker('destroy');
-  //         // jQuery('[name="'+pref+'_unidade\\['+pos+'\\]"]').selectpicker('deselectAll');
-  //         // jQuery('#'+pref+'_unidade\\['+pos+'\\] option[value='+retorno.mat_unidade+']').attr('selected', 'selected');
-  //         jQuery('#' + pref + '_unidade\\[' + pos + '\\]').selectpicker('val', retorno.mat_unidade);
-  //         // jQuery('[name="'+pref+'_unidade\\['+pos+'\\]"]').selectpicker('refresh');
-  //         jQuery('#' + pref + '_unitario\\[' + pos + '\\]').val(converteFloatMoeda(retorno.mat_compra / retorno.mat_quantia));
-  //         if (retorno.mpc_unitario != null) {
-  //             jQuery('#' + pref + '_unitario\\[' + pos + '\\]').val(converteFloatMoeda(retorno.mpc_unitario / 1));
-  //         }
-  //         console.log(retorno);
-  //     }
-  // });
 }
 
-function carregarPDF(urlpdf) {
+function prevEtiqueta(url) {
   const campos = [];
+  jQuery("#etqPreview").html("Renderizando...");
 
   jQuery('select[name^="etc_campo["]').each(function () {
     const index = jQuery(this)
@@ -305,7 +286,7 @@ function carregarPDF(urlpdf) {
   const tel_id = jQuery('select[name="tel_id"]').val();
 
   jQuery.ajax({
-    url: urlpdf,
+    url: url,
     method: "POST",
     contentType: "application/json",
     data: JSON.stringify({
@@ -313,14 +294,15 @@ function carregarPDF(urlpdf) {
       tel_id: tel_id,
       campos: campos,
     }),
-    xhrFields: {
-      responseType: "blob",
-    },
-    success: function (blob) {
-      const pdfBlob = new Blob([blob], { type: "application/pdf" });
-
-      const url = URL.createObjectURL(pdfBlob);
-      jQuery("#pdfPreview").attr("src", url);
+    // xhrFields: {
+    //   responseType: "blob",
+    // },
+    success: function (res) {
+      imgRetornada =
+        "<img src='data:image/png;base64," +
+        res.imagem +
+        "' style='width:95%' />";
+      jQuery("#etqPreview").html(imgRetornada);
     },
   });
 }
