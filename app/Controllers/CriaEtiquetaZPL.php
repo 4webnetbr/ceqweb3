@@ -359,7 +359,7 @@ class CriaEtiquetaZPL extends BaseController
 
             $xBase = $baseX + (int) floor(($ocupouPct / 100) * $etqW);
             if($modelo){ // se for modelo desenha a borda
-                $z .= "^FO{$baseX},{$baseY}^GB" . ($etqW - 1) . "," . ($etqH - 1) . ",1^FS";
+                $z .= "^FO{$baseX},{$baseY}^GB" . ($etqW - 1) . "," . ($etqH - 1) . ",2^FS";
             }
 
             // Linha horizontal?
@@ -638,21 +638,22 @@ class CriaEtiquetaZPL extends BaseController
             $model = $telas['tel_model'];
             $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
             // ajuste o limit conforme sua regra de impressão
-            $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 200);
+            $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 10);
         }
         if (!$dados) {
             return $this->response->setJSON(['erro' => 'Sem dados para imprimir.']);
         }
 
         // Monta ZPL (em LINHAS)
-        $zpl = $this->buildLinha($dados, $camp);
-
+        $zpl = $this->buildLoteEmLinhas($dados, $camp, true);
+        // debug($zpl, true);
         // Envia para a impressora
         $sock = @fsockopen($this->ipZebra, $this->portaZebra, $eno, $estr, 5);
         if (!$sock) {
             return $this->response->setJSON(['erro' => "Conexão com a impressora falhou: $estr ($eno)"]);
         }
-        fwrite($sock, $zpl);
+        stream_set_blocking($sock, true);
+        fwrite($sock, $zpl); // com vários ^XA...^XZ
         fclose($sock);
 
         return $this->response->setJSON(['status' => 'Impressão enviada (respeitando colunas por linha).']);
