@@ -258,6 +258,7 @@ class MicrobAnaliseModel extends Model
         $opcoes         = new CommonModel();
         $ret = [];
 
+
         $id           =  new MyCampo('pro_mic_analise', 'ana_id', false);
         $id->valor    = $dados['ana_id'];
         $ret['ana_id']    = $id->crOculto();
@@ -267,7 +268,7 @@ class MicrobAnaliseModel extends Model
         $ret['stt_id']    = $sttid->crOculto();
 
         $entr           =  new MyCampo('pro_sap_lote', 'lot_entrada');
-        $entr->valor    = $dados['lot_entrada'];
+        $entr->valor    = $dados['lot_entrada']??'';
         $entr->leitura  = true;
         $entr->largura    = 20;
         $ret['lot_entrada'] = $entr->crInput();
@@ -278,7 +279,7 @@ class MicrobAnaliseModel extends Model
         // $opc_produ       = array_column($lst_produ,'pro_despro','pro_id');
 
         $proid             = new MyCampo('pro_mic_analise', 'pro_id', true);
-        $proid->valor = $proid->selecionado  = $dados['pro_id'];
+        $proid->valor = $proid->selecionado  = $dados['pro_id'] ?? '';
         $proid->leitura     = true;
         $proid->largura    = 60;
         $proid->opcoes      = $opc_produ;
@@ -291,7 +292,7 @@ class MicrobAnaliseModel extends Model
         // $opc_fabr       = array_column($lst_fabrics,'fab_apeFab','fab_codFab');
         // debug($opc_fabr, true);
         $fabr           =  new MyCampo('pro_sap_fabricante', 'fab_apeFab');
-        $fabr->valor = $fabr->selecionado = $dados['fab_codFab'];
+        $fabr->valor = $fabr->selecionado = $dados['fab_codFab'] ?? '';
         $fabr->leitura     = true;
         $fabr->largura     = 60;
         $fabr->label       = 'Fabricante';
@@ -299,24 +300,24 @@ class MicrobAnaliseModel extends Model
         $ret['fab_apeFab'] = $fabr->crSelect();
 
         $lote           =  new MyCampo('pro_sap_lote', 'lot_lote');
-        $lote->valor    = $dados['lot_lote'];
+        $lote->valor    = $dados['lot_lote'] ?? '';
         $lote->leitura  = true;
         $lote->largura    = 20;
         $ret['lot_lote'] = $lote->crInput();
 
         $loti           =  new MyCampo('pro_sap_lote', 'lot_id');
-        $loti->valor    = $dados['lot_id'];
+        $loti->valor    = $dados['lot_id'] ?? '';
         $ret['lot_id'] = $loti->crOculto();
 
         $vali           =  new MyCampo('pro_sap_lote', 'lot_validade');
-        $vali->valor    = $dados['lot_validade'];
+        $vali->valor    = $dados['lot_validade'] ?? '';
         $vali->leitura  = true;
         $vali->largura    = 20;
         $ret['lot_validade'] = $vali->crInput();
 
 
         $aqtd               =  new MyCampo('pro_mic_analise', 'ana_qtde');
-        $aqtd->valor        = $dados['ana_qtde'];
+        $aqtd->valor        = $dados['ana_qtde'] ?? 0;
         $aqtd->maximo       = 99999;
         $aqtd->leitura      = $show;
         $aqtd->largura      = 40;

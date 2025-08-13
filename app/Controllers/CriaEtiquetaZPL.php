@@ -532,7 +532,7 @@ class CriaEtiquetaZPL extends BaseController
             if ($telas && !empty($telas['tel_model'])) {
                 $model = $telas['tel_model'];
                 $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
-                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 10);
+                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 1);
             } else {
                 $dados = array_fill(0, $this->colunas, []);
             }
@@ -608,8 +608,24 @@ class CriaEtiquetaZPL extends BaseController
     /**
      * IMPRESSÃO: quebra os dados em linhas de até let_colunas e envia cada LINHA (^XA…^XZ) pra Zebra.
      */
-    public function imprimeEtiqueta($etq_id)
+    public function imprimeEtiqueta($url)
     {
+        $partes = explode('/', trim(parse_url($url, PHP_URL_PATH), '/'));
+
+        $ultimo = end($partes);
+        $penultimo = prev($partes);
+
+        $etq_id = false;
+        $chave  = false;
+
+        if (strpos($ultimo, 'etq') === 0) {
+            $etq_id = $penultimo;
+            $chave  = $ultimo;
+        } elseif (is_numeric($ultimo)) {
+            $etq_id = $ultimo;
+            $chave  = false;
+        }
+
         $etiq = $this->etiqueta->getEtiqueta($etq_id);
         $camp = $this->etiquetaCampo->getEtiquetaCampo($etq_id);
         if (!$etiq) {
@@ -629,23 +645,28 @@ class CriaEtiquetaZPL extends BaseController
         $this->linhas     = (int)   $etq['let_linhas'];
 
         // Busca o LOTE completo (mesma fonte de dados)
-        $dados = [];
-        $fields = array_column($camp, 'etc_campo');
-        $telid  = $etq['tel_id'];
-        $telas  = $this->tela->getTelaId($telid)[0] ?? null;
+        if ($chave === false) {
+            $fields = array_column($camp, 'etc_campo');
+            $telid  = $etq['tel_id'];
+            $telas  = $this->tela->getTelaId($telid)[0] ?? null;
 
-        if ($telas && !empty($telas['tel_model'])) {
-            $model = $telas['tel_model'];
-            $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
-            // ajuste o limit conforme sua regra de impressão
-            $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 10);
+            if ($telas && !empty($telas['tel_model'])) {
+                $model = $telas['tel_model'];
+                $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
+                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 1);
+            } else {
+                $dados = array_fill(0, $this->colunas, []);
+            }
+            $modelo = true;
+        } else {
+            $all = cache()->get($chave) ?: [];
+            $dados = array_slice($all, 0, max(1, $this->colunas));
+            if (!$dados) $dados = [[]];
         }
-        if (!$dados) {
-            return $this->response->setJSON(['erro' => 'Sem dados para imprimir.']);
-        }
+        // debug($dados, true);
 
         // Monta ZPL (em LINHAS)
-        $zpl = $this->buildLoteEmLinhas($dados, $camp, true);
+        $zpl = $this->buildLoteEmLinhas($dados, $camp);
         // debug($zpl, true);
         // Envia para a impressora
         $sock = @fsockopen($this->ipZebra, $this->portaZebra, $eno, $estr, 5);

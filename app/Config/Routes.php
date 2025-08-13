@@ -2,43 +2,48 @@
 
 namespace Config;
 
-use App\Controllers\Analise\Analise;
+use Estoque\Origem;
+use Estoque\Familia;
+use Produto\Produto;
+use Produto\ProClasse;
+use Produto\Fabricante;
+use App\Controllers\Home;
+use App\Controllers\Utils;
+use Produto\ProIngrediente;
+use App\Controllers\Showfile;
 use App\Controllers\CfgEmpresa;
+use App\Controllers\WorkAnalise;
+use App\Controllers\Ws\WsCeqweb;
+use CodeIgniter\Config\Services;
+use App\Controllers\CriaEtiqueta;
+use App\Controllers\Produto\Lote;
 use App\Controllers\Config\CfgCor;
-use App\Controllers\Config\CfgDicionario;
-use App\Controllers\Config\CfgFuncoes;
-use App\Controllers\Config\CfgMensagem;
 use App\Controllers\Config\CfgMenu;
+use App\Controllers\Config\CfgTela;
+use App\Controllers\Analise\Analise;
+use App\Controllers\CriaEtiquetaZPL;
 use App\Controllers\Config\CfgModulo;
 use App\Controllers\Config\CfgPerfil;
 use App\Controllers\Config\CfgStatus;
-use App\Controllers\Config\CfgTela;
-use App\Controllers\Config\CfgUsuario;
-use App\Controllers\Config\Home_config;
-use App\Controllers\CriaEtiqueta;
-use App\Controllers\Estoque\AteRequisicao;
-use App\Controllers\Estoque\CfgEtiqueta;
-use App\Controllers\Estoque\CfgLayoutEtiq;
-use App\Controllers\Estoque\ConfRequisicao;
 use App\Controllers\Estoque\Deposito;
-use App\Controllers\Estoque\OcoTipoAcao;
-use App\Controllers\Estoque\OcoTipoOcorrencia;
-use App\Controllers\Estoque\Requisicao;
-use App\Controllers\Estoque\SaldoEstoque;
-use App\Controllers\Estoque\TipoMovimentacao;
+use App\Controllers\Config\CfgFuncoes;
+use App\Controllers\Config\CfgUsuario;
+use App\Controllers\Estoque\Movimento;
 use App\Controllers\Estoque\Transacao;
+use App\Controllers\Config\CfgMensagem;
+use App\Controllers\Config\Home_config;
+use App\Controllers\Estoque\Requisicao;
+use App\Controllers\Estoque\CfgEtiqueta;
+use App\Controllers\Estoque\OcoTipoAcao;
 use App\Controllers\Micro\AnaRequisicao;
-use App\Controllers\Produto\Lote;
-use App\Controllers\Showfile;
-use App\Controllers\Utils;
-use App\Controllers\Ws\WsCeqweb;
-use CodeIgniter\Config\Services;
-use Estoque\Familia;
-use Estoque\Origem;
-use Produto\Fabricante;
-use Produto\ProClasse;
-use Produto\ProIngrediente;
-use Produto\Produto;
+use App\Controllers\Config\CfgDicionario;
+use App\Controllers\Estoque\SaldoEstoque;
+use App\Controllers\Estoque\AteRequisicao;
+use App\Controllers\Estoque\CfgLayoutEtiq;
+use App\Controllers\Estoque\EtqProdutoReq;
+use App\Controllers\Estoque\ConfRequisicao;
+use App\Controllers\Estoque\TipoMovimentacao;
+use App\Controllers\Estoque\OcoTipoOcorrencia;
 
 // Create a new instance of our RouteCollection class.
 $routes = Services::routes();
@@ -54,7 +59,16 @@ $routes->setDefaultMethod('index');
 $routes->setTranslateURIDashes(true);
 $routes->set404Override(function () {
     log_message('critical', 'Rota 404 chamada: {uri}', ['uri' => current_url()]);
-    return service('response')->respond(['error' => 'Rota não encontrada'], 404);
+    $dadosTela = [
+        'title' => current_url(),
+        'permissao' => false,
+        'erromsg' => "<h2>Atenção</h2>O Caminho <b>" . current_url() . "</b><br>
+            <span style='color:red; font-size:16px'>Não foi Encontrado!</span><br>
+            Informe o Problema ao Administrador do Sistema!",
+    ];
+
+    // Renderiza a view diretamente
+    return view('vw_semacesso', $dadosTela);
 });
 
 $routes->setAutoRoute(true);
@@ -189,6 +203,10 @@ $routes->post('/AteRequisicao/(:any)', 'Estoque\AteRequisicao::$1');
 $routes->get('/ConfRequisicao', 'Estoque\ConfRequisicao::index');
 $routes->get('/ConfRequisicao/(:any)', 'Estoque\ConfRequisicao::$1');
 $routes->post('/ConfRequisicao/(:any)', 'Estoque\ConfRequisicao::$1');
+
+// $routes->get('/EtqProdutoReq', 'Estoque\EtqProdutoReq::index');
+$routes->get('/EtqProdutoReq/(:any)', 'Estoque\EtqProdutoReq::index/$1');
+$routes->post('/EtqProdutoReq/(:any)', 'Estoque\EtqProdutoReq::index/$1');
 
 $routes->get('/Origem', 'Produto\Origem::index');
 $routes->get('/Origem/(:any)', 'Produto\Origem::$1');

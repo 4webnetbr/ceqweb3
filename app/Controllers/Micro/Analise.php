@@ -2,18 +2,17 @@
 
 namespace App\Controllers\Micro;
 
-use stdClass;
-use Config\Database;
+use App\Controllers\BaseController;
+use App\Controllers\BuscasSapiens;
 use App\Libraries\MyCampo;
-use App\Models\CommonModel;
 use App\Libraries\SoapSapiens;
 use App\Models\ArquivoMonModel;
-use App\Controllers\BuscasSapiens;
-use App\Controllers\BaseController;
-use App\Models\Produt\ProdutLoteModel;
-use App\Models\Microb\MicrobAnaliseModel;
-use App\Models\Produt\ProdutProdutoModel;
+use App\Models\CommonModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
+use App\Models\Microb\MicrobAnaliseModel;
+use App\Models\Produt\ProdutLoteModel;
+use App\Models\Produt\ProdutProdutoModel;
+use Config\Database;
 
 class Analise extends BaseController
 {
@@ -108,7 +107,7 @@ class Analise extends BaseController
                     "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' 
             data-mdb-toggle='tooltip' data-mdb-placement='top' 
             title='Imprimir Requisição' onclick='openPDFModal(\"$url_ati\",\"Imprimir Requisição\")'>
-            <i class='fa-solid fa-print'></i></button>"
+            <i class='fas fa-print'></i></button>"
                 ];
             }
         }
@@ -120,19 +119,6 @@ class Analise extends BaseController
         cache()->save('analise', $analise, 300);
         // }
         echo json_encode($analise);
-    }
-
-
-    /**
-     * Consulta
-     * show
-     *
-     * @param mixed $id 
-     * @return void
-     */
-    public function show($id)
-    {
-        return $this->edit($id, true);
     }
 
     /**
@@ -155,6 +141,291 @@ class Analise extends BaseController
             $ret['msg']  = 'Não foi possível Excluir essa Análise Verifique!<br><br>';
         }
         echo json_encode($ret);
+    }
+
+
+    // public function lista()
+    // {
+    //     $msg = 'Buscando Produtos no Depósito Quarentena';
+    //     envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
+
+    //     $campos = montaColunasCampos($this->data, 'ana_id');
+
+    //     // BUSCA OS LOTES DE PRODUTOS NO DEPÓSITO QUARENTENA
+    //     $busca = new BuscasSapiens();
+    //     $saldoest = (array) $busca->buscaEstoqueDeposito('QUA', '');
+
+    //     if (empty($saldoest)) {
+    //         echo json_encode(['data' => []]);
+    //         return;
+    //     }
+
+    //     $codigoProdutoArray = array_column($saldoest, 'codigoProduto');
+    //     $codigoLoteArray = array_column($saldoest, 'codigoLote');
+
+    //     $prods = $this->produto->getProdutoCodLista($codigoProdutoArray, 'S');
+    //     $lotes = $this->lote->getLoteProdutoIn($codigoLoteArray);
+    //     $analises = $this->analise->getAnaliseCod();
+
+    //     // Reestrutura os arrays para facilitar busca rápida por chave
+    //     $prods = array_column($prods, null, 'pro_codpro');
+    //     $lotes = array_column($lotes, null, 'lot_lote');
+    //     $analisesAssoc = [];
+    //     foreach ($analises as $analise) {
+    //         $chave = $analise['pro_codpro'] . '-' . $analise['lot_id'];
+    //         $analisesAssoc[$chave] = $analise;
+    //     }
+
+    //     $msg = count($saldoest) . ' Produtos no Depósito Quarentena';
+    //     envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
+
+    //     foreach ($saldoest as $saldoobj) {
+    //         $saldo = (array)$saldoobj;
+    //         $prodproc = $saldo['codigoProduto'];
+    //         $loteproc = $saldo['codigoLote'];
+    //         $quantidade = str_replace(['.', ','], '', $saldo['quantidadeEstoque']);
+
+    //         if (!isset($prods[$prodproc]) || $prods[$prodproc]['cla_micro'] !== 'S') {
+    //             continue;
+    //         }
+
+    //         $prod = $prods[$prodproc];
+    //         $lote = $lotes[$loteproc] ?? [
+    //             'lot_lote' => $saldo['codigoLote'],
+    //             'lot_entrada' => '',
+    //             'lot_validade' => $saldo['validade'],
+    //             'stt_id' => null,
+    //         ];
+
+    //         $analiseKey = $prodproc . '-' . $loteproc;
+    //         $analis = $analisesAssoc[$analiseKey] ?? null;
+
+    //         if ($lote['stt_id'] == 8 && (is_null($analis) || $analis['stt_id'] == 16)) {
+    //             $this->analise->save([
+    //                 'pro_id' => $prod['pro_id'],
+    //                 'lot_id' => $lote['lot_id'],
+    //                 'ana_qtde' => $quantidade,
+    //                 'ana_data' => date('Y-m-d'),
+    //                 'stt_id' => 10 // ANÁLISE BLOQUEADA
+    //             ]);
+    //         } elseif ($lote['stt_id'] == 9) {
+    //             if (is_null($analis) || in_array($analis['stt_id'], [13, 16])) {
+    //                 $this->analise->save([
+    //                     'pro_id' => $prod['pro_id'],
+    //                     'lot_id' => $lote['lot_id'],
+    //                     'ana_qtde' => $quantidade,
+    //                     'ana_data' => date('Y-m-d'),
+    //                     'stt_id' => 10 // ANÁLISE BLOQUEADA
+    //                 ]);
+
+    //                 $this->lote->save([
+    //                     'lot_id' => $lote['lot_id'],
+    //                     'stt_id' => 8 // LOTE BLOQUEADO
+    //                 ]);
+    //             } elseif ($analis['stt_id'] == 15) {
+    //                 envia_msg_ws($this->data['controler'], "Lote {$saldo['codigoLote']} Análise Aprovada, Movimenta Estoque", 'MsgServer', session()->get('usu_id'), 1);
+
+    //                 $movim = $this->tipomovimento->getTipoMovimentacao(5)[0] ?? null;
+    //                 if ($movim) {
+    //                     (new SoapSapiens())->transfProdutosSapiens(
+    //                         $prod['pro_codpro'],
+    //                         $movim['tmo_transacao_erp'],
+    //                         $movim['dep_codorigem'],
+    //                         date('d/m/Y'),
+    //                         $quantidade,
+    //                         $lote['lot_lote'],
+    //                         $movim['dep_coddestino']
+    //                     );
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     // BUSCA TODAS AS ANÁLISES
+    //     $dados_analise = $this->analise->getAnalise();
+    //     foreach ($dados_analise as &$ana) {
+    //         $log = buscaLog('pro_mic_analise', $ana['ana_id']);
+    //         $ana['usu_nome'] = $log['usua_alterou'] ?? '';
+
+    //         if ($ana['req_id']) {
+    //             $url_ati = base_url('/CriaPdf2025/PrintAnaRequisicao/' . $ana['req_id']);
+    //             $ana['acao_person'] = [
+    //                 "<button class='btn btn-outline-danger btn-sm border-0 mx-0 fs-0 float-end' 
+    //                 data-mdb-toggle='tooltip' data-mdb-placement='top' 
+    //                 title='Imprimir Requisição' onclick='openPDFModal(\"$url_ati\",\"Imprimir Requisição\")'>
+    //                 <i class='fas fa-print'></i></button>"
+    //             ];
+    //         }
+    //     }
+
+    //     $this->data['exclusao'] = false;
+    //     $analise = ['data' => montaListaColunas($this->data, 'ana_id', $dados_analise, $campos[1])];
+
+    //     cache()->save('analise', $analise, 1200);
+    //     echo json_encode($analise);
+    // }
+
+    public function listaAnt()
+    {
+        $msg = 'Buscando Produtos no Depósito Quarentena';
+        envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
+        $campos = montaColunasCampos($this->data, 'ana_id');
+        // BUSCA OS LOTES DE PRODUTOS NO DEPÓSITO QUARENTENA
+        $busca = new BuscasSapiens();
+        $saldoest = (array) $busca->buscaEstoqueDeposito('QUA', '');
+
+        $dados_analise = [];
+        $ct = 0;
+        if (count($saldoest) > 0) {
+            // MONTA O ARRAY COM OS CÕDIGOS DOS PRODUTOS PARA O SQL
+            $codigoProdutoArray = array_map(function ($item) {
+                return $item->codigoProduto;
+            }, $saldoest);
+            $prods = $this->produto->getProdutoCodLista($codigoProdutoArray, 'S');
+
+            $codigoLoteArray = array_map(function ($item) {
+                return $item->codigoLote;
+            }, $saldoest);
+            $lotes = $this->lote->getLoteProdutoIn($codigoLoteArray);
+
+            $analises = $this->analise->getAnaliseCod();
+
+            $msg = count($saldoest) . ' Produtos no Depósito Quarentena';
+            envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
+            for ($s = 0; $s < count($saldoest); $s++) {
+                $saldo = (array) $saldoest[$s];
+                // debug($saldo);x
+                $prodproc = $saldo['codigoProduto'];
+                // Buscar o CODIGO DO PRODUTO NO ARRAY DE PRODUTOS item no array
+                $resultado = array_filter($prods, function ($item) use ($prodproc) {
+                    return $item['pro_codpro'] === $prodproc;
+                });
+                // Converter o resultado para o primeiro item encontrado
+                $prod = reset($resultado);
+
+                $msg = 'Processando Produto ' . $saldo['codigoProduto'] . ' Lote ' . $saldo['codigoLote'] . ' no Depõsito Quarentena';
+                envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
+                // Verifica se o produto necessita de anãlise de Micro
+                if (isset($prod[0]['cla_micro']) && $prod[0]['cla_micro'] == 'S') {
+                    // $lote = $this->lote->getLoteSearch($saldo['codigoLote']);
+                    $loteproc = $saldo['codigoLote'];
+                    // Buscar o CODIGO DO PRODUTO NO ARRAY DE PRODUTOS item no array
+                    $resultado = array_filter($lotes, function ($item) use ($loteproc) {
+                        return $item['lot_lote'] === $loteproc;
+                    });
+                    $lote = reset($resultado);
+                    if (count($lote) == 0) {
+                        $lote[0]['lot_lote']     = $saldo['codigoLote'];
+                        $lote[0]['lot_entrada']  = $saldo['entrada'];
+                        $lote[0]['lot_validade'] = $saldo['validade'];
+                    }
+                    $resultado = array_filter($analises, function ($item) use ($prodproc, $loteproc) {
+                        if ($item['pro_codpro'] === $prodproc && $item['lot_id'] === $loteproc) {
+                            return $item;
+                        }
+                    });
+                    $analis = reset($resultado);
+                    if ($lote[0]['stt_id'] == 8) {
+                        // SE O LOTE ESTIVER BLOQUEADO (ID=8)
+                        // VERIFICA SE O PRODUTO E O LOTE JÃ TEM ANÃLISE
+                        if (count($analis) == 0 || $analis[0]['stt_id'] == 16) {
+                            // SE NÃO TEM, OU TEM COM STATUS REPROVADA (ID 16), INCLUI A ANÁLISE
+                            $sql_ana = [
+                                'pro_id' => $prod[0]['pro_id'],
+                                'lot_id' => $lote[0]['lot_id'],
+                                'ana_qtde' => $saldo['quantidadeEstoque'],
+                                'ana_data' => date('Y-m-d'),
+                                'stt_id'   => 10 // ANÁLISE BLOQUEADA
+                            ];
+                            // debug($sql_ana);
+                            $this->analise->save($sql_ana);
+                        }
+                    } else if ($lote[0]['stt_id'] == 9) {
+                        // SE O LOTE ESTIVER LIBERADO (ID=9)
+                        // VERIFICA SE O PRODUTO E O LOTE JÃ TEM ANÃLISE
+                        if (count($analis) == 0 || $analis[0]['stt_id'] == 13 || $analis[0]['stt_id'] == 16) {
+                            // SE NÃO TEM, OU TEM COM STATUS NAO REALIZADA (ID 13), 
+                            // OU TEM COM STATUS REPROVADA (ID 16) INCLUI A ANÁLISE
+                            $sql_ana = [
+                                'pro_id' => $prod[0]['pro_id'],
+                                'lot_id' => $lote[0]['lot_id'],
+                                'ana_qtde' => $saldo['quantidadeEstoque'],
+                                'ana_data' => date('Y-m-d'),
+                                'stt_id'   => 10 // ANÁLISE BLOQUEADA
+                            ];
+                            $this->analise->save($sql_ana);
+
+                            // ATUALIZA O LOTE PARA BLOQUEADO
+                            $sql_lot = [
+                                'lot_id' => $lote[0]['lot_id'],
+                                'stt_id'   => 8 // LOTE BLOQUEADA
+                            ];
+                            $this->lote->save($sql_lot);
+                        } else if ($analis[0]['stt_id'] == 15) {
+                            $msg = 'Lote ' . $saldo['codigoLote'] . ' Análise Aprovada, Movimenta Estoque';
+                            envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
+                            // CASO A ANALISE ESTEJA APROVADA, GERA MOVIMENTAÇÃO DE ESTOQUE
+                            $codpro = $prod[0]['pro_codpro'];
+                            $datmov = date('d/m/Y');
+                            $codlot = $lote[0]['lot_lote'];
+                            $qtdmov = $saldo['quantidadeEstoque'];
+                            $qtdmov = str_replace(['.', ','], '', $qtdmov);
+                            // BUSCA TIPO MOVIMENTO
+                            $movim  = $this->tipomovimento->getTipoMovimentacao(5);
+                            $codtns = $movim[0]['tmo_transacao_erp'];
+                            $depori = $movim[0]['dep_codorigem'];
+                            $depdes = $movim[0]['dep_coddestino'];
+
+                            // debug($movim);
+                            $soaptrf = new SoapSapiens();
+                            $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes);
+                        }
+                    }
+                }
+            }
+        }
+        // BUSCA TODAS AS ANÁLISES
+        $dados_analise = $this->analise->getAnalise();
+        for ($da = 0; $da < count($dados_analise); $da++) {
+            // $dados_analise[$da]['d'] = '';
+            $ana = $dados_analise[$da];
+            $log = buscaLog('pro_mic_analise', $ana['ana_id']);
+            $dados_analise[$da]['usu_nome'] = isset($log['usua_alterou']) ? $log['usua_alterou'] : '';
+            $this->data['botao'] = [];
+            if ($ana['req_id'] != null) {
+                // debug('Req ' . $ana['req_id']);
+                $url_ati = base_url('/CriaPdf2025/PrintAnaRequisicao/' . $ana['req_id']);
+                $imprimir =
+                    "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' data-mdb-toggle='tooltip' 
+                    data-mdb-placement='top' title='Imprimir Requisição' onclick='openPDFModal(\"" .
+                    $url_ati .
+                    "\",\"Imprimir Requisição\")'><i class='fas fa-print'></i></button>";
+
+                $dados_analise[$da]['acao_person'] = [$imprimir];
+            }
+            // debug($this->data['botao']);
+            // }
+            // debug($dados_analise, true);
+            $this->data['exclusao'] = false;
+            $analise = [
+                'data' => montaListaColunas($this->data, 'ana_id', $dados_analise, $campos[1]),
+            ];
+            cache()->save('analise', $analise, 1200);
+        }
+
+        echo json_encode($analise);
+    }
+
+    /**
+     * Consulta
+     * show
+     *
+     * @param mixed $id 
+     * @return void
+     */
+    public function show($id)
+    {
+        return $this->edit($id, true);
     }
 
     /**
@@ -410,13 +681,6 @@ class Analise extends BaseController
                             'msg' => 'liberado sem Micro'
                         ];
                         // gera movimentação MOV6 da quantidade micro
-                        $permis = $this->tipomovimento->getTipoMovimentacaoTemPermissao(6, $perfil);
-                        if(!$permis){
-                            $ret['erro'] = true;
-                            $ret['msg'] = 31;
-                            echo json_encode($ret);
-                            exit;
-                        }
                         $movs[] = [
                             'id'  => 6,
                             'qt'  => intval($post['ana_qtde_micro']),
@@ -465,7 +729,7 @@ class Analise extends BaseController
                             'qt'  => $qtia,
                             'msg' => 'Análise reprovada'
                         ];
-                        $movs[] = [ // GERA MOVIMENTACAO MOV7 (7) DA QUANTIDADE MICRO
+                       $movs[] = [ // GERA MOVIMENTACAO MOV7 (7) DA QUANTIDADE MICRO
                             'id'  => 7,
                             'qt'  => intval($post['ana_qtde_micro']),
                             'msg' => 'Análise reprovada'
@@ -573,17 +837,18 @@ class Analise extends BaseController
             // Inicia a transação
             $this->analise->transBegin();
 
-            if (!empty($movs)) {
-                cache()->clean();
-                $movim = $this->geraMovimento($movs, $post);
-                // debug($movim, true);
-                if(isset($movim->tipoRetorno) && $movim->tipoRetorno > 1){
-                    $ret['erro'] = true;
-                    $ret['msg'] = $movim->mensagemRetorno;
-                    // Rollback em ambas transações
-                    $this->analise->transRollback();
-                }
-            }
+            // Gera movimentos se existirem
+            // if (!empty($movs)) {
+            //     cache()->clean();
+            //     $movim = $this->geraMovimento($movs, $post);
+            //     // debug($movim, true);
+            //     if($movim->tipoRetorno > 1){
+            //         $ret['erro'] = true;
+            //         $ret['msg'] = $movim->mensagemRetorno;
+            //         // Rollback em ambas transações
+            //         $this->analise->transRollback();
+            //     }
+            // }
             
             if(!$ret['erro']){
                 // Salva dados da análise
@@ -618,6 +883,20 @@ class Analise extends BaseController
                 cache()->clean();
                 $ret['msg'] = 'Dados da Analise gravados com Sucesso!!!';
                 session()->setFlashdata('msg', $ret['msg']);
+
+                if($post['stt_id'] == 10){ // ESTAVA BLOQUEADO
+                    $dados = $this->analise->getListaAnalise($post['ana_id'])[0] ?? null;
+
+                    $numetiquetas = (int) $dados['ana_qtde_micro'];
+                    $dados = array_fill(0, $numetiquetas, $dados);
+                    $chave = uniqid('etq_');
+                    cache()->save($chave, $dados, 60); // 1 minuto
+
+                    $link = base_url('/CriaEtiquetaZPL/emiteEtiqueta/22/'.$chave);
+                    session()->setFlashdata('modal', $link);
+                    session()->setFlashdata('modal-title', 'Imprimir Etiqueta');
+                }
+
                 $ret['url'] = site_url($this->data['controler']);
             }
         } catch (\Exception $e) {
@@ -629,6 +908,7 @@ class Analise extends BaseController
                 $this->lote->transRollback();
             }
         }
+
         echo json_encode($ret);
     }
 
@@ -666,60 +946,34 @@ class Analise extends BaseController
 
     public function geraMovimento($movimentos, $postado)
     {
-        $transf = (object) [];
-        $transf->tipoRetorno = 0;
-        $perfil = session()->get('usu_perfil_id');
-
         for ($m = 0; $m < count($movimentos); $m++) {
             $mov = $movimentos[$m];
-            $permis = $this->tipomovimento->getTipoMovimentacaoTemPermissao($mov['id'], $perfil);
-            if(!$permis){
-                $transf->tipoRetorno = 10;
-                $transf->mensagemRetorno = 31;
-                return $transf;
-            }
+            $produto = $this->produto->getProduto($postado['pro_id'], false)[0];
+            $codpro = $produto['pro_codpro'];
+
+            $msg =  'Produto ' . $codpro . ' Lote ' . $postado['lot_lote'] . $mov['msg'];
+            envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
+
+            $datmov = date('d/m/Y');
+            $codlot = $postado['lot_lote'];
+            $qtdmov = $mov['qt'];
+            $qtdmov = str_replace(['.', ','], '', $qtdmov);
+            // BUSCA TIPO MOVIMENTO
+            $movim  = $this->tipomovimento->getTipoMovimentacao($mov['id']);
+            $codtns = $movim[0]['tmo_transacao_erp'];
+            $depori = $movim[0]['dep_codorigem'];
+            $depdes = $movim[0]['dep_coddestino'];
+            $valida = data_br($postado['lot_validade']);
+
+            log_message('info', 'Movimento '.json_encode($movim));
+
+
+            // DESCOMENTAR AQUI QDO FOR PRA  MOVIMENTAR EFETIVAMENTE
+            // $soaptrf = new SoapSapiens();
+            // $movimenta = $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
+            // // debug($movimenta, true);
+            // return $movimenta;
         }
-        if($transf->tipoRetorno === 0){
-            for ($m = 0; $m < count($movimentos); $m++) {
-                $mov = $movimentos[$m];
-                $produto = $this->produto->getProduto($postado['pro_id'], false)[0];
-                $codpro = $produto['pro_codpro'];
-
-                $msg =  'Produto ' . $codpro . ' Lote ' . $postado['lot_lote'] . $mov['msg'];
-                envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
-
-                $datmov = date('d/m/Y');
-                $codlot = $postado['lot_lote'];
-                $qtdmov = $mov['qt'];
-                $qtdmov = str_replace(['.', ','], '', $qtdmov);
-                // BUSCA TIPO MOVIMENTO
-                $movim  = $this->tipomovimento->getTipoMovimentacao($mov['id']);
-                $codtns = $movim[0]['tmo_transacao_erp'];
-                $depori = $movim[0]['dep_codorigem'];
-                $depdes = $movim[0]['dep_coddestino'];
-                $valida = data_br($postado['lot_validade']);
-
-                log_message('info', 'Movimento '.json_encode($movim));
-
-                // debug($depdes);
-
-                // DESCOMENTAR AQUI QDO FOR PRA  MOVIMENTAR EFETIVAMENTE
-                // $soaptrf = new SoapSapiens();
-                // if($depdes != null && $depdes != ''){
-                //     $transf = $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
-                //     // debug($movimenta, true);
-                //     if($transf->tipoRetorno > 1){
-                //         return $transf;
-                //     }
-                // } else {
-                //     $transf = $soaptrf->movimProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
-                //     // debug($movimenta, true);
-                //     if($transf->tipoRetorno > 1){
-                //         return $transf;
-                //     }
-                // }
-            }
-        }
-        return $transf;
     }
+
 }

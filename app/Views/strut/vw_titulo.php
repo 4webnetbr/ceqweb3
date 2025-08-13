@@ -10,6 +10,7 @@ if (!isset($desc_edicao)) {
   $heig = '3rem';
   $desc_edicao  = '';
 }
+
 // if (!isset($desc_metodo)){
 if ($metodo == 'index' || $metodo == '') {
   $ajuda = $regras_gerais;

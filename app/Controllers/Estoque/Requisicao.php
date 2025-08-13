@@ -226,16 +226,38 @@ class Requisicao extends BaseController
         $campos[0][count($campos[0])] = "<div class='col-6'>.</div>";
         // $campos[0][count($campos[0])] = $fields['lot_codbar'];
 
-        $produtos = $this->requisicao->getRequisicaoProdutos($id);
-        // debug($produtos, true);
+        $produtosreq = $this->requisicao->getRequisicaoProdutos($id);
+        $colunas = ['Cód ERP','Descrição','Fabricante','LF','Lote','LP','Validade','Caixas','Qtde.Requerida','Qtde.Cancelada','Qtde.Pendente','Saldo'];
+        $produtos = [];
+        $produtos[0] = $id;
+        if(count($produtosreq) > 0){
+            for ($p=0; $p < count($produtosreq) ; $p++) { 
+                $prod = $produtosreq[$p];
+                $produto[0] = $prod['rep_id'];
+                $produto[count($produto)] = $prod['pro_codpro'];
+                $produto[count($produto)] = $prod['pro_despro'];
+                $produto[count($produto)] = $prod['fab_apeFab'];
+                $produto[count($produto)] = $prod['pre_cbfabricante'].$prod['pre_undfabricante'];
+                $produto[count($produto)] = $prod['lot_lote'];
+                $produto[count($produto)] = $prod['pre_cblote'].$prod['pre_undlote'];
+                $produto[count($produto)] = $prod['lot_validade'];
+                $produto[count($produto)] = $prod['qtd_caixa'];
+                $produto[count($produto)] = $prod['rep_quantia'];
+                $produto[count($produto)] = $prod['rep_cancelada'];
+                $produto[count($produto)] = $prod['rep_atendida'];
+                $produto[count($produto)] = $prod['rep_quantia'];
+                array_push($produtos, $produto);
+            }
+        }
         $data = [
             'show' => true,
+            'colunas' => $colunas,
             'produtos' => $produtos
         ];
 
-        $campos[0][count($campos[0])] = view('partials/pw_produtos_requisicao',$data); // mesma estrutura do add()
+        $campos[0][count($campos[0])] = view('partials/pw_show_produtos_req',$data); // mesma estrutura do add()
 
-        $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['desc_edicao']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['secoes']    = $secao;
         $this->data['campos']    = $campos;
         $this->data['destino']   = ''; // ou 'update' se você for criar

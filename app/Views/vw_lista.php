@@ -52,7 +52,7 @@
   if (session()->getFlashdata('modal')) {
     $link = session()->getFlashdata('modal');    
     $titu = session()->getFlashdata('modal-title');    
-    echo "<script>openPDFModal(\"" . $link . "\", \"" . $titu . "\");</script>";
+    echo "<script>gerarEtiqueta(\"" . $link . "\", \"" . $titu . "\");</script>";
   }
   ?>
 
