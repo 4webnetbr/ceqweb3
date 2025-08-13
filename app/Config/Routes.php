@@ -199,14 +199,12 @@ $routes->post('/Requisicao/(:any)', 'Estoque\Requisicao::$1');
 $routes->get('/AteRequisicao', 'Estoque\AteRequisicao::index');
 $routes->get('/AteRequisicao/(:any)', 'Estoque\AteRequisicao::$1');
 $routes->post('/AteRequisicao/(:any)', 'Estoque\AteRequisicao::$1');
+$routes->get('/AteRequisicao/GeraEtiqueta/(:num)/(:num)', 'Estoque\AteRequisicao::GeraEtiqueta/$1/$2');
 
 $routes->get('/ConfRequisicao', 'Estoque\ConfRequisicao::index');
 $routes->get('/ConfRequisicao/(:any)', 'Estoque\ConfRequisicao::$1');
 $routes->post('/ConfRequisicao/(:any)', 'Estoque\ConfRequisicao::$1');
 
-// $routes->get('/EtqProdutoReq', 'Estoque\EtqProdutoReq::index');
-$routes->get('/EtqProdutoReq/(:any)', 'Estoque\EtqProdutoReq::index/$1');
-$routes->post('/EtqProdutoReq/(:any)', 'Estoque\EtqProdutoReq::index/$1');
 
 $routes->get('/Origem', 'Produto\Origem::index');
 $routes->get('/Origem/(:any)', 'Produto\Origem::$1');

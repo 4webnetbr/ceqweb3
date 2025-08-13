@@ -347,7 +347,11 @@ class CriaEtiquetaZPL extends BaseController
             $tipoCampo  = $prop['etc_campo'] ?? '';        // '0','1','2','3' ou nome do campo
             $rotulo     = $prop['etc_rotulo'] ?? '';
 
-            $font = ($fonte == 'Courier')?'B':'0';
+            $partes = explode(' ', $fonte, 2);
+
+            // Colocar tudo em maiúsculo
+            $font = strtoupper($partes[0]);
+
 
             $largDisp = (int) floor($etqW * ($colPct / 100));
 
@@ -396,15 +400,38 @@ class CriaEtiquetaZPL extends BaseController
                 $barH     = max(40, $this->mm2dot($alturaMM));
                 $dados    = $texto !== '' ? $texto : str_repeat('0', max(8, $caracteres));
 
-                // Centraliza dentro do bloco de % da etiqueta
-                $margem = (int)(($etqW - $largDisp) / 2);
-                $xPos   = $xBase + $margem;
+                // 1) Área TOTAL (100% da etiqueta) reservada ao barcode
+                $areaW = (int)$etqW; // largura total da etiqueta (em dots)
 
-                $z .= "^FO{$xPos}," . ($baseY + $yCursor);
-                // ^BC: N = não mostrar HRI (texto)
-                $z .= "^BY2^BCN,{$barH},N,N,N^FD" . $this->escZpl($dados) . "^FS";
+                // 2) Largura desejada do BARCODE = % da etiqueta
+                $barTargetW = (int) round($areaW * ($colPct / 100));
 
-                // Respiro abaixo do barcode (1.2mm)
+                // 3) Quiet zones laterais (margens) — ~1,2mm de cada lado
+                $quiet = max(8, (int) $this->mm2dot(1.2));
+                $usableW = max(10, $barTargetW - 2 * $quiet); // largura realmente útil pro desenho
+
+                // 4) Estimativa de módulos do Code128 (usado por ^BC):
+                //    Aproxima: 35 módulos de overhead + ~11 módulos por caractere
+                $lenDados = max(strlen($dados), max(8, (int)$caracteres));
+                $modules  = 35 + (11 * $lenDados);
+
+                // 5) Calcula module width (largura do traço fino) para caber no espaço útil.
+                //    Limita entre 1 e 10 (limite prático pro ^BY).
+                $modW = (int) floor($usableW / $modules);
+                $modW = max(1, min(10, $modW));
+
+                // 6) Largura real do código resultante e centralização na etiqueta
+                $realBarW = ($modules * $modW);
+                $xPos = $xBase + (int) round(($areaW - $realBarW) / 2);
+
+                // Posição Y
+                $yPos = $baseY + $yCursor;
+
+                // 7) Emite ZPL: ^BY com module width, ^BC com altura e sem HRI (N)
+                $z .= "^FO{$xPos},{$yPos}";
+                $z .= "^BY{$modW}^BCN,{$barH},N,N,N^FD" . $this->escZpl($dados) . "^FS";
+
+                // 8) Respiro abaixo do barcode (1.2mm)
                 $yCursor  += ($barH + $this->mm2dot(1.2));
                 $ocupouPct = 0;
                 continue;
@@ -443,12 +470,12 @@ class CriaEtiquetaZPL extends BaseController
 
                 for ($i = 0; $i < $maxLines; $i++) {
                     $yLine = $yBase + ($i * $lineStep);
-                    $z .= "^FO{$xBase},{$yLine}^A@N,{$hDots},{$wDots}";
+                    $z .= "^FO{$xBase},{$yLine}^A@N,{$hDots},{$wDots},E:{$font}.TTF";
                     $z .= "^FB{$largDisp},1,0,{$alinh},0";
                     $part = $partes[$i];
                     $z .= "^FD{$part}^FS";
                     if ($negrito) {
-                        $z .= "^FO{$xBase},{$yLine}^A@N,{$hDots},{$wDots}";
+                        $z .= "^FO{$xBase},{$yLine}^A@N,{$hDots},{$wDots},E:{$font}.TTF";
                         $z .= "^FB{$largDisp},1,0," . ($alinh ?: 'L') . ",0";
                         $z .= "^FD{$part}^FS";
                     }
@@ -456,13 +483,13 @@ class CriaEtiquetaZPL extends BaseController
                 $yCursor  += ($lineStep * ($maxLines -1));
             } else {
                 // 1 linha só
-                $z .= "^FO{$xBase}," . ($baseY + $yCursor) . "^A@N,{$hDots},{$wDots}";
+                $z .= "^FO{$xBase}," . ($baseY + $yCursor) . "^A@N,{$hDots},{$wDots},E:{$font}.TTF";
                 $z .= "^FB{$largDisp},1,0,{$alinh},0";
                 $z .= "^FD" . $this->escZpl($texto) . "^FS";
 
                 // “Negrito” fake (opcional)
                 if ($negrito) {
-                    $z .= "^FO" . ($xBase + 1) . "," . ($baseY + $yCursor) . "^A@N,{$hDots},{$wDots}";
+                    $z .= "^FO" . ($xBase + 1) . "," . ($baseY + $yCursor) . "^A@N,{$hDots},{$wDots},E:{$font}.TTF";
                     $z .= "^FB{$largDisp},1,0," . ($alinh ?: 'L') . ",0";
                     $z .= "^FD" . $this->escZpl($texto) . "^FS";
                 }
@@ -653,6 +680,7 @@ class CriaEtiquetaZPL extends BaseController
             if ($telas && !empty($telas['tel_model'])) {
                 $model = $telas['tel_model'];
                 $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
+                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 1);
                 $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 1);
             } else {
                 $dados = array_fill(0, $this->colunas, []);

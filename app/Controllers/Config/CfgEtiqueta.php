@@ -68,7 +68,7 @@ class CfgEtiqueta extends BaseController
             $etq['acao_person'] = [
                 "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' 
             data-mdb-toggle='tooltip' data-mdb-placement='top' 
-            title='Imprimir Etiquetas' onclick='gerarEtiqueta(\"$url_ati\",event)'>
+            title='Imprimir Etiquetas' onclick='gerarEtiquetaZPL(\"$url_ati\",event)'>
             <i class='fas fa-print'></i></button>"
             ];
         }

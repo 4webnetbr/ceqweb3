@@ -1507,6 +1507,11 @@ function executaAjaxWait(urldest, tipo = "json", dados = {}, funcao = "") {
 
 function gerarEtiqueta(url) {
   // url = '/etiqueta/emiteEtiqueta/' + etq_id;
+  openPdfModal(url, "Impressão de Etiquetas ");
+}
+
+function gerarEtiquetaZPL(url) {
+  // url = '/etiqueta/emiteEtiqueta/' + etq_id;
   openImgModal(url, "Impressão de Etiquetas ");
 }
 
@@ -1566,4 +1571,9 @@ function imprimirEtiqueta(etq_id) {
       alert(res.status); // ou mostrar status no modal
     }
   });
+}
+
+function geraEiquetaProd(url, rep_id, qtia) {
+  // url = '/etiqueta/emiteEtiqueta/' + etq_id;
+  openImgModal(url, "Impressão de Etiquetas ");
 }

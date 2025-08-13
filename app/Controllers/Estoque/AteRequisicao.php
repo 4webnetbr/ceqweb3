@@ -268,12 +268,12 @@ class AteRequisicao extends BaseController
             for ($p=0; $p < count($produtosreq) ; $p++) { 
                 $prod = $produtosreq[$p];
 
-                $url_ati = base_url($this->data['controler'].'/GeraEtiqueta/');
+                $rep_id = $prod['rep_id'];
+                $qtia = $prod['rep_quantia'];
+                $url_ati = base_url($this->data['controler'].'/GeraEtiqueta/'.$rep_id.'/'.$qtia);
                 $imprimir =
-                    "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' data-mdb-toggle='tooltip' 
-                    data-mdb-placement='top' title='Imprimir Requisição' onclick='geraEiquetaProd(\"" .
-                    $url_ati .
-                    "\",\"Imprimir Etiquetas\")'><i class='fas fa-print'></i></button>";
+                    "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
+                    data-mdb-placement='top' title='Imprimir Etiqueta' onclick='geraEiquetaProd(\"".$url_ati."\")'><i class='fas fa-print'></i></button>";
                 
                 $produto[0] = $prod['rep_id'];
                 $produto[count($produto)] = $prod['pro_codpro'];
@@ -283,7 +283,7 @@ class AteRequisicao extends BaseController
                 $produto[count($produto)] = $prod['rep_quantia'];
                 $produto[count($produto)] = $prod['rep_quantia'];
                 $produto[count($produto)] = $prod['etiq_cor'];
-                $produto[count($produto)] = '';
+                $produto[count($produto)] = $imprimir;
                 array_push($produtos, $produto);
             }
         }
@@ -309,6 +309,10 @@ class AteRequisicao extends BaseController
         echo view('vw_edicao', $this->data);
     }
 
+    public function GeraEtiqueta($id, $qtia){
+        debug($id);
+        debug($qtia, true);
+    }
 
     /**
      * Gravação
