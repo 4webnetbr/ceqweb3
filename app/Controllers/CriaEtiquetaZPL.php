@@ -334,6 +334,10 @@ class CriaEtiquetaZPL extends BaseController
         $z = '';
         $yCursor  = 0;
         $ocupouPct = 0; // largura ocupada na linha (em % da etiqueta)
+        // inicialize fora do loop
+        $linhaPctOcupado = 0;               // 0..100
+        $linhaAlturaMax  = 0;               // em dots
+        $EPS             = 0.0001;          // evita quebra por arredondamento
 
         foreach ($camp as $prop) {
             $caracteres = (int) ($prop['etc_caracteres'] ?? 30);
@@ -351,7 +355,10 @@ class CriaEtiquetaZPL extends BaseController
 
             // Colocar tudo em maiúsculo
             $font = strtoupper($partes[0]);
-
+            if($font == 'TIMES'){
+                $font = 'TIMESNR';
+            }
+            $font = $font.'TTF';
 
             $largDisp = (int) floor($etqW * ($colPct / 100));
 
@@ -407,7 +414,7 @@ class CriaEtiquetaZPL extends BaseController
                 $barTargetW = (int) round($areaW * ($colPct / 100));
 
                 // 3) Quiet zones laterais (margens) — ~1,2mm de cada lado
-                $quiet = max(8, (int) $this->mm2dot(1.2));
+                $quiet = max(8, (int) $this->mm2dot(0));
                 $usableW = max(10, $barTargetW - 2 * $quiet); // largura realmente útil pro desenho
 
                 // 4) Estimativa de módulos do Code128 (usado por ^BC):
@@ -422,7 +429,8 @@ class CriaEtiquetaZPL extends BaseController
 
                 // 6) Largura real do código resultante e centralização na etiqueta
                 $realBarW = ($modules * $modW);
-                $xPos = $xBase + (int) round(($areaW - $realBarW) / 2);
+                // $xPos = $xBase + (int) round(($areaW - $realBarW) / 2);
+                $xPos = $xBase + (int) round(($areaW - $usableW) / 2);
 
                 // Posição Y
                 $yPos = $baseY + $yCursor;
@@ -470,35 +478,64 @@ class CriaEtiquetaZPL extends BaseController
 
                 for ($i = 0; $i < $maxLines; $i++) {
                     $yLine = $yBase + ($i * $lineStep);
-                    $z .= "^FO{$xBase},{$yLine}^A@N,{$hDots},{$wDots},E:{$font}.TTF";
+                    $z .= "^FO{$xBase},{$yLine}^A@N,{$hDots},{$wDots},E:{$font}";
                     $z .= "^FB{$largDisp},1,0,{$alinh},0";
                     $part = $partes[$i];
                     $z .= "^FD{$part}^FS";
                     if ($negrito) {
-                        $z .= "^FO{$xBase},{$yLine}^A@N,{$hDots},{$wDots},E:{$font}.TTF";
+                        $z .= "^FO{$xBase},{$yLine}^A@N,{$hDots},{$wDots},E:{$font}";
                         $z .= "^FB{$largDisp},1,0," . ($alinh ?: 'L') . ",0";
                         $z .= "^FD{$part}^FS";
                     }
                 }
                 $yCursor  += ($lineStep * ($maxLines -1));
             } else {
-                // 1 linha só
-                $z .= "^FO{$xBase}," . ($baseY + $yCursor) . "^A@N,{$hDots},{$wDots},E:{$font}.TTF";
-                $z .= "^FB{$largDisp},1,0,{$alinh},0";
+                $itemPct   = (float)$colPct;        // % do container do item
+                $itemW     = (int) round($etqW * ($itemPct / 100));   // largura (dots)
+                $itemH     = (int) $hDots;          // altura do item (ou calcule conforme o caso)
+
+                // 1) Quebra de linha *antes de imprimir* SE não couber
+                if (($linhaPctOcupado + $itemPct) > (100 + $EPS)) {
+                    // avança para próxima linha usando a MAIOR altura coletada
+                    // $yCursor += ($linhaAlturaMax ?: ($hDots + $this->mm2dot(1.2)));
+                    $linhaPctOcupado = 0;
+                    $linhaAlturaMax  = 0;
+                }
+
+                // 2) Posição X baseada no % já ocupado
+                $xPos = $xBase + (int) round(($etqW * $linhaPctOcupado) / 100);
+
+                // 3) Imprime o item (ex.: texto com ^A@ + ^FB em 1 linha)
+                $z .= "^FO{$xPos}," . ($baseY + $yCursor) . "^A@N,{$hDots},{$wDots},E:{$font}";
+                $z .= "^FB{$itemW},1,0,{$alinh},0";
                 $z .= "^FD" . $this->escZpl($texto) . "^FS";
 
-                // “Negrito” fake (opcional)
-                if ($negrito) {
-                    $z .= "^FO" . ($xBase + 1) . "," . ($baseY + $yCursor) . "^A@N,{$hDots},{$wDots},E:{$font}.TTF";
-                    $z .= "^FB{$largDisp},1,0," . ($alinh ?: 'L') . ",0";
+                // negrito fake opcional
+                if (!empty($negrito)) {
+                    $z .= "^FO" . ($xPos + 1) . "," . ($baseY + $yCursor) . "^A@N,{$hDots},{$wDots},E:{$font}";
+                    $z .= "^FB{$itemW},1,0," . ($alinh ?: 'L') . ",0";
                     $z .= "^FD" . $this->escZpl($texto) . "^FS";
                 }
+
+                // 4) Atualiza ocupação e altura da linha
+                $linhaPctOcupado += $itemPct;
+                if ($linhaPctOcupado > 100) { 
+                    $linhaPctOcupado = 100; 
+                } // clamp por segurança
+                $linhaAlturaMax = max($linhaAlturaMax, $itemH);
+
+                // 5) NÃO avance $yCursor aqui.
+                //    Se a linha “fechou” (==100), você só avança na chegada do próximo item,
+                //    pelo passo (1) acima. Isso garante que 30% + 40% fiquem na MESMA linha.
             }
 
             // Avança para próxima “linha de layout” dentro da etiqueta
-            $yCursor   += max($hDots, $this->mm2dot(2.5));
+            // $yCursor   += max($hDots, $this->mm2dot(2.5));
             $ocupouPct += $colPct;
-            if ($ocupouPct >= 100) $ocupouPct = 0;
+            if ($ocupouPct >= 100){
+                $ocupouPct = 0;                
+                $yCursor   += $hDots + $this->mm2dot(0.3);
+            }
         }
         // debug($z);
         return $z;
@@ -559,7 +596,7 @@ class CriaEtiquetaZPL extends BaseController
             if ($telas && !empty($telas['tel_model'])) {
                 $model = $telas['tel_model'];
                 $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
-                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 1);
+                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 10);
             } else {
                 $dados = array_fill(0, $this->colunas, []);
             }
@@ -635,24 +672,8 @@ class CriaEtiquetaZPL extends BaseController
     /**
      * IMPRESSÃO: quebra os dados em linhas de até let_colunas e envia cada LINHA (^XA…^XZ) pra Zebra.
      */
-    public function imprimeEtiqueta($url)
+    public function imprimeEtiqueta($etq_id, $chave = false)
     {
-        $partes = explode('/', trim(parse_url($url, PHP_URL_PATH), '/'));
-
-        $ultimo = end($partes);
-        $penultimo = prev($partes);
-
-        $etq_id = false;
-        $chave  = false;
-
-        if (strpos($ultimo, 'etq') === 0) {
-            $etq_id = $penultimo;
-            $chave  = $ultimo;
-        } elseif (is_numeric($ultimo)) {
-            $etq_id = $ultimo;
-            $chave  = false;
-        }
-
         $etiq = $this->etiqueta->getEtiqueta($etq_id);
         $camp = $this->etiquetaCampo->getEtiquetaCampo($etq_id);
         if (!$etiq) {
@@ -680,15 +701,16 @@ class CriaEtiquetaZPL extends BaseController
             if ($telas && !empty($telas['tel_model'])) {
                 $model = $telas['tel_model'];
                 $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
-                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 1);
-                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 1);
+                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 10);
             } else {
                 $dados = array_fill(0, $this->colunas, []);
             }
             $modelo = true;
         } else {
             $all = cache()->get($chave) ?: [];
+            // debug($all);
             $dados = array_slice($all, 0, max(1, $this->colunas));
+            // debug($dados, true);
             if (!$dados) $dados = [[]];
         }
         // debug($dados, true);

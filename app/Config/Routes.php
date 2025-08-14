@@ -108,6 +108,8 @@ $routes->post('/CriaEtiqueta/previewEtiquetaViaAjax/(:any)', 'CriaEtiqueta::prev
 $routes->get('/CriaEtiquetaZPL', 'CriaEtiquetaZPL::emiteEtiqueta');
 $routes->get('/CriaEtiquetaZPL/emiteEtiqueta/(:any)', 'CriaEtiquetaZPL::emiteEtiqueta/$1');
 $routes->post('/CriaEtiquetaZPL/emiteEtiqueta/(:any)', 'CriaEtiquetaZPL::emiteEtiqueta/$1');
+$routes->get('/CriaEtiquetaZPL/emiteEtiqueta/(:any)/(:any)', 'CriaEtiquetaZPL::emiteEtiqueta/$1/$2');
+$routes->post('/CriaEtiquetaZPL/emiteEtiqueta/(:any)/(:any)', 'CriaEtiquetaZPL::emiteEtiqueta/$1/$2');
 $routes->get('/CriaEtiquetaZPL/previewEtiquetaViaAjax/(:any)', 'CriaEtiquetaZPL::previewZPL/$1');
 $routes->post('/CriaEtiquetaZPL/previewEtiquetaViaAjax/(:any)', 'CriaEtiquetaZPL::previewZPL/$1');
 

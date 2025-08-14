@@ -227,12 +227,15 @@ class Requisicao extends BaseController
         // $campos[0][count($campos[0])] = $fields['lot_codbar'];
 
         $produtosreq = $this->requisicao->getRequisicaoProdutos($id);
+        // debug($produtosreq);
         $colunas = ['Cód ERP','Descrição','Fabricante','LF','Lote','LP','Validade','Caixas','Qtde.Requerida','Qtde.Cancelada','Qtde.Pendente','Saldo'];
         $produtos = [];
         $produtos[0] = $id;
         if(count($produtosreq) > 0){
             for ($p=0; $p < count($produtosreq) ; $p++) { 
                 $prod = $produtosreq[$p];
+                // debug($prod);
+                $produto = [];
                 $produto[0] = $prod['rep_id'];
                 $produto[count($produto)] = $prod['pro_codpro'];
                 $produto[count($produto)] = $prod['pro_despro'];
@@ -246,9 +249,10 @@ class Requisicao extends BaseController
                 $produto[count($produto)] = $prod['rep_cancelada'];
                 $produto[count($produto)] = $prod['rep_atendida'];
                 $produto[count($produto)] = $prod['rep_quantia'];
-                array_push($produtos, $produto);
+                $produtos[count($produtos)] =$produto;
             }
         }
+        // debug($produtos, true);
         $data = [
             'show' => true,
             'colunas' => $colunas,
@@ -304,6 +308,7 @@ class Requisicao extends BaseController
         if ($reqid != '') {
             $prodreq = $this->requisicaoproduto->getRequisicaoProdutos($reqid);
         }
+        // debug($prodreq, true);
 
         // === Dados iniciais de retorno ===
         $ret = [

@@ -33,16 +33,18 @@ if(!isset($show)){
                     <tbody style="max-height: 45vh; overflow-y: auto;">
                         <?
                         if(count($produtos) > 1){
-                            foreach (array_slice($produtos, 1) as $produto): ?>
-                                <tr id='<?= $produto[0]?>'>
-                                <?
-                                for ($c=1; $c < count($produto) ; $c++) { ?>
-                                    <td><?=$produto[$c];?></td>
-                                <?
-                                }?>
+                            for ($p=1; $p < count($produtos) ; $p++) { 
+                                $prodt = $produtos[$p];
+                            ?>
+                                <tr id='<?= $prodt[0]?>'>
+                                    <?
+                                    for ($pp=1; $pp < count($colunas) ; $pp++) { ?>
+                                        <td><?=$prodt[$pp];?></td>
+                                    <?
+                                    }?>
                                 </tr>
                                 <?
-                            endforeach;
+                            };
                         } else {?>
                             <tr>
                             <?
