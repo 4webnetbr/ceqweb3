@@ -349,11 +349,12 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
                     $dat_i['men_icone'] . "'></i> " . $dat_i['men_etiqueta'];
             }
         }
-        $dados[$p]['acao'] = "<div class='col-12 text-nowrap'>";
+        $dados[$p]['acao'] = "<div class='col-12 float-start text-center'>";
+        // $dados[$p]['acao'] = rtrim($dados[$p]['acao']);
         $dados[$p]['acao'] .= $edit . ' ' . $exclui . ' ' . $inativa . ' ';
         $dados[$p]['acao'] = rtrim($dados[$p]['acao']);
         if (isset($dados[$p]['acao_person'])) {
-            // debug($data_lis['botao']);
+            // debug($dados[$p]['acao_person'], true);
             for ($bt = 0; $bt < count($dados[$p]['acao_person']); $bt++) {
                 $dados[$p]['acao'] .= $dados[$p]['acao_person'][$bt] . ' ';
             }

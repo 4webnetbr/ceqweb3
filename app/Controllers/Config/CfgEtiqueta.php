@@ -61,15 +61,23 @@ class CfgEtiqueta extends BaseController
         $campos = montaColunasCampos($this->data, 'etq_id');
         $dados_etiqt = $this->etiqueta->getEtiqueta();
         $base_url = base_url('/CriaEtiquetaZPL/emiteEtiqueta/');
+        $base_cop = base_url($this->data['controler'].'/copy/');
 
         foreach ($dados_etiqt as &$etq) {
             $url_ati = $base_url . $etq['etq_id'];
+            $url_cop = $base_cop . $etq['etq_id'];
             // Gerar a ação do botão
             $etq['acao_person'] = [
-                "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' 
-            data-mdb-toggle='tooltip' data-mdb-placement='top' 
-            title='Imprimir Etiquetas' onclick='gerarEtiquetaZPL(\"$url_ati\",event)'>
-            <i class='fas fa-print'></i></button>"
+                "<button class='btn btn-outline-info btn-sm border-0 mx-0 fs-0' 
+                data-mdb-toggle='tooltip' data-mdb-placement='top' 
+                title='Copiar Etiqueta' onclick='redireciona(\"$url_cop\",event)'>
+                <i class='fas fa-copy'></i></button>",
+
+                "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0' 
+                data-mdb-toggle='tooltip' data-mdb-placement='top'
+                title='Imprimir Etiqueta' onclick='gerarEtiquetaZPL(\"$url_ati\",event)'>
+                <i class='fas fa-print'></i></button>",
+
             ];
         }
 
@@ -191,6 +199,79 @@ class CfgEtiqueta extends BaseController
         $this->data['secoes']     = $secao;
         $this->data['campos']     = $campos;
         $this->data['displ']     = $displ;
+        $this->data['destino']    = 'store';
+        $base_url = base_url('/CriaEtiquetaZPL/previewEtiquetaViaAjax');
+        $this->data['script'] = "<script>acerta_botoes_rep('campos_para_etiqueta');prevEtiqueta('".$base_url."')</script>";
+
+        echo view('vw_edicao_etiqueta', $this->data);
+    }
+
+    /**
+     * Copiar Etiquetas
+     * copy
+     *
+     * @param mixed $id 
+     * @return void
+     */
+    public function copy($id)
+    {
+        $dados_etiqueta = $this->etiqueta->find($id);
+        unset($dados_etiqueta['etq_id']);
+        $fields = $this->etiqueta->defCampos($dados_etiqueta);
+        $secao[0] = 'Dados Gerais';
+        $campos[0] = [];
+        $campos[0][count($campos[0])] = $fields['etq_id'];
+        $campos[0][count($campos[0])] = $fields['etq_nome'];
+        $campos[0][count($campos[0])] = $fields['let_id'];
+        $secao[1] = 'Tela Aplicável';
+        $campos[1] = [];
+        $campos[1][count($campos[1])] = $fields['mod_id'];
+        $campos[1][count($campos[1])] = $fields['tel_id'];
+
+        $dados_campos = $this->etiquetaCampo->getEtiquetaCampo($id);
+        // debug(count($dados_campos));
+        $secao[2] = 'Campos para Etiqueta';
+        $displ[2] = 'tabela';
+        if (count($dados_campos) > 0) {
+            for ($ec = 0; $ec < count($dados_campos); $ec++) {
+                $fields = $this->etiquetaCampo->defCamposCfg($dados_campos[$ec], false, $ec);
+                $campos[2][$ec][0] = $fields['etc_campo'];
+                $campos[2][$ec][count($campos[2][$ec])] = $fields['etc_codbar'];
+                $campos[2][$ec][count($campos[2][$ec])] = $fields['etc_rotulo'];
+                $campos[2][$ec][count($campos[2][$ec])] = $fields['etc_caracteres'];
+                $campos[2][$ec][count($campos[2][$ec])] = $fields['etc_linhas'];
+                $campos[2][$ec][count($campos[2][$ec])] = $fields['etc_colunas'];
+                $campos[2][$ec][count($campos[2][$ec])] = $fields['etc_fonte'];
+                $campos[2][$ec][count($campos[2][$ec])] = $fields['etc_tamanho'];
+                $campos[2][$ec][count($campos[2][$ec])] = $fields['etc_alinhamento'];
+                $campos[2][$ec][count($campos[2][$ec])] = $fields['etc_negrito'];
+                $campos[2][$ec][count($campos[2][$ec])] = $fields['etc_italico'];
+                $campos[2][$ec][count($campos[2][$ec])] = $fields['etc_sublinhado'];
+                $campos[2][$ec][count($campos[2][$ec])] = $fields['bt_add'];
+                $campos[2][$ec][count($campos[2][$ec])] = $fields['bt_del'];
+            }
+        } else {
+            $fields = $this->etiquetaCampo->defCamposCfg();
+            $campos[2][0] = [];
+            $campos[2][0][count($campos[2][0])] = $fields['etc_campo'];
+            $campos[2][0][count($campos[2][0])] = $fields['etc_codbar'];
+            $campos[2][0][count($campos[2][0])] = $fields['etc_rotulo'];
+            $campos[2][0][count($campos[2][0])] = $fields['etc_caracteres'];
+            $campos[2][0][count($campos[2][0])] = $fields['etc_linhas'];
+            $campos[2][0][count($campos[2][0])] = $fields['etc_colunas'];
+            $campos[2][0][count($campos[2][0])] = $fields['etc_fonte'];
+            $campos[2][0][count($campos[2][0])] = $fields['etc_tamanho'];
+            $campos[2][0][count($campos[2][0])] = $fields['etc_alinhamento'];
+            $campos[2][0][count($campos[2][0])] = $fields['etc_negrito'];
+            $campos[2][0][count($campos[2][0])] = $fields['etc_italico'];
+            $campos[2][0][count($campos[2][0])] = $fields['etc_sublinhado'];
+            $campos[2][0][count($campos[2][0])] = $fields['bt_add'];
+            $campos[2][0][count($campos[2][0])] = $fields['bt_del'];
+        }
+        $this->data['secoes']     = $secao;
+        $this->data['campos']     = $campos;
+        $this->data['displ']     = $displ;
+        $this->data['desc_metodo']     = 'Nova Versão de ';
         $this->data['destino']    = 'store';
         $base_url = base_url('/CriaEtiquetaZPL/previewEtiquetaViaAjax');
         $this->data['script'] = "<script>acerta_botoes_rep('campos_para_etiqueta');prevEtiqueta('".$base_url."')</script>";
