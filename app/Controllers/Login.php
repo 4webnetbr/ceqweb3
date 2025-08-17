@@ -162,13 +162,18 @@ class Login extends BaseController
                     'ismobile'      => $mobile
                 ];
                 $session->set($newdata);
-                if (isset($_COOKIE['paginausuario'])) {
-                    $usuariocook = $_COOKIE['paginausuario'];
-                    $valores = explode(",", $usuariocook);
-                    if ($valores[0] == $log_config[0]['usu_id'] && $valores[1] != '') {
-                        $dash = $valores[1];
+                $usuarioId = $log_config[0]['usu_id'] ?? null;
+
+                if ($usuarioId) {
+                    $cookieNome = 'pguser_' . $usuarioId;
+
+                    if (isset($_COOKIE[$cookieNome])) {
+                        $json = $_COOKIE[$cookieNome];
+                        $dados = json_decode($json, true); // true = array associativo
+                        $dash = $dados[$usuarioId];
                     }
                 }
+
                 return redirect()->to('/' . $dash);
             }
         }

@@ -60,12 +60,12 @@ class CfgEtiqueta extends BaseController
         // if (!$etiqt = cache('etiqt')) {
         $campos = montaColunasCampos($this->data, 'etq_id');
         $dados_etiqt = $this->etiqueta->getEtiqueta();
-        $base_url = base_url('/CriaEtiquetaZPL/emiteEtiqueta/');
+        $url_eti = base_url('/CriaEtiquetaZPL/emiteEtiqueta/');
         $base_cop = base_url($this->data['controler'].'/copy/');
 
         foreach ($dados_etiqt as &$etq) {
-            $url_ati = $base_url . $etq['etq_id'];
-            $url_cop = $base_cop . $etq['etq_id'];
+            $etiq = $etq['etq_id'];
+            $url_cop = $base_cop . $etiq;
             // Gerar a ação do botão
             $etq['acao_person'] = [
                 "<button class='btn btn-outline-info btn-sm border-0 mx-0 fs-0' 
@@ -75,7 +75,7 @@ class CfgEtiqueta extends BaseController
 
                 "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0' 
                 data-mdb-toggle='tooltip' data-mdb-placement='top'
-                title='Imprimir Etiqueta' onclick='gerarEtiquetaZPL(\"$url_ati\",event)'>
+                title='Imprimir Etiqueta' onclick='gerarEtiquetaZPL(\"$url_eti\", $etiq)'>
                 <i class='fas fa-print'></i></button>",
 
             ];

@@ -130,6 +130,7 @@ jQuery(document).ready(function () {
       if (!isvalido) {
         event.preventDefault();
         event.stopPropagation();
+        desBloqueiaTela();
       } else {
         // verificar se o campo select foi alterado
         jQuery("input[data-valid], select[data-valid]").each(async function () {
@@ -498,13 +499,28 @@ function retorna_listagem() {
  *
  */
 function salvaPagina() {
-  var arr = location.href.split("/");
-  // var controler = arr[0] + '//' + arr[2] + '/' + arr[3];
-  var controler = arr[3];
+  var controller = jQuery("#controler").val();
   var usuario = jQuery("#usu_id").val();
-  setCookie("paginausuario", usuario + "," + controler);
-}
+  if (!usuario) {
+    console.warn("Usuário não identificado.");
+    return;
+  }
 
+  var cookieNome = "pguser_" + usuario;
+  var cookie = getCookie(cookieNome);
+  var dados = {};
+
+  if (cookie) {
+    try {
+      dados = JSON.parse(cookie);
+    } catch (e) {
+      console.warn("Cookie mal formatado, sobrescrevendo.");
+    }
+  }
+
+  dados[usuario] = controller;
+  setCookie(cookieNome, JSON.stringify(dados), 7);
+}
 /**
  * retorna_url
  * Retorna para a URL anterior
@@ -740,7 +756,178 @@ function ativInativ(url, registro, ativo) {
  * @param {boolean} close - verdadeiro, Mostra o botão para fechar o Alerta
  * @param {integer} tipo  - Determina as características do Box 1 = Atenção, 2 = Informação
  * @param {boolean} confirma  - verdadeiro, Mostra os botões Sim ou Não para Confirmação
+ * @param {array} opcoes  - verdadeiro, Mostra os botões Sim ou Não para Confirmação
  */
+// function boxAlert(
+//   msg,
+//   erro = false,
+//   url,
+//   close = false,
+//   tipo = 1,
+//   confirma = false,
+//   titulo = "",
+//   opcoes = false
+// ) {
+//   if (!isNaN(msg)) {
+//     //mensagem é um número
+//     // busca os dados da  mensagem no array de mensagens
+//     msg_id = msg_cfg[msg - 1];
+//     msg = msg_id.msg_mensagem;
+//     tipo = msg_id.msg_tipo;
+//     if (tipo == "P") {
+//       titulo =
+//         '<h3><i class="fa-solid fa-circle-question fa-lg"></i><span class="mx-2">' +
+//         msg_id.msg_titulo +
+//         "</span></h3>";
+//       confirma = true;
+//     } else if (tipo == "A") {
+//       titulo =
+//         '<h3><i class="fa-solid fa-circle-exclamation fa-lg"></i><span class="mx-2">' +
+//         msg_id.msg_titulo +
+//         "</span></h3>";
+//       tipo = 1;
+//     } else if (tipo == "E") {
+//       titulo =
+//         '<h3><i class="fa-solid fa-circle-xmark fa-lg"></i><span class="mx-2">' +
+//         msg_id.msg_titulo +
+//         "</span></h3>";
+//       erro = true;
+//     } else if (tipo == "I") {
+//       titulo =
+//         '<h3><i class="fa-solid fa-circle-info fa-lg"></i><span class="mx-2">' +
+//         msg_id.msg_titulo +
+//         "</span></h3>";
+//     }
+//     cor = msg_id.msg_cor;
+//   } else {
+//     if (tipo == 1) {
+//       // ATENÇÃO
+//       titulo =
+//         '<h3><i class="fas fa-exclamation-triangle"></i><span class="mx-2">Atenção</span></h3>';
+//       tipo = "A";
+//       cor = "bg-warning";
+//     } else if (tipo == 2) {
+//       // INFORMAÇÃO
+//       titulo =
+//         '<h3><i class="fas fa-info-circle"></i><span class="mx-2">Informação</span></h3>';
+//       tipo = "I";
+//       cor = "bg-success";
+//     } else if (tipo == 3) {
+//       // ERRO
+//       titulo =
+//         '<h3><i class="fas fa-circle-xmark"></i><span class="mx-2">ERRO!</span></h3>';
+//       tipo = "E";
+//       cor = "bg-danger";
+//     }
+//   }
+//   if (!confirma) {
+//     if (opcoes) {
+//       // se tem opções é um Select de Opções
+//       bootbox.prompt({
+//         title: titulo,
+//         message: "<div class='text-center'><h5>" + msg + "</h5></div>",
+//         centerVertical: true,
+//         size: "large",
+//         closeButton: false,
+//         inputType: "select",
+//         inputOptions: [
+//           ...opcoes.map(({ id, text }) => ({
+//             text,
+//             value: String(id), // garante string
+//           })),
+//         ],
+//         callback: function (result) {
+//           console.log(result);
+//           return result;
+//         },
+//       });
+//     } else {
+//       bootbox.alert({
+//         title: titulo,
+//         message: "<div class='text-center'><h5>" + msg + "</h5></div>",
+//         centerVertical: true,
+//         closeButton: close,
+//         size: "large",
+//         className: "rubberBand animated",
+//         callback: function () {
+//           if (!erro) {
+//             redireciona(url);
+//           }
+//         },
+//       });
+//     }
+//   } else {
+//     if (titulo == "") {
+//       titulo =
+//         '<h3><i class="fas fa-question-circle"></i><span class="mx-2">Exclusão de Registro</span></h3>';
+//     }
+//     bootbox.confirm({
+//       title: titulo,
+//       message: "<div class='text-center'><h5>" + msg + "</h5></div>",
+//       centerVertical: true,
+//       size: "large",
+//       closeButton: false,
+//       swapButtonOrder: true,
+//       buttons: {
+//         cancel: {
+//           label: '<i class="fa fa-times"></i> Não',
+//           className: "btn-secondary",
+//         },
+//         confirm: {
+//           label: '<i class="fa fa-check"></i> Sim',
+//           className: "btn-danger ",
+//         },
+//       },
+//       callback: function (result) {
+//         if (result) {
+//           if (url == "submit") {
+//             jQuery("#form1").trigger("submit");
+//           } else {
+//             if (url.indexOf("location") > -1) {
+//               eval(url);
+//             } else if (url.indexOf("back") > -1) {
+//               window.history.back();
+//             } else {
+//               if (tipo == "P") {
+//                 retornoAjax = false;
+//                 executaAjax(url, "json", "");
+//                 if (retornoAjax) {
+//                   if (retornoAjax.erro) {
+//                     boxAlert(retornoAjax.msg, true, "", false, 1, false);
+//                   } else {
+//                     var arr = location.href.split("/");
+//                     var controler = arr[0] + "//" + arr[2] + "/" + arr[3];
+//                     location.href = controler;
+//                   }
+//                 }
+//               } else {
+//                 redireciona(url);
+//               }
+//             }
+//           }
+//         }
+//       },
+//     });
+//   }
+//   jQuery(".modal-header").addClass(cor);
+//   if (tipo == "A") {
+//     // ATENÇÃO
+//     jQuery(".modal-header").css("color", "black");
+//   } else if (tipo == "I") {
+//     // INFORMAÇÃO
+//     // jQuery('.modal-header').css("background-color", "green");
+//     jQuery(".modal-header").css("color", "white");
+//   } else if (tipo == "E") {
+//     // ERRO
+//     // jQuery('.modal-header').css("background-color", "orange");
+//     jQuery(".modal-header").css("color", "yellow");
+//   } else if (tipo == "P") {
+//     // PERGUNTA
+//     // jQuery('.modal-header').css("background-color", "orange");
+//     jQuery(".modal-header").css("color", "black");
+//   }
+// }
+
 function boxAlert(
   msg,
   erro = false,
@@ -748,53 +935,61 @@ function boxAlert(
   close = false,
   tipo = 1,
   confirma = false,
-  titulo = ""
+  titulo = "",
+  opcoes = false
 ) {
+  // --- normalização de título/tipo/cor a partir do msg ou do tipo informado
+  let cor = "bg-warning";
+  bootbox.setLocale("pt-BR");
+
   if (!isNaN(msg)) {
-    //mensagem é um número
-    // busca os dados da  mensagem no array de mensagens
-    msg_id = msg_cfg[msg - 1];
-    msg = msg_id.msg_mensagem;
-    tipo = msg_id.msg_tipo;
-    if (tipo == "P") {
-      titulo =
-        '<h3><i class="fa-solid fa-circle-question fa-lg"></i><span class="mx-2">' +
-        msg_id.msg_titulo +
-        "</span></h3>";
-      confirma = true;
-    } else if (tipo == "A") {
-      titulo =
-        '<h3><i class="fa-solid fa-circle-exclamation fa-lg"></i><span class="mx-2">' +
-        msg_id.msg_titulo +
-        "</span></h3>";
-      tipo = 1;
-    } else if (tipo == "E") {
-      titulo =
-        '<h3><i class="fa-solid fa-circle-xmark fa-lg"></i><span class="mx-2">' +
-        msg_id.msg_titulo +
-        "</span></h3>";
-      erro = true;
-    } else if (tipo == "I") {
-      titulo =
-        '<h3><i class="fa-solid fa-circle-info fa-lg"></i><span class="mx-2">' +
-        msg_id.msg_titulo +
-        "</span></h3>";
+    // mensagem por ID do array msg_cfg
+    const msg_id = msg_cfg[+msg - 1];
+    if (msg_id) {
+      msg = msg_id.msg_mensagem;
+      tipo = msg_id.msg_tipo;
+      cor = msg_id.msg_cor;
+
+      if (tipo === "P") {
+        titulo =
+          '<h3><i class="fa-solid fa-circle-question fa-lg"></i><span class="mx-2">' +
+          msg_id.msg_titulo +
+          "</span></h3>";
+        confirma = true;
+      } else if (tipo === "A") {
+        titulo =
+          '<h3><i class="fa-solid fa-circle-exclamation fa-lg"></i><span class="mx-2">' +
+          msg_id.msg_titulo +
+          "</span></h3>";
+        tipo = 1; // mantém comportamento original
+      } else if (tipo === "E") {
+        titulo =
+          '<h3><i class="fa-solid fa-circle-xmark fa-lg"></i><span class="mx-2">' +
+          msg_id.msg_titulo +
+          "</span></h3>";
+        erro = true;
+      } else if (tipo === "I") {
+        titulo =
+          '<h3><i class="fa-solid fa-circle-info fa-lg"></i><span class="mx-2">' +
+          msg_id.msg_titulo +
+          "</span></h3>";
+      }
     }
-    cor = msg_id.msg_cor;
   } else {
-    if (tipo == 1) {
+    // mensagem direta + tipo numérico informado
+    if (tipo === 1) {
       // ATENÇÃO
       titulo =
         '<h3><i class="fas fa-exclamation-triangle"></i><span class="mx-2">Atenção</span></h3>';
       tipo = "A";
       cor = "bg-warning";
-    } else if (tipo == 2) {
+    } else if (tipo === 2) {
       // INFORMAÇÃO
       titulo =
         '<h3><i class="fas fa-info-circle"></i><span class="mx-2">Informação</span></h3>';
       tipo = "I";
       cor = "bg-success";
-    } else if (tipo == 3) {
+    } else if (tipo === 3) {
       // ERRO
       titulo =
         '<h3><i class="fas fa-circle-xmark"></i><span class="mx-2">ERRO!</span></h3>';
@@ -802,26 +997,72 @@ function boxAlert(
       cor = "bg-danger";
     }
   }
-  if (!confirma) {
-    bootbox.alert({
-      title: titulo,
-      message: "<div class='text-center'><h5>" + msg + "</h5></div>",
-      centerVertical: true,
-      closeButton: close,
-      size: "large",
-      className: "rubberBand animated",
-      callback: function () {
-        if (!erro) {
-          redireciona(url);
-        }
-      },
-    });
-  } else {
-    if (titulo == "") {
+
+  // helper para aplicar cor e fonte só no último bootbox aberto
+  const pintaCabecalho = () => {
+    setTimeout(() => {
+      const $hdr = jQuery(".bootbox .modal-header").last();
+      if ($hdr.length) {
+        $hdr.addClass(cor);
+        if (tipo === "A") $hdr.css("color", "black");
+        else if (tipo === "I") $hdr.css("color", "white");
+        else if (tipo === "E") $hdr.css("color", "yellow");
+        else if (tipo === "P") $hdr.css("color", "black");
+      }
+    }, 0);
+  };
+
+  // ---- retorna Promise para permitir await (mantendo callbacks originais)
+  return new Promise((resolve) => {
+    if (!confirma) {
+      if (opcoes) {
+        // SELECT (prompt)
+        const dlg = bootbox.prompt({
+          title: titulo,
+          message: "<div class='text-center'><h5>" + msg + "</h5></div>",
+          centerVertical: true,
+          size: "medium",
+          closeButton: false,
+          cancelButton: false,
+          inputType: "select",
+          inputOptions: [
+            ...opcoes.map(({ id, text }) => ({ text, value: String(id) })),
+          ],
+          callback: function (result) {
+            resolve(result);
+          },
+        });
+        pintaCabecalho();
+        return;
+      }
+
+      // ALERT
+      const dlg = bootbox.alert({
+        title: titulo,
+        message: "<div class='text-center'><h5>" + msg + "</h5></div>",
+        centerVertical: true,
+        closeButton: close,
+        size: "large",
+        className: "rubberBand animated",
+        callback: function () {
+          if (!erro) {
+            // comportamento original: redireciona se NÃO for erro
+            redireciona(url);
+          }
+          resolve(true); // fecha -> resolve
+        },
+      });
+      pintaCabecalho();
+      return;
+    }
+
+    // CONFIRM
+    if (titulo === "") {
       titulo =
         '<h3><i class="fas fa-question-circle"></i><span class="mx-2">Exclusão de Registro</span></h3>';
     }
-    bootbox.confirm({
+
+    const dlg = bootbox.confirm({
       title: titulo,
       message: "<div class='text-center'><h5>" + msg + "</h5></div>",
       centerVertical: true,
@@ -839,53 +1080,63 @@ function boxAlert(
         },
       },
       callback: function (result) {
-        if (result) {
-          if (url == "submit") {
-            jQuery("#form1").trigger("submit");
-          } else {
-            if (url.indexOf("location") > -1) {
-              eval(url);
-            } else if (url.indexOf("back") > -1) {
-              window.history.back();
+        if (!result) {
+          resolve(false);
+          return;
+        }
+
+        // confirmou:
+        if (url === "submit") {
+          jQuery("#form1").trigger("submit");
+          resolve(true);
+          return;
+        }
+
+        if (typeof url === "string" && url.indexOf("location") > -1) {
+          // ex.: "location.href='...'"
+          try {
+            eval(url);
+          } catch (e) {}
+          resolve(true);
+          return;
+        }
+
+        if (typeof url === "string" && url.indexOf("back") > -1) {
+          window.history.back();
+          resolve(true);
+          return;
+        }
+
+        if (tipo === "P") {
+          // mantém comportamento original com executaAjax + retornoAjax global
+          retornoAjax = false;
+          executaAjax(url, "json", "");
+          if (retornoAjax) {
+            if (retornoAjax.erro) {
+              // exibe erro e depois resolve(false)
+              boxAlert(retornoAjax.msg, true, "", false, 1, false).then(() =>
+                resolve(false)
+              );
             } else {
-              if (tipo == "P") {
-                retornoAjax = false;
-                executaAjax(url, "json", "");
-                if (retornoAjax) {
-                  if (retornoAjax.erro) {
-                    boxAlert(retornoAjax.msg, true, "", false, 1, false);
-                  } else {
-                    var arr = location.href.split("/");
-                    var controler = arr[0] + "//" + arr[2] + "/" + arr[3];
-                    location.href = controler;
-                  }
-                }
-              } else {
-                redireciona(url);
-              }
+              // volta para o controller atual
+              const arr = location.href.split("/");
+              const controler = arr[0] + "//" + arr[2] + "/" + arr[3];
+              location.href = controler;
+              resolve(true);
             }
+          } else {
+            // se executaAjax for assíncrona, aqui nada foi retornado ainda
+            resolve(false);
           }
+        } else {
+          redireciona(url);
+          resolve(true);
         }
       },
     });
-  }
-  jQuery(".modal-header").addClass(cor);
-  if (tipo == "A") {
-    // ATENÇÃO
-    jQuery(".modal-header").css("color", "black");
-  } else if (tipo == "I") {
-    // INFORMAÇÃO
-    // jQuery('.modal-header').css("background-color", "green");
-    jQuery(".modal-header").css("color", "white");
-  } else if (tipo == "E") {
-    // ERRO
-    // jQuery('.modal-header').css("background-color", "orange");
-    jQuery(".modal-header").css("color", "yellow");
-  } else if (tipo == "P") {
-    // PERGUNTA
-    // jQuery('.modal-header').css("background-color", "orange");
-    jQuery(".modal-header").css("color", "black");
-  }
+
+    pintaCabecalho();
+  });
 }
 
 /**
@@ -1050,21 +1301,12 @@ function cancelar() {
   }
 }
 
-function setCookie(name, value, path = "/") {
-  var d = new Date();
-  var year = d.getFullYear();
-  var month = d.getMonth();
-  var day = d.getDate();
-  var duration = new Date(year + 1, month, day);
-
-  var cookie =
-    name +
-    "=" +
-    escape(value) +
-    (duration ? "; expires=" + duration.toGMTString() : "") +
-    ";path=/";
-
-  document.cookie = cookie;
+function setCookie(nome, valor, dias) {
+  var data = new Date();
+  data.setTime(data.getTime() + dias * 24 * 60 * 60 * 1000);
+  var expires = "expires=" + data.toUTCString();
+  document.cookie =
+    nome + "=" + encodeURIComponent(valor) + ";" + expires + ";path=/";
 }
 
 function getCookie(name) {
@@ -1510,9 +1752,43 @@ function gerarEtiqueta(url) {
   openPdfModal(url, "Impressão de Etiquetas ");
 }
 
-function gerarEtiquetaZPL(url) {
-  // url = '/etiqueta/emiteEtiqueta/' + etq_id;
-  openImgModal(url, "Impressão de Etiquetas ");
+async function gerarEtiquetaZPL(url, etiq = false, chave = false) {
+  // SE A ETIQUETA NÃO ESTÁ DEFINIDA, BUSCA AS ETIQUETAS DA PÁGINA ATIVA
+  if (!etiq) {
+    var controller = jQuery("#controler").val();
+    var urlcontroler = window.location.origin + "/buscas/buscaetiqcontroler";
+    dados = { busca: controller };
+    retornoAjax = false;
+    executaAjax(urlcontroler, "json", dados);
+    if (retornoAjax) {
+      if (retornoAjax.length == 1) {
+        if (retornoAjax[0].id == "-1") {
+          etiq = null;
+          await boxAlert(retornoAjax[0].text, true, "");
+        } else {
+          etiq = retornoAjax[0].id;
+        }
+      } else {
+        etiq = await boxAlert(
+          "Selecione a Etiqueta",
+          false,
+          "",
+          false,
+          2,
+          false,
+          "Selecione a Etiqueta",
+          retornoAjax
+        );
+      }
+    }
+  }
+  if (etiq && etiq != null) {
+    url = url + "/" + etiq;
+    if (chave) {
+      url = url + "/" + etiq + "/" + chave;
+    }
+    openImgModal(url, "Impressão de Etiquetas ");
+  }
 }
 
 /**
@@ -1582,7 +1858,8 @@ function imprimirEtiqueta(etq_id, url = false) {
   });
 }
 
-function geraEiquetaProd(url, rep_id, qtia) {
-  // url = '/etiqueta/emiteEtiqueta/' + etq_id;
-  openImgModal(url, "Impressão de Etiquetas ");
+function geraEiquetaProd(url) {
+  jQuery.getJSON(url, function (res) {
+    gerarEtiquetaZPL(res.link, (etiq = false), res.chave);
+  });
 }

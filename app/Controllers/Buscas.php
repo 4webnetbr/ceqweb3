@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\Config\ConfigDicDadosModel;
+use App\Models\Config\ConfigEtiquetaModel;
 use App\Models\Config\ConfigMenuModel;
 use App\Models\Config\ConfigModuloModel;
 use App\Models\Config\ConfigTelaModel;
@@ -381,6 +382,34 @@ class Buscas extends BaseController
         echo json_encode($ret);
     }
 
+    public function buscaetiqcontroler()
+    {
+        $ret    = [];
+        // debug($_REQUEST,false);
+        if ($_REQUEST['busca']) {
+            $termo            = $_REQUEST['busca'];
+            $mtela            = new ConfigTelaModel();
+            $tela             = $mtela->getTelaSearch($termo);
+            if($tela){
+                $tel_id = $tela[0]['tel_id'];
+                $tetqs            = new ConfigEtiquetaModel();
+                $tetquetas        = $tetqs->getEtiquetaTela($tel_id);
+                if (sizeof($tetquetas) <= 0) {
+                    $ret[0]['id'] = '-1';
+                    $ret[0]['text'] = 'Etiqueta não encontrada...';
+                } else {
+                    for ($c = 0; $c < sizeof($tetquetas); $c++) {
+                        $ret[$c]['id'] = $tetquetas[$c]['etq_id'];
+                        $ret[$c]['text'] = $tetquetas[$c]['etq_nome'];
+                    }
+                }
+            } else {
+                $ret[0]['id'] = '-1';
+                $ret[0]['text'] = 'Tela não encontrada...';
+            }
+        }
+        echo json_encode($ret);
+    }
 
 
     public function busca_dep_destino()

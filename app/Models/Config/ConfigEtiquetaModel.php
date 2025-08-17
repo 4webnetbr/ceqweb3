@@ -124,6 +124,24 @@ class ConfigEtiquetaModel extends Model
         return $ret;
     }
 
+    public function getEtiquetaTela($tel_id = false)
+    {
+        if(!$tel_id){
+            return;
+        }
+        $db = db_connect('default');
+        $builder = $db->table($this->view);
+        $builder->select('*');
+        $builder->where('tel_id', $tel_id);
+        $builder->where('etq_ativo', 'A');
+        $builder->orderBy('etq_ativo, etq_nome');
+        // $sql = $builder->getCompiledSelect();
+        // debug($sql, true);
+        $ret = $builder->get()->getResultArray();
+
+        return $ret;
+    }
+
     public function getEtiquetaLayout($lay_id = false)
     {
         $db = db_connect('default');

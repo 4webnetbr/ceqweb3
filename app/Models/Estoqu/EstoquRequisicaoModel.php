@@ -124,7 +124,24 @@ class EstoquRequisicaoModel extends Model
         if ($req_id) {
             $builder->where('req_id', $req_id);
         }
-        return $builder->get()->getResultArray();
+        
+        $ret = $builder->get()->getResultArray();
+        // debug($this->db->getLastQuery(), false);
+        return $ret;
+    }
+
+    public function getRequisicaoRep($rep_id = false)
+    {
+        $db = db_connect('dbEstoque');
+        $builder = $db->table('vw_est_requisicao_produto_relac');
+        $builder->select('*');
+        if ($rep_id) {
+            $builder->where('rep_id', $rep_id);
+        }
+        
+        $ret = $builder->get()->getResultArray();
+        // debug($this->db->getLastQuery(), false);
+        return $ret;
     }
 
     public function getProdutoRequisicao($produto)

@@ -863,7 +863,7 @@ class MyCampo
                     $this->field['onkeyup']   = 'mascara(this, \'mquantia\')';
                     $this->field['onblur']    = $this->funcBlur;
                     $this->field['value']     = floatToQuantia($this->valor, $this->size);
-                    $this->field['pattern']   = "/^([\d]*\,?[\d]{0," . $this->size . "})$/";
+                    $this->field['pattern']   = "^([\d]*\,?[\d]{0," . $this->size . "})$";
                     $this->field['style']     = 'text-align: right';
                     $this->field['aria-describedby'] = 'ig_' . $this->nome;
                     break;
@@ -905,7 +905,7 @@ class MyCampo
                 case 'moeda':
                     $this->field['type']      = 'text';
                     $this->field['onkeyup']   = 'mascara(this, \'mvalor\')';
-                    $this->field['pattern']   = "/^([\$]?)([0-9]*\,?[0-9]{0,2})$/";
+                    $this->field['pattern']   = "^([\$]?)([0-9]*\,?[0-9]{0,2})$";
                     $this->field['onchange']  = $this->funcChan;
                     $this->field['data-origin'] = floatToMoeda($this->valor);
                     $this->field['value']     = floatToMoeda($this->valor);
@@ -942,7 +942,7 @@ class MyCampo
                     break;
                 case 'email':
                     $this->field['type']      = 'email';
-                    $this->field['pattern']   = '/^[\w\.=-]+@[\w\.-]+\.[\w]{2,3}$/';
+                    $this->field['pattern']   = '^[\w\.=-]+@[\w\.-]+\.[\w]{2,3}$';
                     $this->field['style']     = 'text-align: left';
                     $this->field['aria-describedby'] = 'ad_' . $this->nome;
                     $this->field['data-original-title'] = 'Informe um E-mail válido!';
@@ -953,7 +953,7 @@ class MyCampo
                 case 'site':
                 case 'url':
                     $this->field['type']      = 'url';
-                    $this->field['pattern']   = '/^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/';
+                    $this->field['pattern']   = '^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$';
                     $this->field['style']     = 'text-align: left';
                     $this->field['aria-describedby'] = 'ad_' . $this->nome;
                     $this->field['data-original-title'] = 'Informe uma url válida!';
@@ -964,7 +964,7 @@ class MyCampo
                 case 'telefone':
                 case 'fone':
                     $this->field['type']      = 'tel';
-                    $this->field['pattern']   = '/^\(\d{2}\) \d{4}\-\d{4}$/';
+                    $this->field['pattern']   = '^\(\d{2}\) \d{4}\-\d{4}$';
                     $this->field['onkeyup']   = 'mascara(this, \'mtel\')';
                     $this->field['style']     = 'text-align: left';
                     $this->field['aria-describedby'] = 'ad_' . $this->nome;
@@ -978,7 +978,7 @@ class MyCampo
                 case 'whatsapp':
                 case 'whats':
                     $this->field['type']      = 'tel';
-                    $this->field['pattern']   = '/^\(\d{2}\) \d{4,5}\-\d{4}$/';
+                    $this->field['pattern']   = '^\(\d{2}\) \d{4,5}\-\d{4}$';
                     $this->field['onkeyup']   = 'mascara(this, \'mcel2\')';
                     $this->field['style']     = 'text-align: left';
                     $this->field['aria-describedby'] = 'ad_' . $this->nome;
@@ -989,7 +989,7 @@ class MyCampo
                     break;
                 case 'cnpj':
                     $this->field['type']      = 'text';
-                    $this->field['pattern']   = '/^\\d{2}\.\d{3}\.\d{3}\/\d{4}\-\d{2}/';
+                    $this->field['pattern']   = '^\d{2}\.\d{3}\.\d{3}\/\d{4}\-\d{2}$';
                     $this->field['onkeyup']   = 'mascara(this, \'mcnpj\')';
                     $this->field['style']     = 'text-align: right';
                     $this->field['aria-describedby'] = 'ad_' . $this->nome;
@@ -998,7 +998,7 @@ class MyCampo
                     break;
                 case 'cpf':
                     $this->field['type']      = 'text';
-                    $this->field['pattern']   = '/^\\d{3}\.\d{3}\.\d{3}\-\d{2}/';
+                    $this->field['pattern']   = '^\d{3}\.\d{3}\.\d{3}\-\d{2}$';
                     $this->field['onkeyup']   = 'mascara(this, \'mcpf\')';
                     $this->field['onblur']    = $this->field['onblur'] . ';ValidaCPF(this)';
                     $this->field['style']     = 'text-align: right';
@@ -1008,7 +1008,7 @@ class MyCampo
                     break;
                 case 'cep':
                     $this->field['type']      = 'text';
-                    $this->field['pattern']   = '/^\\d{5}\-\d{3}$/';
+                    $this->field['pattern']   = '^\d{5}\-\d{3}$';
                     $this->field['onkeyup']   = 'mascara(this, \'mcep\')';
                     $this->field['style']     = 'text-align: right';
                     $this->field['aria-describedby'] = 'ad_' . $this->nome;
@@ -1017,12 +1017,21 @@ class MyCampo
                     break;
                 case 'placaveiculo':
                     $this->field['type']      = 'text';
-                    $this->field['pattern']   = '/^\\[A-Z]{3}\-\d[A-Z0-9]\d{2}$/';
+                    $this->field['pattern']   = '^\[A-Z]{3}\-\d[A-Z0-9]\d{2}$';
                     $this->field['onkeyup']   = 'mascara(this, \'mplaca\')';
                     $this->field['class']     = "form-control $this->classep text-uppercase";
                     $this->field['style']     = 'text-align: left';
                     $this->field['data-original-title'] = 'Informe uma Placa Válida! AAA=0000 ou AAA-0A00';
                     $this->field['title']     = 'Informe uma Placa Válida! AAA=0000 ou AAA-0A00';
+                    $this->field['aria-describedby'] = 'ig_' . $this->nome;
+                    break;
+                case 'ip':
+                    $this->field['type']      = 'text';
+                    $this->field['pattern']   = '^\d{3}\.\d{3}\.\d{1,3}\.\d{1,3}$';
+                    $this->field['class']     = "form-control $this->classep text-uppercase";
+                    $this->field['style']     = 'text-align: left';
+                    $this->field['data-original-title'] = 'Informe um Endereço IP válido! 000.000.000.000';
+                    $this->field['title']     = 'Informe um Endereço IP válido! 000.000.000.000';
                     $this->field['aria-describedby'] = 'ig_' . $this->nome;
                     break;
                 case 'file':

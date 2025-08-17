@@ -167,6 +167,10 @@ $routes->get('/CfgEtiqueta', 'Config\CfgEtiqueta::index');
 $routes->get('/CfgEtiqueta/(:any)', 'Config\CfgEtiqueta::$1');
 $routes->post('/CfgEtiqueta/(:any)', 'Config\CfgEtiqueta::$1');
 
+$routes->get('/CfgImpressora', 'Config\CfgImpressora::index');
+$routes->get('/CfgImpressora/(:any)', 'Config\CfgImpressora::$1');
+$routes->post('/CfgImpressora/(:any)', 'Config\CfgImpressora::$1');
+
 $routes->get('/CfgEmpresa', 'Config\CfgEmpresa::index');
 $routes->get('/CfgEmpresa/(:any)', 'Config\CfgEmpresa::$1');
 $routes->post('/CfgEmpresa/(:any)', 'Config\CfgEmpresa::$1');

@@ -274,7 +274,6 @@ class AteRequisicao extends BaseController
                 $imprimir =
                     "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
                     data-mdb-placement='top' title='Imprimir Etiqueta' onclick='geraEiquetaProd(\"".$url_ati."\")'><i class='fas fa-print'></i></button>";
-                
                 $produto[0] = $prod['rep_id'];
                 $produto[count($produto)] = $prod['pro_codpro'];
                 $produto[count($produto)] = $prod['pro_despro'];
@@ -310,8 +309,18 @@ class AteRequisicao extends BaseController
     }
 
     public function GeraEtiqueta($id, $qtia){
-        debug($id);
-        debug($qtia, true);
+        $produtos = $this->requisicao->getRequisicaoProdutos($id);
+
+        $produtosreq = array_fill(0, $qtia, $produtos);
+        $chave = uniqid('etq_');
+        cache()->save($chave, $produtosreq, 120); // 1 minuto
+
+        $link = base_url('/CriaEtiquetaZPL/emiteEtiqueta/');
+
+        $ret['link'] = $link;
+        $ret['chave'] = $chave;
+
+        return json_encode($ret);
     }
 
     /**

@@ -18,7 +18,8 @@ $title ??= $controler;
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
 
   <!-- Frameworks e plugins -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" crossorigin="anonymous">
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" crossorigin="anonymous"> -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 
@@ -37,9 +38,51 @@ $title ??= $controler;
   <!-- Scripts principais -->
   <script src="<?= base_url('assets/jscript/jquery-3.6.3.js'); ?>"></script>
   <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+  <script>
+  /* Shim completo para plugins que esperam $.fn.modal do BS3/4
+    - Requer jQuery + Bootstrap 5 já carregados
+    - Fornece $.fn.modal, $.fn.modal.Constructor e .VERSION
+  */
+  (function ($, bs) {
+    if (!$ || !bs) return;
+
+    if (!$.fn.modal) {
+      $.fn.modal = function (arg) {
+        return this.each(function () {
+          const el = this;
+          const isStr = typeof arg === 'string';
+          const opts  = !isStr && arg ? arg : {};
+          let inst = bs.Modal.getInstance(el);
+          if (!inst) inst = new bs.Modal(el, opts);
+
+          if (isStr && typeof inst[arg] === 'function') {
+            inst[arg]();               // 'show' | 'hide' | 'toggle' etc.
+          } else if (!isStr && arg !== 'hide') {
+            inst.show();               // default: abre
+          }
+        });
+      };
+    }
+
+    // Emula API antiga esperada por alguns plugins (ex.: Bootbox)
+    $.fn.modal.Constructor = bs.Modal;
+    if (!$.fn.modal.Constructor.VERSION) {
+      // tenta pegar VERSION de algum componente; se não houver, usa '5'
+      $.fn.modal.Constructor.VERSION =
+        (bs.Modal && bs.Modal.VERSION) ||
+        (bs.Tooltip && bs.Tooltip.VERSION) ||
+        (bs.Alert && bs.Alert.VERSION) ||
+        '5';
+    }
+    $.fn.modal.noConflict = () => $.fn.modal;
+  })(window.jQuery, window.bootstrap);
+  </script>
+
+  <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script> -->
   <!-- <script src="https://kit.fontawesome.com/da32fd0a5b.js" crossorigin="anonymous"></script> -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/6.0.0/bootbox.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootbox@6.0.4/dist/bootbox.all.min.js"></script>
+
 
   <!-- Scripts customizados -->
   <script src="<?=base_url('assets/fontawesome/js/all.min.js');?>" defer></script>

@@ -38,7 +38,7 @@ if(!isset($show)){
                             ?>
                                 <tr id='<?= $prodt[0]?>'>
                                     <?
-                                    for ($pp=1; $pp < count($colunas) ; $pp++) { ?>
+                                    for ($pp=1; $pp <= count($colunas) ; $pp++) { ?>
                                         <td><?=$prodt[$pp];?></td>
                                     <?
                                     }?>

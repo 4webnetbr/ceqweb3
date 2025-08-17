@@ -47,12 +47,12 @@
   montaListaDados('table', '<?= $url_lista; ?>');
   salvaPagina();
 </script>
-
   <?
   if (session()->getFlashdata('modal')) {
-    $link = session()->getFlashdata('modal');    
-    $titu = session()->getFlashdata('modal-title');    
-    echo "<script>gerarEtiquetaZPL(\"" . $link . "\", \"" . $titu . "\");</script>";
+    $link = session()->getFlashdata('modal');
+    $titu = session()->getFlashdata('modal-title');
+    $chave = session()->getFlashdata('chave');
+    echo "<script>gerarEtiquetaZPL(\"" . $link . "\",false,$chave);</script>";
   }
   ?>
 
