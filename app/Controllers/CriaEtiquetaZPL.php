@@ -602,8 +602,10 @@ class CriaEtiquetaZPL extends BaseController
             }
             $modelo = true;
         } else {
-            $all = cache()->get($chave) ?: [];
-            $dados = array_slice($all, 0, max(1, $this->colunas));
+            $dados = cache()->get($chave) ?: [];
+            // debug($all, true);
+            // $dados = array_slice($all, 0, max(1, $this->colunas));
+            // debug($dados, true);
             if (!$dados) $dados = [[]];
         }
 

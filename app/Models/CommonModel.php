@@ -180,17 +180,42 @@ class CommonModel extends Model
     {
         $campos = implode(', ', $fields);
         $db = db_connect($banco);
-        $builder = $db->table($table);
-        $builder->distinct()->select($campos);
-        if ($chave) {
-            if (substr(trim($chave), -1) != "=") { // PREVINE CHAVE COM VALOR NULO
-                $builder->where($chave);
+        $ret = [];
+        if (strpos($table, ';') !== false) {
+            // Quebra a string em várias partes
+            $partes = explode(';', $table);
+            foreach ($partes as $table) {
+                $builder = $db->table($table);
+                $builder->distinct()->select($campos);
+                if ($chave) {
+                    if (substr(trim($chave), -1) != "=") { // PREVINE CHAVE COM VALOR NULO
+                        $builder->where($chave);
+                    }
+                }
+                $builder->limit($limite);
+                try {
+                    $retor = $builder->get()->getResultArray();
+                    $ret = array_merge(
+                                $ret,
+                                $retor
+                            );
+                } catch (\Throwable $th) {
+                    //throw $th;
+                }
             }
+        } else {
+            $builder = $db->table($table);
+            $builder->distinct()->select($campos);
+            if ($chave) {
+                if (substr(trim($chave), -1) != "=") { // PREVINE CHAVE COM VALOR NULO
+                    $builder->where($chave);
+                }
+            }
+            $builder->limit($limite);
+            // $sql = $builder->getCompiledSelect();
+            // debug($sql, true);
+            $ret = $builder->get()->getResultArray();
         }
-        $builder->limit($limite);
-        // $sql = $builder->getCompiledSelect();
-        // debug($sql, true);
-        $ret = $builder->get()->getResultArray();
         return $ret;
     }
 

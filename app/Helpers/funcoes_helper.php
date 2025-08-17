@@ -71,6 +71,7 @@ function campos_tabela(array $campos)
     $tipos['mediumtext'] = 'Texto';
     $tipos['text']      = 'Texto';
     $tipos['int']       = 'Inteiro';
+    $tipos['bigint']       = 'Inteiro';
     $tipos['float']     = 'Moeda';
     $tipos['decimal']     = 'Decimal';
     $tipos['date']      = 'Data';

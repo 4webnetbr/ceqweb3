@@ -312,9 +312,26 @@ class CfgTela extends BaseController
     
     public function defCamposLista($lista = '', $pos = 0, $show = false, $tabela = '', $view ='')
     {
-        $campos_tab = $this->dicionario->getCampos($view);
+        $campos_lis = [];
+        if (strpos($view, ';') !== false) {
+            // Quebra a string em várias partes
+            $partes = explode(';', $view);
+
+            foreach ($partes as $parte) {
+                $campos_tab = $this->dicionario->getCampos($parte);
+                // debug($campos_tab);
+                // $campos_lis = 
+                array_push($campos_lis,array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME'));
+            }
+        } else {
+            $campos_tab = $this->dicionario->getCampos($view);
+            // debug($campos_tab);
+            $campos_lis = array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME');
+        }
+
+        // $campos_tab = $this->dicionario->getCampos($view);
         // debug($campos_tab);
-        $campos_lis = array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME');
+        // $campos_lis = array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME');
 
         $id             = new MyCampo('cfg_tela_lista', 'lis_id');
         $id->nome       = $id->nome . "[$pos]";

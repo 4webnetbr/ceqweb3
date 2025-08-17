@@ -490,8 +490,27 @@ class Buscas extends BaseController
                 $pasta = "App\\Models\\" . $compl_model . "\\";
                 $model_atual = model($pasta . $model);
                 $view   = $model_atual->view;
-                $campos_tab = $this->admDados->getCampos($view);
-                $campos_lis = array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME');
+                $campos_lis = [];
+                if (strpos($view, ';') !== false) {
+                    // Quebra a string em várias partes
+                    $partes = explode(';', $view);
+
+                    foreach ($partes as $parte) {
+                        $campos_tab = $this->admDados->getCampos($parte);
+                        // debug($campos_tab);
+                        $campos_lis = array_merge(
+                                    $campos_lis,
+                                    array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME')
+                                );
+                    }
+                } else {
+                    $campos_tab = $this->admDados->getCampos($view);
+                    // debug($campos_tab);
+                    $campos_lis = array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME');
+                }
+                // $campos_tab = $this->admDados->getCampos($view);
+                // $campos_lis = array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME');
+
                 if (sizeof($campos_lis) <= 0) {
                     $ret[0]['id'] = '-1';
                     $ret[0]['text'] = 'Campos não encontrados...';

@@ -13,7 +13,9 @@ class EstoquRequisicaoModel extends Model
 {
     protected $DBGroup          = 'dbEstoque';
     protected $table            = 'est_requisicao';
-    protected $view             = 'vw_est_requisicao_lista_relac';
+    protected $view             = 'vw_est_requisicao_lista_relac;vw_est_requisicao_produto_relac';
+    protected $viewlista             = 'vw_est_requisicao_lista_relac';
+    protected $viewprodu             = 'vw_est_requisicao_produto_relac';
     protected $primaryKey       = 'req_id';
     protected $useAutoIncremodt = true;
 
@@ -92,7 +94,7 @@ class EstoquRequisicaoModel extends Model
     public function getRequisicaoLista($req_id = false, $status = false)
     {
         $db = db_connect('dbEstoque');
-        $builder = $db->table($this->view);
+        $builder = $db->table($this->viewlista);
         $builder->select('*');
         if ($req_id) {
             $builder->where('req_id', $req_id);
@@ -107,7 +109,7 @@ class EstoquRequisicaoModel extends Model
     public function getRequisicao($req_id = false)
     {
         $db = db_connect('dbEstoque');
-        $builder = $db->table($this->view);
+        $builder = $db->table($this->viewlista);
         $builder->select('*');
         if ($req_id) {
             $builder->where('req_id', $req_id);
@@ -119,7 +121,7 @@ class EstoquRequisicaoModel extends Model
     public function getRequisicaoProdutos($req_id = false)
     {
         $db = db_connect('dbEstoque');
-        $builder = $db->table('vw_est_requisicao_produto_relac');
+        $builder = $db->table($this->viewprodu);
         $builder->select('*');
         if ($req_id) {
             $builder->where('req_id', $req_id);
@@ -133,7 +135,7 @@ class EstoquRequisicaoModel extends Model
     public function getRequisicaoRep($rep_id = false)
     {
         $db = db_connect('dbEstoque');
-        $builder = $db->table('vw_est_requisicao_produto_relac');
+        $builder = $db->table($this->viewprodu);
         $builder->select('*');
         if ($rep_id) {
             $builder->where('rep_id', $rep_id);

@@ -1785,7 +1785,7 @@ async function gerarEtiquetaZPL(url, etiq = false, chave = false) {
   if (etiq && etiq != null) {
     url = url + "/" + etiq;
     if (chave) {
-      url = url + "/" + etiq + "/" + chave;
+      url = url + "/" + chave;
     }
     openImgModal(url, "Impressão de Etiquetas ");
   }

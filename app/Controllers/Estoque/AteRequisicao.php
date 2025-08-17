@@ -309,13 +309,14 @@ class AteRequisicao extends BaseController
     }
 
     public function GeraEtiqueta($id, $qtia){
-        $produtos = $this->requisicao->getRequisicaoProdutos($id);
-
-        $produtosreq = array_fill(0, $qtia, $produtos);
+        $produtos = $this->requisicao->getRequisicaoRep($id);
+        // debug($produtos);
+        $produtosreq = array_fill(0, $qtia, $produtos[0]);
+        // debug($produtosreq);
         $chave = uniqid('etq_');
         cache()->save($chave, $produtosreq, 120); // 1 minuto
 
-        $link = base_url('/CriaEtiquetaZPL/emiteEtiqueta/');
+        $link = base_url('/CriaEtiquetaZPL/emiteEtiqueta');
 
         $ret['link'] = $link;
         $ret['chave'] = $chave;
