@@ -319,8 +319,6 @@ class CfgTela extends BaseController
 
             foreach ($partes as $parte) {
                 $campos_tab = $this->dicionario->getCampos($parte);
-                // debug($campos_tab);
-                // $campos_lis = 
                 array_push($campos_lis,array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME'));
             }
         } else {

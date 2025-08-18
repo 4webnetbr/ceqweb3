@@ -52,7 +52,7 @@
     $link = session()->getFlashdata('modal');
     $titu = session()->getFlashdata('modal-title');
     $chave = session()->getFlashdata('chave');
-    echo "<script>gerarEtiquetaZPL(\"" . $link . "\",false,$chave);</script>";
+    echo "<script>gerarEtiquetaZPL(\"" . $link . "\",false,\"" .$chave . "\");</script>";
   }
   ?>
 

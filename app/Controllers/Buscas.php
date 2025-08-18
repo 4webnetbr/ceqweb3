@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Models\Config\ConfigDicDadosModel;
 use App\Models\Config\ConfigEtiquetaModel;
+use App\Models\Config\ConfigImpressoraModel;
 use App\Models\Config\ConfigMenuModel;
 use App\Models\Config\ConfigModuloModel;
 use App\Models\Config\ConfigTelaModel;
@@ -411,6 +412,24 @@ class Buscas extends BaseController
         echo json_encode($ret);
     }
 
+    public function buscaimpressoras()
+    {
+        $ret    = [];
+        // debug($_REQUEST,false);
+        $termo            = $_REQUEST['busca'] ?? false;
+        $printeres         = new ConfigImpressoraModel();
+        $printers             = $printeres->getImpressoraId($termo);
+        if (sizeof($printers) <= 0) {
+            $ret[0]['id'] = '-1';
+            $ret[0]['text'] = 'Impressora não encontrada...';
+        } else {
+            for ($c = 0; $c < sizeof($printers); $c++) {
+                $ret[$c]['id'] = $printers[$c]['imp_id'];
+                $ret[$c]['text'] = $printers[$c]['imp_nome'];
+            }
+        }
+        echo json_encode($ret);
+    }
 
     public function busca_dep_destino()
     {

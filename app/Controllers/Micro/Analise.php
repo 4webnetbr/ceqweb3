@@ -890,7 +890,7 @@ class Analise extends BaseController
                     $numetiquetas = (int) $dados['ana_qtde_micro'];
                     $dados = array_fill(0, $numetiquetas, $dados);
                     $chave = uniqid('etq_');
-                    cache()->save($chave, $dados, 120); // 1 minuto
+                    cache()->save($chave, $dados, 300); // 1 minuto
 
                     $link = base_url('/CriaEtiquetaZPL/emiteEtiqueta/');
                     session()->setFlashdata('modal', $link);

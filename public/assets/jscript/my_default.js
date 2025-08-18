@@ -973,6 +973,11 @@ function boxAlert(
           '<h3><i class="fa-solid fa-circle-info fa-lg"></i><span class="mx-2">' +
           msg_id.msg_titulo +
           "</span></h3>";
+      } else if (tipo === "S") {
+        titulo =
+          '<h3><i class="fa-regular fa-circle-question fa-lg"></i><span class="mx-2">' +
+          msg_id.msg_titulo +
+          "</span></h3>";
       }
     }
   } else {
@@ -995,6 +1000,14 @@ function boxAlert(
         '<h3><i class="fas fa-circle-xmark"></i><span class="mx-2">ERRO!</span></h3>';
       tipo = "E";
       cor = "bg-danger";
+    } else if (tipo === 9) {
+      // SELEÇÃO
+      tit =
+        '<h3><i class="far fa-circle-question"></i><span class="mx-2">' +
+          titulo ?? "Selecione" + "</span></h3>";
+      titulo = tit;
+      tipo = "S";
+      cor = "bg-primary";
     }
   }
 
@@ -1005,6 +1018,7 @@ function boxAlert(
       if ($hdr.length) {
         $hdr.addClass(cor);
         if (tipo === "A") $hdr.css("color", "black");
+        else if (tipo === "S") $hdr.css("color", "white");
         else if (tipo === "I") $hdr.css("color", "white");
         else if (tipo === "E") $hdr.css("color", "yellow");
         else if (tipo === "P") $hdr.css("color", "black");
@@ -1028,11 +1042,14 @@ function boxAlert(
           inputOptions: [
             ...opcoes.map(({ id, text }) => ({ text, value: String(id) })),
           ],
+          value: String(opcoes[0].id),
           callback: function (result) {
+            jQuery(".modal-backdrop").removeClass("bootbox");
             resolve(result);
           },
         });
         pintaCabecalho();
+        jQuery(".modal-backdrop").addClass("bootbox");
         return;
       }
 
@@ -1047,12 +1064,14 @@ function boxAlert(
         callback: function () {
           if (!erro) {
             // comportamento original: redireciona se NÃO for erro
+            jQuery(".modal-backdrop").removeClass("bootbox");
             redireciona(url);
           }
           resolve(true); // fecha -> resolve
         },
       });
       pintaCabecalho();
+      jQuery(".modal-backdrop").addClass("bootbox");
       return;
     }
 
@@ -1134,8 +1153,8 @@ function boxAlert(
         }
       },
     });
-
     pintaCabecalho();
+    jQuery(".modal-backdrop").addClass("bootbox");
   });
 }
 
@@ -1754,27 +1773,30 @@ function gerarEtiqueta(url) {
 
 async function gerarEtiquetaZPL(url, etiq = false, chave = false) {
   // SE A ETIQUETA NÃO ESTÁ DEFINIDA, BUSCA AS ETIQUETAS DA PÁGINA ATIVA
+  bloqueiaTela();
   if (!etiq) {
     var controller = jQuery("#controler").val();
     var urlcontroler = window.location.origin + "/buscas/buscaetiqcontroler";
     dados = { busca: controller };
     retornoAjax = false;
     executaAjax(urlcontroler, "json", dados);
+    bloqueiaTela();
     if (retornoAjax) {
       if (retornoAjax.length == 1) {
         if (retornoAjax[0].id == "-1") {
           etiq = null;
+          desBloqueiaTela();
           await boxAlert(retornoAjax[0].text, true, "");
         } else {
           etiq = retornoAjax[0].id;
         }
       } else {
         etiq = await boxAlert(
-          "Selecione a Etiqueta",
+          "Etiquetas Cadastradas",
           false,
           "",
           false,
-          2,
+          9,
           false,
           "Selecione a Etiqueta",
           retornoAjax
@@ -1788,6 +1810,8 @@ async function gerarEtiquetaZPL(url, etiq = false, chave = false) {
       url = url + "/" + chave;
     }
     openImgModal(url, "Impressão de Etiquetas ");
+  } else {
+    desBloqueiaTela();
   }
 }
 
@@ -1797,9 +1821,10 @@ async function gerarEtiquetaZPL(url, etiq = false, chave = false) {
  * @param {string} url - URL do PDF
  * @param {string} titulo - titulo da Janela Modal
  */
-async function openImgModal(url, titulo = false) {
+async function openImgModal(url, titulo = false, chave) {
   jQuery.get(url, function (res) {
     if (res.erro) {
+      desBloqueiaTela();
       boxAlert(res.erro, true, "");
     } else {
       if (titulo) {
@@ -1835,31 +1860,127 @@ async function openImgModal(url, titulo = false) {
       jQuery('.modal-footer button[data-bs-dismiss="modal"]')
         .text("🖨️ Imprimir")
         .removeAttr("data-bs-dismiss") // remove o fechar
+        .removeClass("btn-dark") // remove o fechar
+        .addClass("btn-success") // remove o fechar
         .off("click") // remove eventos antigos
         .on("click", function () {
-          imprimirEtiqueta(etq_id, url); // chama a função correta
+          imprimirEtiqueta(url); // chama a função correta
         });
 
       modal.show();
+      desBloqueiaTela();
     }
   });
 }
 
-function imprimirEtiqueta(etq_id, url = false) {
-  if (!url) {
-    url = "/CriaEtiquetaZPL/imprimeEtiqueta/" + etq_id;
-  }
-  jQuery.get(url, function (res) {
-    if (res.erro) {
-      alert(res.erro);
+async function imprimirEtiqueta(url = false) {
+  var urlbusca = window.location.origin + "/buscas/buscaimpressoras";
+  retornoAjax = false;
+  executaAjax(urlbusca, "json");
+  if (retornoAjax) {
+    if (retornoAjax.length == 1) {
+      if (retornoAjax[0].id == "-1") {
+        imp = null;
+        await boxAlert(retornoAjax[0].text, true, "");
+      } else {
+        imp = retornoAjax[0].id;
+      }
     } else {
-      alert(res.status); // ou mostrar status no modal
+      imp = await boxAlert(
+        "Impressoras Cadastradas",
+        false,
+        "",
+        false,
+        9,
+        false,
+        "Selecione a Impressora",
+        retornoAjax
+      );
     }
-  });
+  }
+  if (imp != null) {
+    url = url + "/" + imp;
+
+    jQuery.get(url, async function (res) {
+      if (res.erro) {
+        boxAlert(res.erro, true, "", true);
+      } else {
+        await boxAlert(res.status, false, "", true, 2); // ou mostrar status no modal
+        fecharTodosModais();
+      }
+    });
+  }
 }
 
 function geraEiquetaProd(url) {
   jQuery.getJSON(url, function (res) {
     gerarEtiquetaZPL(res.link, (etiq = false), res.chave);
   });
+}
+
+// Fecha todos os modais e (opcional) aguarda o fechamento
+async function fecharTodosModais({
+  bootboxToo = true, // fecha diálogos do Bootbox
+  offcanvasToo = true, // fecha offcanvas abertos também (se houver)
+  cleanup = true, // remove backdrops órfãos e classes no body
+  wait = true, // aguarda animação/hidden dos modais
+  timeout = 1500, // tempo máx. para aguardar (ms)
+} = {}) {
+  // 1) Bootbox
+  if (bootboxToo && window.bootbox) {
+    try {
+      bootbox.hideAll();
+    } catch (_) {}
+  }
+
+  // 2) Bootstrap modals (em ordem reversa p/ respeitar empilhamento)
+  const modals = Array.from(document.querySelectorAll(".modal.show")).reverse();
+  const waiters = [];
+
+  for (const el of modals) {
+    const inst = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+    if (wait) {
+      waiters.push(
+        new Promise((res) => {
+          el.addEventListener("hidden.bs.modal", res, { once: true });
+        })
+      );
+    }
+    inst.hide();
+  }
+
+  // 3) Offcanvas (opcional)
+  if (offcanvasToo) {
+    const canvases = Array.from(
+      document.querySelectorAll(".offcanvas.show")
+    ).reverse();
+    for (const el of canvases) {
+      const inst =
+        bootstrap.Offcanvas.getInstance(el) || new bootstrap.Offcanvas(el);
+      if (wait) {
+        waiters.push(
+          new Promise((res) => {
+            el.addEventListener("hidden.bs.offcanvas", res, { once: true });
+          })
+        );
+      }
+      inst.hide();
+    }
+  }
+
+  // 4) Aguarda animações (se solicitado)
+  if (wait && waiters.length) {
+    await Promise.race([
+      Promise.allSettled(waiters),
+      new Promise((res) => setTimeout(res, timeout)),
+    ]);
+  }
+
+  // 5) Limpa backdrops e classes
+  if (cleanup) {
+    document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+    document.body.classList.remove("modal-open");
+    document.body.style.removeProperty("padding-right");
+    document.body.style.removeProperty("overflow");
+  }
 }

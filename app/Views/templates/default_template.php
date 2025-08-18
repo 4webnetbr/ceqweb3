@@ -118,19 +118,6 @@ $title ??= $controler;
 
   <?= view('strut/vw_modal'); ?>
 
-  <!-- Toast de notificação -->
-  <!--
-  <div id="myToast" class="toast bg-success text-white d-none">
-    <div class="toast-header">
-      <strong class="me-auto">
-        <span class="toast-title"><i class="bi bi-info-circle"></i> Informação</span>
-      </strong>
-      <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-    </div>
-    <div class="toast-body">
-    </div>
-  </div>
-    -->
   <div id="toast-container"></div>
 
 

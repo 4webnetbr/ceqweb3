@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\CommonModel;
 use App\Models\Config\ConfigEtiquetaCampoModel;
 use App\Models\Config\ConfigEtiquetaModel;
+use App\Models\Config\ConfigImpressoraModel;
 use App\Models\Config\ConfigTelaModel;
 
 class CriaEtiquetaZPL extends BaseController
@@ -394,6 +395,9 @@ class CriaEtiquetaZPL extends BaseController
             } else {
                 if ($rotulo === 'Sem Rótulo' || $rotulo === '.') $rotulo = '';
                 $val = trim((string) ($registro[$tipoCampo] ?? ''));
+                if(isValidDate($val)){
+                    $val = data_br($val);
+                }
                 if ($caracteres > 0 && $linhas == 1) $val = mb_substr($val, 0, $caracteres);
                 $texto = trim(($rotulo ? "$rotulo " : '') . $val);
             }
@@ -674,13 +678,21 @@ class CriaEtiquetaZPL extends BaseController
     /**
      * IMPRESSÃO: quebra os dados em linhas de até let_colunas e envia cada LINHA (^XA…^XZ) pra Zebra.
      */
-    public function imprimeEtiqueta($etq_id, $chave = false)
+    public function imprimeEtiqueta($etq_id, $chave = false, $imp_id = false)
     {
+        if (!$imp_id) {
+            return $this->response->setJSON(['erro' => 'Impressora não definida.']);
+        }
         $etiq = $this->etiqueta->getEtiqueta($etq_id);
-        $camp = $this->etiquetaCampo->getEtiquetaCampo($etq_id);
         if (!$etiq) {
             return $this->response->setJSON(['erro' => 'Layout não encontrado.']);
         }
+        $camp = $this->etiquetaCampo->getEtiquetaCampo($etq_id);
+        $printers = new ConfigImpressoraModel();
+        $impr = $printers->getImpressoraId($imp_id);
+        $this->ipZebra = trim($impr[0]['imp_ip']);
+        $this->portaZebra = intval($impr[0]['imp_porta']);
+        $nomeimpressora = $impr[0]['imp_nome'];
 
         $etq = $etiq[0];
         $this->largura    = (float) $etq['let_largura'];
@@ -723,13 +735,13 @@ class CriaEtiquetaZPL extends BaseController
         // Envia para a impressora
         $sock = @fsockopen($this->ipZebra, $this->portaZebra, $eno, $estr, 5);
         if (!$sock) {
-            return $this->response->setJSON(['erro' => "Conexão com a impressora falhou: $estr ($eno)"]);
+            return $this->response->setJSON(['erro' => "Conexão com a impressora $nomeimpressora falhou: $estr ($eno)"]);
         }
         stream_set_blocking($sock, true);
         fwrite($sock, $zpl); // com vários ^XA...^XZ
         fclose($sock);
 
-        return $this->response->setJSON(['status' => 'Impressão enviada (respeitando colunas por linha).']);
+        return $this->response->setJSON(['status' => "Etiquetas enviadas para Impressora $nomeimpressora"]);
     }
 
     /* ================== Preview por tela (opcional) ================== */

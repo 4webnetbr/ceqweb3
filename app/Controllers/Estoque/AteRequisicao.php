@@ -274,16 +274,17 @@ class AteRequisicao extends BaseController
                 $imprimir =
                     "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
                     data-mdb-placement='top' title='Imprimir Etiqueta' onclick='geraEiquetaProd(\"".$url_ati."\")'><i class='fas fa-print'></i></button>";
-                $produto[0] = $prod['rep_id'];
-                $produto[count($produto)] = $prod['pro_codpro'];
-                $produto[count($produto)] = $prod['pro_despro'];
-                $produto[count($produto)] = $prod['fab_apeFab'];
-                $produto[count($produto)] = $prod['lot_lote'];
-                $produto[count($produto)] = $prod['rep_quantia'];
-                $produto[count($produto)] = $prod['rep_quantia'];
-                $produto[count($produto)] = $prod['etiq_cor'];
-                $produto[count($produto)] = $imprimir;
-                array_push($produtos, $produto);
+                $item = [];
+                $item[0] = $rep_id;
+                $item[count($item)] = $prod['pro_codpro'];
+                $item[count($item)] = $prod['pro_despro'];
+                $item[count($item)] = $prod['fab_apeFab'];
+                $item[count($item)] = $prod['lot_lote'];
+                $item[count($item)] = $prod['rep_quantia'];
+                $item[count($item)] = $prod['rep_quantia'];
+                $item[count($item)] = $prod['etiq_cor'];
+                $item[count($item)] = $imprimir;
+                $produtos[count($produtos)] = $item;
             }
         }
         // debug($produtos, true);
@@ -314,7 +315,7 @@ class AteRequisicao extends BaseController
         $produtosreq = array_fill(0, $qtia, $produtos[0]);
         // debug($produtosreq);
         $chave = uniqid('etq_');
-        cache()->save($chave, $produtosreq, 120); // 1 minuto
+        cache()->save($chave, $produtosreq, 300); // 1 minuto
 
         $link = base_url('/CriaEtiquetaZPL/emiteEtiqueta');
 

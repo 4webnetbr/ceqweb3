@@ -792,3 +792,13 @@ function extrairCodBarFab($str) {
     }
     return substr($str, $pos, 13);
 }
+
+function isValidDate($date, $format = 'Y-m-d') {
+    // Primeiro: checa se contém "-" (traço)
+    if (strpos($date, '-') === false) {
+        return false;
+    }
+
+    $d = DateTime::createFromFormat($format, $date);
+    return $d && $d->format($format) === $date;
+}
