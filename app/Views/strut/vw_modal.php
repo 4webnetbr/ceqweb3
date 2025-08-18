@@ -9,7 +9,7 @@
             <div class="modal-body" id="modal-body" style='overflow: auto;'>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn border border-dark btn-dark" data-bs-dismiss="modal">[X] Fechar</button>
+                <button type="button" class="btn border border-dark btn-dark" data-bs-dismiss="modal"><i class="fa-solid fa-door-open"></i> Fechar</button>
             </div>
         </div>
     </div>

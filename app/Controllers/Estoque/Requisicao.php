@@ -81,6 +81,14 @@ class Requisicao extends BaseController
         $campos = montaColunasCampos($this->data, 'req_id');
         $dados_requis = $this->requisicao->getRequisicaoLista(false, [6, 4]);
         // debug($dados_requis, true);
+        foreach ($dados_requis as &$req) {
+            // debug($req['stt_id']);
+            // debug($req['stt_edicao']);
+            if ($req['stt_id'] == 4) { // se estiver pendente, não deixa editar
+                $req['stt_edicao'] = 'N';
+                // debug($req['stt_edicao']);
+            }
+        }
         $requis = [
             'data' => montaListaColunas($this->data, 'req_id', $dados_requis, $campos[1]),
         ];

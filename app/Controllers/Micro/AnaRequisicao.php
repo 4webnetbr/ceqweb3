@@ -75,7 +75,7 @@ class AnaRequisicao extends BaseController
         foreach ($dados_tela as &$req) {
             $url_ati = base_url('/CriaPdf2025/PrintAnaRequisicao/' . $req['req_id']);
             $req['acao_person'] = [
-                "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' 
+                "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end' 
                 data-mdb-toggle='tooltip' data-mdb-placement='top' 
                 title='Imprimir Requisição' onclick='openPDFModal(\"$url_ati\",\"Imprimir Requisição\")'>
                 <i class='fa-solid fa-print'></i></button>"

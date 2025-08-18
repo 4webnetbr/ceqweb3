@@ -104,7 +104,7 @@ class Analise extends BaseController
                 $url_ati = $base_url . $ana['req_id'];
                 // Gerar a ação do botão
                 $ana['acao_person'] = [
-                    "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' 
+                    "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end' 
             data-mdb-toggle='tooltip' data-mdb-placement='top' 
             title='Imprimir Requisição' onclick='openPDFModal(\"$url_ati\",\"Imprimir Requisição\")'>
             <i class='fas fa-print'></i></button>"
@@ -396,7 +396,7 @@ class Analise extends BaseController
                 // debug('Req ' . $ana['req_id']);
                 $url_ati = base_url('/CriaPdf2025/PrintAnaRequisicao/' . $ana['req_id']);
                 $imprimir =
-                    "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' data-mdb-toggle='tooltip' 
+                    "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end' data-mdb-toggle='tooltip' 
                     data-mdb-placement='top' title='Imprimir Requisição' onclick='openPDFModal(\"" .
                     $url_ati .
                     "\",\"Imprimir Requisição\")'><i class='fas fa-print'></i></button>";

@@ -93,7 +93,7 @@ class Movimento extends BaseController
                 $oid = (string) $id;
 
                 $url_edit = base_url($this->data['controler'].'/edit/'.$oid);
-                $botaoedt = "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' 
+                $botaoedt = "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end' 
             data-mdb-toggle='tooltip' data-mdb-placement='top' 
             title='Imprimir Requisição' onclick='openPDFModal(\"$url_edit\",\"Imprimir Requisição\")'>
             <i class='fas fa-print'></i></button>";

@@ -247,6 +247,7 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
                     $podeinativar = false;
                 }
             }
+            // debug($dat_i['stt_edicao']);
             if (isset($dat_i['stt_edicao'])) {
                 if (trim($dat_i['stt_edicao']) == 'N') {
                     $podeeditar = false;

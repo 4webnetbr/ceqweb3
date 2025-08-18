@@ -73,7 +73,7 @@ class CfgEtiqueta extends BaseController
                 title='Copiar Etiqueta' onclick='redireciona(\"$url_cop\",event)'>
                 <i class='fas fa-copy'></i></button>",
 
-                "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0' 
+                "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0' 
                 data-mdb-toggle='tooltip' data-mdb-placement='top'
                 title='Imprimir Etiqueta' onclick='gerarEtiquetaZPL(\"$url_eti\", $etiq)'>
                 <i class='fas fa-print'></i></button>",

@@ -89,10 +89,10 @@ class AteRequisicao extends BaseController
                 $url_ati = $base_url . $req['req_id'];
                 // Gerar a ação do botão
                 $req['acao_person'] = [
-                    "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' 
+                    "<button class='btn btn-outline-warning btn-sm border-0 mx-0 fs-0 float-end' 
             data-mdb-toggle='tooltip' data-mdb-placement='top' 
             title='Etiquetas de Produtos' onclick='redireciona(\"$url_ati\")'>
-            <i class='fas fa-ticket-alt text-warning'></i></button>"
+            <i class='fas fa-tag'></i></button>"
                 ];
             }
         }
@@ -272,7 +272,7 @@ class AteRequisicao extends BaseController
                 $qtia = $prod['rep_quantia'];
                 $url_ati = base_url($this->data['controler'].'/GeraEtiqueta/'.$rep_id.'/'.$qtia);
                 $imprimir =
-                    "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
+                    "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
                     data-mdb-placement='top' title='Imprimir Etiqueta' onclick='geraEiquetaProd(\"".$url_ati."\")'><i class='fas fa-print'></i></button>";
                 $item = [];
                 $item[0] = $rep_id;
@@ -297,7 +297,7 @@ class AteRequisicao extends BaseController
         $campos[0][count($campos[0])] = view('partials/pw_show_produtos_req',$data); // mesma estrutura do add()
         
         // $this->data['mostrar']   = ''; // ou 'update' se você for criar
-        $this->data['icone']   = "<i class='fas fa-ticket-alt'></i>"; // ou 'update' se você for criar
+        $this->data['icone']   = "<i class='fas fa-tag'></i>"; // ou 'update' se você for criar
         $this->data['desc_metodo']   = ''; // ou 'update' se você for criar
         $this->data['title']   = 'Impressão de Etiquetas de Produtos'; // ou 'update' se você for criar
         $this->data['desc_edicao']  = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
