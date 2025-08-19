@@ -157,20 +157,12 @@ class ConfigEtiquetaCampoModel extends Model
                 $pasta = "App\\Models\\" . $compl_model . "\\";
                 $model_atual = model($pasta . $model);
                 $view   = $model_atual->view;
-                $campos_lis = [];
-                if (strpos($view, ';') !== false) {
-                    // Quebra a string em várias partes
-                    $partes = explode(';', $view);
-
-                    foreach ($partes as $parte) {
-                        $campos_tab = $this->admDados->getCampos($parte);
-                        array_push($campos_lis,array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME'));
-                    }
-                } else {
-                    $campos_tab = $this->admDados->getCampos($view);
-                    // debug($campos_tab);
-                    $campos_lis = array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME');
+                if(isset($model_atual->viewoutra)){
+                    $view   = $model_atual->viewoutra;
                 }
+                $campos_tab = $this->admDados->getCampos($view);
+                // debug($campos_tab);
+                $campos_lis = array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME');
                 // $campos_tab = $this->admDados->getCampos($view);
                 // $campos_lis = array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME');
                 if (sizeof($campos_lis) <= 0) {

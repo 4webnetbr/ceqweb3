@@ -219,7 +219,8 @@ class ConfigEtiquetaModel extends Model
         if (isset($dados['mod_id'])) {
             $chave = 'mod_id = ' . $dados['mod_id'];
         }
-        $opc_mod      = $opcoes->getListaOpcoes('default', 'cfg_modulo', ['mod_nome', 'mod_id'], $chave);
+        // $opc_mod      = $opcoes->getListaOpcoes('default', 'cfg_modulo', ['mod_nome', 'mod_id'], $chave);
+        $opc_mod      = $opcoes->getListaOpcoes('default', 'cfg_modulo', ['mod_nome', 'mod_id']);
 
         $mod_id                 = new MyCampo('cfg_etiqueta', 'mod_id', false);
         $mod_id->valor          = (isset($dados['mod_id'])) ? $dados['mod_id'] : '';

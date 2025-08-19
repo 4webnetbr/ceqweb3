@@ -13,9 +13,9 @@ class EstoquRequisicaoModel extends Model
 {
     protected $DBGroup          = 'dbEstoque';
     protected $table            = 'est_requisicao';
-    protected $view             = 'vw_est_requisicao_lista_relac;vw_est_requisicao_produto_relac';
-    protected $viewlista             = 'vw_est_requisicao_lista_relac';
-    protected $viewprodu             = 'vw_est_requisicao_produto_relac';
+    protected $view             = 'vw_est_requisicao_lista_relac';
+    protected $viewlista        = 'vw_est_requisicao_lista_relac';
+    protected $viewoutra        = 'vw_est_requisicao_produto_relac';
     protected $primaryKey       = 'req_id';
     protected $useAutoIncremodt = true;
 
@@ -121,7 +121,7 @@ class EstoquRequisicaoModel extends Model
     public function getRequisicaoProdutos($req_id = false)
     {
         $db = db_connect('dbEstoque');
-        $builder = $db->table($this->viewprodu);
+        $builder = $db->table($this->viewoutra);
         $builder->select('*');
         if ($req_id) {
             $builder->where('req_id', $req_id);
@@ -135,7 +135,7 @@ class EstoquRequisicaoModel extends Model
     public function getRequisicaoRep($rep_id = false)
     {
         $db = db_connect('dbEstoque');
-        $builder = $db->table($this->viewprodu);
+        $builder = $db->table($this->viewoutra);
         $builder->select('*');
         if ($rep_id) {
             $builder->where('rep_id', $rep_id);
@@ -149,7 +149,7 @@ class EstoquRequisicaoModel extends Model
     public function getProdutoRequisicao($produto)
     {
         $db = db_connect('dbEstoque');
-        $builder = $db->table('est_requisicao_produto');
+        $builder = $db->table($this->table);
         $builder->select('*');
         $builder->where('pro_id', $produto);
         return $builder->get()->getResultArray();

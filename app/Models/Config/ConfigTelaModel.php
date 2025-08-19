@@ -345,19 +345,8 @@ class ConfigTelaModel extends Model
         $camp           = new MyCampo();
         $camp->label    = 'Campos da Visão Principal';
         if ($view != '') {
-            $camp->valor = '';
-            if (strpos($view, ';') !== false) {
-                // Quebra a string em várias partes
-                $partes = explode(';', $view);
-
-                foreach ($partes as $parte) {
-                    $campos_view = $dicionario->getCampos($parte);
-                    $camp->valor    .= campos_tabela($campos_view);
-                }
-            } else {
-                $campos_view = $dicionario->getCampos($view);
-                $camp->valor    .= campos_tabela($campos_view);
-            }
+            $campos_view = $dicionario->getCampos($view);
+            $camp->valor    .= campos_tabela($campos_view);
         }
         $ret['tel_camp_view'] = $camp->crShow();
 

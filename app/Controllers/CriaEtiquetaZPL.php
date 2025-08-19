@@ -359,7 +359,7 @@ class CriaEtiquetaZPL extends BaseController
             if($font == 'TIMES'){
                 $font = 'TIMESNR';
             }
-            $font = $font.'TTF';
+            $font = $font.'.TTF';
 
             $largDisp = (int) floor($etqW * ($colPct / 100));
 
@@ -435,6 +435,7 @@ class CriaEtiquetaZPL extends BaseController
                 $realBarW = ($modules * $modW);
                 // $xPos = $xBase + (int) round(($areaW - $realBarW) / 2);
                 $xPos = $xBase + (int) round(($areaW - $usableW) / 2);
+                // $xPos = $xBase;
 
                 // Posição Y
                 $yPos = $baseY + $yCursor;
@@ -507,17 +508,20 @@ class CriaEtiquetaZPL extends BaseController
                 }
 
                 // 2) Posição X baseada no % já ocupado
-                $xPos = $xBase + (int) round(($etqW * $linhaPctOcupado) / 100);
+                // $xPos = $xBase + (int) round(($etqW * $linhaPctOcupado) / 100);
+                $xPos = $xBase;
 
                 // 3) Imprime o item (ex.: texto com ^A@ + ^FB em 1 linha)
                 $z .= "^FO{$xPos}," . ($baseY + $yCursor) . "^A@N,{$hDots},{$wDots},E:{$font}";
-                $z .= "^FB{$itemW},1,0,{$alinh},0";
+                // debug($alinh);
+                $z .= "^FB{$itemW},2,0,{$alinh},0";
+                // debug("^FB{$itemW},2,0,{$alinh},0");
                 $z .= "^FD" . $this->escZpl($texto) . "^FS";
 
                 // negrito fake opcional
                 if (!empty($negrito)) {
                     $z .= "^FO" . ($xPos + 1) . "," . ($baseY + $yCursor) . "^A@N,{$hDots},{$wDots},E:{$font}";
-                    $z .= "^FB{$itemW},1,0," . ($alinh ?: 'L') . ",0";
+                    $z .= "^FB{$itemW},2,0," . ($alinh ?: 'L') . ",0";
                     $z .= "^FD" . $this->escZpl($texto) . "^FS";
                 }
 
@@ -532,7 +536,6 @@ class CriaEtiquetaZPL extends BaseController
                 //    Se a linha “fechou” (==100), você só avança na chegada do próximo item,
                 //    pelo passo (1) acima. Isso garante que 30% + 40% fiquem na MESMA linha.
             }
-
             // Avança para próxima “linha de layout” dentro da etiqueta
             // $yCursor   += max($hDots, $this->mm2dot(2.5));
             $ocupouPct += $colPct;
@@ -600,7 +603,11 @@ class CriaEtiquetaZPL extends BaseController
             if ($telas && !empty($telas['tel_model'])) {
                 $model = $telas['tel_model'];
                 $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
-                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 10);
+                $view   = $model_atual->view;
+                if(isset($model_atual->viewoutra)){
+                    $view   = $model_atual->viewoutra;
+                }
+                $dados = $this->common->getListaTabela($model_atual->DBGroup, $view, $fields, false, 10);
             } else {
                 $dados = array_fill(0, $this->colunas, []);
             }
@@ -715,7 +722,11 @@ class CriaEtiquetaZPL extends BaseController
             if ($telas && !empty($telas['tel_model'])) {
                 $model = $telas['tel_model'];
                 $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
-                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 10);
+                $view   = $model_atual->view;
+                if(isset($model_atual->viewoutra)){
+                    $view   = $model_atual->viewoutra;
+                }
+                $dados = $this->common->getListaTabela($model_atual->DBGroup, $view, $fields, false, 10);
             } else {
                 $dados = array_fill(0, $this->colunas, []);
             }
@@ -780,8 +791,12 @@ class CriaEtiquetaZPL extends BaseController
         if ($telas && !empty($telas['tel_model'])) {
             $model = $telas['tel_model'];
             $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
+            $view   = $model_atual->view;
+            if(isset($model_atual->viewoutra)){
+                $view   = $model_atual->viewoutra;
+            }
             $fields = array_filter(array_column($camp, 'etc_campo'), fn($f) => $f !== '0' && $f !== '1');
-            $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, max(1, 10));
+            $dados = $this->common->getListaTabela($model_atual->DBGroup, $view, $fields, false, max(1, 10));
         }
         if (!$dados) $dados = [[]];
 

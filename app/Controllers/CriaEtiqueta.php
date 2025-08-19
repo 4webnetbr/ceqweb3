@@ -809,7 +809,11 @@ private function renderConteudoInterno(array $dados, array $camp, bool $exibirBo
             if (!empty($telas['tel_model'])) {
                 $model = $telas['tel_model'];
                 $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
-                $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 20);
+                $view   = $model_atual->view;
+                if(isset($model_atual->viewoutra)){
+                    $view   = $model_atual->viewoutra;
+                }
+                $dados = $this->common->getListaTabela($model_atual->DBGroup, $view, $fields, false, 20);
             }
         } else {
             $dados = cache()->get($chave);
@@ -863,8 +867,12 @@ private function renderConteudoInterno(array $dados, array $camp, bool $exibirBo
         if (!empty($telas['tel_model'])) {
             $model = $telas['tel_model'];
             $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
+            $view   = $model_atual->view;
+            if(isset($model_atual->viewoutra)){
+                $view   = $model_atual->viewoutra;
+            }
             $fields = array_filter(array_column($camp, 'etc_campo'), fn($f) => $f !== '0' && $f !== '1');
-            $dados = $this->common->getListaTabela($model_atual->DBGroup, $model_atual->view, $fields, false, 10);
+            $dados = $this->common->getListaTabela($model_atual->DBGroup, $view, $fields, false, 10);
         }
 
         $tamanho[0]   = ($this->colunas * $this->largura) + (($this->colunas - 1) * $this->horizontal) + ($this->esquerda + $this->direita);

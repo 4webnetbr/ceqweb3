@@ -168,6 +168,9 @@ class CfgTela extends BaseController
         // debug($this->model_atual);
         $tabela = $this->model_atual->table;
         $view   = $this->model_atual->view;
+        if(isset($this->model_atual->viewlista)){
+            $view   = $this->model_atual->viewlista;
+        }
         $fields = $this->tela->defCampos($dados_tela, $show, $tabela, $view);
 
         $secao[0] = 'Dados Gerais';
@@ -265,6 +268,9 @@ class CfgTela extends BaseController
         }
         $tabela = $this->model_atual->table;
         $view   = $this->model_atual->view;
+        if(isset($this->model_atual->viewlista)){
+            $view   = $this->model_atual->viewlista;
+        }
         
         $lista['tel_id'] = $dados_tela['tel_id'];
 
@@ -312,20 +318,9 @@ class CfgTela extends BaseController
     
     public function defCamposLista($lista = '', $pos = 0, $show = false, $tabela = '', $view ='')
     {
-        $campos_lis = [];
-        if (strpos($view, ';') !== false) {
-            // Quebra a string em várias partes
-            $partes = explode(';', $view);
-
-            foreach ($partes as $parte) {
-                $campos_tab = $this->dicionario->getCampos($parte);
-                array_push($campos_lis,array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME'));
-            }
-        } else {
-            $campos_tab = $this->dicionario->getCampos($view);
-            // debug($campos_tab);
-            $campos_lis = array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME');
-        }
+        $campos_tab = $this->dicionario->getCampos($view);
+        // debug($campos_tab);
+        $campos_lis = array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME');
 
         // $campos_tab = $this->dicionario->getCampos($view);
         // debug($campos_tab);
