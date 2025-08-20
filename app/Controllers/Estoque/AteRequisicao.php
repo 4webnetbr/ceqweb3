@@ -187,7 +187,7 @@ class AteRequisicao extends BaseController
         $campos[0][count($campos[0])] = $fields['lot_codbar'];
 
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
-        // debug($produtos);
+        debug($produtos, true);
         // debug(count($produtos), true);
         for ($p=0; $p < count($produtos); $p++) { 
             $prod = $produtos[$p];
@@ -195,7 +195,7 @@ class AteRequisicao extends BaseController
             $produtos[$p]['rep_cancelada'] = $fields['rep_cancelada'];
             $produtos[$p]['rep_atendida'] = $fields['rep_atendida'];
         }
-        // debug($produtos);
+        // debug($produtos, true);
         // $secao[1] = 'Produtos';
         $campos[0][count($campos[0])] = view('partials/pw_produtos_requisicao',['produtos' => $produtos]); // mesma estrutura do add()
 

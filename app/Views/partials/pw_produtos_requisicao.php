@@ -65,13 +65,13 @@ if(!isset($show)){
                             <td class='text-start'><?= $produto['pro_despro'] ?></td>
                             <td  id='<?= $produto['pro_codbar_fabricante'] ?>' data-id='cbFab' class='text-start'><?= $produto['fab_apeFab'] ?></td>
                             <?if(!$show){?>
-                            <td><div id='fab_<?= $produto["rep_id"]?>' class='rounded-circle border border-2 border-secondary p-1'><?= $produto['pre_cbfabricante'].$produto['pre_undfabricante'] ?></div></td>
+                                <td><div id='fab_<?= $produto["rep_id"]?>' class='rounded-circle border border-2 border-secondary p-1'><?= $produto['pre_cbfabricante'].$produto['pre_undfabricante'] ?></div></td>
                             <?} else {?>
                                 <td><div id='fab_<?= $produto["rep_id"]?>' class='p-1'><?= $produto['pre_cbfabricante'].$produto['pre_undfabricante'] ?></div></td>
                             <?}?>
                             <td id='<?= $produto['lot_codbar'] ?>' data-id='cbLot' class='text-start'><?= $produto['lot_lote'] ?></td>
                             <?if(!$show){?>
-                            <td><div id='lot_<?= $produto["rep_id"]?>' class='rounded-circle  border border-2 border-secondary p-1'><?= $produto['pre_cblote'].$produto['pre_undlote'] ?></div></td>
+                                <td><div id='lot_<?= $produto["rep_id"]?>' class='rounded-circle  border border-2 border-secondary p-1'><?= $produto['pre_cblote'].$produto['pre_undlote'] ?></div></td>
                             <?} else {?>
                                 <td><div id='lot_<?= $produto["rep_id"]?>' class='p-1'><?= $produto['pre_cblote'].$produto['pre_undlote'] ?></div></td>
                             <?}?>
