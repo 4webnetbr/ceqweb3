@@ -561,25 +561,29 @@ class Requisicao extends BaseController
             }
 
             // === Segurança e sugestão bruta (sempre calculadas) ===
-            $produto->pro_seguranca = ceil($produto->pro_consumo * ($prod['pct_seguranca'] / 100));
-            $sugestaoBruta = ($produto->pro_consumo + $produto->pro_seguranca) - $produto->lotedes->pro_estdestino;
-
             // === Aplicar faixa de mínimo e máximo (somente se gestão de estoque) ===
             if ($prod['pre_gestaoestoque'] === 'S') {
                 $produto->pro_minimo = ($prod['pre_mindiaanterior'] === 'S')
-                    ? $produto->pro_consumo_diaant
-                    : $prod['pre_minimo'];
+                ? $produto->pro_consumo_diaant
+                : $prod['pre_minimo'];
                 $produto->pro_consumo = ($prod['pre_mindiaanterior'] === 'S')
-                    ? $produto->pro_consumo
-                    : $prod['pre_sugerida'];
+                ? $produto->pro_consumo
+                : $prod['pre_sugerida'];
+                
+                $produto->pro_seguranca = ceil(floatval($produto->pro_consumo * ($prod['pct_seguranca'] / 100)));
 
+                // debug('Consumo '.$produto->pro_consumo);
+                // debug(('Segurança '.$produto->pro_seguranca));
+                // debug('Est Destino '.$produto->lotedes->pro_estdestino);
+                $sugestaoBruta = $produto->pro_consumo + $produto->pro_seguranca - $produto->lotedes->pro_estdestino;
+                // debug('Sugest Ini '.$sugestaoBruta, true);
                 if ($prod['pre_maxdiaanterior'] === 'S') {
                     $percentual = floatval($prod['pre_porcmaximo']) / 100;
-                    $produto->pro_maximo = $produto->pro_consumo * (1 + $percentual);
+                    $produto->pro_maximo = ceil($produto->pro_consumo * (1 + $percentual));
                 } else {
                     $produto->pro_maximo = $prod['pre_maximo'];
                 }
-
+                
                 // === Definir sugestão respeitando faixa
                 if ($sugestaoBruta <= 0) {
                     $produto->pro_sugestao = 0;
@@ -590,9 +594,11 @@ class Requisicao extends BaseController
                 } else {
                     $produto->pro_sugestao = max($produto->pro_minimo, $sugestaoBruta);
                     $produto->pro_sugestao = min($produto->pro_sugestao, $produto->pro_maximo);
+                    $produto->pro_sugestao = max(0, ($produto->pro_sugestao - $produto->lotedes->pro_estdestino));
                 }
             } else {
                 // === Sem gestão de estoque: usar sugestão bruta diretamente
+                $sugestaoBruta = ($produto->pro_consumo + $produto->pro_seguranca) - $produto->lotedes->pro_estdestino;
                 $produto->pro_minimo = 0;
                 $produto->pro_maximo = 0;
                 $produto->pro_sugestao = max(0, $sugestaoBruta);
