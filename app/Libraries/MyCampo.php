@@ -435,8 +435,10 @@ class MyCampo
         $this->field['label']         = isset($this->label) ? $this->label : "";
         $this->field['hint']          = isset($this->hint) ? $this->hint : "";
         $this->field['autocomplete']  = 'off';
-        $this->field['onchange']      = isset($this->funcChan) ? $this->funcChan : "";
-        $this->field['onblur']        = isset($this->funcBlur) ? $this->funcBlur : "";
+        if($this->tipo != 'botao' && $this->tipo != 'button'){
+            $this->field['onchange']      = isset($this->funcChan) ? $this->funcChan : "";
+            $this->field['onblur']        = isset($this->funcBlur) ? $this->funcBlur : "";
+        }
         if (isset($this->default)) {
             $this->field['data-default'] = $this->default;
         }
@@ -521,6 +523,7 @@ class MyCampo
     public function crBotao(): string
     {
         $this->acertaId();
+        $this->tipo = 'botao';
         // NÃO TEM FORMATO NO FORMULÁRIO
         $txtlabel = isset($this->label) ? $this->label : "";
         $this->field = array(

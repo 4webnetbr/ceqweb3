@@ -720,6 +720,9 @@ $client = new Client("ws://127.0.0.1:8443/ws", [
         // debug($msg);
         $client->send(json_encode($msg));
         log_message('info', 'Enviou Mensagem ' . $msg['msg']);
+    } else {
+        log_message('info', 'Não conectou no Cliente');
+
     }
     // $client->close();
     return;

@@ -126,13 +126,30 @@ class EstoquRequisicaoModel extends Model
         if ($req_id) {
             $builder->where('req_id', $req_id);
         }
-        return $builder->get()->getResultArray();
+        
+        $ret = $builder->get()->getResultArray();
+        // debug($this->db->getLastQuery(), false);
+        return $ret;
+    }
+
+    public function getRequisicaoRep($rep_id = false)
+    {
+        $db = db_connect('dbEstoque');
+        $builder = $db->table($this->viewoutra);
+        $builder->select('*');
+        if ($rep_id) {
+            $builder->where('rep_id', $rep_id);
+        }
+        
+        $ret = $builder->get()->getResultArray();
+        // debug($this->db->getLastQuery(), false);
+        return $ret;
     }
 
     public function getProdutoRequisicao($produto)
     {
         $db = db_connect('dbEstoque');
-        $builder = $db->table($this->viewoutra);
+        $builder = $db->table($this->table);
         $builder->select('*');
         $builder->where('pro_id', $produto);
         return $builder->get()->getResultArray();
@@ -143,10 +160,17 @@ class EstoquRequisicaoModel extends Model
         $ret = [];
         $simnao['S'] = 'Sim';
         $simnao['N'] = 'Não';
-        $id           =  new MyCampo('est_requisicao', 'req_id', false);
-        $id->valor    = (isset($dados['req_id'])) ? $dados['req_id'] : '';
-        $id->leitura  = $show;
-        $ret['req_id']    = $id->crOculto();
+        $id                 =  new MyCampo('est_requisicao', 'req_id', true);
+        $id->valor          = (isset($dados['req_id'])) ? str_pad($dados['req_id'], 6, '0', STR_PAD_LEFT) : '';
+        $id->leitura        = true;
+        $id->tipo           = 'text';
+        $id->dispForm       = 'linha';
+        $id->classep        = 'mb3';
+        if($show){
+            $ret['req_id']      = $id->crInput();
+        } else {
+            $ret['req_id']      = $id->crOculto();
+        }
 
         $hoje = new DateTime();
         $data                 = new MyCampo('est_requisicao', 'req_data', false);
@@ -162,10 +186,9 @@ class EstoquRequisicaoModel extends Model
         $entr->valor          = (isset($dados['req_dataentrega'])) ? $dados['req_dataentrega'] : '';
         $entr->leitura        = $show;
         $entr->datamin         = $data->format('Y-m-d');
-        $entr->obrigatorio    = true;
         $entr->dispForm       = 'col-6';
         $entr->classep        = 'mb3';
-        $entr->funcBlur       = 'validaDataMinima(this)';
+        // $entr->funcBlur       = 'validaDataMinima(this)';
         $ret['req_dataentrega']   = $entr->crInput();
 
         $tipomovs = new EstoquTipoMovimentacaoModel();
@@ -174,7 +197,7 @@ class EstoquRequisicaoModel extends Model
 
         $tmov                 = new MyCampo('est_requisicao', 'tmo_id', false);
         $tmov->valor          = (isset($dados['tmo_id'])) ? $dados['tmo_id'] : '';
-        $tmov->obrigatorio    = true;
+        $tmov->leitura        = $show;
         $tmov->selecionado    = [$tmov->valor];
         $tmov->opcoes         = $opc_tipomov;
         $tmov->largura        = 50;
@@ -188,8 +211,8 @@ class EstoquRequisicaoModel extends Model
         $mudi->minimo         = 0;
         $mudi->step           = 1;
         $mudi->maximo         = 10;
-        $mudi->classep        = 'mb2';
-        $mudi->dispForm       = 'col-6';
+        // $mudi->classep        = 'mb3';
+        $mudi->dispForm       = 'col-6 mb-2';
         $ret['req_repetedias']          = $mudi->crInput();
 
         $depositos = new EstoquDepositoModel();
@@ -292,19 +315,44 @@ class EstoquRequisicaoModel extends Model
         $codb->funcBlur       = 'validaCodBar(this)';
         $ret['lot_codbar']      = $codb->crInput();
 
-        $btca            = new MyCampo();
-        $btca->nome      = "bt_carregar";
-        $btca->id        = "bt_carregar";
-        $btca->i_cone    = "<i class='fas fa-refresh fs-3'></i> <scan class='mx-3'>Carregar Produtos</scan>";
-        $btca->label     = $btca->place     = "Carregar Produtos";
-        $btca->classep   = "btn-outline-success btn-sm align-items-center d-flex m-3";
-        $btca->funcChan  = "carregarProdutos('" . base_url("Requisicao/produtos/") . "','produtos',this)";
+        $qtia                 = new MyCampo('est_requisicao_produto', 'rep_quantia', false);
+        $qtia->valor          = '0';
+        $qtia->leitura        = false;
+        $qtia->classep        = 'mb2';
+        $qtia->dispForm       = 'col-6';
+        $ret['rep_quantia']      = $qtia->crInput();
+
+        $btca                 = new MyCampo();
+        $btca->nome           = "bt_carregar";
+        $btca->id             = "bt_carregar";
+        $btca->i_cone         = "<i class='fas fa-refresh fs-3'></i> <scan class='mx-3'>Carregar Produtos</scan>";
+        $btca->label          = $btca->place     = "Carregar Produtos";
+        $btca->classep        = "btn-outline-success btn-sm align-items-center d-flex m-3";
+        $btca->funcChan       = "carregarProdutos('" . base_url("Requisicao/produtos") . "','produtos',this,event)";
         $ret['bt_carregar']   = $btca->crBotao();
 
         return $ret;
     }
 
 
+    public function defCamposProduto($dados = false, $show = false)
+    {
+        $produtos       = new ProdutProdutoModel();
+        $lst_produts    = $produtos->getProdutoSemRequisicao();
+        $opc_prods      = array_column($lst_produts, 'pro_despro', 'pro_id');
+
+        $prod                   = new MyCampo('pro_req_produto', 'pro_id', false);
+        $prod->valor            = (isset($dados['pro_id'])) ? implode(",", $dados['pro_id']) : '';
+        $prod->selecionado      = (isset($dados['pro_id'])) ? $dados['pro_id'] : [];
+        $prod->opcoes           = $opc_prods;
+        $prod->valid            = isset($dados['pro_id']) ? true : false;
+        $prod->largura          = 50;
+        $prod->pai              = "cla_id";
+        $prod->urlbusca         = base_url('buscas/buscaProdutoClasse');
+        $ret['pro_id']          = $prod->crDependeMultiplo();
+
+        return $ret;
+    }
     public function defCamposProdutoAte($dados = false, $show = false)
     {
         $ret = [];

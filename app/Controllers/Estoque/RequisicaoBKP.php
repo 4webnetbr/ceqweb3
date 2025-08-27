@@ -81,6 +81,14 @@ class Requisicao extends BaseController
         $campos = montaColunasCampos($this->data, 'req_id');
         $dados_requis = $this->requisicao->getRequisicaoLista(false, [6, 4]);
         // debug($dados_requis, true);
+        foreach ($dados_requis as &$req) {
+            // debug($req['stt_id']);
+            // debug($req['stt_edicao']);
+            if ($req['stt_id'] == 4) { // se estiver pendente, não deixa editar
+                $req['stt_edicao'] = 'N';
+                // debug($req['stt_edicao']);
+            }
+        }
         $requis = [
             'data' => montaListaColunas($this->data, 'req_id', $dados_requis, $campos[1]),
         ];
@@ -201,6 +209,76 @@ class Requisicao extends BaseController
     }
 
     /**
+     * Consulta
+     * show
+     *
+     * @param mixed $id 
+     * @return void
+     */
+    public function show($id)
+    {
+        $requisicao = $this->requisicao->getRequisicao($id)[0];
+
+        if (!$requisicao) {
+            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
+            return redirect()->to(site_url($this->data['controler']));
+        }
+
+        // Montar campos como no add()
+        $fields = $this->requisicao->defCampos($requisicao, true);
+        $secao[0] = 'Dados Gerais';
+        $campos[0][0] = $fields['req_id'];
+        $campos[0][count($campos[0])] = $fields['req_data'];
+        $campos[0][count($campos[0])] = $fields['req_dataentrega'];
+        $campos[0][count($campos[0])] = $fields['tmo_id'];
+        $campos[0][count($campos[0])] = "<div class='col-6'>.</div>";
+        // $campos[0][count($campos[0])] = $fields['lot_codbar'];
+
+        $produtosreq = $this->requisicao->getRequisicaoProdutos($id);
+        // debug($produtosreq);
+        $colunas = ['Cód ERP','Descrição','Fabricante','LF','Lote','LP','Validade','Caixas','Qtde.Requerida','Qtde.Cancelada','Qtde.Pendente','Saldo'];
+        $produtos = [];
+        $produtos[0] = $id;
+        if(count($produtosreq) > 0){
+            for ($p=0; $p < count($produtosreq) ; $p++) { 
+                $prod = $produtosreq[$p];
+                // debug($prod);
+                $produto = [];
+                $produto[0] = $prod['rep_id'];
+                $produto[count($produto)] = $prod['pro_codpro'];
+                $produto[count($produto)] = $prod['pro_despro'];
+                $produto[count($produto)] = $prod['fab_apeFab'];
+                $produto[count($produto)] = $prod['pre_cbfabricante'].$prod['pre_undfabricante'];
+                $produto[count($produto)] = $prod['lot_lote'];
+                $produto[count($produto)] = $prod['pre_cblote'].$prod['pre_undlote'];
+                $produto[count($produto)] = $prod['lot_validade'];
+                $produto[count($produto)] = $prod['qtd_caixa'];
+                $produto[count($produto)] = $prod['rep_quantia'];
+                $produto[count($produto)] = $prod['rep_cancelada'];
+                $produto[count($produto)] = $prod['rep_atendida'];
+                $produto[count($produto)] = $prod['rep_quantia'];
+                $produtos[count($produtos)] =$produto;
+            }
+        }
+        // debug($produtos, true);
+        $data = [
+            'show' => true,
+            'colunas' => $colunas,
+            'produtos' => $produtos
+        ];
+
+        $campos[0][count($campos[0])] = view('partials/pw_show_produtos_req',$data); // mesma estrutura do add()
+
+        $this->data['desc_edicao']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['secoes']    = $secao;
+        $this->data['campos']    = $campos;
+        $this->data['destino']   = ''; // ou 'update' se você for criar
+        $this->data['scripts']   = 'my_requisicao';
+
+        echo view('vw_edicao', $this->data);
+    }
+
+    /**
      * Exclusão
      * delete
      *
@@ -238,6 +316,7 @@ class Requisicao extends BaseController
         if ($reqid != '') {
             $prodreq = $this->requisicaoproduto->getRequisicaoProdutos($reqid);
         }
+        // debug($prodreq, true);
 
         // === Dados iniciais de retorno ===
         $ret = [
@@ -482,18 +561,15 @@ class Requisicao extends BaseController
             }
 
             // === Segurança e sugestão bruta (sempre calculadas) ===
-            $produto->pro_seguranca = ceil($produto->pro_consumo * ($prod['pct_seguranca'] / 100));
-            $sugestaoBruta = ($produto->pro_consumo + $produto->pro_seguranca) - $produto->lotedes->pro_estdestino;
-
             // === Aplicar faixa de mínimo e máximo (somente se gestão de estoque) ===
             if ($prod['pre_gestaoestoque'] === 'S') {
                 $produto->pro_minimo = ($prod['pre_mindiaanterior'] === 'S')
-                    ? $produto->pro_consumo_diaant
-                    : $prod['pre_minimo'];
+                ? $produto->pro_consumo_diaant
+                : $prod['pre_minimo'];
                 $produto->pro_consumo = ($prod['pre_mindiaanterior'] === 'S')
-                    ? $produto->pro_consumo
-                    : $prod['pre_sugerida'];
-
+                ? $produto->pro_consumo
+                : $prod['pre_sugerida'];
+                
                 $produto->pro_seguranca = ceil(floatval($produto->pro_consumo * ($prod['pct_seguranca'] / 100)));
 
                 // debug('Consumo '.$produto->pro_consumo);
@@ -527,7 +603,6 @@ class Requisicao extends BaseController
                 $produto->pro_maximo = 0;
                 $produto->pro_sugestao = max(0, $sugestaoBruta);
             }
-
             $produto->pro_sugestao = min($proEstDispon, $produto->pro_sugestao);
             if (count($prodreq) > 0) {
                 $produto->pro_requisicao = $this->buscarRepQuantia($prodreq, $codPro, $produto->lot_lote);
@@ -549,6 +624,10 @@ class Requisicao extends BaseController
         $ret['erro'] = false;
         $db = \Config\Database::connect();
 
+        // debug($postado, true);
+        if(!isset($postado['json_requisicoes'])){
+            return;
+        }
         $requisicoes = json_decode($postado['json_requisicoes'], true);
 
         $db->transStart(); // Início da transação
@@ -591,7 +670,7 @@ class Requisicao extends BaseController
                 $produto = $this->produtos->getProdutoCod($item['cod_erp']);
                 $lote = $this->lote->getLoteCodproLote($item['cod_erp'], $item['lote']);
 
-                if (!$produto || !$lote) {
+                if (!$produto || (!$lote && trim($item['lote']) != 'Sem Lote')) {                    
                     $ret['erro'] = true;
                     $ret['msg'] = "Produto ou lote não encontrado para o código: {$item['cod_erp']} ou lote: {$item['lote']}";
                     $db->transRollback();
@@ -602,7 +681,7 @@ class Requisicao extends BaseController
                 $rep = [
                     'req_id' => $req_id,
                     'pro_id' => $produto[0]['pro_id'],
-                    'lot_id' => $lote[0]['lot_id'],
+                    'lot_id' => $lote[0]['lot_id'] ?? null,
                     'rep_quantia' => $item['requisicao']
                 ];
 

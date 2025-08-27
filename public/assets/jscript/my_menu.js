@@ -21,7 +21,10 @@ function atualizaMenu() {
     }
   });
   jQuery(".nav-dropdown-menu").each(function (index) {
-    if (jQuery(this)[0].id == jQuery("#controler").val()) {
+    if (
+      jQuery(this)[0].id.toLowerCase() ==
+      jQuery("#controler").val().toLowerCase()
+    ) {
       submenu = jQuery(this)[0].getAttribute("data-submenu");
       if (submenu) {
         collapsesub = jQuery(this)[0].getAttribute("data-collapse");

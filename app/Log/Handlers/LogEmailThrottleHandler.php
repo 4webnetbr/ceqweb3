@@ -55,7 +55,7 @@ class LogEmailThrottleHandler implements HandlerInterface
             $lastHash = $cache->get($cacheKey);
 
             if ($currentHash === $lastHash) {
-                log_message('info', 'Erro Repetido '.json_encode($lastHash));
+                log_message('info', 'Erro Repetido '.$text);
                 return false; // Log repetido, ignora envio
             }
 

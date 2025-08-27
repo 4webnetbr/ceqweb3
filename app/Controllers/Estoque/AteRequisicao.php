@@ -178,6 +178,7 @@ class AteRequisicao extends BaseController
 
         // Montar campos como no add()
         $fields = $this->requisicao->defCampos($requisicao, $show);
+        // debug($fields, true);
         $secao[0] = 'Dados Gerais';
         $campos[0][0] = $fields['req_id'];
         $campos[0][count($campos[0])] = $fields['req_data'];
@@ -187,7 +188,7 @@ class AteRequisicao extends BaseController
         $campos[0][count($campos[0])] = $fields['lot_codbar'];
 
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
-        debug($produtos, true);
+        // debug($produtos, true);
         // debug(count($produtos), true);
         for ($p=0; $p < count($produtos); $p++) { 
             $prod = $produtos[$p];

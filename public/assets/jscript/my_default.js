@@ -96,7 +96,7 @@ jQuery(document).ready(function () {
     bloqueiaTela();
     const controller = jQuery("#controler").val();
 
-    if (controller === "requisicao") {
+    if (controller.toLowerCase() === "requisicao") {
       // event.preventDefault(); // impede submit automático
       enviarRequisicoes();
     }
@@ -1671,6 +1671,9 @@ function executaAjax(urldest, tipo = "json", dados = {}, funcao = "") {
       complete: function () {
         desBloqueiaTela();
       },
+      error: function () {
+        desBloqueiaTela();
+      },
     };
   } else {
     options = {
@@ -1684,6 +1687,9 @@ function executaAjax(urldest, tipo = "json", dados = {}, funcao = "") {
         bloqueiaTela();
       },
       complete: function () {
+        desBloqueiaTela();
+      },
+      error: function () {
         desBloqueiaTela();
       },
     };

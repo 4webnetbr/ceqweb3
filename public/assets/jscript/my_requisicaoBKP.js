@@ -108,7 +108,7 @@ function criarLinhaProduto(
       : "";
 
   return `
-        <tr class="linha-produto ${isDuplicado ? "d-none" : ""}" 
+        <tr class="centralizado linha-produto ${isDuplicado ? "d-none" : ""}" 
             data-classe="${dadosDep.classe}" 
             data-index="${index}" 
             data-codpro="${codpro}"
@@ -259,7 +259,242 @@ function montarTabelaProdutos(classe, rt, dadosDep) {
   return text.join("");
 }
 
-async function carregarProdutos(url, aba, obj) {
+function calcularSugestao(
+  base,
+  multiplicador,
+  seguranca,
+  max,
+  saldoDestino,
+  saldoDisponivel
+) {
+  let sug = base * multiplicador;
+  const vsegura = Math.ceil(sug * (seguranca / 100));
+  let maxMult = max * multiplicador;
+  sug = sug + vsegura - saldoDestino;
+  if (maxMult > 0) {
+    const restanteMax = maxMult - saldoDestino;
+    if (restanteMax <= 0) return 0;
+    sug = Math.min(sug, restanteMax);
+  }
+  sug = Math.min(sug, saldoDisponivel);
+  return Math.max(0, sug);
+}
+
+function preencherRequisicaoAutomatica(index, valor, classe) {
+  const checkbox = jQuery(`#checkSug${classe}`);
+  if (checkbox.is(":checked")) {
+    jQuery(`.requisicao[data-index="${index}"]`)
+      .data("ignore-validation", true)
+      .val(valor)
+      .trigger("change");
+  }
+}
+
+function atualizarSugestao(index, novaSug) {
+  jQuery(`#sug_${index}`).text(parseInt(novaSug));
+}
+
+function atualizarSeguranca(index, consumo, segurancaPct) {
+  const novoSeg = Math.ceil(consumo * (segurancaPct / 100));
+  jQuery(`#seg_${index}`).text(novoSeg);
+  return novoSeg;
+}
+
+function handleMultiplicaChange() {
+  const input = jQuery(this);
+  const index = input.data("index");
+  const tr = jQuery(`tr[data-index="${index}"]`);
+
+  const saldoDisponivel = parseInt(tr.data("saldo-disponivel")) || 0;
+  let max = parseInt(tr.data("max")) || 0;
+  max = max === 0 ? saldoDisponivel : max;
+
+  const codproAtual = tr.data("codpro");
+  let saldoDestino = 0;
+  jQuery("tr").each(function () {
+    if (jQuery(this).data("codpro") == codproAtual) {
+      saldoDestino += parseInt(jQuery(this).data("saldo-destino")) || 0;
+    }
+  });
+
+  const multiplicador = parseInt(input.val()) || 1;
+  const consumo = parseInt(tr.data("consumo")) || 0;
+  const seguranca = parseInt(jQuery(`#pro_pctseguranca_${index}`).val()) || 0;
+
+  const novaSug = calcularSugestao(
+    consumo,
+    multiplicador,
+    seguranca,
+    max,
+    saldoDestino,
+    saldoDisponivel
+  );
+  atualizarSugestao(index, novaSug);
+  jQuery(".requisicao").trigger("change");
+  preencherRequisicaoAutomatica(index, novaSug, tr.data("classe"));
+}
+
+function handleSegurancaChange() {
+  const input = jQuery(this);
+  const index = input.data("index");
+  const tr = jQuery(`tr[data-index="${index}"]`);
+
+  const consumo = parseInt(tr.data("consumo")) || 0;
+  const segurancaPct = parseInt(input.val()) || 0;
+  const multiplicador = parseInt(jQuery(`#pro_multiplica${index}`).val()) || 1;
+
+  atualizarSeguranca(index, consumo, segurancaPct);
+
+  const codproAtual = tr.data("codpro");
+  let saldoDestino = 0;
+  jQuery("tr").each(function () {
+    if (jQuery(this).data("codpro") == codproAtual) {
+      saldoDestino += parseInt(jQuery(this).data("saldo-destino")) || 0;
+    }
+  });
+
+  const saldoDisponivel = parseInt(tr.data("saldo-disponivel")) || 0;
+  let max = parseInt(tr.data("max")) || 0;
+  max = max === 0 ? saldoDisponivel : max;
+
+  const novaSug = calcularSugestao(
+    consumo,
+    multiplicador,
+    segurancaPct,
+    max,
+    saldoDestino,
+    saldoDisponivel
+  );
+  atualizarSugestao(index, novaSug);
+  preencherRequisicaoAutomatica(index, novaSug, tr.data("classe"));
+}
+
+function handleAceitaSugestaoChange() {
+  const classeId = jQuery(this).data("classe");
+  const checked = jQuery(this).is(":checked");
+  jQuery(`tr[data-classe="${classeId}"]`).each(function () {
+    const index = jQuery(this).data("index");
+    const valorSugestao =
+      parseInt(jQuery(this).find(`#sug_${index}`).text()) || 0;
+    jQuery(`.requisicao[data-index="${index}"]`)
+      .data("ignore-validation", true)
+      .val(checked ? valorSugestao : 0)
+      .trigger("change");
+  });
+}
+
+function handleRequisicaoChange() {
+  const input = jQuery(this);
+  if (input.data("ignore-validation")) {
+    input.removeData("ignore-validation");
+    return;
+  }
+
+  const index = input.data("index");
+  const valAtual = Math.round(parseInt(input.val()) || 0);
+  if (valAtual !== 0) {
+    const tr = jQuery(`tr[data-index="${index}"]`)[0];
+    const codigo = tr.getAttribute("data-codpro");
+    const minOriginal = parseInt(tr.getAttribute("data-min")) || 0;
+    const saldoDisponivelAtual =
+      parseInt(tr.getAttribute("data-saldo-disponivel")) || 0;
+    let maxOriginal = parseInt(tr.getAttribute("data-max")) || 0;
+    const maxAntesOri = maxOriginal;
+    maxOriginal = maxOriginal === 0 ? saldoDisponivelAtual : maxOriginal;
+
+    let saldoDestinoAtual = 0;
+    jQuery("tr").each(function () {
+      if (this.getAttribute("data-codpro") == codigo) {
+        saldoDestinoAtual +=
+          parseInt(this.getAttribute("data-saldo-destino")) || 0;
+      }
+    });
+
+    let motivo = 0;
+    let novoValor = valAtual;
+
+    if (saldoDestinoAtual > maxOriginal) {
+      novoValor = 0;
+      input.val(0);
+      motivo = 12;
+    } else {
+      const max =
+        maxAntesOri === 0
+          ? maxOriginal
+          : Math.max(0, maxOriginal - saldoDestinoAtual);
+      const min = Math.min(minOriginal, minOriginal - saldoDestinoAtual);
+
+      let somaOutros = 0;
+      jQuery(".requisicao")
+        .filter(function () {
+          return jQuery(this).closest("tr").data("codpro") === codigo;
+        })
+        .each(function () {
+          if (this !== input[0]) {
+            somaOutros += parseInt(jQuery(this).val()) || 0;
+          }
+        });
+
+      const restantePermitido = max - somaOutros;
+      novoValor = Math.min(valAtual, restantePermitido);
+      novoValor = Math.min(novoValor, saldoDisponivelAtual);
+      novoValor = Math.max(min, novoValor);
+
+      if (novoValor !== valAtual) {
+        input.val(novoValor);
+        if (valAtual > restantePermitido) motivo = 12;
+        if (valAtual < min) motivo = 13;
+        if (valAtual > saldoDisponivelAtual) motivo = 30;
+      } else {
+        input.val(novoValor);
+      }
+    }
+
+    if (motivo > 0) {
+      mostranoToast(motivo, true);
+    }
+  } else {
+    input.val(0);
+  }
+}
+
+function handleToggleLinhas() {
+  const codpro = jQuery(this).data("codpro");
+  const linhas = jQuery(`tr[data-codpro="${codpro}"]`).not(":first");
+  const icone = jQuery(this);
+  const isAberto = icone.hasClass("fa-arrow-alt-circle-down");
+
+  linhas.toggleClass("d-none");
+  icone
+    .toggleClass("fa-arrow-alt-circle-down fa-arrow-alt-circle-right")
+    .attr("title", isAberto ? "Mostrar mais" : "Ocultar");
+}
+
+function bindEvents() {
+  jQuery(document)
+    .off("change", ".multiplica")
+    .on("change", ".multiplica", handleMultiplicaChange);
+  jQuery(document)
+    .off("change", ".seguranca")
+    .on("change", ".seguranca", handleSegurancaChange);
+  jQuery(document)
+    .off("change", ".aceita-sugestao")
+    .on("change", ".aceita-sugestao", handleAceitaSugestaoChange);
+  jQuery(document)
+    .off("change", ".requisicao")
+    .on("change", ".requisicao", handleRequisicaoChange);
+  jQuery(document)
+    .off("click", ".toggle-linhas")
+    .on("click", ".toggle-linhas", handleToggleLinhas);
+  jQuery(document)
+    .off("input change", ".requisicao")
+    .on("input change", ".requisicao", atualizarEstadoBotaoSalvar);
+}
+
+async function carregarProdutos(url, aba, obj, event) {
+  event.preventDefault();
+  event.stopPropagation();
+
   const reqid = jQuery("#req_id").val();
   const deporigem = jQuery("#req_deporigem").val();
   const depdestino = jQuery("#req_depdestino").val();
@@ -267,7 +502,7 @@ async function carregarProdutos(url, aba, obj) {
   const multiplica = jQuery("#req_repetedias").val();
   const diaanterior = jQuery('input[name="req_consdiaanterior"]:checked').val();
   const mediaconsumo = jQuery('input[name="req_medconsumodias"]:checked').val();
-  const seguranca = jQuery("#req_percseguranca").val();
+  const segurancaPct = jQuery("#req_percseguranca").val();
   const meddias = jQuery("#req_meddias").val();
   const proid = jQuery("#pro_id").val();
 
@@ -292,13 +527,14 @@ async function carregarProdutos(url, aba, obj) {
     multiplica,
     diaanterior,
     mediaconsumo,
-    seguranca,
+    seguranca: segurancaPct,
     meddias,
     proid,
+    obj,
   };
 
   try {
-    const retornoAjax = await executaAjaxWait(url, "json", dados);
+    executaAjax(url, "json", dados);
     if (!retornoAjax) return;
 
     const hoje = new Date();
@@ -323,296 +559,8 @@ async function carregarProdutos(url, aba, obj) {
     jQuery("#produtos-tabr").trigger("click");
     jQuery("#produtos-tab").trigger("click");
     atualizarEstadoBotaoSalvar();
-    function calcularSugestao(
-      base,
-      multiplicador,
-      seguranca,
-      max,
-      saldoDestino,
-      saldoDisponivel
-    ) {
-      let sug = base * multiplicador;
-      vsegura = Math.ceil(sug * (seguranca / 100));
-      sug = sug + vsegura;
-      sug = sug - saldoDestino;
 
-      // Ajustar para que o total não ultrapasse o máximo (se definido)
-      if (max > 0) {
-        let restanteMax = max - saldoDestino;
-        if (restanteMax <= 0) return 0; // Não há espaço para sugerir
-        sug = Math.min(sug, restanteMax);
-      }
-
-      // Limitar ao saldo disponível
-      sug = Math.min(sug, saldoDisponivel);
-
-      // Se sugestão é negativa ou zero, retorna zero
-      return Math.max(0, sug);
-    }
-
-    function preencherRequisicaoAutomatica(index, valor, classe) {
-      const checkbox = jQuery(`#checkSug${classe}`);
-      if (checkbox.is(":checked")) {
-        jQuery(`.requisicao[data-index="${index}"]`)
-          .data("ignore-validation", true)
-          .val(valor)
-          .trigger("change");
-      }
-    }
-
-    function atualizarSugestao(index, novaSug) {
-      jQuery(`#sug_${index}`).text(parseInt(novaSug));
-    }
-
-    function atualizarSeguranca(index, consumo, seguranca) {
-      const novoSeg = Math.ceil(consumo * (seguranca / 100));
-      jQuery(`#seg_${index}`).text(novoSeg);
-      return novoSeg;
-    }
-
-    // Evento para multiplicador
-    jQuery(".multiplica").on("change", function () {
-      const input = jQuery(this);
-      const index = input.data("index");
-      const tr = jQuery(`tr[data-index="${index}"]`);
-
-      const baseSug = parseInt(tr.find(".sugestao").text()) || 0;
-
-      const saldoDisponivel = parseInt(tr.data("saldo-disponivel")) || 0;
-      let min = parseInt(tr.data("min")) || 0;
-      let max = parseInt(tr.data("max")) || 0;
-      max = max === 0 ? saldoDisponivel : max;
-
-      const codproAtual = tr.data("codpro");
-      let saldoDestino = 0;
-
-      jQuery("tr").each(function () {
-        const linha = jQuery(this);
-        if (linha.data("codpro") == codproAtual) {
-          saldoDestino += parseInt(linha.data("saldo-destino")) || 0;
-        }
-      });
-      // const saldoDestino = parseInt(tr.data('saldo-destino')) || 0;
-      const multiplicador = parseInt(input.val()) || 1;
-      max = max * multiplicador;
-      tr.data("max", max);
-      min = min * multiplicador;
-      tr.data("min", min);
-
-      const consumo = parseInt(tr.data("consumo")) || 0;
-      const seguranca =
-        parseInt(jQuery(`#pro_pctseguranca_${index}`).val()) || 0;
-
-      const novaSug = calcularSugestao(
-        consumo,
-        multiplicador,
-        seguranca,
-        max,
-        saldoDestino,
-        saldoDisponivel
-      );
-
-      atualizarSugestao(index, novaSug);
-      preencherRequisicaoAutomatica(index, novaSug, tr.data("classe"));
-    });
-
-    // Evento para segurança
-    jQuery(".seguranca").on("change", function () {
-      const input = jQuery(this);
-      const index = input.data("index");
-      const tr = jQuery(`tr[data-index="${index}"]`);
-
-      const baseSugOriginal = parseInt(tr.find(".sugestao").text()) || 0;
-      // const baseSugOriginal = parseInt(tr.data('sugestao-base')) || 0;
-      const saldoDisponivel = parseInt(tr.data("saldo-disponivel")) || 0;
-      const min = parseInt(tr.data("min")) || 0;
-      let max = parseInt(tr.data("max")) || 0;
-      max = max === 0 ? saldoDisponivel : max;
-
-      const codproAtual = tr.data("codpro");
-      let saldoDestino = 0;
-
-      jQuery("tr").each(function () {
-        const linha = jQuery(this);
-        if (linha.data("codpro") == codproAtual) {
-          saldoDestino += parseInt(linha.data("saldo-destino")) || 0;
-        }
-      });
-
-      // const saldoDestino = parseInt(tr.data('saldo-destino')) || 0;
-      const consumo = parseInt(tr.data("consumo")) || 0;
-      const seguranca = parseInt(input.val()) || 0;
-
-      const multiplicador =
-        parseInt(jQuery(`#pro_multiplica${index}`).val()) || 1;
-      const segAnterior = parseInt(jQuery(`#seg_${index}`).text()) || 0;
-
-      let baseSug = baseSugOriginal - segAnterior;
-      const novoSeg = atualizarSeguranca(index, consumo, seguranca);
-      baseSug += novoSeg;
-
-      const novaSug = calcularSugestao(
-        consumo,
-        multiplicador,
-        seguranca,
-        max,
-        saldoDestino,
-        saldoDisponivel
-      );
-
-      // const novaSug = calcularSugestao(consumo, multiplicador, min, max, saldoDestino, saldoDisponivel);
-
-      atualizarSugestao(index, novaSug);
-      preencherRequisicaoAutomatica(index, novaSug, tr.data("classe"));
-    });
-
-    jQuery(".aceita-sugestao").on("change", function () {
-      const classeId = jQuery(this).data("classe");
-      const checked = jQuery(this).is(":checked");
-      jQuery(`tr[data-classe="${classeId}"]`).each(function () {
-        const index = jQuery(this).data("index");
-        const valorSugestao =
-          parseInt(jQuery(this).find(`#sug_${index}`).text()) || 0;
-        jQuery(`.requisicao[data-index="${index}"]`)
-          .data("ignore-validation", true)
-          .val(checked ? valorSugestao : 0)
-          .trigger("change");
-      });
-    });
-
-    jQuery(".requisicao").on("change", function () {
-      const input = jQuery(this);
-      if (input.data("ignore-validation")) {
-        input.removeData("ignore-validation");
-        return;
-      }
-
-      const index = input.data("index");
-      const valAtual = Math.round(parseInt(input.val()) || 0);
-      if (valAtual != 0) {
-        const tr = jQuery(`tr[data-index="${index}"]`);
-
-        const codigo = tr.data("codpro");
-        const minOriginal = parseInt(tr.data("min")) || 0;
-        const saldoDisponivelAtual = parseInt(tr.data("saldo-disponivel")) || 0;
-        let maxOriginal = parseInt(tr.data("max")) || 0;
-        let maxAntesOri = maxOriginal;
-        maxOriginal = maxOriginal === 0 ? saldoDisponivelAtual : maxOriginal;
-
-        const codproAtual = tr.data("codpro");
-        let saldoDestinoAtual = 0;
-
-        jQuery("tr").each(function () {
-          const linha = jQuery(this);
-          if (linha.data("codpro") == codproAtual) {
-            saldoDestinoAtual += parseInt(linha.data("saldo-destino")) || 0;
-          }
-        });
-        // const saldoDestinoAtual = parseInt(tr.data('saldo-destino')) || 0;
-
-        let motivo = 0;
-        let novoValor = valAtual;
-
-        if (saldoDestinoAtual > maxOriginal) {
-          novoValor = 0;
-          input.val(novoValor);
-          // motivos.push(12);
-          motivo = 12;
-          // motivos.push(`Saldo Atual (${saldoDestinoAtual}) maior que o Máximo (${maxOriginal})`);
-        } else {
-          const desconsideraMaximo = minOriginal === 0 && maxOriginal === 0;
-          let max = 0;
-          if (maxAntesOri == 0) {
-            max = Math.max(0, maxOriginal);
-          } else {
-            max = Math.max(0, maxOriginal - saldoDestinoAtual);
-          }
-          const min = Math.min(minOriginal, minOriginal - saldoDestinoAtual);
-
-          let restantePermitido = 0;
-
-          // if (!desconsideraMaximo) {
-          const lotesDoProduto = jQuery(`.requisicao`).filter(function () {
-            return jQuery(this).closest("tr").data("codpro") === codigo;
-          });
-
-          let somaOutros = 0;
-
-          lotesDoProduto.each(function () {
-            const otherInput = jQuery(this);
-            if (otherInput.is(input)) return;
-
-            const val = parseInt(otherInput.val()) || 0;
-            somaOutros += val;
-          });
-
-          restantePermitido = max - somaOutros;
-          novoValor = Math.min(novoValor, restantePermitido);
-          // }
-
-          novoValor = Math.min(novoValor, saldoDisponivelAtual);
-          novoValor = Math.max(min, novoValor);
-
-          if (novoValor !== valAtual) {
-            input.val(novoValor);
-
-            if (valAtual > restantePermitido) {
-              motivo = 12;
-              // motivos.push(`Máximo permitido (${max})`);
-            }
-            if (valAtual < min) {
-              motivo = 13;
-              // motivos.push(`Mínimo permitido (${min})`);
-            }
-
-            if (valAtual > saldoDisponivelAtual) {
-              motivo = 30;
-              // motivos.push(`Saldo disponível do lote (${saldoDisponivelAtual})`);
-            }
-            // motivos.push(`Valor ajustado para não ultrapassar`);
-          } else {
-            input.val(novoValor); // Garante valor inteiro mesmo se não alterado
-          }
-        }
-        if (motivo > 0) {
-          // const mensagem = `${motivos.join(' ')}.`;
-          msg_id = msg_cfg[motivo - 1];
-          const mensagem = msg_id.msg_mensagem;
-          mostranoToast(motivo, true);
-        }
-      } else {
-        input.val(valAtual); // Garante valor inteiro mesmo se não alterado
-      }
-    });
-
-    // 👉 evento para toggle de linhas duplicadas
-    jQuery(document)
-      .off("click", ".toggle-linhas")
-      .on("click", ".toggle-linhas", function () {
-        const codpro = jQuery(this).data("codpro");
-        const linhas = jQuery(`tr[data-codpro="${codpro}"]`).not(":first");
-        const icone = jQuery(this);
-
-        const isAberto = icone.hasClass("fa-arrow-alt-circle-down");
-
-        if (isAberto) {
-          linhas.addClass("d-none");
-          icone
-            .removeClass("fa-arrow-alt-circle-down")
-            .addClass("fa-arrow-alt-circle-right")
-            .attr("title", "Mostrar mais");
-        } else {
-          linhas.removeClass("d-none");
-          icone
-            .removeClass("fa-arrow-alt-circle-right")
-            .addClass("fa-arrow-alt-circle-down")
-            .attr("title", "Ocultar");
-        }
-      });
-
-    jQuery(document).on("input change", ".requisicao", function () {
-      atualizarEstadoBotaoSalvar();
-    });
+    bindEvents();
   } catch (error) {
     console.error("Erro na requisição AJAX:", error);
   }

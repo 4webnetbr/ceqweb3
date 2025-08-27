@@ -15,7 +15,7 @@ if ($avatar != '') {
     $image_avatar = "<i class='far fa-laugh-wink float-start'></i> ";
 }
 ?>
-<input type='hidden' id='controler' value='<?=strtolower($controler);?>' />
+<input type='hidden' id='controler' value='<?=$controler;?>' />
 <input type='hidden' id='usu_id' value='<?=$idusua;?>' />
 <div id='show_user' class="card col-lg-2 col-6 border border-1 border-info shadow p-3 me-1 float-start" >
   <div class="card-header d-flex">
