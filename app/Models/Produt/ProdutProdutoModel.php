@@ -273,17 +273,24 @@ class ProdutProdutoModel extends Model
         return $builder->get()->getResultArray();
     }
 
-    public function getProdutoEstoque($pro_id = false)
+    public function getProdutoEstoque($pro_id = false, $deposito)
     {
         $db = db_connect('dbProduto');
         $builder = $db->table('pro_est_produto');
 
         $builder->select('*');
+
         if ($pro_id) {
-            $builder->where('pro_id', $pro_id);
+            if (is_array($pro_id)) {
+                $builder->whereIn('pro_id', $pro_id);
+            } else {
+                $builder->where('pro_id', $pro_id);
+            }
         }
-        // $sql = $builder->getCompiledSelect();
-        // debug($sql, true);
+        if($deposito){
+            $builder->where('dep_codDep', $deposito);
+        }
+
         return $builder->get()->getResultArray();
     }
 

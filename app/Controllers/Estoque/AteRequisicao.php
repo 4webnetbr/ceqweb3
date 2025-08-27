@@ -170,12 +170,12 @@ class AteRequisicao extends BaseController
     public function edit($id, $show = false)
     {
         $requisicao = $this->requisicao->getRequisicao($id)[0];
-
+        
         if (!$requisicao) {
             session()->setFlashdata('erromsg', 'Requisição não encontrada.');
             return redirect()->to(site_url($this->data['controler']));
         }
-
+        
         // Montar campos como no add()
         $fields = $this->requisicao->defCampos($requisicao, $show);
         // debug($fields, true);
@@ -186,19 +186,41 @@ class AteRequisicao extends BaseController
         $campos[0][count($campos[0])] = $fields['tmo_id'];
         $campos[0][count($campos[0])] = "<div class='col-6'>.</div>";
         $campos[0][count($campos[0])] = $fields['lot_codbar'];
-
+        
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
-        // debug($produtos, true);
-        // debug(count($produtos), true);
-        for ($p=0; $p < count($produtos); $p++) { 
-            $prod = $produtos[$p];
-            $fields = $this->requisicao->defCamposProdutoAte($prod);
-            $produtos[$p]['rep_cancelada'] = $fields['rep_cancelada'];
-            $produtos[$p]['rep_atendida'] = $fields['rep_atendida'];
+        $pro_ids = array_unique(array_column($produtos, 'pro_id'));
+        $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $requisicao['req_deporigem']);
+        debug($dados_est_produto, true);
+        // Transformar $produtos em um array indexado por pro_id
+        $produtosIndexado = [];
+        foreach ($produtos as $param) {
+            $produtosIndexado[$param['pro_id']] = $param;
         }
-        // debug($produtos, true);
+
+        // Array para o resultado final
+        $resultado = [];
+
+        foreach ($dados_est_produto as $itemEstoque) {
+            $pro_id = $itemEstoque['pro_id'];
+
+            if (isset($produtosIndexado[$pro_id])) {
+                // Mescla os dados de estoque + parâmetros (com todas as chaves)
+                $resultado[] = array_merge($itemEstoque, $produtosIndexado[$pro_id]);
+            } else {
+                // Se não existir parâmetro correspondente, adiciona só o estoque
+                $resultado[] = $itemEstoque;
+            }
+        }
+        
+        for ($p=0; $p < count($resultado); $p++) { 
+            $prod = $resultado[$p];
+            $fields = $this->requisicao->defCamposProdutoAte($prod);
+            $resultado[$p]['rep_cancelada'] = $fields['rep_cancelada'];
+            $resultado[$p]['rep_atendida'] = $fields['rep_atendida'];
+        }
+        debug($resultado, true);
         // $secao[1] = 'Produtos';
-        $campos[0][count($campos[0])] = view('partials/pw_produtos_requisicao',['produtos' => $produtos]); // mesma estrutura do add()
+        $campos[0][count($campos[0])] = view('partials/pw_produtos_requisicao',['produtos' => $resultado]); // mesma estrutura do add()
 
         $envr          = new MyCampo();
         $envr->nome    = 'bt_envia';
