@@ -320,6 +320,7 @@ class Requisicao extends BaseController
         $classesTemp = [];
 
         foreach ($listaProdutos as $prod) {
+            // debug($prod, true);
             $codPro  = $prod['pro_codpro'];
             $lotePro = $prod['lot_lote'];
             $claId   = $prod['cla_id'];
@@ -333,6 +334,7 @@ class Requisicao extends BaseController
 
             // Parâmetros para cálculo
             $prod['pro_consumo']      = 0;
+            // $prod['pro_multiplica']   = $this->buscarRepMultiplicador($prodreq, $codPro, $lotePro);
             $prod['pro_multiplica']   = 1;
             $prod['pct_seguranca']    = $pct_seguranca;
             $prod['pro_seguranca']    = 0;
@@ -374,6 +376,16 @@ class Requisicao extends BaseController
         foreach ($dados as $item) {
             if ($item['pro_codpro'] == $codpro && $item['lot_lote'] == $lot_lote) {
                 return $item['rep_quantia'];
+            }
+        }
+        return 0;
+    }
+
+    function buscarRepMultiplicador(array $dados, string $codpro, string $lot_lote): int
+    {
+        foreach ($dados as $item) {
+            if ($item['pro_codpro'] == $codpro && $item['lot_lote'] == $lot_lote) {
+                return $item['rep_multiplicador'];
             }
         }
         return 0;

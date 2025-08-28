@@ -318,6 +318,7 @@ class EstoquRequisicaoModel extends Model
         $canc->minimo           = 0;
         $canc->maximo           = $dados['rep_quantia'];
         $canc->dispForm       = 'col-1';
+        $canc->funcChan       = 'acertaSaldoReq(this)';
         $ret['rep_cancelada']      = $canc->crInput();
 
         $aten                 = new MyCampo('est_requisicao_produto', 'rep_atendida', false);
@@ -332,6 +333,7 @@ class EstoquRequisicaoModel extends Model
         $aten->dispForm       = 'col-1';
         $aten->minimo           = 0;
         $aten->maximo           = $dados['rep_quantia'];
+        $aten->funcChan       = 'acertaSaldoReq(this)';
         $ret['rep_atendida']      = $aten->crInput();
         return $ret;
     }

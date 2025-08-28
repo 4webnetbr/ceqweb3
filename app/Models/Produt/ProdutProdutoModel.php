@@ -273,7 +273,7 @@ class ProdutProdutoModel extends Model
         return $builder->get()->getResultArray();
     }
 
-    public function getProdutoEstoque($pro_id = false, $deposito)
+    public function getProdutoEstoque($pro_id = false, $deposito = false)
     {
         $db = db_connect('dbProduto');
         $builder = $db->table('pro_est_produto');
@@ -291,7 +291,10 @@ class ProdutProdutoModel extends Model
             $builder->where('dep_codDep', $deposito);
         }
 
-        return $builder->get()->getResultArray();
+        $ret = $builder->get()->getResultArray();
+        // $sql = $db->getLastQuery();
+        // debug($sql, true);
+        return $ret;
     }
 
     public function getProdutoOrigemFamiliaClasse($origem = false, $familia = false, $classe = false)

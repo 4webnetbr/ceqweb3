@@ -14,16 +14,24 @@ if (!isset($desc_edicao)) {
 // if (!isset($desc_metodo)){
 if ($metodo == 'index' || $metodo == '') {
   $ajuda = $regras_gerais;
-  $desc_metodo = '';
+  if(!isset($desc_metodo)){
+    $desc_metodo = '';
+  }
 } elseif ($metodo == 'add' || $metodo == '000') {
-  $desc_metodo = 'Cadastro de ';
+  if(!isset($desc_metodo)){
+    $desc_metodo = 'Cadastro de ';
+  }
   $ajuda = $regras_cadastro;
 } elseif ($metodo == 'edit' || $metodo == '200') {
   $ajuda = $regras_cadastro;
-  $desc_metodo = 'Alteração de ';
+  if(!isset($desc_metodo)){
+    $desc_metodo = 'Alteração de ';
+  }
 } elseif ($metodo == 'show' || $metodo == '000') {
   $ajuda = $regras_cadastro;
-  $desc_metodo = 'Consulta de ';
+  if(!isset($desc_metodo)){
+    $desc_metodo = 'Consulta de ';
+  }
 }
 if (strlen($ajuda) > 5) {
   $mostra_ajuda = true;

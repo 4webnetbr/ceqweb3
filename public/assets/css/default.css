@@ -938,5 +938,5 @@ div {
 .bootbox.modal { z-index: 5005 !important; }
 
 tr td {
-  vertical-align: sub;
+  vertical-align: middle;
 }

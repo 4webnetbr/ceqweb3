@@ -81,22 +81,28 @@ class AteRequisicao extends BaseController
         $campos = montaColunasCampos($this->data, 'req_id');
         $dados_requis = $this->requisicao->getRequisicaoLista(false, [4]);
 
-        $base_url = base_url($this->data['controler'].'/EtqProduto/');
+        $base_url = base_url($this->data['controler']);
         foreach ($dados_requis as &$req) {
             // Verificar se o log já está disponível para esse ana_id
             if ($req['req_id']) {
                 // Concatenar o URL de forma mais eficiente
-                $url_ati = $base_url . $req['req_id'];
+                $url_eti = $base_url .'/EtqProduto/' . $req['req_id'];
+                $url_ate = $base_url .'/atende/' . $req['req_id'];
                 // Gerar a ação do botão
                 $req['acao_person'] = [
+                    "<button class='btn btn-outline-success btn-sm border-0 mx-0 fs-0' 
+            data-mdb-toggle='tooltip' data-mdb-placement='top' 
+            title='Atendimento' onclick='redireciona(\"$url_ate\")'>
+            <i class='fas fa-bell-concierge'></i></button>",
                     "<button class='btn btn-outline-warning btn-sm border-0 mx-0 fs-0 float-end' 
             data-mdb-toggle='tooltip' data-mdb-placement='top' 
-            title='Etiquetas de Produtos' onclick='redireciona(\"$url_ati\")'>
+            title='Etiquetas de Produtos' onclick='redireciona(\"$url_eti\")'>
             <i class='fas fa-tag'></i></button>"
                 ];
             }
         }
         // debug($dados_requis, true);
+        $this->data['edicao'] = false;
         $requis = [
             'data' => montaListaColunas($this->data, 'req_id', $dados_requis, $campos[1]),
         ];
@@ -160,14 +166,17 @@ class AteRequisicao extends BaseController
         return redirect()->to('/Requisicao/show/'.$id);
     }
 
+    public function edit($id, $show = false){
+        $this->atende($id, $show = false);
+    }
     /**
-     * Edição
-     * edit
+     * Atenndimento
+     * atende
      *
      * @param mixed $id 
      * @return void
      */
-    public function edit($id, $show = false)
+    public function atende($id, $show = false)
     {
         $requisicao = $this->requisicao->getRequisicao($id)[0];
         
@@ -190,7 +199,7 @@ class AteRequisicao extends BaseController
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
         $pro_ids = array_unique(array_column($produtos, 'pro_id'));
         $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $requisicao['req_deporigem']);
-        debug($dados_est_produto, true);
+        // debug($dados_est_produto, true);
         // Transformar $produtos em um array indexado por pro_id
         $produtosIndexado = [];
         foreach ($produtos as $param) {
@@ -200,25 +209,39 @@ class AteRequisicao extends BaseController
         // Array para o resultado final
         $resultado = [];
 
-        foreach ($dados_est_produto as $itemEstoque) {
-            $pro_id = $itemEstoque['pro_id'];
+        if(count($dados_est_produto) > 0){
+            foreach ($dados_est_produto as $itemEstoque) {
+                $pro_id = $itemEstoque['pro_id'];
 
-            if (isset($produtosIndexado[$pro_id])) {
-                // Mescla os dados de estoque + parâmetros (com todas as chaves)
-                $resultado[] = array_merge($itemEstoque, $produtosIndexado[$pro_id]);
-            } else {
-                // Se não existir parâmetro correspondente, adiciona só o estoque
-                $resultado[] = $itemEstoque;
+                if (isset($produtosIndexado[$pro_id])) {
+                    // Mescla os dados de estoque + parâmetros (com todas as chaves)
+                    $resultado[] = array_merge($itemEstoque, $produtosIndexado[$pro_id]);
+                } else {
+                    // Se não existir parâmetro correspondente, adiciona só o estoque
+                    $resultado[] = $itemEstoque;
+                }
             }
+        } else {
+            $resultado = $produtos;
         }
+        // debug($resultado, true);
         
         for ($p=0; $p < count($resultado); $p++) { 
             $prod = $resultado[$p];
+            if(!isset($prod['pre_cbfabricante'])){
+                $resultado[$p]['pre_cbfabricante'] = 'N';
+                $resultado[$p]['pre_undfabricante'] = 'N';
+                $resultado[$p]['pre_cblote'] = 'N';
+                $resultado[$p]['pre_undlote'] = 'N';
+                $prod['pre_cbfabricante'] = 'N';
+                $prod['pre_undfabricante'] = 'N';
+                $prod['pre_cblote'] = 'N';
+                $prod['pre_undlote'] = 'N';
+            }
             $fields = $this->requisicao->defCamposProdutoAte($prod);
             $resultado[$p]['rep_cancelada'] = $fields['rep_cancelada'];
             $resultado[$p]['rep_atendida'] = $fields['rep_atendida'];
         }
-        debug($resultado, true);
         // $secao[1] = 'Produtos';
         $campos[0][count($campos[0])] = view('partials/pw_produtos_requisicao',['produtos' => $resultado]); // mesma estrutura do add()
 
@@ -236,6 +259,7 @@ class AteRequisicao extends BaseController
         $this->data['botao'] = $this->bt_envia;
 
         $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['desc_metodo']     = ' Atendimento de ';
         $this->data['secoes']    = $secao;
         $this->data['campos']    = $campos;
         $this->data['destino']   = 'store'; // ou 'update' se você for criar

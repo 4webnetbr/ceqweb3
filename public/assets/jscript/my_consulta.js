@@ -321,6 +321,7 @@ function validaCodBar(obj) {
       var idBase = linha.id;
 
       var tipo = tdCodbar[0].dataset.id;
+
       if (tipo == "cbFab") {
         // SCANEOU CODIGO DO FABRICANTE
         var ctafab = jQuery("#ctafb_" + idBase).val();
@@ -405,4 +406,35 @@ function extrairCodBarFab(str) {
     return str;
   }
   return str.substring(pos, pos + 13);
+}
+
+function acertaSaldoReq(obj) {
+  var linha = jQuery(obj).closest("tr")[0]; // pega a linha
+
+  // Extrai o ID base (assumindo que o codbar está na mesma linha do stt_169)
+  var idBase = linha.id;
+
+  var qtde = parseInt(jQuery("#qt_" + idBase).text());
+
+  var aten = parseInt(jQuery("#rep_atendida_" + idBase).val());
+  var canc = parseInt(jQuery("#rep_cancelada_" + idBase).val());
+
+  saldo = qtde - canc - aten;
+  jQuery("#sl_" + idBase).text(saldo);
+
+  fundo = "";
+  if (saldo == 0) {
+    fundo = "bg-success";
+  } else if (saldo > 0 && saldo < qtde) {
+    fundo = "bg-warning";
+  } else if (saldo > 0 && saldo > qtde) {
+    fundo = "bg-danger";
+  } else if (saldo == qtde) {
+    fundo = "bg-white";
+  }
+  jQuery("#stt_" + idBase).removeClass("bg-white");
+  jQuery("#stt_" + idBase).removeClass("bg-warning");
+  jQuery("#stt_" + idBase).removeClass("bg-success");
+  jQuery("#stt_" + idBase).removeClass("bg-danger");
+  jQuery("#stt_" + idBase).addClass(fundo);
 }
