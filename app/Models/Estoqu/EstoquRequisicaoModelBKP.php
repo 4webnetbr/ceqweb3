@@ -197,12 +197,12 @@ class EstoquRequisicaoModel extends Model
 
         $tmov                 = new MyCampo('est_requisicao', 'tmo_id', false);
         $tmov->valor          = (isset($dados['tmo_id'])) ? $dados['tmo_id'] : '';
-        $tmov->leitura        = $show;
         $tmov->selecionado    = [$tmov->valor];
         $tmov->opcoes         = $opc_tipomov;
         $tmov->largura        = 50;
         $tmov->funcChan       = "buscaTipoMovimentacao(this,'req_deporigem','req_depdestino')";
         $tmov->dispForm       = 'col-6';
+        $tmov->leitura        = $show;
         $ret['tmo_id'] = $tmov->crSelect();
 
         $mudi                 = new MyCampo('est_requisicao', 'req_repetedias', false);

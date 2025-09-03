@@ -80,7 +80,24 @@ class ConfRequisicao extends BaseController
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
         $dados_requis = $this->requisicao->getRequisicaoLista(false, [18]);
+
+        $base_url = base_url($this->data['controler']);
+        foreach ($dados_requis as &$req) {
+            // Verificar se o log já está disponível para esse ana_id
+            if ($req['req_id']) {
+                // Concatenar o URL de forma mais eficiente
+                $url_con = $base_url .'/confere/' . $req['req_id'];
+                // Gerar a ação do botão
+                $req['acao_person'] = [
+                    "<button class='btn btn-outline-success btn-sm border-0 mx-0 fs-0' 
+            data-mdb-toggle='tooltip' data-mdb-placement='top' 
+            title='Conferência' onclick='redireciona(\"$url_con\")'>
+            <i class='fas fa-check'></i></button>",
+                ];
+            }
+        }
         // debug($dados_requis, true);
+        $this->data['edicao'] = false;
         $requis = [
             'data' => montaListaColunas($this->data, 'req_id', $dados_requis, $campos[1]),
         ];
@@ -140,62 +157,108 @@ class ConfRequisicao extends BaseController
         echo view('vw_edicao', $this->data);
     }
 
+    public function show($id){
+        return redirect()->to('/Requisicao/show/'.$id);
+    }
+
+    public function edit($id, $show = false){
+        $this->atende($id, $show = false);
+    }
     /**
-     * Edição
-     * edit
+     * Atenndimento
+     * atende
      *
      * @param mixed $id 
      * @return void
      */
-    public function edit($id)
+    public function atende($id, $show = false)
     {
-        $requisicao = $this->requisicao->find($id);
-
+        $requisicao = $this->requisicao->getRequisicao($id)[0];
+        
         if (!$requisicao) {
             session()->setFlashdata('erromsg', 'Requisição não encontrada.');
             return redirect()->to(site_url($this->data['controler']));
         }
-
+        
         // Montar campos como no add()
-        $fields = $this->requisicao->defCampos($requisicao);
+        $fields = $this->requisicao->defCampos($requisicao, $show);
+        // debug($fields, true);
         $secao[0] = 'Dados Gerais';
         $campos[0][0] = $fields['req_id'];
         $campos[0][count($campos[0])] = $fields['req_data'];
         $campos[0][count($campos[0])] = $fields['req_dataentrega'];
         $campos[0][count($campos[0])] = $fields['tmo_id'];
-        $campos[0][count($campos[0])] = $fields['req_repetedias'];
-        $campos[0][count($campos[0])] = $fields['req_deporigem'];
-        $campos[0][count($campos[0])] = $fields['req_depdestino'];
-        $campos[0][count($campos[0])] = $fields['req_consdiaanterior'];
-        $campos[0][count($campos[0])] = $fields['req_medconsumodias'];
-        $campos[0][count($campos[0])] = $fields['req_meddias'];
-        $campos[0][count($campos[0])] = $fields['req_percseguranca'];
-        $campos[0][count($campos[0])] = $fields['pro_id'];
-        $campos[0][count($campos[0])] = $fields['req_observacao'];
-        $campos[0][count($campos[0])] = $fields['bt_carregar'];
+        $campos[0][count($campos[0])] = "<div class='col-6'>.</div>";
+        $campos[0][count($campos[0])] = $fields['lot_codbar'];
+        
+        $produtos = $this->requisicao->getRequisicaoProdutos($id);
+        $pro_ids = array_unique(array_column($produtos, 'pro_id'));
+        $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $requisicao['req_deporigem']);
+        // debug($dados_est_produto, true);
+        // Transformar $produtos em um array indexado por pro_id
+        $produtosIndexado = [];
+        foreach ($produtos as $param) {
+            $produtosIndexado[$param['pro_id']] = $param;
+        }
 
-        $secao[1] = 'Produtos';
-        $campos[1][0] = ''; // mesma estrutura do add()
+        // Array para o resultado final
+        $resultado = [];
+
+        if(count($dados_est_produto) > 0){
+            foreach ($dados_est_produto as $itemEstoque) {
+                $pro_id = $itemEstoque['pro_id'];
+
+                if (isset($produtosIndexado[$pro_id])) {
+                    // Mescla os dados de estoque + parâmetros (com todas as chaves)
+                    $resultado[] = array_merge($itemEstoque, $produtosIndexado[$pro_id]);
+                } else {
+                    // Se não existir parâmetro correspondente, adiciona só o estoque
+                    $resultado[] = $itemEstoque;
+                }
+            }
+        } else {
+            $resultado = $produtos;
+        }
+        // debug($resultado, true);
+        
+        for ($p=0; $p < count($resultado); $p++) { 
+            $prod = $resultado[$p];
+            if(!isset($prod['pre_cbfabricante'])){
+                $resultado[$p]['pre_cbfabricante'] = 'N';
+                $resultado[$p]['pre_undfabricante'] = 'N';
+                $resultado[$p]['pre_cblote'] = 'N';
+                $resultado[$p]['pre_undlote'] = 'N';
+                $prod['pre_cbfabricante'] = 'N';
+                $prod['pre_undfabricante'] = 'N';
+                $prod['pre_cblote'] = 'N';
+                $prod['pre_undlote'] = 'N';
+            }
+            $fields = $this->requisicao->defCamposProdutoAte($prod);
+            $resultado[$p]['rep_cancelada'] = $fields['rep_cancelada'];
+            $resultado[$p]['rep_atendida'] = $fields['rep_atendida'];
+        }
+        // $secao[1] = 'Produtos';
+        $campos[0][count($campos[0])] = view('partials/pw_produtos_requisicao',['produtos' => $resultado]); // mesma estrutura do add()
 
         $envr          = new MyCampo();
         $envr->nome    = 'bt_envia';
         $envr->id      = 'bt_envia';
         $envr->i_cone  = '<div class="align-items-center py-1 text-start float-start font-weight-bold" style="">
-                            <i class="fa-regular fa-paper-plane" style="font-size: 2rem;" aria-hidden="true"></i></div>';
-        $envr->i_cone  .= '<div class="align-items-start txt-bt-manut">Enviar Requisição</div>';
-        $envr->place    = 'Enviar Requisição';
-        $envr->funcChan = 'enviarRequisicoes(1)';
+                            <i class="fa-solid fa-check" style="font-size: 2rem;" aria-hidden="true"></i></div>';
+        $envr->i_cone  .= '<div class="align-items-start txt-bt-manut">Finalizar Atendimento</div>';
+        $envr->place    = 'Finalizar Atendimento';
+        // $envr->funcChan = 'enviarRequisicoes(1)';
         $envr->classep  = 'btn-success bt-manut btn-sm mb-2 float-end';
         $this->bt_envia = $envr->crBotao();
 
         $this->data['botao'] = $this->bt_envia;
 
         $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['desc_metodo']     = ' Atendimento de ';
         $this->data['secoes']    = $secao;
         $this->data['campos']    = $campos;
         $this->data['destino']   = 'store'; // ou 'update' se você for criar
         $this->data['scripts']   = 'my_requisicao';
-        $this->data['script']    = "<script>jQuery('#bt_carregar').trigger('click');mostraOcultaCampo('req_consdiaanterior', 'N', 'req_medconsumodias,req_meddias');mudaCheck2opcoes('req_consdiaanterior', 'req_medconsumodias');</script>";
 
         echo view('vw_edicao', $this->data);
     }
@@ -212,319 +275,96 @@ class ConfRequisicao extends BaseController
         // TODO implementar
 
     }
-
     /**
-     * Carga de Produtos da Requisição
-     * produtos
+     * Impressão de Etiquetas de Produtos
+     * EtqProduto
      *
+     * @param mixed $id 
      * @return void
      */
-    public function produtos()
+    public function EtqProduto($id)
     {
-        $req = request()->getVar();
-        // === Parâmetros recebidos ===
-        $reqid          = trim($req['reqid']);
-        $proid          = trim($req['proid']);
-        $deporigem      = trim($req['deporigem']);
-        $depdestino     = trim($req['depdestino']);
-        $tipomovim      = trim($req['tipomovim']);
-        $multiplica     = trim($req['multiplica']);
-        $diaanterior    = trim($req['diaanterior']);
-        $mediaconsumo   = trim($req['mediaconsumo']);
-        $pct_seguranca  = trim($req['seguranca']);
-        $meddias        = trim($req['meddias']);
+        $requisicao = $this->requisicao->getRequisicao($id)[0];
 
-        $prodreq = [];
-        if ($reqid != '') {
-            $prodreq = $this->requisicaoproduto->getRequisicaoProdutos($reqid);
+        if (!$requisicao) {
+            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
+            return redirect()->to(site_url($this->data['controler']));
         }
 
-        // === Dados iniciais de retorno ===
-        $ret = [
-            'deporigem'     => $deporigem,
-            'depdestino'    => $depdestino,
-            'deppadrao'     => '',
-            'diaanterior'   => $diaanterior,
-            'mediaconsumo'  => $mediaconsumo,
-            'meddias'       => $meddias,
-            'classe'        => []
+        // Montar campos como no add()
+        $fields = $this->requisicao->defCampos($requisicao, true);
+        $secao[0] = 'Dados Gerais';
+        $campos[0][0] = $fields['req_id'];
+        $campos[0][count($campos[0])] = $fields['req_data'];
+        $campos[0][count($campos[0])] = $fields['req_dataentrega'];
+        $campos[0][count($campos[0])] = $fields['tmo_id'];
+        $campos[0][count($campos[0])] = "<div class='col-6'>.</div>";
+        // $campos[0][count($campos[0])] = $fields['lot_codbar'];
+
+        $produtosreq = $this->requisicao->getRequisicaoProdutos($id);
+        // debug($produtosreq, true);
+        $colunas = ['Cód ERP','Descrição','Fabricante','Lote','Qtde.Requerida','Qtde.Imprimir','Coloração Etiqueta','Imprimir'];
+        $produtos = [];
+        $produtos[0] = $id;
+        if(count($produtosreq) > 0){
+            for ($p=0; $p < count($produtosreq) ; $p++) { 
+                $prod = $produtosreq[$p];
+
+                $rep_id = $prod['rep_id'];
+                $qtia = $prod['rep_quantia'];
+                $url_ati = base_url($this->data['controler'].'/GeraEtiqueta/'.$rep_id.'/'.$qtia);
+                $imprimir =
+                    "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
+                    data-mdb-placement='top' title='Imprimir Etiqueta' onclick='geraEiquetaProd(\"".$url_ati."\")'><i class='fas fa-print'></i></button>";
+                $item = [];
+                $item[0] = $rep_id;
+                $item[count($item)] = $prod['pro_codpro'];
+                $item[count($item)] = $prod['pro_despro'];
+                $item[count($item)] = $prod['fab_apeFab'];
+                $item[count($item)] = $prod['lot_lote'];
+                $item[count($item)] = $prod['rep_quantia'];
+                $item[count($item)] = $prod['rep_quantia'];
+                $item[count($item)] = $prod['etiq_cor'];
+                $item[count($item)] = $imprimir;
+                $produtos[count($produtos)] = $item;
+            }
+        }
+        // debug($produtos, true);
+        $data = [
+            'show' => true,
+            'colunas' => $colunas,
+            'produtos' => $produtos
         ];
 
-        envia_msg_ws($this->data['controler'], "Buscando Transação", 'MsgServer', session()->get('usu_id'), 1);
-        $tipomov = (new EstoquTipoMovimentacaoModel())->getTipoMovimentacao($tipomovim)[0];
+        $campos[0][count($campos[0])] = view('partials/pw_show_produtos_req',$data); // mesma estrutura do add()
+        
+        // $this->data['mostrar']   = ''; // ou 'update' se você for criar
+        $this->data['icone']   = "<i class='fas fa-tag'></i>"; // ou 'update' se você for criar
+        $this->data['desc_metodo']   = ''; // ou 'update' se você for criar
+        $this->data['title']   = 'Impressão de Etiquetas de Produtos'; // ou 'update' se você for criar
+        $this->data['desc_edicao']  = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['secoes']    = $secao;
+        $this->data['campos']    = $campos;
+        $this->data['destino']   = ''; // ou 'update' se você for criar
+        $this->data['scripts']   = 'my_requisicao';
 
-        envia_msg_ws($this->data['controler'], "Carregando produtos", 'MsgServer', session()->get('usu_id'), 1);
-        if ($proid == '') {
-            $proid = false;
-        }
-        $listaProdutos = $this->produtos->getProdutoRequisicao($depdestino, $proid);
-        // debug($listaProdutos, true);
-        // === Estoque origem e destino ===
-        envia_msg_ws($this->data['controler'], "Buscando estoque de origem", 'MsgServer', session()->get('usu_id'), 1);
-        $estoqueOrigem = $this->indexarEstoque($this->busca->buscaEstoqueDeposito($deporigem) ?? []);
-
-        envia_msg_ws($this->data['controler'], "Buscando estoque de destino", 'MsgServer', session()->get('usu_id'), 1);
-        $estoqueDestino = $this->indexarEstoque($this->busca->buscaEstoqueDeposito($depdestino) ?? []);
-        // debug($estoqueDestino);
-
-        // === Estoque padrão (opcional) ===
-        $estoquePadrao = [];
-        if (!empty($tipomov['tmo_estoquepadrao']) && strtoupper($tipomov['tmo_estoquepadrao']) === 'S') {
-            envia_msg_ws($this->data['controler'], "Obtendo depósito padrão", 'MsgServer', session()->get('usu_id'), 1);
-            $deppadrao = $this->deposito->getDepositoPadrao()[0]['dep_codDep'] ?? '';
-
-            if ($deppadrao && $deppadrao !== $deporigem && $deppadrao !== $depdestino) {
-                $ret['deppadrao'] = $deppadrao;
-                envia_msg_ws($this->data['controler'], "Buscando estoque padrão", 'MsgServer', session()->get('usu_id'), 1);
-                $estoquePadrao = $this->indexarEstoque($this->busca->buscaEstoqueDeposito($deppadrao) ?? []);
-            } else {
-                envia_msg_ws($this->data['controler'], "Depósito padrão inválido (igual à origem ou destino)", 'MsgServer', session()->get('usu_id'), 1);
-            }
-        }
-
-        // === Período para consumo ===
-        $dias   = ($mediaconsumo === 'S' && $meddias > 0) ? $meddias : 1;
-        $ontem  = date('Y-m-d', strtotime('-1 day'));
-        $inicio = date('Y-m-d', strtotime("-{$dias} days"));
-
-        envia_msg_ws($this->data['controler'], "Consumo de {$inicio} até {$ontem}", 'MsgServer', session()->get('usu_id'), 1);
-
-        // === Buscar consumo de insumos, equipos, bolsas ===
-        $consumo = [
-            'insumos' => [],
-            'equipos' => [],
-            'bolsas'  => []
-        ];
-
-        $tiposConsumo = [
-            'insumos' => 'api_tot_insumos.php',
-            'equipos' => 'api_tot_equipo.php',
-            'bolsas'  => 'api_tot_bolsa.php'
-        ];
-
-        foreach ($tiposConsumo as $tipo => $endpoint) {
-            envia_msg_ws($this->data['controler'], "Buscando " . ucfirst($tipo), 'MsgServer', session()->get('usu_id'), 1);
-
-            $res = api_request(
-                "https://secure.ceqnep.com.br/producao/home/ajax/{$endpoint}",
-                ['inicio' => $inicio, 'final' => $ontem],
-                'get'
-            );
-
-            if ($res) {
-                $consumo[$tipo] = $this->indexarConsumo($res);
-            }
-        }
-
-        // === Agrupar produtos por classe com produtos válidos ===
-        $classesTemp = [];
-
-        foreach ($listaProdutos as $prod) {
-            $codPro  = $prod['pro_codpro'];
-            $lotePro = $prod['lot_lote'];
-            $claId   = $prod['cla_id'];
-            $claNome = $prod['cla_nome'];
-
-            $ori = $estoqueOrigem[$codPro][$lotePro] ?? [];
-            $des = $estoqueDestino[$codPro][$lotePro] ?? [];
-            $pad = ($ret['deppadrao'] !== '') ? ($estoquePadrao[$codPro][$lotePro] ?? []) : [];
-
-            // debug($codPro . ' - ' . $lotePro);
-
-            // Parâmetros para cálculo
-            $prod['pro_consumo']      = 0;
-            $prod['pro_multiplica']   = 1;
-            $prod['pct_seguranca']    = $pct_seguranca;
-            $prod['pro_seguranca']    = 0;
-            $prod['pro_meddias']      = $meddias;
-            $prod['pro_sugestao']     = 0;
-            $prod['pro_diaanterior']  = $diaanterior;
-            $prod['pro_mediaconsumo'] = $mediaconsumo;
-
-            $produto = $this->montarProduto($prod, $ori, $des, $pad, $consumo, $prodreq);
-
-            if (!empty($produto)) {
-                if (!isset($classesTemp[$claId])) {
-                    envia_msg_ws($this->data['controler'], "Processando classe: {$claNome}", 'MsgServer', session()->get('usu_id'), 1);
-                    $classesTemp[$claId] = [
-                        'id'   => $claId,
-                        'nome' => $claNome,
-                        'prod' => []
-                    ];
-                }
-
-                $classesTemp[$claId]['prod'][] = $produto;
-            }
-        }
-
-        // === Montar array final com classes que têm produtos ===
-        $ret['classe'] = array_values($classesTemp);
-
-        if (empty($ret['classe'])) {
-            envia_msg_ws($this->data['controler'], "Nenhum produto encontrado", 'MsgServer', session()->get('usu_id'), 1);
-        } else {
-            envia_msg_ws($this->data['controler'], "Finalizando resposta com produtos", 'MsgServer', session()->get('usu_id'), 1);
-        }
-
-        echo json_encode($ret);
+        echo view('vw_edicao', $this->data);
     }
 
-    function buscarRepQuantia(array $dados, string $codpro, string $lot_lote): int
-    {
-        foreach ($dados as $item) {
-            if ($item['pro_codpro'] == $codpro && $item['lot_lote'] == $lot_lote) {
-                return $item['rep_quantia'];
-            }
-        }
-        return 0;
-    }
+    public function GeraEtiqueta($id, $qtia){
+        $produtos = $this->requisicao->getRequisicaoRep($id);
+        // debug($produtos);
+        $produtosreq = array_fill(0, $qtia, $produtos[0]);
+        // debug($produtosreq);
+        $chave = uniqid('etq_');
+        cache()->save($chave, $produtosreq, 300); // 1 minuto
 
+        $link = base_url('/CriaEtiquetaZPL/emiteEtiqueta');
 
-    private function indexarEstoque(array $estoque): array
-    {
-        $indexado = [];
+        $ret['link'] = $link;
+        $ret['chave'] = $chave;
 
-        foreach ($estoque as $item) {
-            // Remover apenas o ponto do número (mantém vírgula, se houver)
-            if (isset($item->quantidadeEstoque)) {
-                $item->quantidadeEstoque = str_replace('.', '', (string) $item->quantidadeEstoque);
-            }
-
-            $indexado[$item->codigoProduto][$item->codigoLote][] = $item;
-        }
-
-        return $indexado;
-    }
-
-    private function indexarConsumo(array $consumo): array
-    {
-        $indexado = [];
-        foreach ($consumo as $item) {
-            $codigo = $item['codigo_erp'];
-            $reindexado[$codigo] = $item;
-        }
-        return $reindexado;
-    }
-
-    private function montarProduto(array $prod, array $ori, array $des, array $padr, array $consumo, array $prodreq): array
-    {
-        $produto = new ProdutoMontado($prod);
-
-        // === Preencher lote de origem ===
-        if ($oriItem = $ori[0] ?? null) {
-            $produto->loteori->lote_origem     = $oriItem->codigoLote ?? '';
-            $produto->loteori->validade_origem = $oriItem->validade ?? '';
-            $produto->loteori->pro_estorigem   = $oriItem->quantidadeEstoque ?? 0;
-        }
-
-        // === Preencher lote de destino ===
-        if ($desItem = $des[0] ?? null) {
-            $produto->lotedes->lote_destino     = $desItem->codigoLote ?? '';
-            $produto->lotedes->validade_destino = $desItem->validade ?? '';
-            $produto->lotedes->pro_estdestino   = $desItem->quantidadeEstoque ?? 0;
-        }
-
-        // === Preencher lote padrão ===
-        foreach ($padr as $item) {
-            if ($item->quantidadeEstoque > 0) {
-                $produto->lotepad->lote_padrao     = $item->codigoLote ?? '';
-                $produto->lotepad->validade_padrao = $item->validade ?? '';
-                $produto->lotepad->pro_estpadrao   = $item->quantidadeEstoque ?? 0;
-                break;
-            }
-        }
-
-        // === Validação de estoque origem/padrão ===
-        $proEstDestin = $produto->lotedes->pro_estdestino;
-        $proEstOrigem = $produto->loteori->pro_estorigem;
-        $proEstPadrao = $produto->lotepad->pro_estpadrao;
-
-        $proEstDispon = $proEstPadrao + $proEstOrigem;
-
-        if (($proEstDispon + $proEstDestin) <= 0) {
-            return [];
-        }
-
-        // === Verifica se deve calcular consumo ===
-        if ($prod['pro_diaanterior'] === 'S' || $prod['pro_mediaconsumo'] === 'S') {
-            $dash = $prod['cla_dash_consumo'];
-            $codPro = $prod['pro_codpro'];
-
-            // === Buscar consumo ===
-            if ($prod['pre_gestaoestoque'] === 'S') {
-                switch ($dash) {
-                    case 'Insumos':
-                        $produto->pro_consumo_medio  = $consumo['insumos'][$codPro]['media'] ?? 0;
-                        $produto->pro_consumo_diaant = $consumo['insumos'][$codPro]['consumido'] ?? 0;
-                        break;
-                    case 'Equipos':
-                        $produto->pro_consumo_medio  = $consumo['equipos'][$codPro]['media'] ?? 0;
-                        $produto->pro_consumo_diaant = $consumo['equipos'][$codPro]['consumido'] ?? 0;
-                        break;
-                    case 'Bolsas':
-                        $produto->pro_consumo_medio  = $consumo['bolsas'][$codPro]['media'] ?? 0;
-                        $produto->pro_consumo_diaant = $consumo['bolsas'][$codPro]['consumido'] ?? 0;
-                        break;
-                }
-            } else {
-                $produto->pro_consumo_medio  = 0;
-                $produto->pro_consumo_diaant = 0;
-            }
-
-            // === Base de consumo ===
-            $produto->pro_consumo = ($prod['pro_meddias'] > 0)
-                ? $produto->pro_consumo_medio
-                : $produto->pro_consumo_diaant;
-
-            // === Ajuste no estoque de destino (condicional) ===
-            if ($prod['pre_gestaoestoque'] === 'S' && $prod['pre_estdataatual'] === 'N') {
-                $produto->lotedes->pro_estdestino -= $produto->pro_consumo;
-            }
-
-            // === Segurança e sugestão bruta (sempre calculadas) ===
-            $produto->pro_seguranca = ceil($produto->pro_consumo * ($prod['pct_seguranca'] / 100));
-            $sugestaoBruta = ($produto->pro_consumo + $produto->pro_seguranca) - $produto->lotedes->pro_estdestino;
-
-            // === Aplicar faixa de mínimo e máximo (somente se gestão de estoque) ===
-            if ($prod['pre_gestaoestoque'] === 'S') {
-                $produto->pro_minimo = ($prod['pre_mindiaanterior'] === 'S')
-                    ? $produto->pro_consumo_diaant
-                    : $prod['pre_minimo'];
-                $produto->pro_consumo = ($prod['pre_mindiaanterior'] === 'S')
-                    ? $produto->pro_consumo
-                    : $prod['pre_sugerida'];
-
-                if ($prod['pre_maxdiaanterior'] === 'S') {
-                    $percentual = floatval($prod['pre_porcmaximo']) / 100;
-                    $produto->pro_maximo = $produto->pro_consumo * (1 + $percentual);
-                } else {
-                    $produto->pro_maximo = $prod['pre_maximo'];
-                }
-
-                // === Definir sugestão respeitando faixa
-                if ($sugestaoBruta <= 0) {
-                    $produto->pro_sugestao = 0;
-                } elseif ($produto->pro_minimo == 0 && $produto->pro_maximo == 0) {
-                    $produto->pro_sugestao = $sugestaoBruta;
-                } elseif ($produto->pro_minimo > $produto->pro_maximo) {
-                    $produto->pro_sugestao = min($sugestaoBruta, $produto->pro_maximo);
-                } else {
-                    $produto->pro_sugestao = max($produto->pro_minimo, $sugestaoBruta);
-                    $produto->pro_sugestao = min($produto->pro_sugestao, $produto->pro_maximo);
-                }
-            } else {
-                // === Sem gestão de estoque: usar sugestão bruta diretamente
-                $produto->pro_minimo = 0;
-                $produto->pro_maximo = 0;
-                $produto->pro_sugestao = max(0, $sugestaoBruta);
-            }
-            $produto->pro_sugestao = min($proEstDispon, $produto->pro_sugestao);
-            if (count($prodreq) > 0) {
-                $produto->pro_requisicao = $this->buscarRepQuantia($prodreq, $codPro, $produto->lot_lote);
-            }
-        }
-
-        return $produto->toArray();
+        return json_encode($ret);
     }
 
     /**
