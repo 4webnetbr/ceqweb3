@@ -168,7 +168,7 @@ class Requisicao extends BaseController
 
         $produtosreq = $this->requisicao->getRequisicaoProdutos($id);
         $pro_ids = array_unique(array_column($produtosreq, 'pro_id'));
-        $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $requisicao['req_deporigem']);
+        $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $requisicao['req_depdestino']);
         // debug($dados_est_produto, true);
         // Transformar $produtos em um array indexado por pro_id
         $produtosIndexado = [];
@@ -206,9 +206,17 @@ class Requisicao extends BaseController
                 $produto[count($produto)] = $prod['pro_codpro'];
                 $produto[count($produto)] = $prod['pro_despro'];
                 $produto[count($produto)] = $prod['fab_apeFab'];
-                $produto[count($produto)] = $prod['pre_cbfabricante'].$prod['pre_undfabricante'];
+                if(isset($prod['pre_cbfabricante'])){
+                    $produto[count($produto)] = $prod['pre_cbfabricante'].$prod['pre_undfabricante'];
+                } else {
+                    $produto[count($produto)] = '';
+                }
                 $produto[count($produto)] = $prod['lot_lote'];
-                $produto[count($produto)] = $prod['pre_cblote'].$prod['pre_undlote'];
+                if(isset($prod['pre_cblote'])){
+                    $produto[count($produto)] = $prod['pre_cblote'].$prod['pre_undlote'];
+                } else {
+                    $produto[count($produto)] = '';
+                }
                 $produto[count($produto)] = $prod['lot_validade'];
                 $produto[count($produto)] = $prod['qtd_caixa'];
                 $produto[count($produto)] = $prod['rep_quantia'];
@@ -335,7 +343,7 @@ class Requisicao extends BaseController
         if ($reqid != '') {
             $prodreq = $this->requisicaoproduto->getRequisicaoProdutos($reqid);
             $pro_ids = array_unique(array_column($prodreq, 'pro_id'));
-            $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $reqid);
+            $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $req['depdestino']);
             // debug($dados_est_produto, true);
             // Transformar $produtos em um array indexado por pro_id
             $produtosIndexado = [];
@@ -453,11 +461,11 @@ class Requisicao extends BaseController
             $claId   = $prod['cla_id'];
             $claNome = $prod['cla_nome'];
 
-            debug($codPro . ' - ' . $loteid);
+            // debug($codPro . ' - ' . $loteid);
             $produtoreq = [];
             if($loteid){
                 $produtoreq = $this->buscarProdutoReq($prodreq, $codPro, $loteid);
-                debug($produtoreq);
+                // debug($produtoreq);
             }
             $ori = $estoqueOrigem[$codPro][$lotePro] ?? [];
             $des = $estoqueDestino[$codPro][$lotePro] ?? [];
@@ -466,7 +474,7 @@ class Requisicao extends BaseController
 
             // Parâmetros para cálculo
             $prod['pro_consumo']      = 0;
-            $prod['pro_multiplica']   = $produtoreq['pro_multiplica']??1;
+            $prod['pro_multiplica']   = $produtoreq['rep_multiplicador']??1;
             $prod['pct_seguranca']    = $pct_seguranca;
             $prod['pro_seguranca']    = 0;
             $prod['pro_meddias']      = $meddias;
@@ -639,7 +647,6 @@ class Requisicao extends BaseController
                 } else {
                     $produto->pro_maximo = $prod['pre_maximo'];
                 }
-                
                 // === Definir sugestão respeitando faixa
                 if ($sugestaoBruta <= 0) {
                     $produto->pro_sugestao = 0;
@@ -680,7 +687,7 @@ class Requisicao extends BaseController
         $db = \Config\Database::connect();
 
         $requisicoes = json_decode($postado['json_requisicoes'], true);
-
+        // debug($requisicoes, true);
         $db->transStart(); // Início da transação
 
         $status = 6;
@@ -729,13 +736,15 @@ class Requisicao extends BaseController
                     return;
                 }
 
+                // debug($item);
                 $rep = [
                     'req_id' => $req_id,
                     'pro_id' => $produto[0]['pro_id'],
                     'lot_id' => $lote[0]['lot_id'],
+                    'rep_multiplicador' => $item['multiplica'],
                     'rep_quantia' => $item['requisicao']
                 ];
-
+                // debug($rep);
                 if (!$this->requisicaoproduto->insert($rep)) {
                     $ret['erro'] = true;
                     $erros = $this->requisicaoproduto->errors();
@@ -796,6 +805,7 @@ class Requisicao extends BaseController
                             'req_id' => $novo_req_id,
                             'pro_id' => $produto[0]['pro_id'],
                             'lot_id' => $lote[0]['lot_id'],
+                            'rep_multiplicador' => $item['multiplica'],
                             'rep_quantia' => $item['requisicao']
                         ];
 

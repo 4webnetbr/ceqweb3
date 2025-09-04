@@ -120,7 +120,7 @@ class MicrobAnaliseModel extends Model
     public function getListaAnaliseSemReq($ana_id = false, $stt_id = false)
     {
         $db = db_connect('dbProduto');
-        $builder = $db->table('vw_pro_mic_analise_relac');
+        $builder = $db->table('vw_pro_mic_analise_relac_v2');
 
         $builder->select('*');
         if ($ana_id) {

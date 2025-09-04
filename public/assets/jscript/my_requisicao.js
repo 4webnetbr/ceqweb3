@@ -354,7 +354,7 @@ async function carregarProdutos(url, aba, obj) {
       const checkbox = jQuery(`#checkSug${classe}`);
       if (checkbox.is(":checked")) {
         jQuery(`.requisicao[data-index="${index}"]`)
-          .data("ignore-validation", true)
+          .attr("data-ignore-validation", true)
           .val(valor)
           .trigger("change");
       }
@@ -373,33 +373,33 @@ async function carregarProdutos(url, aba, obj) {
     // Evento para multiplicador
     jQuery(".multiplica").on("change", function () {
       const input = jQuery(this);
-      const index = input.data("index");
+      const index = input.attr("data-index");
       const tr = jQuery(`tr[data-index="${index}"]`);
 
       const baseSug = parseInt(tr.find(".sugestao").text()) || 0;
 
-      const saldoDisponivel = parseInt(tr.data("saldo-disponivel")) || 0;
-      let min = parseInt(tr.data("min")) || 0;
-      let max = parseInt(tr.data("max")) || 0;
+      const saldoDisponivel = parseInt(tr.attr("data-saldo-disponivel")) || 0;
+      let min = parseInt(tr.attr("data-min")) || 0;
+      let max = parseInt(tr.attr("data-max")) || 0;
       max = max === 0 ? saldoDisponivel : max;
 
-      const codproAtual = tr.data("codpro");
+      const codproAtual = tr.attr("data-codpro");
       let saldoDestino = 0;
 
       jQuery("tr").each(function () {
         const linha = jQuery(this);
-        if (linha.data("codpro") == codproAtual) {
-          saldoDestino += parseInt(linha.data("saldo-destino")) || 0;
+        if (linha.attr("data-codpro") == codproAtual) {
+          saldoDestino += parseInt(linha.attr("data-saldo-destino")) || 0;
         }
       });
       // const saldoDestino = parseInt(tr.data('saldo-destino')) || 0;
       const multiplicador = parseInt(input.val()) || 1;
       max = max * multiplicador;
-      tr.data("max", max);
+      tr.attr("data-max", max);
       min = min * multiplicador;
-      tr.data("min", min);
+      tr.attr("data-min", min);
 
-      const consumo = parseInt(tr.data("consumo")) || 0;
+      const consumo = parseInt(tr.attr("data-consumo")) || 0;
       const seguranca =
         parseInt(jQuery(`#pro_pctseguranca_${index}`).val()) || 0;
 
@@ -413,34 +413,34 @@ async function carregarProdutos(url, aba, obj) {
       );
 
       atualizarSugestao(index, novaSug);
-      preencherRequisicaoAutomatica(index, novaSug, tr.data("classe"));
+      preencherRequisicaoAutomatica(index, novaSug, tr.attr("data-classe"));
     });
 
     // Evento para segurança
     jQuery(".seguranca").on("change", function () {
       const input = jQuery(this);
-      const index = input.data("index");
+      const index = input.attr("data-index");
       const tr = jQuery(`tr[data-index="${index}"]`);
 
       const baseSugOriginal = parseInt(tr.find(".sugestao").text()) || 0;
       // const baseSugOriginal = parseInt(tr.data('sugestao-base')) || 0;
-      const saldoDisponivel = parseInt(tr.data("saldo-disponivel")) || 0;
-      const min = parseInt(tr.data("min")) || 0;
-      let max = parseInt(tr.data("max")) || 0;
+      const saldoDisponivel = parseInt(tr.attr("data-saldo-disponivel")) || 0;
+      const min = parseInt(tr.attr("data-min")) || 0;
+      let max = parseInt(tr.attr("data-max")) || 0;
       max = max === 0 ? saldoDisponivel : max;
 
-      const codproAtual = tr.data("codpro");
+      const codproAtual = tr.attr("data-codpro");
       let saldoDestino = 0;
 
       jQuery("tr").each(function () {
         const linha = jQuery(this);
-        if (linha.data("codpro") == codproAtual) {
-          saldoDestino += parseInt(linha.data("saldo-destino")) || 0;
+        if (linha.attr("data-codpro") == codproAtual) {
+          saldoDestino += parseInt(linha.attr("data-saldo-destino")) || 0;
         }
       });
 
       // const saldoDestino = parseInt(tr.data('saldo-destino')) || 0;
-      const consumo = parseInt(tr.data("consumo")) || 0;
+      const consumo = parseInt(tr.attr("data-consumo")) || 0;
       const seguranca = parseInt(input.val()) || 0;
 
       const multiplicador =
@@ -463,18 +463,18 @@ async function carregarProdutos(url, aba, obj) {
       // const novaSug = calcularSugestao(consumo, multiplicador, min, max, saldoDestino, saldoDisponivel);
 
       atualizarSugestao(index, novaSug);
-      preencherRequisicaoAutomatica(index, novaSug, tr.data("classe"));
+      preencherRequisicaoAutomatica(index, novaSug, tr.attr("data-classe"));
     });
 
     jQuery(".aceita-sugestao").on("change", function () {
-      const classeId = jQuery(this).data("classe");
+      const classeId = jQuery(this).attr("data-classe");
       const checked = jQuery(this).is(":checked");
       jQuery(`tr[data-classe="${classeId}"]`).each(function () {
-        const index = jQuery(this).data("index");
+        const index = jQuery(this).attr("data-index");
         const valorSugestao =
           parseInt(jQuery(this).find(`#sug_${index}`).text()) || 0;
         jQuery(`.requisicao[data-index="${index}"]`)
-          .data("ignore-validation", true)
+          .attr("data-ignore-validation", true)
           .val(checked ? valorSugestao : 0)
           .trigger("change");
       });
@@ -482,30 +482,32 @@ async function carregarProdutos(url, aba, obj) {
 
     jQuery(".requisicao").on("change", function () {
       const input = jQuery(this);
-      if (input.data("ignore-validation")) {
-        input.removeData("ignore-validation");
+      if (input.attr("data-ignore-validation")) {
+        input.removeattr("data-ignore-validation");
         return;
       }
 
-      const index = input.data("index");
+      const index = input.attr("data-index");
       const valAtual = Math.round(parseInt(input.val()) || 0);
       if (valAtual != 0) {
         const tr = jQuery(`tr[data-index="${index}"]`);
 
-        const codigo = tr.data("codpro");
-        const minOriginal = parseInt(tr.data("min")) || 0;
-        const saldoDisponivelAtual = parseInt(tr.data("saldo-disponivel")) || 0;
-        let maxOriginal = parseInt(tr.data("max")) || 0;
+        const codigo = tr.attr("data-codpro");
+        const minOriginal = parseInt(tr.attr("data-min")) || 0;
+        const saldoDisponivelAtual =
+          parseInt(tr.attr("data-saldo-disponivel")) || 0;
+        let maxOriginal = parseInt(tr.attr("data-max")) || 0;
         let maxAntesOri = maxOriginal;
         maxOriginal = maxOriginal === 0 ? saldoDisponivelAtual : maxOriginal;
 
-        const codproAtual = tr.data("codpro");
+        const codproAtual = tr.attr("data-codpro");
         let saldoDestinoAtual = 0;
 
         jQuery("tr").each(function () {
           const linha = jQuery(this);
-          if (linha.data("codpro") == codproAtual) {
-            saldoDestinoAtual += parseInt(linha.data("saldo-destino")) || 0;
+          if (linha.attr("data-codpro") == codproAtual) {
+            saldoDestinoAtual +=
+              parseInt(linha.attr("data-saldo-destino")) || 0;
           }
         });
         // const saldoDestinoAtual = parseInt(tr.data('saldo-destino')) || 0;
@@ -533,7 +535,7 @@ async function carregarProdutos(url, aba, obj) {
 
           // if (!desconsideraMaximo) {
           const lotesDoProduto = jQuery(`.requisicao`).filter(function () {
-            return jQuery(this).closest("tr").data("codpro") === codigo;
+            return jQuery(this).closest("tr").attr("data-codpro") === codigo;
           });
 
           let somaOutros = 0;
@@ -589,7 +591,7 @@ async function carregarProdutos(url, aba, obj) {
     jQuery(document)
       .off("click", ".toggle-linhas")
       .on("click", ".toggle-linhas", function () {
-        const codpro = jQuery(this).data("codpro");
+        const codpro = jQuery(this).attr("data-codpro");
         const linhas = jQuery(`tr[data-codpro="${codpro}"]`).not(":first");
         const icone = jQuery(this);
 
@@ -653,7 +655,7 @@ function enviarRequisicoes(tipo = 0) {
 
   jQuery("tr[data-index]").each(function () {
     const tr = jQuery(this);
-    const index = tr.data("index");
+    const index = tr.attr("data-index");
     const inputRequisicao = jQuery(`.requisicao[data-index="${index}"]`);
     const valorRequisicao = parseInt(inputRequisicao.val()) || 0;
 
@@ -688,7 +690,8 @@ function enviarRequisicoes(tipo = 0) {
       // Classe e cla_id do accordion
       const acc = tr.closest(".accordion-item");
       if (acc.length) {
-        dados.cla_id = acc.data("cla_id") || acc.data("claid") || null;
+        dados.cla_id =
+          acc.attr("data-cla_id") || acc.attr("data-claid") || null;
         dados.classe = acc
           .find(".accordion-header, .accordion-button")
           .first()
