@@ -234,8 +234,9 @@ class ConfRequisicao extends BaseController
                 $prod['pre_undlote'] = 'N';
             }
             $fields = $this->requisicao->defCamposProdutoAte($prod);
-            $resultado[$p]['rep_cancelada'] = $fields['rep_cancelada'];
-            $resultado[$p]['rep_atendida'] = $fields['rep_atendida'];
+            $resultado[$p]['rpa_cancelada'] = $fields['rpa_cancelada'];
+            $resultado[$p]['rpa_atendida'] = $fields['rpa_atendida'];
+            $resultado[$p]['saldo'] = $resultado[$p]['rep_quantia'] - ($resultado[$p]['rpa_cancelada'] + $resultado[$p]['rpa_atendida']);
         }
         // $secao[1] = 'Produtos';
         $campos[0][count($campos[0])] = view('partials/pw_produtos_requisicao',['produtos' => $resultado]); // mesma estrutura do add()

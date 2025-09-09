@@ -332,10 +332,10 @@ function validaCodBar(obj) {
         var ctalot = jQuery("#ctalt_" + idBase).val();
         ctalot++;
         jQuery("#ctalt_" + idBase).val(ctalot);
-        jQuery("#rep_atendida_" + idBase).val(ctalot);
+        jQuery("#rpa_atendida_" + idBase).val(ctalot);
       }
       var qtde = jQuery("#qt_" + idBase).text();
-      var canc = jQuery("#rep_cancelada_" + idBase).val();
+      var canc = jQuery("#rpa_cancelada_" + idBase).val();
 
       var lf = jQuery("#fab_" + idBase).text();
       var ctafab = jQuery("#ctafb_" + idBase).val();
@@ -416,15 +416,17 @@ function acertaSaldoReq(obj) {
 
   var qtde = parseInt(jQuery("#qt_" + idBase).text());
 
-  var aten = parseInt(jQuery("#rep_atendida_" + idBase).val());
-  var canc = parseInt(jQuery("#rep_cancelada_" + idBase).val());
+  var aten = parseInt(jQuery("#rpa_atendida_" + idBase).val());
+  var canc = parseInt(jQuery("#rpa_cancelada_" + idBase).val());
 
   saldo = qtde - canc - aten;
   jQuery("#sl_" + idBase).text(saldo);
 
   fundo = "";
-  if (saldo == 0) {
+  if (saldo == 0 && aten == qtde) {
     fundo = "bg-success";
+  } else if (saldo == 0 && aten != qtde) {
+    fundo = "bg-danger";
   } else if (saldo > 0 && saldo < qtde) {
     fundo = "bg-warning";
   } else if (saldo > 0 && saldo > qtde) {

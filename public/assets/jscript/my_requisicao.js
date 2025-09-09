@@ -323,6 +323,7 @@ async function carregarProdutos(url, aba, obj) {
     jQuery("#produtos-tabr").trigger("click");
     jQuery("#produtos-tab").trigger("click");
     atualizarEstadoBotaoSalvar();
+
     function calcularSugestao(
       base,
       multiplicador,
@@ -395,9 +396,7 @@ async function carregarProdutos(url, aba, obj) {
       // const saldoDestino = parseInt(tr.data('saldo-destino')) || 0;
       const multiplicador = parseInt(input.val()) || 1;
       max = max * multiplicador;
-      tr.attr("data-max", max);
       min = min * multiplicador;
-      tr.attr("data-min", min);
 
       const consumo = parseInt(tr.attr("data-consumo")) || 0;
       const seguranca =
@@ -413,6 +412,7 @@ async function carregarProdutos(url, aba, obj) {
       );
 
       atualizarSugestao(index, novaSug);
+
       preencherRequisicaoAutomatica(index, novaSug, tr.attr("data-classe"));
     });
 
@@ -444,7 +444,9 @@ async function carregarProdutos(url, aba, obj) {
       const seguranca = parseInt(input.val()) || 0;
 
       const multiplicador =
-        parseInt(jQuery(`#pro_multiplica${index}`).val()) || 1;
+        parseInt(jQuery(`#pro_multiplica_${index}`).val()) || 1;
+      max = max * multiplicador;
+
       const segAnterior = parseInt(jQuery(`#seg_${index}`).text()) || 0;
 
       let baseSug = baseSugOriginal - segAnterior;

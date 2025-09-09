@@ -217,11 +217,11 @@ class Requisicao extends BaseController
                 } else {
                     $produto[count($produto)] = '';
                 }
-                $produto[count($produto)] = $prod['lot_validade'];
+                $produto[count($produto)] = data_br($prod['lot_validade']);
                 $produto[count($produto)] = $prod['qtd_caixa'];
                 $produto[count($produto)] = $prod['rep_quantia'];
-                $produto[count($produto)] = $prod['rep_cancelada'];
-                $produto[count($produto)] = $prod['rep_atendida'];
+                $produto[count($produto)] = $prod['rpa_cancelada'];
+                $produto[count($produto)] = $prod['rpa_atendida'];
                 $produto[count($produto)] = $prod['rep_quantia'];
                 $produtos[count($produtos)] =$produto;
             }

@@ -96,7 +96,7 @@ jQuery(document).ready(function () {
     bloqueiaTela();
     const controller = jQuery("#controler").val();
 
-    if (controller.toLowerCase() === "requisicao") {
+    if (controller.toLowerCase() == "requisicao") {
       // event.preventDefault(); // impede submit automático
       enviarRequisicoes();
     }
@@ -413,18 +413,25 @@ function showToast(message, isAlert = false) {
   });
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 /**
  * bloqueiaTela
  * Bloqueia a tela e apresenta a msg Processando...
  */
-function bloqueiaTela() {
-  var displayValor = jQuery("#bloqueiaTela").css("display");
+async function bloqueiaTela() {
+  const $tela = jQuery("#bloqueiaTela");
 
-  if (displayValor == "none") {
-    jQuery("#bloqueiaTela").css("display", "block");
-    jQuery("#bloqueiaTela")[0].offsetHeight;
+  // Garante que o display seja "block"
+  if ($tela.css("display") === "none") {
+    $tela.stop(true, true).css({
+      display: "block",
+      opacity: 1,
+      visibility: "visible",
+    });
+    await sleep(500);
   }
-  // setTimeout(console.log('Aguardando'), 1000);
 }
 
 /**
@@ -433,7 +440,11 @@ function bloqueiaTela() {
  */
 function desBloqueiaTela() {
   if (!executandoAjax) {
-    jQuery("#bloqueiaTela").css("display", "none");
+    jQuery("#bloqueiaTela").stop(true, true).css({
+      display: "none",
+      opacity: 0,
+      visibility: "hidden",
+    });
   }
 }
 

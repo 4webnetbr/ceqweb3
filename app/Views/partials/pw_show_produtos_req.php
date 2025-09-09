@@ -10,14 +10,14 @@ if(!isset($show)){
 ?>
 <div class="accordion" id="accProdutos">
     <div class="accordion-item">
-        <h2 class="accordion-header border border-bottom-1" id="heading<?= $produtos[0] ?>">
+        <h2 class="accordion-header border border-bottom-1" id="headprod<?= $produtos[0] ?>">
             <button class="accordion-button" type="button" data-bs-toggle="collapse"
-              data-bs-target="#collapse<?= $produtos[0] ?>" aria-expanded="false"
-              aria-controls="collapse<?= $produtos[0] ?>" data-proid="<?= $produtos[0] ?>">
+              data-bs-target="#collapseprod<?= $produtos[0] ?>" aria-expanded="false"
+              aria-controls="collapseprod<?= $produtos[0] ?>" data-proid="<?= $produtos[0] ?>">
                 <div class='col-12 text-center'>Produtos</div>
             </button>
         </h2>
-        <div id="collapse<?= $produtos[0] ?>" class="accordion-collapse collapse show" aria-labelledby="heading<?= $produtos[0] ?>" data-bs-parent="#accProdutos">
+        <div id="collapseprod<?= $produtos[0] ?>" class="accordion-collapse collapse show" aria-labelledby="headprod<?= $produtos[0] ?>" data-bs-parent="#accProdutos">
             <div class="accordion-body p-1" style="max-height:49vh; height:49vh; overflow-y: auto">
                 <table class="table table-bordered table-sm text-center align-middle tabela-pequena">
                     <thead class="table-light">
@@ -36,7 +36,7 @@ if(!isset($show)){
                             for ($p=1; $p < count($produtos) ; $p++) { 
                                 $prodt = $produtos[$p];
                             ?>
-                                <tr id='<?= $prodt[0]?>'>
+                                <tr id='<?=$prodt[0]?>'>
                                     <?
                                     for ($pp=1; $pp <= count($colunas) ; $pp++) { ?>
                                         <td><?=$prodt[$pp];?></td>

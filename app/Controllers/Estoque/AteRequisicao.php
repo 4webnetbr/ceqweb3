@@ -2,28 +2,30 @@
 
 namespace App\Controllers\Estoque;
 
-use App\Controllers\BaseController;
-use App\Controllers\BuscasSapiens;
-use App\DTOs\LoteDestino;
+use Config\Database;
 use App\DTOs\LoteOrigem;
 use App\DTOs\LotePadrao;
-use App\DTOs\ProdutoMontado;
+use App\DTOs\LoteDestino;
 use App\Libraries\MyCampo;
+use App\DTOs\ProdutoMontado;
+use App\Controllers\BuscasSapiens;
+use App\Controllers\BaseController;
+use App\Models\Produt\ProdutLoteModel;
+use App\Models\Produt\ProdutClasseModel;
+use App\Models\Produt\ProdutProdutoModel;
 use App\Models\Estoqu\EstoquDepositoModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
-use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
-use App\Models\Produt\ProdutClasseModel;
-use App\Models\Produt\ProdutLoteModel;
-use App\Models\Produt\ProdutProdutoModel;
-use Config\Database;
+use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
+use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
 
 class AteRequisicao extends BaseController
 {
     public $data = [];
     public $permissao = '';
     public $requisicao;
-    public $requisicaoproduto;
+    public $reqproduto;
+    public $reqprodutoate;
     public $classes;
     public $produtos;
     public $lote;
@@ -40,7 +42,8 @@ class AteRequisicao extends BaseController
         $this->data         = session()->getFlashdata('dados_tela');
         $this->permissao    = $this->data['permissao'];
         $this->requisicao   = new EstoquRequisicaoModel();
-        $this->requisicaoproduto   = new EstoquRequisicaoProdutoModel();
+        $this->reqproduto   = new EstoquRequisicaoProdutoModel();
+        $this->reqprodutoate   = new EstoquRequisicaoProdutoAtendimentoModel();
         $this->classes      = new ProdutClasseModel();
         $this->produtos     = new ProdutProdutoModel();
         $this->busca        = new BuscasSapiens();
@@ -79,7 +82,7 @@ class AteRequisicao extends BaseController
     {
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
-        $dados_requis = $this->requisicao->getRequisicaoLista(false, [4]);
+        $dados_requis = $this->requisicao->getRequisicaoLista(false, [4, 21]);
 
         $base_url = base_url($this->data['controler']);
         foreach ($dados_requis as &$req) {
@@ -239,8 +242,9 @@ class AteRequisicao extends BaseController
                 $prod['pre_undlote'] = 'N';
             }
             $fields = $this->requisicao->defCamposProdutoAte($prod);
-            $resultado[$p]['rep_cancelada'] = $fields['rep_cancelada'];
-            $resultado[$p]['rep_atendida'] = $fields['rep_atendida'];
+            $resultado[$p]['rpa_cancelada'] = $fields['rpa_cancelada'];
+            $resultado[$p]['rpa_atendida'] = $fields['rpa_atendida'];
+            $resultado[$p]['saldo'] = intval($resultado[$p]['rep_quantia']) - (intval($prod['rpa_cancelada']) + intval($prod['rpa_atendida']));
         }
         // $secao[1] = 'Produtos';
         $campos[0][count($campos[0])] = view('partials/pw_produtos_requisicao',['produtos' => $resultado]); // mesma estrutura do add()
@@ -381,159 +385,93 @@ class AteRequisicao extends BaseController
     public function store()
     {
         $postado = $this->request->getPost();
-        $ret['erro'] = false;
-        $db = \Config\Database::connect();
+        // debug($postado, true);
 
-        $requisicoes = json_decode($postado['json_requisicoes'], true);
+        $dadosAgrupados = [];
 
-        $db->transStart(); // Início da transação
+        foreach ($postado as $key => $value) {
+            if (preg_match('/^repid_(\d+)$/', $key, $matches)) {
+                $id = $matches[1]; // Ex: 88, 89
 
-        $status = 6;
-        if (isset($postado['req_status'])) {
-            if ($postado['req_status'] == 1) {
-                $status = 4;
-            }
-        }
+                // Inicializa temporário para os dados desse ID
+                $dadosTemp = ['repid' => $value];
 
-        // Prepara dados para inserção/atualização na tabela est_requisicao
-        $dadosReq = [
-            'req_data' => $postado['req_data'],
-            'req_dataentrega' => $postado['req_dataentrega'],
-            'tmo_id' => $postado['tmo_id'],
-            'req_deporigem' => $postado['req_deporigem'],
-            'req_depdestino' => $postado['req_depdestino'],
-            'req_consdiaanterior' => $postado['req_consdiaanterior'],
-            'req_medconsumodias' => $postado['req_medconsumodias'],
-            'req_meddias' => $postado['req_meddias'] ?? null,
-            'req_repetedias' => 1,
-            'req_percseguranca' => $postado['req_percseguranca'],
-            'req_observacao' => $postado['req_observacao'],
-            'stt_id' => $status
-        ];
-
-        if ($postado['req_id'] != "") {
-            $salvaReq = $this->requisicao->update($postado['req_id'], $dadosReq);
-            $req_id = $postado['req_id'];
-            $this->requisicaoproduto->excluir($req_id);
-        } else {
-            $salvaReq = $this->requisicao->insert($dadosReq);
-            $req_id = $this->requisicao->getInsertID();
-        }
-
-        if ($salvaReq) {
-            // Inserir os produtos da requisição principal
-            foreach ($requisicoes as $item) {
-                $produto = $this->produtos->getProdutoCod($item['cod_erp']);
-                $lote = $this->lote->getLoteCodproLote($item['cod_erp'], $item['lote']);
-
-                if (!$produto || !$lote) {
-                    $ret['erro'] = true;
-                    $ret['msg'] = "Produto ou lote não encontrado para o código: {$item['cod_erp']} ou lote: {$item['lote']}";
-                    $db->transRollback();
-                    echo json_encode($ret);
-                    return;
-                }
-
-                $rep = [
-                    'req_id' => $req_id,
-                    'pro_id' => $produto[0]['pro_id'],
-                    'lot_id' => $lote[0]['lot_id'],
-                    'rep_quantia' => $item['requisicao']
-                ];
-
-                if (!$this->requisicaoproduto->insert($rep)) {
-                    $ret['erro'] = true;
-                    $erros = $this->requisicaoproduto->errors();
-                    $ret['msg'] = 'Erro ao inserir item na requisição de produto.';
-
-                    if (!empty($erros)) {
-                        foreach ($erros as $campo => $mensagem) {
-                            $ret['msg'] .= " Campo: {$campo} - Erro: {$mensagem}";
-                        }
-                    }
-
-                    $db->transRollback();
-                    echo json_encode($ret);
-                    return;
-                }
-            }
-
-            // Repetições mesmo em update
-            if (intval($postado['req_repetedias']) > 1) {
-                $totalRepeticoes = intval($postado['req_repetedias']);
-
-                for ($i = 1; $i < $totalRepeticoes; $i++) {
-                    $novaReq = $dadosReq;
-
-                    // Incrementa a data de entrega
-                    $dataEntrega = new \DateTime($dadosReq['req_dataentrega']);
-                    $dataEntrega->modify("+{$i} days");
-                    $novaReq['req_dataentrega'] = $dataEntrega->format('Y-m-d');
-
-                    // Atualiza a data de criação
-                    $novaReq['req_data'] = date('Y-m-d');
-
-                    $salvaNova = $this->requisicao->insert($novaReq);
-
-                    if (!$salvaNova) {
-                        $ret['erro'] = true;
-                        $ret['msg'] = 'Erro ao inserir requisição repetida.';
-                        $db->transRollback();
-                        echo json_encode($ret);
-                        return;
-                    }
-
-                    $novo_req_id = $this->requisicao->getInsertID();
-
-                    foreach ($requisicoes as $item) {
-                        $produto = $this->produtos->getProdutoCod($item['cod_erp']);
-                        $lote = $this->lote->getLoteCodproLote($item['cod_erp'], $item['lote']);
-
-                        if (!$produto || !$lote) {
-                            $ret['erro'] = true;
-                            $ret['msg'] = "Produto ou lote não encontrado para o código: {$item['cod_erp']} ou lote: {$item['lote']} (repetição)";
-                            $db->transRollback();
-                            echo json_encode($ret);
-                            return;
-                        }
-
-                        $rep = [
-                            'req_id' => $novo_req_id,
-                            'pro_id' => $produto[0]['pro_id'],
-                            'lot_id' => $lote[0]['lot_id'],
-                            'rep_quantia' => $item['requisicao']
-                        ];
-
-                        if (!$this->requisicaoproduto->insert($rep)) {
-                            $ret['erro'] = true;
-                            $ret['msg'] = "Erro ao inserir item em requisição repetida.";
-                            $db->transRollback();
-                            echo json_encode($ret);
-                            return;
-                        }
+                // Pega os campos relacionados ao mesmo ID
+                foreach ($postado as $campo => $val) {
+                    if (str_ends_with($campo, "_$id") && $campo !== "repid_$id") {
+                        $nomeCampo = substr($campo, 0, -strlen("_$id"));
+                        $dadosTemp[$nomeCampo] = $val;
                     }
                 }
+
+                // Faz a verificação: repqtia == (rpa_cancelada + rpa_atendida)
+                $qtia        = (int)($dadosTemp['repqtia'] ?? 0);
+                $cancelada   = (int)($dadosTemp['rpa_cancelada'] ?? 0);
+                $atendida    = (int)($dadosTemp['rpa_atendida'] ?? 0);
+                $somaStatus  = $cancelada + $atendida;
+
+                if ($qtia === $somaStatus) {
+                    // Somente adiciona se a condição for satisfeita
+                    $dadosAgrupados[$id] = $dadosTemp;
+                }
             }
-        } else {
-            $ret['erro'] = true;
-            $ret['msg'] = 'Erro ao gravar a requisição.';
-            $db->transRollback();
-            echo json_encode($ret);
-            return;
         }
-
-        $db->transComplete();
-
-        if ($db->transStatus() === false) {
-            $ret['erro'] = true;
-            $ret['msg'] = 'Erro na transação. Nenhum dado foi gravado.';
-        } else {
-            $ret['msg'] = 'Requisição gravada com sucesso!';
+        // debug(count($dadosAgrupados));
+        if(count($dadosAgrupados) === 0){
+            $msg            = 7;
+            session()->setFlashdata('msg', $msg);
             $ret['url'] = site_url($this->data['controler']);
-            session()->setFlashdata('msg', $ret['msg']);
+            $ret['erro'] = false;
+        } else {
+            $ret['erro'] = false;
+            $db = \Config\Database::connect();
+
+            $db->transStart(); // Início da transação
+
+
+            foreach ($dadosAgrupados as $campo => $val) {
+                $sql_save = [
+                    'rep_id' => $val['repid'],
+                    'pro_id' => $val['proid'],
+                    'rpa_cancelada' => $val['rpa_cancelada'],
+                    'rpa_atendida' => $val['rpa_atendida'],
+                    'rpa_data' => date('Y-m-d H:i:s'),
+                ];
+                if (!$this->reqprodutoate->insert($sql_save)) {
+                    $ret['erro'] = true;
+                    $ret['msg'] = 'Erro ao gravar o Atendimento.';
+                    $db->transRollback();
+                    echo json_encode($ret);
+                    return;
+                }
+
+            }
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                $ret['erro'] = true;
+                $ret['msg'] = 'Erro na transação. Nenhum dado foi gravado.';
+            } else {
+                $saldos = $this->reqprodutoate->getSaldoRequisicao($postado['req_id']);
+                $sald = 0;
+                $status = 18;
+                for ($s=0; $s < count($saldos) ; $s++) { 
+                    $sald += $saldos[$s]['saldo'];
+                }
+                if($sald > 0){
+                    $status = 21;
+                }
+                $dadosReq = [
+                    'stt_id' => $status
+                ];
+                $this->requisicao->update($postado['req_id'], $dadosReq);
+                $ret['msg'] = 'Atendimento gravada com sucesso!';
+                $ret['url'] = site_url($this->data['controler']);
+                session()->setFlashdata('msg', $ret['msg']);
+            }
         }
 
         echo json_encode($ret);
-        cache()->clean();
+        // cache()->clean();
     }
 }

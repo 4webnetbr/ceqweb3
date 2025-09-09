@@ -126,7 +126,10 @@ class EstoquRequisicaoModel extends Model
         if ($req_id) {
             $builder->where('req_id', $req_id);
         }
-        return $builder->get()->getResultArray();
+        $ret = $builder->get()->getResultArray();
+        // debug($db->getLastQuery(), false);
+
+        return $ret;
     }
 
     public function getProdutoRequisicao($produto)
@@ -308,33 +311,39 @@ class EstoquRequisicaoModel extends Model
     public function defCamposProdutoAte($dados = false, $show = false)
     {
         $ret = [];
-
-        $canc                 = new MyCampo('est_requisicao_produto', 'rep_cancelada', false);
-        $canc->id = $canc->nome = "rep_cancelada_".$dados['rep_id'];
-        $canc->valor          = 0;
+        // debug($dados);
+        $canc                 = new MyCampo('est_requisicao_produto_atendimento', 'rpa_cancelada', false);
+        $canc->id = $canc->nome = "rpa_cancelada_".$dados['rep_id'];
+        $canc->valor          = $dados['rpa_cancelada']??0;
         $canc->label          = '';
         $canc->leitura        = false;
+        if(intval($dados['rep_quantia']) == (intval($dados['rpa_atendida']) + intval($dados['rpa_cancelada']))){
+            $canc->leitura        = true;
+        }
         $canc->classep        = 'mb2';
         $canc->minimo           = 0;
         $canc->maximo           = $dados['rep_quantia'];
         $canc->dispForm       = 'col-1';
         $canc->funcChan       = 'acertaSaldoReq(this)';
-        $ret['rep_cancelada']      = $canc->crInput();
+        $ret['rpa_cancelada']      = $canc->crInput();
 
-        $aten                 = new MyCampo('est_requisicao_produto', 'rep_atendida', false);
-        $aten->id = $aten->nome = "rep_atendida_".$dados['rep_id'];
-        $aten->valor          = 0;
+        $aten                 = new MyCampo('est_requisicao_produto_atendimento', 'rpa_atendida', false);
+        $aten->id = $aten->nome = "rpa_atendida_".$dados['rep_id'];
+        $aten->valor          = $dados['rpa_atendida']??0;
         $aten->label          = '';
         $aten->leitura        = true;
         if($dados['pre_cbfabricante'] == 'N' && $dados['pre_undfabricante'] == 'N'){
             $aten->leitura        = false;
+        }
+        if(intval($dados['rep_quantia']) == (intval($dados['rpa_atendida']) + intval($dados['rpa_cancelada']))){
+            $aten->leitura        = true;
         }
         $aten->classep        = 'mb2';
         $aten->dispForm       = 'col-1';
         $aten->minimo           = 0;
         $aten->maximo           = $dados['rep_quantia'];
         $aten->funcChan       = 'acertaSaldoReq(this)';
-        $ret['rep_atendida']      = $aten->crInput();
+        $ret['rpa_atendida']      = $aten->crInput();
         return $ret;
     }
 }

@@ -5,12 +5,12 @@ namespace App\Models\Estoqu;
 use App\Models\LogMonModel;
 use CodeIgniter\Model;
 
-class EstoquRequisicaoProdutoModel extends Model
+class EstoquRequisicaoProdutoAtendimentoModel extends Model
 {
     protected $DBGroup          = 'dbEstoque';
-    protected $table            = 'est_requisicao_produto';
+    protected $table            = 'est_requisicao_produto_atendimento';
     protected $view             = '';
-    protected $primaryKey       = 'rep_id';
+    protected $primaryKey       = 'rpa_id';
     protected $useAutoIncremodt = true;
 
 
@@ -18,12 +18,12 @@ class EstoquRequisicaoProdutoModel extends Model
     protected $useSoftDeletes   = false;
 
     protected $allowedFields    = [
-        'rep_id',
-        'req_id',
-        'pro_id',
-        'lot_id',
-        'rep_multiplicador',
-        'rep_quantia',
+            'rpa_id',
+            'rep_id',
+            'pro_id',
+            'rpa_cancelada',
+            'rpa_atendida',
+            'rpa_data',
     ];
 
     // protected $deletedField  = 'req_excluido';
@@ -77,28 +77,15 @@ class EstoquRequisicaoProdutoModel extends Model
         return $data;
     }
 
-    public function getRequisicaoProdutos($req_id = false)
+    public function getProdutoRequisicaoAtendimento($rep_id, $produto)
     {
         $db = db_connect('dbEstoque');
-        $builder = $db->table('vw_est_requisicao_produto_relac');
+        $builder = $db->table('est_requisicao_produto_atendimento');
         $builder->select('*');
-        if ($req_id) {
-            $builder->where('req_id', $req_id);
-        }
+        $builder->where('rep_id', $rep_id);
+        $builder->where('pro_id', $produto);
         return $builder->get()->getResultArray();
     }
-
-    public function excluir($req_id)
-    {
-        $db = db_connect('dbEstoque');
-        $builder = $db->table($this->table);
-        $builder->where('req_id', $req_id);
-        $ret = $builder->delete();
-        // debug($this->db->getLastQuery(), false);
-        return $ret;
-    }
-
-
 
     public function getProdutoRequisicao($produto)
     {
@@ -109,4 +96,12 @@ class EstoquRequisicaoProdutoModel extends Model
         return $builder->get()->getResultArray();
     }
 
+    public function getSaldoRequisicao($requisicao)
+    {
+        $db = db_connect('dbEstoque');
+        $builder = $db->table('vw_saldo_requisicao_produto');
+        $builder->select('*');
+        $builder->where('req_id', $requisicao);
+        return $builder->get()->getResultArray();
+    }
 }
