@@ -345,32 +345,31 @@ class Requisicao extends BaseController
             // debug($prodreq, true);
             $pro_ids = array_unique(array_column($prodreq, 'pro_id'));
             $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $req['depdestino']);
-            // debug($dados_est_produto, true);
-            // Transformar $produtos em um array indexado por pro_id
-            $produtosIndexado = [];
-            foreach ($prodreq as $param) {
-                $produtosIndexado[$param['pro_id']] = $param;
+
+            // Indexar dados de estoque por pro_id para acesso rápido
+            $estoqueIndexado = [];
+            foreach ($dados_est_produto as $estoque) {
+                $estoqueIndexado[$estoque['pro_id']] = $estoque;
             }
 
-            // Array para o resultado final
+            // Resultado final com todos os produtos da requisição
             $resultado = [];
 
-            if(count($dados_est_produto) > 0){
-                foreach ($dados_est_produto as $itemEstoque) {
-                    $pro_id = $itemEstoque['pro_id'];
+            foreach ($prodreq as $produto) {
+                $pro_id = $produto['pro_id'];
 
-                    if (isset($produtosIndexado[$pro_id])) {
-                        // Mescla os dados de estoque + parâmetros (com todas as chaves)
-                        $resultado[] = array_merge($itemEstoque, $produtosIndexado[$pro_id]);
-                    } else {
-                        // Se não existir parâmetro correspondente, adiciona só o estoque
-                        $resultado[] = $itemEstoque;
-                    }
+                if (isset($estoqueIndexado[$pro_id])) {
+                    // Mescla os dados do produto com os dados de estoque
+                    $resultado[] = array_merge($produto, $estoqueIndexado[$pro_id]);
+                } else {
+                    // Produto sem controle de estoque, usa apenas os dados da requisição
+                    $resultado[] = $produto;
                 }
-                $prodreq = $resultado;
-            } 
+            }
 
-            // debug($prodreq, true);
+            $prodreq = $resultado;
+
+            // debug($prodreq, false);
 
         }
 
@@ -455,10 +454,10 @@ class Requisicao extends BaseController
         $classesTemp = [];
 
         foreach ($listaProdutos as $prod) {
-            // debug($prod, true);
+            // debug($prod);
             $codPro  = $prod['pro_codpro'];
             $lotePro = $prod['lot_lote'];
-            $loteid = $prod['lot_id']??'';
+            $loteid  = $prod['lot_id']??'';
             $claId   = $prod['cla_id'];
             $claNome = $prod['cla_nome'];
 
@@ -513,11 +512,15 @@ class Requisicao extends BaseController
 
     function buscarProdutoReq(array $dados, string $codpro, string $lot_id): array
     {
+        // debug('Prod '.$codpro.' Lote '.$lot_id);
         foreach ($dados as $item) {
-            if ($item['pro_codpro'] == $codpro && $item['lot_id'] == $lot_id) {
-                return $item;
+            if ($item['pro_codpro'] == $codpro) {
+                if ($lot_id === '' || $item['lot_id'] == $lot_id) {
+                    return $item;
+                }
             }
         }
+
         return [];
     }
 
