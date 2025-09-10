@@ -202,7 +202,8 @@ class AteRequisicao extends BaseController
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
         $pro_ids = array_unique(array_column($produtos, 'pro_id'));
         $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $requisicao['req_deporigem']);
-        // debug($dados_est_produto, true);
+        // debug($produtos, false);
+        // debug($dados_est_produto, false);
         // Transformar $produtos em um array indexado por pro_id
         $produtosIndexado = [];
         foreach ($produtos as $param) {
@@ -244,23 +245,25 @@ class AteRequisicao extends BaseController
             $fields = $this->requisicao->defCamposProdutoAte($prod);
             $resultado[$p]['rpa_cancelada'] = $fields['rpa_cancelada'];
             $resultado[$p]['rpa_atendida'] = $fields['rpa_atendida'];
+            $resultado[$p]['rpa_cancelada_val'] = $prod['rpa_cancelada'];
+            $resultado[$p]['rpa_atendida_val'] = $prod['rpa_atendida'];
             $resultado[$p]['saldo'] = intval($resultado[$p]['rep_quantia']) - (intval($prod['rpa_cancelada']) + intval($prod['rpa_atendida']));
         }
         // $secao[1] = 'Produtos';
         $campos[0][count($campos[0])] = view('partials/pw_produtos_requisicao',['produtos' => $resultado]); // mesma estrutura do add()
 
-        $envr          = new MyCampo();
-        $envr->nome    = 'bt_envia';
-        $envr->id      = 'bt_envia';
-        $envr->i_cone  = '<div class="align-items-center py-1 text-start float-start font-weight-bold" style="">
-                            <i class="fa-solid fa-check" style="font-size: 2rem;" aria-hidden="true"></i></div>';
-        $envr->i_cone  .= '<div class="align-items-start txt-bt-manut">Finalizar Atendimento</div>';
-        $envr->place    = 'Finalizar Atendimento';
-        // $envr->funcChan = 'enviarRequisicoes(1)';
-        $envr->classep  = 'btn-success bt-manut btn-sm mb-2 float-end';
-        $this->bt_envia = $envr->crBotao();
+        // $envr          = new MyCampo();
+        // $envr->nome    = 'bt_envia';
+        // $envr->id      = 'bt_envia';
+        // $envr->i_cone  = '<div class="align-items-center py-1 text-start float-start font-weight-bold" style="">
+        //                     <i class="fa-solid fa-check" style="font-size: 2rem;" aria-hidden="true"></i></div>';
+        // $envr->i_cone  .= '<div class="align-items-start txt-bt-manut">Finalizar Atendimento</div>';
+        // $envr->place    = 'Finalizar Atendimento';
+        // // $envr->funcChan = 'enviarRequisicoes(1)';
+        // $envr->classep  = 'btn-success bt-manut btn-sm mb-2 float-end';
+        // $this->bt_envia = $envr->crBotao();
 
-        $this->data['botao'] = $this->bt_envia;
+        // $this->data['botao'] = $this->bt_envia;
 
         $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['desc_metodo']     = ' Atendimento de ';

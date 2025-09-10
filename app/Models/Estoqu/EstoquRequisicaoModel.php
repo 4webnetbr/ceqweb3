@@ -141,6 +141,21 @@ class EstoquRequisicaoModel extends Model
         return $builder->get()->getResultArray();
     }
 
+        public function getRequisicaoRep($rep_id = false)
+    {
+        $db = db_connect('dbEstoque');
+        $builder = $db->table($this->viewoutra);
+        $builder->select('*');
+        if ($rep_id) {
+            $builder->where('rep_id', $rep_id);
+        }
+        
+        $ret = $builder->get()->getResultArray();
+        // debug($this->db->getLastQuery(), false);
+        return $ret;
+    }
+
+
     public function defCampos($dados = false, $show = false)
     {
         $ret = [];

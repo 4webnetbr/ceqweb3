@@ -45,12 +45,23 @@ if(!isset($show)){
                         </tr>
                     </thead>
                     <tbody style="max-height: 45vh; overflow-y: auto;">
-                        <?php foreach ($produtos as $produto): ?>
+                        <?php foreach ($produtos as $produto): 
+                            $corlegenda = 'bg-white';
+                            $corleglote = 'border-secondary';
+                            if(intval($produto['saldo']) == 0){
+                                $corleglote = 'bg-success';
+                                if(intval($produto['rpa_cancelada_val']) == 0){
+                                    $corlegenda = 'bg-success';
+                                } else {
+                                    $corlegenda = 'bg-danger';
+                                }
+                            }
+                        ?>
                         <tr id='<?= $produto["rep_id"]?>'>
                             <?
                             if(!$show){?>
                             <td>
-                                <div id='stt_<?= $produto["rep_id"]?>' class='rounded-circle border border-1 bg-white' style='width: 25px; min-height: 25px'></div>
+                                <div id='stt_<?= $produto["rep_id"]?>' class='rounded-circle border border-1 <?=$corlegenda;?>' style='width: 25px; min-height: 25px'></div>
                             </td>
                             <?}?>
                             <td>
@@ -68,18 +79,18 @@ if(!isset($show)){
                             <td class='text-start'><?= $produto['pro_despro'] ?></td>
                             <td  id='<?= $produto['pro_codbar_fabricante'] ?>' data-id='cbFab' class='text-start'><?= $produto['fab_apeFab'] ?></td>
                             <?if(!$show){?>
-                                <td><div id='fab_<?= $produto["rep_id"]?>' class='rounded-circle border border-2 border-secondary p-1'><?= $produto['pre_cbfabricante'].$produto['pre_undfabricante'] ?></div></td>
+                                <td><div id='fab_<?= $produto["rep_id"]?>' class='rounded-circle border border-2  <?=$corleglote;?> p-1'><?= $produto['pre_cbfabricante'].$produto['pre_undfabricante'] ?></div></td>
                             <?} else {?>
                                 <td><div id='fab_<?= $produto["rep_id"]?>' class='p-1'><?= $produto['pre_cbfabricante'].$produto['pre_undfabricante'] ?></div></td>
                             <?}?>
                             <td id='<?= $produto['lot_codbar'] ?>' data-id='cbLot' class='text-start'><?= $produto['lot_lote'] ?></td>
                             <?if(!$show){?>
-                                <td><div id='lot_<?= $produto["rep_id"]?>' class='rounded-circle  border border-2 border-secondary p-1'><?= $produto['pre_cblote'].$produto['pre_undlote'] ?></div></td>
+                                <td><div id='lot_<?= $produto["rep_id"]?>' class='rounded-circle  border border-2 <?=$corleglote;?> p-1'><?= $produto['pre_cblote'].$produto['pre_undlote'] ?></div></td>
                             <?} else {?>
                                 <td><div id='lot_<?= $produto["rep_id"]?>' class='p-1'><?= $produto['pre_cblote'].$produto['pre_undlote'] ?></div></td>
                             <?}?>
                             <td><?= data_br($produto['lot_validade']) ?></td>
-                            <td><?= $produto['qtd_caixa'] ?></td>
+                            <td id='cx_<?= $produto["rep_id"]?>'><?= $produto['qtd_caixa'] ?></td>
                             <td id='qt_<?= $produto["rep_id"]?>'><?= $produto['rep_quantia'] ?></td>
                             <td id='ca_<?= $produto["rep_id"]?>'><?= $produto['rpa_cancelada'] ?></td>
                             <td id='at_<?= $produto["rep_id"]?>'><?= $produto['rpa_atendida'] ?></td>

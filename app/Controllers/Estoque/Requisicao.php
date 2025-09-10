@@ -342,6 +342,7 @@ class Requisicao extends BaseController
         $prodreq = [];
         if ($reqid != '') {
             $prodreq = $this->requisicaoproduto->getRequisicaoProdutos($reqid);
+            // debug($prodreq, true);
             $pro_ids = array_unique(array_column($prodreq, 'pro_id'));
             $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $req['depdestino']);
             // debug($dados_est_produto, true);
@@ -457,16 +458,16 @@ class Requisicao extends BaseController
             // debug($prod, true);
             $codPro  = $prod['pro_codpro'];
             $lotePro = $prod['lot_lote'];
-            $loteid = $prod['lot_id'];
+            $loteid = $prod['lot_id']??'';
             $claId   = $prod['cla_id'];
             $claNome = $prod['cla_nome'];
 
             // debug($codPro . ' - ' . $loteid);
             $produtoreq = [];
-            if($loteid){
+            // if($loteid){
                 $produtoreq = $this->buscarProdutoReq($prodreq, $codPro, $loteid);
                 // debug($produtoreq);
-            }
+            // }
             $ori = $estoqueOrigem[$codPro][$lotePro] ?? [];
             $des = $estoqueDestino[$codPro][$lotePro] ?? [];
             $pad = ($ret['deppadrao'] !== '') ? ($estoquePadrao[$codPro][$lotePro] ?? []) : [];
@@ -726,7 +727,12 @@ class Requisicao extends BaseController
             // Inserir os produtos da requisição principal
             foreach ($requisicoes as $item) {
                 $produto = $this->produtos->getProdutoCod($item['cod_erp']);
-                $lote = $this->lote->getLoteCodproLote($item['cod_erp'], $item['lote']);
+                if(trim($item['lote']) != 'Sem Lote'){
+                    $lote = $this->lote->getLoteCodproLote($item['cod_erp'], $item['lote']);
+                } else {
+                    $lote[0]['lot_id'] = null;
+                }
+
 
                 if (!$produto || !$lote) {
                     $ret['erro'] = true;

@@ -358,15 +358,17 @@ class ProdutProdutoModel extends Model
         $builder->select('*');
         if ($deposito) {
             $builder->where('pre_codDep', $deposito);
+            $builder->orWhere('prc_deposito', $deposito);
         }
         if ($produto) {
             $builder->where('pro_id', $produto);
         }
 
         $builder->orderBy('cla_ordem, pro_despro, pro_codpro, lot_validade');
-        // $sql = $builder->getCompiledSelect();
-        // debug($sql);
-        return $builder->get()->getResultArray();
+        $ret = $builder->get()->getResultArray();
+        // $sql = $db->getLastQuery();
+        // debug($sql, TRUE);
+        return $ret;
     }
 
 

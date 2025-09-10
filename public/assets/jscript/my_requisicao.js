@@ -485,7 +485,7 @@ async function carregarProdutos(url, aba, obj) {
     jQuery(".requisicao").on("change", function () {
       const input = jQuery(this);
       if (input.attr("data-ignore-validation")) {
-        input.removeattr("data-ignore-validation");
+        input.removeAttr("data-ignore-validation");
         return;
       }
 

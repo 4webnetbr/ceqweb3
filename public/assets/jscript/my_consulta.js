@@ -320,64 +320,92 @@ function validaCodBar(obj) {
       // Extrai o ID base (assumindo que o codbar está na mesma linha do stt_169)
       var idBase = linha.id;
 
+      let saldoatual = parseInt(jQuery("#sl_" + idBase).text());
       var tipo = tdCodbar[0].dataset.id;
+      var qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
+      var qtde = jQuery("#qt_" + idBase).text();
+      var canc = jQuery("#rpa_cancelada_" + idBase).val();
 
       if (tipo == "cbFab") {
         // SCANEOU CODIGO DO FABRICANTE
         var ctafab = jQuery("#ctafb_" + idBase).val();
         ctafab++;
         jQuery("#ctafb_" + idBase).val(ctafab);
+
+        var lf = jQuery("#fab_" + idBase).text();
+        var ctafab = jQuery("#ctafb_" + idBase).val();
+        var fabok = false;
+        if (lf == "SN") {
+          if (ctafab == qtcaixa) {
+            jQuery("#fab_" + idBase).removeClass("border-secondary");
+            jQuery("#fab_" + idBase).removeClass("border-warning bg-warning");
+            jQuery("#fab_" + idBase).addClass("border-success bg-success");
+            fabok = true;
+          } else {
+            fabok = false;
+            jQuery("#fab_" + idBase).removeClass("border-secondary");
+            jQuery("#fab_" + idBase).addClass("border-warning bg-warning");
+          }
+        } else if (lf == "SS") {
+          if (ctafab == qtde) {
+            fabok = true;
+            jQuery("#fab_" + idBase).removeClass("border-secondary");
+            jQuery("#fab_" + idBase).removeClass("border-warning bg-warning");
+            jQuery("#fab_" + idBase).addClass("border-success bg-success");
+          } else {
+            fabok = false;
+            jQuery("#fab_" + idBase).removeClass("border-secondary");
+            jQuery("#fab_" + idBase).addClass("border-warning bg-warning");
+          }
+        }
       } else if (tipo == "cbLot") {
         // SCANEOU CÓDIGO DO LOTE
+        if (saldoatual == 0) {
+          boxAlert(32, false, "", true, 1, false);
+          obj.value = "";
+          obj.focus;
+          return;
+        } else {
+          var ctalot = jQuery("#ctalt_" + idBase).val();
+          ctalot++;
+          jQuery("#ctalt_" + idBase).val(ctalot);
+        }
+        var lp = jQuery("#lot_" + idBase).text();
         var ctalot = jQuery("#ctalt_" + idBase).val();
-        ctalot++;
-        jQuery("#ctalt_" + idBase).val(ctalot);
-        jQuery("#rpa_atendida_" + idBase).val(ctalot);
-      }
-      var qtde = jQuery("#qt_" + idBase).text();
-      var canc = jQuery("#rpa_cancelada_" + idBase).val();
-
-      var lf = jQuery("#fab_" + idBase).text();
-      var ctafab = jQuery("#ctafb_" + idBase).val();
-      var fabok = false;
-      if (lf == "SN" && ctafab > 0) {
-        jQuery("#fab_" + idBase).removeClass("border-secondary");
-        jQuery("#fab_" + idBase).addClass("border-success bg-success");
-        fabok = true;
-      } else if (lf == "SS") {
-        if (ctafab == qtde) {
-          fabok = true;
-          jQuery("#fab_" + idBase).removeClass("border-secondary");
-          jQuery("#fab_" + idBase).removeClass("border-warning bg-warning");
-          jQuery("#fab_" + idBase).addClass("border-success bg-success");
-        } else {
-          fabok = false;
-          jQuery("#fab_" + idBase).removeClass("border-secondary");
-          jQuery("#fab_" + idBase).addClass("border-warning bg-warning");
+        lotok = false;
+        if (lp == "SN") {
+          if (ctalot == qtcaixa) {
+            jQuery("#lot_" + idBase).removeClass("border-secondary");
+            jQuery("#lot_" + idBase).removeClass("border-warning bg-warning");
+            jQuery("#lot_" + idBase).addClass("border-success bg-success");
+            qtatendida = saldoatual;
+            jQuery("#rpa_atendida_" + idBase).val(qtatendida);
+            jQuery("#rpa_cancelada_" + idBase).prop("disabled", true);
+            jQuery("#rpa_cancelada_" + idBase).prop("readonly", true);
+            qtde = qtatendida;
+            saldo = 0;
+            jQuery("#sl_" + idBase).text(saldo);
+            lotok = true;
+          } else {
+            lotok = false;
+            jQuery("#lot_" + idBase).removeClass("border-secondary");
+            jQuery("#lot_" + idBase).addClass("border-warning bg-warning");
+          }
+        } else if (lp == "SS") {
+          if (ctalot == qtde) {
+            lotok = true;
+            jQuery("#lot_" + idBase).removeClass("border-secondary");
+            jQuery("#lot_" + idBase).removeClass("border-warning bg-warning");
+            jQuery("#lot_" + idBase).addClass("border-success bg-success");
+          } else {
+            lotok = false;
+            jQuery("#lot_" + idBase).removeClass("border-secondary");
+            jQuery("#lot_" + idBase).addClass("border-warning bg-warning");
+          }
+          saldo = qtde - canc - ctalot;
+          jQuery("#sl_" + idBase).text(saldo);
         }
       }
-      var lp = jQuery("#lot_" + idBase).text();
-      var ctalot = jQuery("#ctalt_" + idBase).val();
-      lotok = false;
-      if (lp == "SN" && ctalot > 0) {
-        jQuery("#lot_" + idBase).removeClass("border-secondary");
-        jQuery("#lot_" + idBase).addClass("border-success bg-success");
-        lotok = true;
-      } else if (lp == "SS") {
-        if (ctalot == qtde) {
-          lotok = true;
-          jQuery("#lot_" + idBase).removeClass("border-secondary");
-          jQuery("#lot_" + idBase).removeClass("border-warning bg-warning");
-          jQuery("#lot_" + idBase).addClass("border-success bg-success");
-        } else {
-          lotok = false;
-          jQuery("#lot_" + idBase).removeClass("border-secondary");
-          jQuery("#lot_" + idBase).addClass("border-warning bg-warning");
-        }
-      }
-
-      saldo = qtde - canc - ctalot;
-      jQuery("#sl_" + idBase).text(saldo);
 
       fundo = "";
       if ((ctafab > 0 || ctalot > 0) && (!lotok || !fabok)) {
@@ -393,7 +421,7 @@ function validaCodBar(obj) {
       jQuery("#stt_" + idBase).removeClass("bg-danger");
       jQuery("#stt_" + idBase).addClass(fundo);
     } else {
-      boxAlert(10, false, "", true, 1, false);
+      boxAlert(10, true);
     }
   }
   obj.value = "";
