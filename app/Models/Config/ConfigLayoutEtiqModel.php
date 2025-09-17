@@ -216,7 +216,7 @@ class ConfigLayoutEtiqModel extends Model
         $altura->obrigatorio = true;
         $altura->leitura  = $show;
         $altura->maxLength  = 3;
-        $altura->largura  = 50;
+        $altura->largura  = 20;
         $ret['let_altura'] = $altura->crInput();
 
         $largura           =  new MyCampo('cfg_layout_etiqueta', 'let_largura');
@@ -224,7 +224,7 @@ class ConfigLayoutEtiqModel extends Model
         $largura->obrigatorio = true;
         $largura->leitura  = $show;
         $largura->maxLength  = 3;
-        $largura->largura  = 50;
+        $largura->largura  = 20;
         $ret['let_largura'] = $largura->crInput();
 
         $colunas          =  new MyCampo('cfg_layout_etiqueta', 'let_colunas');
@@ -232,7 +232,7 @@ class ConfigLayoutEtiqModel extends Model
         $colunas->obrigatorio = true;
         $colunas->leitura  = $show;
         $colunas->maxLength  = 2;
-        $colunas->largura  = 50;
+        $colunas->largura  = 20;
         $ret['let_colunas'] = $colunas->crInput();
 
         $let_linhas          =  new MyCampo('cfg_layout_etiqueta', 'let_linhas');
@@ -240,7 +240,7 @@ class ConfigLayoutEtiqModel extends Model
         $let_linhas->obrigatorio = true;
         $let_linhas->leitura  = $show;
         $let_linhas->maxLength  = 2;
-        $let_linhas->largura  = 50;
+        $let_linhas->largura  = 20;
         $ret['let_linhas'] = $let_linhas->crInput();
 
         $margemDireita          =  new MyCampo('cfg_layout_etiqueta', 'let_marg_direita');
@@ -248,7 +248,7 @@ class ConfigLayoutEtiqModel extends Model
         $margemDireita->obrigatorio = true;
         $margemDireita->leitura  = $show;
         $margemDireita->maxLength  = 2;
-        $margemDireita->largura  = 50;
+        $margemDireita->largura  = 20;
         $ret['let_marg_direita'] = $margemDireita->crInput();
 
         $margemEsquerda          =  new MyCampo('cfg_layout_etiqueta', 'let_marg_esquerda');
@@ -256,7 +256,7 @@ class ConfigLayoutEtiqModel extends Model
         $margemEsquerda->obrigatorio = true;
         $margemEsquerda->leitura  = $show;
         $margemEsquerda->maxLength  = 2;
-        $margemEsquerda->largura  = 50;
+        $margemEsquerda->largura  = 20;
         $ret['let_marg_esquerda'] = $margemEsquerda->crInput();
 
         $margemSuperior          =  new MyCampo('cfg_layout_etiqueta', 'let_marg_superior');
@@ -264,7 +264,7 @@ class ConfigLayoutEtiqModel extends Model
         $margemSuperior->obrigatorio = true;
         $margemSuperior->leitura  = $show;
         $margemSuperior->maxLength  = 2;
-        $margemSuperior->largura  = 50;
+        $margemSuperior->largura  = 20;
         $ret['let_marg_superior'] = $margemSuperior->crInput();
 
         $margemInferior          =  new MyCampo('cfg_layout_etiqueta', 'let_marg_inferior');
@@ -272,7 +272,7 @@ class ConfigLayoutEtiqModel extends Model
         $margemInferior->obrigatorio = true;
         $margemInferior->leitura  = $show;
         $margemInferior->maxLength =  2;
-        $margemInferior->largura =  50;
+        $margemInferior->largura =  20;
         $ret['let_marg_inferior'] = $margemInferior->crInput();
 
         $let_distancia          =  new MyCampo('cfg_layout_etiqueta', 'let_distancia_h');
@@ -280,7 +280,7 @@ class ConfigLayoutEtiqModel extends Model
         $let_distancia->obrigatorio = true;
         $let_distancia->leitura  = $show;
         $let_distancia->maxLength  = 2;
-        $let_distancia->largura  = 50;
+        $let_distancia->largura  = 20;
         $ret['let_distancia_h'] = $let_distancia->crInput();
 
         $let_distancia          =  new MyCampo('cfg_layout_etiqueta', 'let_distancia_v');
@@ -288,7 +288,7 @@ class ConfigLayoutEtiqModel extends Model
         $let_distancia->obrigatorio = true;
         $let_distancia->leitura  = $show;
         $let_distancia->maxLength  = 2;
-        $let_distancia->largura  = 50;
+        $let_distancia->largura  = 20;
         $ret['let_distancia_v'] = $let_distancia->crInput();
 
         $opcat['A'] = 'Ativo';

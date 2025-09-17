@@ -338,8 +338,9 @@ class EstoquRequisicaoModel extends Model
         $canc->classep        = 'mb2';
         $canc->minimo           = 0;
         $canc->maximo           = $dados['rep_quantia'];
-        $canc->dispForm       = 'col-1';
+        $canc->dispForm       = 'col-12';
         $canc->funcChan       = 'acertaSaldoReq(this)';
+        $canc->largura        = 30;
         $ret['rpa_cancelada']      = $canc->crInput();
 
         $aten                 = new MyCampo('est_requisicao_produto_atendimento', 'rpa_atendida', false);
@@ -354,11 +355,12 @@ class EstoquRequisicaoModel extends Model
             $aten->leitura        = true;
         }
         $aten->classep        = 'mb2';
-        $aten->dispForm       = 'col-1';
+        $aten->dispForm       = 'col-12';
         $aten->minimo           = 0;
         $aten->maximo           = $dados['rep_quantia'];
         $aten->funcChan       = 'acertaSaldoReq(this)';
-        $ret['rpa_atendida']      = $aten->crInput();
+        $aten->largura        = 30;
+        $ret['rpa_atendida']      = $aten->crInput(); 
         return $ret;
     }
 }

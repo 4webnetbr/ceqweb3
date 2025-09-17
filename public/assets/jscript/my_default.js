@@ -1475,7 +1475,7 @@ function verificaNotificacao() {
 
         jQuery("#show_notifica").html("");
         jQuery("#badgenotif").html("");
-        // jQuery('#show_notifica').removeClass('show');
+        jQuery("#show_notifica").removeClass("show");
       }
     }
   }

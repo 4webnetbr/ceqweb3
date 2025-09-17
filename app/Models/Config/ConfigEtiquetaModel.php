@@ -186,7 +186,8 @@ class ConfigEtiquetaModel extends Model
         $nome->valor            = (isset($dados['etq_nome'])) ? $dados['etq_nome'] : '';
         $nome->obrigatorio      = true;
         $nome->leitura          = $show;
-        $nome->dispForm         = "linha";
+        $nome->dispForm         = "col-12";
+        $nome->largura          = 50;
         $ret['etq_nome']        = $nome->crInput();
 
         $opcat['A'] = 'Ativo';
@@ -198,6 +199,7 @@ class ConfigEtiquetaModel extends Model
         $ativ->opcoes           = $opcat;
         $ativ->leitura          = $show;
         $ativ->dispForm         = "col-12";
+        $ativ->largura          = 50;
         $ret['etq_ativo']       = $ativ->cr2opcoes();
 
         $chave = false;
@@ -211,7 +213,8 @@ class ConfigEtiquetaModel extends Model
         $let_id->selecionado    = $let_id->valor;
         $let_id->opcoes         = $opc_let;
         $let_id->leitura        = $show;
-        $let_id->dispForm       = "linha";
+        $let_id->largura        = 50;
+        $let_id->dispForm       = "col-12";
         $ret['let_id'] = $let_id->crSelect();
 
 
@@ -228,6 +231,7 @@ class ConfigEtiquetaModel extends Model
         $mod_id->opcoes         = $opc_mod;
         $mod_id->leitura        = $show;
         $mod_id->dispForm       = "col-5";
+        $mod_id->largura        = 50;
         $ret['mod_id']          = $mod_id->crSelect();
 
         $chave = false;
@@ -243,6 +247,7 @@ class ConfigEtiquetaModel extends Model
         $tel_id->pai            = 'mod_id';
         $tel_id->opcoes         = $opc_tel;
         $tel_id->dispForm       = "col-5";
+        $tel_id->largura        = 50;
         $ret['tel_id']          = $tel_id->crDepende();
         return $ret;
     }

@@ -320,13 +320,13 @@ class MicrobAnaliseModel extends Model
         $aqtd->valor        = $dados['ana_qtde'] ?? 0;
         $aqtd->maximo       = 99999;
         $aqtd->leitura      = $show;
-        $aqtd->largura      = 40;
+        $aqtd->largura      = 20;
         $aqtd->tamanho      = 40;
         $ret['ana_qtde']    = $aqtd->crInput();
 
         $aqtm               =  new MyCampo('pro_mic_analise', 'ana_qtde_micro');
         $aqtm->valor        = ($dados['ana_qtde_micro'] != '') ? $dados['ana_qtde_micro'] : 0;
-        $aqtm->largura      = 40;
+        $aqtm->largura      = 20;
         $aqtm->tamanho      = 40;
         $aqtm->minimo       = 1;
         $aqtm->maximo       = 99;

@@ -970,10 +970,10 @@ class Analise extends BaseController
 
 
             // DESCOMENTAR AQUI QDO FOR PRA  MOVIMENTAR EFETIVAMENTE
-            // $soaptrf = new SoapSapiens();
-            // $movimenta = $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
-            // // debug($movimenta, true);
-            // return $movimenta;
+            $soaptrf = new SoapSapiens();
+            $movimenta = $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
+            // debug($movimenta, true);
+            return $movimenta;
         }
     }
 
