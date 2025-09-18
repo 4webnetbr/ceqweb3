@@ -530,7 +530,7 @@ function salvaPagina() {
   }
 
   dados[usuario] = controller;
-  setCookie(cookieNome, JSON.stringify(dados), 7);
+  setCookie(cookieNome, controller, 7);
 }
 /**
  * retorna_url

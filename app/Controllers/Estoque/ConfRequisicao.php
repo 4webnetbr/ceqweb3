@@ -171,7 +171,7 @@ class ConfRequisicao extends BaseController
      * @param mixed $id 
      * @return void
      */
-    public function atende($id, $show = false)
+    public function confere($id, $show = false)
     {
         $requisicao = $this->requisicao->getRequisicao($id)[0];
         
@@ -233,29 +233,19 @@ class ConfRequisicao extends BaseController
                 $prod['pre_cblote'] = 'N';
                 $prod['pre_undlote'] = 'N';
             }
-            $fields = $this->requisicao->defCamposProdutoAte($prod);
-            $resultado[$p]['rpa_cancelada'] = $fields['rpa_cancelada'];
-            $resultado[$p]['rpa_atendida'] = $fields['rpa_atendida'];
-            $resultado[$p]['saldo'] = $resultado[$p]['rep_quantia'] - ($resultado[$p]['rpa_cancelada'] + $resultado[$p]['rpa_atendida']);
+            // $fields = $this->requisicao->defCamposProdutoAte($prod);
+            $resultado[$p]['rpa_cancelada'] = $prod['rpa_cancelada'];
+            $resultado[$p]['rpa_atendida'] = $prod['rpa_atendida'];
+            $resultado[$p]['rpa_cancelada_val'] = $prod['rpa_cancelada'];
+            $resultado[$p]['rpa_atendida_val'] = $prod['rpa_atendida'];
+            $resultado[$p]['saldo'] = intval($resultado[$p]['rep_quantia']) - (intval($resultado[$p]['rpa_cancelada']) + intval($resultado[$p]['rpa_atendida']));
         }
         // $secao[1] = 'Produtos';
         $campos[0][count($campos[0])] = view('partials/pw_produtos_requisicao',['produtos' => $resultado]); // mesma estrutura do add()
 
-        $envr          = new MyCampo();
-        $envr->nome    = 'bt_envia';
-        $envr->id      = 'bt_envia';
-        $envr->i_cone  = '<div class="align-items-center py-1 text-start float-start font-weight-bold" style="">
-                            <i class="fa-solid fa-check" style="font-size: 2rem;" aria-hidden="true"></i></div>';
-        $envr->i_cone  .= '<div class="align-items-start txt-bt-manut">Finalizar Atendimento</div>';
-        $envr->place    = 'Finalizar Atendimento';
-        // $envr->funcChan = 'enviarRequisicoes(1)';
-        $envr->classep  = 'btn-success bt-manut btn-sm mb-2 float-end';
-        $this->bt_envia = $envr->crBotao();
-
-        $this->data['botao'] = $this->bt_envia;
 
         $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
-        $this->data['desc_metodo']     = ' Atendimento de ';
+        $this->data['desc_metodo']     = ' Conferência de ';
         $this->data['secoes']    = $secao;
         $this->data['campos']    = $campos;
         $this->data['destino']   = 'store'; // ou 'update' se você for criar

@@ -167,10 +167,9 @@ class Login extends BaseController
                 if ($usuarioId) {
                     $cookieNome = 'pguser_' . $usuarioId;
 
-                    if (isset($_COOKIE[$cookieNome])) {
-                        $json = $_COOKIE[$cookieNome];
-                        $dados = json_decode($json, true); // true = array associativo
-                        $dash = $dados[$usuarioId];
+                    if ($this->request->getCookie($cookieNome)) {
+                        $usuariocook = $this->request->getCookie($cookieNome);
+                        $dash = $usuariocook;
                     }
                 }
 
