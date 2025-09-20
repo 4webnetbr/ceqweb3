@@ -2,7 +2,7 @@
 <?=$this->section('menu');?>
 <?php
 // debug($it_menu);
-  $url_sair = base_url('/login');
+  $url_sair = base_url('/');
   $avatar = session()->get('usu_avatar'); 
   $nomeus = session()->get('usu_nome'); 
   $cont_accord = 1;
@@ -33,7 +33,7 @@
       echo "<hr>";
       echo anchor('SetUsuario/edit_senha', 'Alterar Senha');
       echo "<hr>";
-      echo anchor(base_url('/login'), '<i class="fas fa-sign-out-alt"></i> - Sair');
+      echo anchor(base_url('/'), '<i class="fas fa-sign-out-alt"></i> - Sair');
     ?>
   </div>
 </div>

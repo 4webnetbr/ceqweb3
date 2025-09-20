@@ -13,7 +13,7 @@ $routes = Services::routes();
 $routes->setDefaultNamespace('App\\Controllers');
 $routes->setDefaultController('login');
 $routes->setDefaultMethod('index');
-$routes->setTranslateURIDashes(true);
+$routes->setTranslateURIDashes(false);
 $routes->set404Override(function () {
     log_message('critical', 'Rota 404 chamada: {uri}', ['uri' => current_url()]);
     return view('vw_semacesso', [
@@ -24,10 +24,10 @@ $routes->set404Override(function () {
         Informe o Problema ao Administrador do Sistema!",
     ]);
 });
-$routes->setAutoRoute(false);
+$routes->setAutoRoute(true);
 
 // Rotas Padrão
-$routes->get('/', 'login::index', ['as' => 'login_index']);
+$routes->get('/', 'login::index', ['as' => 'login']);
 $routes->get('home_config', 'Config\\Home_config::index', ['as' => 'home_config_index']);
 $routes->get('WorkAnalise', 'WorkAnalise::index', ['as' => 'workanalise_index']);
 $routes->get('teste-handler', 'Home::testarEmailHandler', ['as' => 'home_testarEmailHandler']);

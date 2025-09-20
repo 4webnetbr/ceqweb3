@@ -296,7 +296,7 @@ jQuery(document).ready(function () {
   //     url = 'buscas/verSessao';
   //     executaAjax(url, 'json');
   //     if (!retornoAjax.sessao) {
-  //         redireciona('/login');
+  //         redireciona('/');
   //     }
   // }, 120000);
 });

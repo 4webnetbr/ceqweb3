@@ -1,6 +1,6 @@
 jQuery(document).ajaxError(function (event, xhr, settings) {
   if (xhr.status === 303) {
-    urllogin = window.location.origin + "/login";
+    urllogin = window.location.origin + "/";
     boxAlert(23, false, urllogin, false, 1, false, "Sessão Expirada");
   }
 }); // carregamentos_iniciais();

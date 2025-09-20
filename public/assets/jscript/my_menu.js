@@ -230,10 +230,10 @@ function verificaSessao() {
     success: function (response) {
       if (response.status === "sessao_expirada") {
         // Sessão expirada, redireciona para o login
-        urllogin = window.location.origin + "/login";
+        urllogin = window.location.origin + "/";
         clearInterval(intervalId);
         boxAlert(23, false, urllogin, false, 1, false, "Sessão Expirada");
-        // window.location.href = "/login"; // Redireciona para a página de login
+        // window.location.href = "/"; // Redireciona para a página de login
       } else {
         // Sessão ainda válida, nada a fazer
         console.log("Sessão válida");

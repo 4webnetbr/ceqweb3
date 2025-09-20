@@ -3,7 +3,7 @@
 
 echo $this->section('menu');
 
-$url_sair = base_url('/login');
+$url_sair = base_url('/');
 $avatar = session()->get('usu_avatar');
 $nomeus = session()->get('usu_nome');
 $idusua = session()->get('usu_id'); 
@@ -45,7 +45,7 @@ if ($avatar != '') {
     <?
         echo anchor('CfgUsuario/edit_senha/' . session()->usu_id, 'Editar Meus Dados', 'class="form-control px-1 btn btn-outline-secondary w-100"');
         echo "<hr>";
-        echo anchor(base_url('/login'), '<div class="icon-menu float-start me-2">
+        echo anchor(base_url('/'), '<div class="icon-menu float-start me-2">
                     <i class="fas fa-sign-out-alt" aria-hidden="true"></i></div>
                     <div class="text-start txt-bt-manut">
                       Sair

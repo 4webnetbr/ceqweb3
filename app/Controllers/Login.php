@@ -122,12 +122,12 @@ class Login extends BaseController
         $log_config =  $this->usuario_config->usuLogonConfig($data);
         if (!$log_config) {
             $session->setFlashdata('msg', 'Usuário não Encontrado');
-            return redirect()->to('/login');
+            return redirect()->to('/');
         } else {
             $conf_senha = (md5($senha) == trim($log_config[0]['usu_senha']));
             if (!$conf_senha) {
                 $session->setFlashdata('msg', 'Senha não corresponde ao Usuário!');
-                return redirect()->to('/login');
+                return redirect()->to('/');
             } else {
                 $img_name       = 'usu_' . $log_config[0]['usu_id'] . '.jpg';
                 $sem_avat       = base_url('assets/images/sem_avatar.png');
