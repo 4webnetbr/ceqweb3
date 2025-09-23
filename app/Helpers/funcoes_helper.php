@@ -802,3 +802,13 @@ function isValidDate($date, $format = 'Y-m-d') {
     $d = DateTime::createFromFormat($format, $date);
     return $d && $d->format($format) === $date;
 }
+
+/**
+ * funcExemplo
+ * é só um exemplo de função
+ * @param string $nomeTela
+ * @return array
+ */
+function funcExemplo(string $nomeTela){
+
+};;
