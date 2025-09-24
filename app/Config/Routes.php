@@ -11,7 +11,7 @@ use CodeIgniter\Router\RouteCollection;
 $routes = Services::routes();
 
 $routes->setDefaultNamespace('App\\Controllers');
-$routes->setDefaultController('login');
+$routes->setDefaultController('Login');
 $routes->setDefaultMethod('index');
 $routes->setTranslateURIDashes(false);
 $routes->set404Override(function () {
@@ -24,10 +24,12 @@ $routes->set404Override(function () {
         Informe o Problema ao Administrador do Sistema!",
     ]);
 });
-$routes->setAutoRoute(true);
+$routes->setAutoRoute(false);
 
 // Rotas Padrão
-$routes->get('/', 'login::index', ['as' => 'login']);
+$routes->get('/', 'Login::index', ['as' => 'login']);
+$routes->get('/login', 'Login::index', ['as' => 'loginindex']);
+$routes->match(['get', 'post'], '/login/(:any)', 'Login::$1', ['as' => 'loginlog']);
 $routes->get('home_config', 'Config\\Home_config::index', ['as' => 'home_config_index']);
 $routes->get('WorkAnalise', 'WorkAnalise::index', ['as' => 'workanalise_index']);
 $routes->get('teste-handler', 'Home::testarEmailHandler', ['as' => 'home_testarEmailHandler']);

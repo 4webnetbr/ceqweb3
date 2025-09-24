@@ -3,7 +3,7 @@
 
 echo $this->section('menu');
 
-$url_sair = base_url('/');
+$url_sair = base_url('/login');
 $avatar = session()->get('usu_avatar');
 $nomeus = session()->get('usu_nome');
 $idusua = session()->get('usu_id'); 

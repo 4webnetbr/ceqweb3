@@ -79,7 +79,7 @@ class ConfRequisicao extends BaseController
     {
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
-        $dados_requis = $this->requisicao->getRequisicaoLista(false, [18]);
+        $dados_requis = $this->requisicao->getRequisicaoLista(false, [18,21]);
 
         $base_url = base_url($this->data['controler']);
         foreach ($dados_requis as &$req) {
@@ -162,7 +162,7 @@ class ConfRequisicao extends BaseController
     }
 
     public function edit($id, $show = false){
-        $this->atende($id, $show = false);
+        $this->confere($id, $show = true);
     }
     /**
      * Atenndimento
@@ -171,7 +171,7 @@ class ConfRequisicao extends BaseController
      * @param mixed $id 
      * @return void
      */
-    public function confere($id, $show = false)
+    public function confere($id, $show = true)
     {
         $requisicao = $this->requisicao->getRequisicao($id)[0];
         
@@ -184,7 +184,7 @@ class ConfRequisicao extends BaseController
         $fields = $this->requisicao->defCampos($requisicao, $show);
         // debug($fields, true);
         $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['req_id'];
+        $campos[0][0] = $fields['req_id']; 
         $campos[0][count($campos[0])] = $fields['req_data'];
         $campos[0][count($campos[0])] = $fields['req_dataentrega'];
         $campos[0][count($campos[0])] = $fields['tmo_id'];
@@ -192,6 +192,11 @@ class ConfRequisicao extends BaseController
         $campos[0][count($campos[0])] = $fields['lot_codbar'];
         
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
+        // debug($produtos, true);
+        $filtrado = array_filter($produtos, function ($item) {
+            return ($item['rpa_atendida'] + $item['rpa_cancelada']) == $item['rep_quantia'];
+        });
+        $produtos = $filtrado;
         $pro_ids = array_unique(array_column($produtos, 'pro_id'));
         $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $requisicao['req_deporigem']);
         // debug($dados_est_produto, true);

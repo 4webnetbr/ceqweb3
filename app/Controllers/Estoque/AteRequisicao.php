@@ -179,7 +179,7 @@ class AteRequisicao extends BaseController
      * @param mixed $id 
      * @return void
      */
-    public function atende($id, $show = false)
+    public function atende($id, $show = true)
     {
         $requisicao = $this->requisicao->getRequisicao($id)[0];
         

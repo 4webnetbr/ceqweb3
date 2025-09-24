@@ -1345,13 +1345,11 @@ class MyCampo
         if (! isset($this->size) || $this->size == '') {
             $this->size = -1;
         }
-        $this->propriedades();
-        $this->field['placeholder'] = str_replace('Informe', 'Selecione', $this->field['placeholder']);
+            $this->propriedades();
+            $this->field['placeholder'] = str_replace('Informe', 'Selecione', $this->field['placeholder']);
+            $campo = form_dropdown($this->field, $this->opcoes, $this->selecionado);
 
-        $campo = form_dropdown($this->field, $this->opcoes, $this->selecionado);
-
-        $resp .= $this->fmtDisplay($campo);
-
+            $resp .= $this->fmtDisplay($campo);
         return $resp;
     }
 

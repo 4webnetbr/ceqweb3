@@ -940,3 +940,7 @@ div {
 tr td {
   vertical-align: middle;
 }
+
+.dropdown-toggle.disabled, .dropdown.bootstrap-select.disabled{
+    background-color: var(--bs-secondary-bg);
+}

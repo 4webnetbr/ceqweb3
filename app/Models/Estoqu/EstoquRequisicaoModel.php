@@ -196,6 +196,7 @@ class EstoquRequisicaoModel extends Model
         $tmov->selecionado    = [$tmov->valor];
         $tmov->opcoes         = $opc_tipomov;
         $tmov->largura        = 50;
+        $tmov->leitura        = $show;
         $tmov->funcChan       = "buscaTipoMovimentacao(this,'req_deporigem','req_depdestino')";
         $tmov->dispForm       = 'col-6';
         $ret['tmo_id'] = $tmov->crSelect();
