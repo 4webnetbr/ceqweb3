@@ -32,8 +32,9 @@ $routes->get('/login', 'Login::index', ['as' => 'loginindex']);
 $routes->match(['get', 'post'], '/login/(:any)', 'Login::$1', ['as' => 'loginlog']);
 $routes->get('home_config', 'Config\\Home_config::index', ['as' => 'home_config_index']);
 $routes->get('WorkAnalise', 'WorkAnalise::index', ['as' => 'workanalise_index']);
-$routes->get('teste-handler', 'Home::testarEmailHandler', ['as' => 'home_testarEmailHandler']);
-$routes->get('teste-email', 'Home::testeEmailManual', ['as' => 'home_testeEmailManual']);
+
+$routes->match(['get', 'post'], 'buscas/(:any)/(:any)', 'Buscas::$1/$2', ['as' => 'buscas_two_params']);
+$routes->match(['get', 'post'], 'buscas/(:any)', 'Buscas::$1', ['as' => 'buscas_one_params']);
 
 $routes->match(['get', 'post'], 'Notifica/(:any)', 'Notifica::$1', ['as' => 'notifica_verNotifica_match']);
 // Grupo: Utils

@@ -79,8 +79,33 @@ class Requisicao extends BaseController
     {
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
-        $dados_requis = $this->requisicao->getRequisicaoLista(false, [6, 4]);
+        $dados_requis = $this->requisicao->getRequisicaoLista(false);
         // debug($dados_requis, true);
+        $base_url = base_url($this->data['controler']);
+        foreach ($dados_requis as &$req) {
+            if ($req['req_id']) {
+                // Concatenar o URL de forma mais eficiente
+                $url_cop = $base_url .'/copy/' . $req['req_id'];
+                $url_imp = $base_url .'/imprimir/' . $req['req_id'];
+
+                if(trim($req['stt_edicao']) == 'N')
+                // se não pode editar, pode copiar e imprimir
+                {
+                    $req['acao_person'] = [
+                        "<button class='btn btn-outline-success btn-sm border-0 mx-0 fs-0' 
+                        data-mdb-toggle='tooltip' data-mdb-placement='top' 
+                        title='Copiar Requisição' onclick='redireciona(\"$url_cop\",event)'>
+                        <i class='fas fa-copy'></i></button>",
+                        "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0' 
+                        data-mdb-toggle='tooltip' data-mdb-placement='top' 
+                        title='Imprimir Requisição' onclick='openPDFModal(\"$url_imp\",\"Imprimir Requisição\")'>
+                        <i class='fa-solid fa-print'></i></button>"
+                    ];
+                }
+
+                // Gerar a ação do botão
+            }
+        }
         $requis = [
             'data' => montaListaColunas($this->data, 'req_id', $dados_requis, $campos[1]),
         ];
@@ -136,6 +161,75 @@ class Requisicao extends BaseController
         $this->data['scripts']  = 'my_requisicao';
 
         $this->data['script']   = "<script>mostraOcultaCampo('req_consdiaanterior', 'N', 'req_medconsumodias,req_meddias');mudaCheck2opcoes('req_consdiaanterior', 'req_medconsumodias');atualizarEstadoBotaoSalvar();</script>";
+
+        echo view('vw_edicao', $this->data);
+    }
+
+    /**
+     * Copiar Etiquetas
+     * copy
+     *
+     * @param mixed $id 
+     * @return void
+     */
+    public function copy($id)
+    {
+        $requisicao = $this->requisicao->find($id);
+        // unset($requisicao['req_id']);
+
+        if (!$requisicao) {
+            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
+            return redirect()->to(site_url($this->data['controler']));
+        }
+        $requisicao['req_data'] = date('Y-m-d');
+
+        // Montar campos como no add()
+        $fields = $this->requisicao->defCampos($requisicao);
+        $secao[0] = 'Dados Gerais';
+        $campos[0][0] = $fields['req_id'];
+        $campos[0][count($campos[0])] = $fields['req_data'];
+        $campos[0][count($campos[0])] = $fields['req_dataentrega'];
+        $campos[0][count($campos[0])] = $fields['tmo_id'];
+        $campos[0][count($campos[0])] = $fields['req_repetedias'];
+        $campos[0][count($campos[0])] = $fields['req_deporigem'];
+        $campos[0][count($campos[0])] = $fields['req_depdestino'];
+        $campos[0][count($campos[0])] = $fields['req_consdiaanterior'];
+        $campos[0][count($campos[0])] = $fields['req_medconsumodias'];
+        $campos[0][count($campos[0])] = $fields['req_meddias'];
+        $campos[0][count($campos[0])] = $fields['req_percseguranca'];
+        $campos[0][count($campos[0])] = $fields['pro_id'];
+        $campos[0][count($campos[0])] = $fields['req_observacao'];
+        $campos[0][count($campos[0])] = $fields['bt_carregar'];
+
+        $secao[1] = 'Produtos';
+        $campos[1][0] = ''; // mesma estrutura do add()
+
+        $envr          = new MyCampo();
+        $envr->nome    = 'bt_envia';
+        $envr->id      = 'bt_envia';
+        $envr->i_cone  = '<div class="align-items-center py-1 text-start float-start font-weight-bold" style="">
+                            <i class="fa-regular fa-paper-plane" style="font-size: 2rem;" aria-hidden="true"></i></div>';
+        $envr->i_cone  .= '<div class="align-items-start txt-bt-manut">Enviar Requisição</div>';
+        $envr->place    = 'Enviar Requisição';
+        $envr->funcChan = 'enviarRequisicoes(1)';
+        $envr->classep  = 'btn-success bt-manut btn-sm mb-2 float-end';
+        $this->bt_envia = $envr->crBotao();
+
+        $this->data['botao'] = $this->bt_envia;
+
+        $this->data['metodo']     = ' ';
+        $this->data['title']     = '';
+        $this->data['desc_metodo']     = ' Cópia da Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['secoes']    = $secao;
+        $this->data['campos']    = $campos;
+        $this->data['destino']   = 'store'; // ou 'update' se você for criar
+        $this->data['scripts']   = 'my_requisicao';
+        $this->data['script']    = "<script>
+                                    jQuery('#bt_carregar').trigger('click'); 
+                                    mostraOcultaCampo('req_consdiaanterior', 'N', 'req_medconsumodias,req_meddias');
+                                    mudaCheck2opcoes('req_consdiaanterior', 'req_medconsumodias');
+                                    jQuery('#req_id').val('');
+                                    jQuery('#form1').attr('data-alter', true);</script>";
 
         echo view('vw_edicao', $this->data);
     }
@@ -200,7 +294,7 @@ class Requisicao extends BaseController
         if(count($produtosreq) > 0){
             for ($p=0; $p < count($produtosreq) ; $p++) { 
                 $prod = $produtosreq[$p];
-                // debug($prod);
+                // debug($prod, true);
                 $produto = [];
                 $produto[0] = $prod['rep_id'];
                 $produto[count($produto)] = $prod['pro_codpro'];

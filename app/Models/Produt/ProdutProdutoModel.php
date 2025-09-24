@@ -292,7 +292,7 @@ class ProdutProdutoModel extends Model
         }
 
         $ret = $builder->get()->getResultArray();
-        // $sql = $db->getLastQuery();
+        $sql = $db->getLastQuery();
         // debug($sql, true);
         return $ret;
     }

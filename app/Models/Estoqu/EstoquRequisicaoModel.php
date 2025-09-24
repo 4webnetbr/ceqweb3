@@ -102,7 +102,7 @@ class EstoquRequisicaoModel extends Model
         if ($status) {
             $builder->whereIn('stt_id', $status);
         }
-        $builder->orderBy('req_data');
+        $builder->orderBy('stt_ordem, req_data, req_id');
         return $builder->get()->getResultArray();
     }
 
@@ -127,7 +127,7 @@ class EstoquRequisicaoModel extends Model
             $builder->where('req_id', $req_id);
         }
         $ret = $builder->get()->getResultArray();
-        // debug($db->getLastQuery(), false);
+        // debug($db->getLastQuery(), true);
 
         return $ret;
     }
