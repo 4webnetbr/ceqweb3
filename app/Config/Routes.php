@@ -49,6 +49,12 @@ $routes->group('Showfile', static function ($routes) {
     $routes->match(['get', 'post'], '(:any)', 'Showfile::show/$1', ['as' => 'showfile_show_match']);
 });
 
+// Grupo: CriaPdf2025
+$routes->group('CriaPdf2025', static function ($routes) {
+    $routes->match(['get', 'post'], 'PrintAnaRequisicao/(:any)', 'CriaPdf2025::PrintAnaRequisicao/$1', ['as' => 'criapdf2025_match']);
+    $routes->match(['get', 'post'], 'PrintRequisicaoEstoq/(:any)', 'CriaPdf2025::PrintRequisicaoEstoq/$1', ['as' => 'criapdf2025_match_two']);
+});
+
 // Grupo: CriaEtiqueta
 $routes->group('CriaEtiqueta', static function ($routes) {
     $routes->get('/', 'CriaEtiqueta::emiteEtiqueta', ['as' => 'criaetiqueta_emiteEtiqueta']);

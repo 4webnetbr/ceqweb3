@@ -5,7 +5,7 @@ namespace App\Models\Estoqu;
 use App\Models\LogMonModel;
 use CodeIgniter\Model;
 
-class EstoquRequisicaoProdutoModel extends Model
+class EstoquRequisicaoProdutoModelBKP extends Model
 {
     protected $DBGroup          = 'dbEstoque';
     protected $table            = 'est_requisicao_produto';
@@ -78,13 +78,16 @@ class EstoquRequisicaoProdutoModel extends Model
         return $data;
     }
 
-    public function getRequisicaoProdutos($req_id = false)
+    public function getRequisicaoProdutos($req_id = false, $pro_id = false)
     {
         $db = db_connect('dbEstoque');
         $builder = $db->table('vw_est_requisicao_produto_relac');
         $builder->select('*');
         if ($req_id) {
             $builder->where('req_id', $req_id);
+        }
+        if ($pro_id) {
+            $builder->where('pro_id', $pro_id);
         }
         return $builder->get()->getResultArray();
     }

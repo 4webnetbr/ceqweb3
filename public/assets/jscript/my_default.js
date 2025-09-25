@@ -1822,9 +1822,9 @@ async function gerarEtiquetaZPL(url, etiq = false, chave = false) {
     }
   }
   if (etiq && etiq != null) {
-    url = url + "/" + etiq;
+    url = url + etiq;
     if (chave) {
-      url = url + "/" + chave;
+      url = url + chave;
     }
     openImgModal(url, "Impressão de Etiquetas ");
   } else {
@@ -1868,11 +1868,11 @@ async function openImgModal(url, titulo = false, chave) {
 
       const etq_id = url.substring(url.lastIndexOf("/") + 1);
 
-      if (!etq_id.startsWith("etq")) {
-        url = false;
-      } else {
-        url = url.replace("emiteEtiqueta", "imprimeEtiqueta");
-      }
+      // if (!etq_id.startsWith("etq")) {
+      // url = false;
+      // } else {
+      url = url.replace("emiteEtiqueta", "imprimeEtiqueta");
+      // }
 
       jQuery('.modal-footer button[data-bs-dismiss="modal"]')
         .text("🖨️ Imprimir")
@@ -1916,7 +1916,7 @@ async function imprimirEtiqueta(url = false) {
     }
   }
   if (imp != null) {
-    url = url + "/" + imp;
+    url = url + imp;
 
     jQuery.get(url, async function (res) {
       if (res.erro) {

@@ -751,11 +751,11 @@ div.msgprocessando>div:last-child>div {
     display: inline-flex;
     width: auto;
     height: 16px;
-    bottom: -8px;
+    bottom: -15px;
     position: absolute;         /* permite sair do fluxo */
-    top: 50%;                   /* centraliza verticalmente */
-    left: 92%;                 /* posiciona à direita do input */
-    transform: translateY(-50%);/* centraliza no eixo vertical */
+    /* top: 50%;                   centraliza verticalmente */
+    left: 94%;                 /* posiciona à direita do input */
+    /* transform: translateY(-50%);centraliza no eixo vertical */
     color: black;
     box-shadow: inset 0 0 2.5px 0.1rem rgb(13 110 253 / 25%);
 }

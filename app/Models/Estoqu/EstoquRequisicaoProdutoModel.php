@@ -85,7 +85,10 @@ class EstoquRequisicaoProdutoModel extends Model
         if ($req_id) {
             $builder->where('req_id', $req_id);
         }
-        return $builder->get()->getResultArray();
+        $ret = $builder->get()->getResultArray();
+        // debug($db->getLastQuery(), true);
+
+        return $ret;
     }
 
     public function excluir($req_id)

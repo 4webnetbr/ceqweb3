@@ -257,7 +257,7 @@ class EstoquRequisicaoModel extends Model
         $mcdi->selecionado    = $mcdi->valor;
         $mcdi->classep        = 'mb2';
         $mcdi->dispForm       = 'col-3';
-        $mcdi->funcChan       = "mostraOcultaCampo(this,'S','req_meddias')";
+        $mcdi->funcChan       = "mostraOcultaCampo(this,'S','req_meddias');mudaCheck2opcoes(this,'req_consdiaanterior');";
         $ret['req_medconsumodias']          = $mcdi->cr2opcoes();
 
         $medi                 = new MyCampo('est_requisicao', 'req_meddias', false);

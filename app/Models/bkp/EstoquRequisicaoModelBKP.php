@@ -9,7 +9,7 @@ use App\Models\Produt\ProdutProdutoModel;
 use CodeIgniter\Model;
 use DateTime;
 
-class EstoquRequisicaoModel extends Model
+class EstoquRequisicaoModelBKP extends Model
 {
     protected $DBGroup          = 'dbEstoque';
     protected $table            = 'est_requisicao';

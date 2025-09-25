@@ -357,8 +357,10 @@ class ProdutProdutoModel extends Model
 
         $builder->select('*');
         if ($deposito) {
+            $builder->groupStart();
             $builder->where('pre_codDep', $deposito);
             $builder->orWhere('prc_deposito', $deposito);
+            $builder->groupEnd();
         }
         if ($produto) {
             $builder->where('pro_id', $produto);
