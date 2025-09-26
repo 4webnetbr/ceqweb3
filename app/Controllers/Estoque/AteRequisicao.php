@@ -210,23 +210,23 @@ class AteRequisicao extends BaseController
             $produtosIndexado[$param['pro_id']] = $param;
         }
 
-        // Array para o resultado final
+        // Indexa os dados de estoque por pro_id para facilitar busca
+        $estoqueIndexado = [];
+        foreach ($dados_est_produto as $itemEstoque) {
+            $estoqueIndexado[$itemEstoque['pro_id']] = $itemEstoque;
+        }
+
+        // Resultado final com todos os produtos
         $resultado = [];
 
-        if(count($dados_est_produto) > 0){
-            foreach ($dados_est_produto as $itemEstoque) {
-                $pro_id = $itemEstoque['pro_id'];
-
-                if (isset($produtosIndexado[$pro_id])) {
-                    // Mescla os dados de estoque + parâmetros (com todas as chaves)
-                    $resultado[] = array_merge($itemEstoque, $produtosIndexado[$pro_id]);
-                } else {
-                    // Se não existir parâmetro correspondente, adiciona só o estoque
-                    $resultado[] = $itemEstoque;
-                }
+        foreach ($produtosIndexado as $pro_id => $produto) {
+            if (isset($estoqueIndexado[$pro_id])) {
+                // Mescla produto com dados de estoque
+                $resultado[] = array_merge($produto, $estoqueIndexado[$pro_id]);
+            } else {
+                // Apenas dados do produto
+                $resultado[] = $produto;
             }
-        } else {
-            $resultado = $produtos;
         }
         // debug($resultado, true);
         
