@@ -830,7 +830,7 @@ class Campos
         }
         $resp .= form_input($field);
         if ($this->tipo == 'password' || $this->tipo == 'senha') {
-            $resp .= "<span name='show_password' class='input-group-text input-group-append bi bi-eye-slash-fill show_password' id='ada_$this->nome' data-field='$this->nome'></span>";
+            $resp .= "<span name='show_password' class='input-group-text input-group-append show_password bi bi-eye-slash-fill' id='ada_$this->nome' data-field='$this->nome'></span>";
         }
         if ($this->obrigatorio) {
             $resp .= "<div class='invalid-feedback'>";

@@ -4,7 +4,9 @@ jQuery(document).ajaxError(function (event, xhr, settings) {
     boxAlert(23, false, urllogin, false, 1, false, "Sessão Expirada");
   }
 }); // carregamentos_iniciais();
-jQuery(document).ready(function () {});
+jQuery(document).ready(function () {
+  carregamentos_iniciais();
+});
 
 function carregamentos_iniciais() {
   var temNumero = /[0-9]/;
@@ -164,21 +166,22 @@ function carregamentos_iniciais() {
    * Mostra ou oculta a Senha
    * Document Ready my_fields
    */
-  jQuery(".show_password").hover(function (e) {
-    e.preventDefault();
-    field = this.getAttribute("data-field");
-    alvo = document.getElementById(field);
-    if (jQuery(alvo).attr("type") == "password") {
-      jQuery(alvo).attr("type", "text");
-      jQuery("#ada_" + fields).attr("class", "fa fa-eye");
-      // jQuery('#ada_'+ fields).removeClass('bi bi-eye-slash-fill');
-      // jQuery('#ada_'+ fields).addClass('bi bi-eye');
-    } else {
-      jQuery(alvo).attr("type", "password");
-      jQuery("#ada_" + fields).attr("class", "fa fa-eye-slash");
-      // jQuery('#ada_'+ fields).removeClass('bi bi-eye');
-      // jQuery('#ada_'+ fields).addClass('bi bi-eye-slash-fill');
-    }
+  jQuery(function () {
+    jQuery(document).on(
+      "mouseenter mouseleave",
+      ".show_password",
+      function (e) {
+        e.preventDefault();
+
+        const fieldId = jQuery(this).data("field");
+        const $input = jQuery("#" + fieldId);
+
+        if (!$input.length) return;
+
+        const isMouseEnter = e.type === "mouseenter";
+        $input.attr("type", isMouseEnter ? "text" : "password");
+      }
+    );
   });
 
   /**

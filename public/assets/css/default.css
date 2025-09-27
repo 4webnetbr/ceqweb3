@@ -397,7 +397,9 @@ input[type="date"].form-control {
     margin-left: 0.10rem !important;
 }
 
-
+.show_password{
+    pointer-events: all;
+}
 .show_password::before {
     content: "\f33f";
 }
