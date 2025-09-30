@@ -11,8 +11,11 @@ class EstoquDepositoModel extends Model
     protected $DBGroup          = 'dbEstoque';
     protected $table            = 'est_sap_deposito';
     protected $view             = 'est_sap_deposito';
+    protected $viewlista        = 'est_sap_deposito';
+    protected $viewoutra        = 'est_sap_deposito';
     protected $primaryKey       = 'dep_codDep';
     // protected $useAutoIncremodt = false;
+
 
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
@@ -22,8 +25,8 @@ class EstoquDepositoModel extends Model
         'dep_desDep',
         'dep_aceNeg',
         'dep_codDescricao',
-
-
+        'dep_padrao',
+        'dep_reserva',
     ];
 
     // Callbacks
@@ -120,29 +123,45 @@ class EstoquDepositoModel extends Model
 
     public function defCampos($dados = false, $show = false)
     {
+        $simnao['S'] = 'Sim';
+        $simnao['N'] = 'Não';
+
         $cdep           =  new MyCampo('est_sap_deposito', 'dep_codDep', true);
         $cdep->valor    = (isset($dados['dep_codDep'])) ? $dados['dep_codDep'] : '';
-        $cdep->obrigatorio = true;
         $cdep->leitura  = $show;
         $ret['dep_codDep'] = $cdep->crInput();
 
         $ddep           =  new MyCampo('est_sap_deposito', 'dep_desDep');
         $ddep->valor    = (isset($dados['dep_desDep'])) ? $dados['dep_desDep'] : '';
-        $ddep->obrigatorio = true;
         $ddep->leitura  = $show;
         $ret['dep_desDep'] = $ddep->crInput();
 
         $acng           =  new MyCampo('est_sap_deposito', 'dep_aceNeg');
-        $acng->valor    = (isset($dados['dep_aceNeg'])) ? $dados['dep_aceNeg'] : '';
-        $acng->obrigatorio = true;
+        $acng->valor = $acng->selecionado    = (isset($dados['dep_aceNeg'])) ? $dados['dep_aceNeg'] : 'N';
         $acng->leitura  = $show;
-        $ret['dep_aceNeg'] = $acng->crInput();
+        $acng->opcoes   = $simnao;
+        $ret['dep_aceNeg'] = $acng->cr2opcoes();
+
+        $padr           =  new MyCampo('est_sap_deposito', 'dep_padrao');
+        $padr->valor = $padr->selecionado    = (isset($dados['dep_padrao'])) ? $dados['dep_padrao'] : 'N';
+        $padr->leitura  = false;
+        $padr->opcoes   = $simnao;
+        $ret['dep_padrao'] = $padr->cr2opcoes();
 
         $cdes           =  new MyCampo('est_sap_deposito', 'dep_codDescricao');
         $cdes->valor    = (isset($dados['dep_codDescricao'])) ? $dados['dep_codDescricao'] : '';
-        $cdes->obrigatorio = true;
         $cdes->leitura  = $show;
         $ret['dep_codDescricao'] = $cdes->crInput();
+
+        $depositos = $this->getDeposito();
+        $reservas = array_column($depositos, 'dep_codDescricao','dep_codDep');
+
+        $rese           =  new MyCampo('est_sap_deposito', 'dep_reserva');
+        $rese->valor = $rese->selecionado    = (isset($dados['dep_reserva'])) ? $dados['dep_reserva'] : '';
+        $rese->leitura  = false;
+        $rese->opcoes   = $reservas;
+        $rese->largura  = 50;
+        $ret['dep_reserva'] = $rese->crSelect();
 
         return $ret;
     }

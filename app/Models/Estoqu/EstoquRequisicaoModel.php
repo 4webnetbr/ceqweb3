@@ -245,7 +245,7 @@ class EstoquRequisicaoModel extends Model
         $coda->opcoes         = $simnao;
         $coda->selecionado    = $coda->valor;
         $coda->classep        = 'semmb';
-        $coda->dispForm       = 'col-3';
+        $coda->dispForm       = ($show)?'col-6':'col-3';
         $coda->funcChan       = "mostraOcultaCampo(this,'N','req_medconsumodias,req_meddias');mudaCheck2opcoes(this,'req_medconsumodias');";
         $ret['req_consdiaanterior']          = $coda->cr2opcoes();
 
@@ -256,7 +256,7 @@ class EstoquRequisicaoModel extends Model
         $mcdi->opcoes         = $simnao;
         $mcdi->selecionado    = $mcdi->valor;
         $mcdi->classep        = 'mb2';
-        $mcdi->dispForm       = 'col-3';
+        $mcdi->dispForm       = ($show)?'col-6':'col-3';
         $mcdi->funcChan       = "mostraOcultaCampo(this,'S','req_meddias');mudaCheck2opcoes(this,'req_consdiaanterior');";
         $ret['req_medconsumodias']          = $mcdi->cr2opcoes();
 

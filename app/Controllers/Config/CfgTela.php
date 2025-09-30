@@ -171,6 +171,7 @@ class CfgTela extends BaseController
         if(isset($this->model_atual->viewlista)){
             $view   = $this->model_atual->viewlista;
         }
+        // debug($view, true);
         $fields = $this->tela->defCampos($dados_tela, $show, $tabela, $view);
 
         $secao[0] = 'Dados Gerais';

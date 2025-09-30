@@ -336,6 +336,7 @@ class ConfigTelaModel extends Model
         // if ($tabela != '') {
         $camp           = new MyCampo();
         $camp->label    = 'Campos da Tabela';
+        $camp->valor    = '';
         if ($tabela != '') {
             $campos_tab = $dicionario->getCampos($tabela);
             $camp->valor    = campos_tabela($campos_tab);
@@ -346,7 +347,8 @@ class ConfigTelaModel extends Model
         $camp->label    = 'Campos da Visão Principal';
         if ($view != '') {
             $campos_view = $dicionario->getCampos($view);
-            $camp->valor    .= campos_tabela($campos_view);
+            // debug($campos_view, false);
+            $camp->valor   = campos_tabela($campos_view);
         }
         $ret['tel_camp_view'] = $camp->crShow();
 

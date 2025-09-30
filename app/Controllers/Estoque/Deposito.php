@@ -59,6 +59,7 @@ class Deposito extends BaseController
             
             $campos = montaColunasCampos($this->data, 'dep_codDep');
             $dados_tela = $this->depositos->getDeposito();
+            $this->data['exclusao'] = false;
             $depositos = [
                 'data' => montaListaColunas($this->data, 'dep_codDep', $dados_tela, $campos[1]),
             ];
@@ -79,6 +80,40 @@ class Deposito extends BaseController
         $campos[0][1] = $fields['dep_desDep'];
         $campos[0][2] = $fields['dep_aceNeg'];
         $campos[0][3] = $fields['dep_codDescricao'];
+        $campos[0][4] = $fields['dep_padrao'];
+        $campos[0][5] = $fields['dep_reserva'];
+        
+		$this->data['secoes']     = $secao;
+        $this->data['campos']     = $campos;
+        $this->data['destino']    = '';
+        // BUSCAR DADOS DO LOG
+        $this->data['log'] = buscaLog('est_sap_deposito', $id);
+
+        echo view('vw_edicao', $this->data);
+    }
+
+    /**
+     * Edição
+     * edit
+     *
+     * @param mixed $id 
+     * @return void
+     */
+    public function edit($id, $show = false)
+    {
+        $integ = new WsCeqweb();
+        $integ->integraDeposito();
+
+		$dados_depositos = $this->depositos->getDeposito($id);
+        $fields = $this->depositos->defCampos($dados_depositos[0], true);
+
+        $secao[0] = 'Dados Gerais'; 
+        $campos[0][0] = $fields['dep_codDep']; 
+        $campos[0][1] = $fields['dep_desDep'];
+        $campos[0][2] = $fields['dep_aceNeg'];
+        $campos[0][3] = $fields['dep_codDescricao'];
+        $campos[0][4] = $fields['dep_padrao'];
+        $campos[0][5] = $fields['dep_reserva'];
         
 		$this->data['secoes']     = $secao;
         $this->data['campos']     = $campos;
@@ -87,6 +122,43 @@ class Deposito extends BaseController
         $this->data['log'] = buscaLog('est_sap_deposito', $id);
 
         echo view('vw_edicao', $this->data);
+    }
+
+    /**
+     * Gravação
+     * store
+     *
+     * @return void
+     */
+    public function store()
+    {
+        $ret = [];
+        $ret['erro'] = false;
+        $postado = $this->request->getPost();
+
+        $this->depositos->transBegin();
+        $erros = [];
+        $sql_tmo = [
+            'dep_codDep' => $postado['dep_codDep'],
+            'dep_padrao' => $postado['dep_padrao'],
+            'dep_reserva' => $postado['dep_reserva'],
+        ];
+        if ($this->depositos->save($sql_tmo)) {
+            $this->depositos->transCommit();
+            $ret['msg']  = 'Depósito atualizado com Sucesso!!!';
+            session()->setFlashdata('msg', $ret['msg']);
+            $ret['url']  = site_url($this->data['controler']);
+        } else {
+            $this->depositos->transRollback();
+            $ret['msg'] = 'Não foi possível atualizar o Depósito, Verifique!<br><br>';
+            foreach ($erros as $erro) {
+                $ret['msg'] .= $erro . '<br>';
+                if (is_numeric($erro)) {
+                    $ret['msg'] = $erro;
+                }
+            }
+        }
+        echo json_encode($ret);
     }
 
 }

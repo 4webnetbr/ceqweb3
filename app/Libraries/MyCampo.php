@@ -292,7 +292,7 @@ class MyCampo
         }
         $mb = 'mb-4';
         if (isset($this->objeto) && $this->objeto == 'cr2opcoes') {
-            $mb = 'mb-4 mt-2';
+            $mb = 'mb-4 mt-0';
         }
 
         $ret = "<div class='position-relative {$mb}' style='z-index:110'>";
@@ -684,49 +684,52 @@ class MyCampo
         $resp         = '';
         $campo        = '';
 
-        $cont = 0;
-        foreach ($this->opcoes as $valor => $label) {
-            $id = $this->id . '[' . $cont . ']';
-            if ($cont == 0) {
-                $cor      = 'btn btn-outline-primary';
-                $corradio = 'duasOpcoes primeira';
-            } else {
-                $cor      = 'btn btn-outline-secondary';
-                $corradio = 'duasOpcoes segunda';
-            }
-            if (! isset($this->selecionado)) {
-                $this->selecionado = $valor;
-            }
-            $disabled = '';
-            if ($this->leitura) {
-                $disabled = 'disabled';
-            }
+        if($this->leitura){
+            $campo .= "<div class='btn btn-outilne-secondary border border-1 border-secondary pe-none'>{$this->opcoes[$this->selecionado]}</div>";
+        } else {
+            $cont = 0;
+            foreach ($this->opcoes as $valor => $label) {
+                $id = $this->id . '[' . $cont . ']';
+                if ($cont == 0) {
+                    $cor      = 'btn btn-outline-primary';
+                    $corradio = 'duasOpcoes primeira';
+                } else {
+                    $cor      = 'btn btn-outline-secondary';
+                    $corradio = 'duasOpcoes segunda';
+                }
+                if (! isset($this->selecionado)) {
+                    $this->selecionado = $valor;
+                }
+                $disabled = '';
+                if ($this->leitura) {
+                    $disabled = 'disabled';
+                }
 
-            $this->field = [
-                'name'       => $this->nome,
-                'id'         => $id,
-                // 'value'         => $valor,
-                'data-selec' => $this->selecionado,
-                'data-salva' => true,
-                'data-index' => $cont,
-                'disabled'   => true,
-                'class'      => "form-check-input $corradio ml-2 $this->classep ",
-            ];
-            $disp    = 'd-none';
-            $checked = false;
-            if ($valor == $this->selecionado) {
-                // $this->field['checked'] = true;
-                $checked = true;
-                $disp    = 'd-block';
+                $this->field = [
+                    'name'       => $this->nome,
+                    'id'         => $id,
+                    // 'value'         => $valor,
+                    'data-selec' => $this->selecionado,
+                    'data-salva' => true,
+                    'data-index' => $cont,
+                    'disabled'   => true,
+                    'class'      => "form-check-input $corradio ml-2 $this->classep ",
+                ];
+                $disp    = 'd-none';
+                $checked = false;
+                if ($valor == $this->selecionado) {
+                    // $this->field['checked'] = true;
+                    $checked = true;
+                    $disp    = 'd-block';
+                }
+                $this->propriedades();
+                $campo .= "<div class='form-check form-switch form-check-inline form-control ps-1 pe-3 duasOpcoes $disp $cor $disabled' style='width: auto;height:33px;padding-top:2px'>";
+                $campo .= "<div class='d-inline-flex' style='width: auto;'>";
+                $campo .= form_radio($this->field, $valor, $checked) . $lab;
+                $campo .= '</div>';
+                $campo .= "</div>";
+                $cont++;
             }
-            $this->propriedades();
-            $lab = "<label class='form-check-label px-1 m-auto mx-0 duasOpcoes' for='$id'> $label </label>";
-            $campo .= "<div class='form-check form-switch form-check-inline form-control ps-1 pe-3 duasOpcoes $disp $cor $disabled' style='width: auto;height:33px;padding-top:2px'>";
-            $campo .= "<div class='d-inline-flex' style='width: auto;'>";
-            $campo .= form_radio($this->field, $valor, $checked) . $lab;
-            $campo .= '</div>';
-            $campo .= "</div>";
-            $cont++;
         }
 
         $resp .= $this->fmtDisplay($campo);

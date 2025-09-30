@@ -258,6 +258,10 @@ class Requisicao extends BaseController
         $campos[0][count($campos[0])] = $fields['req_data'];
         $campos[0][count($campos[0])] = $fields['req_dataentrega'];
         $campos[0][count($campos[0])] = $fields['tmo_id'];
+        $campos[0][count($campos[0])] = $fields['req_repetedias'];
+        $campos[0][count($campos[0])] = $fields['req_consdiaanterior'];
+        $campos[0][count($campos[0])] = $fields['req_percseguranca'];
+        $campos[0][count($campos[0])] = $fields['req_observacao'];
         $campos[0][count($campos[0])] = "<div class='col-6'>.</div>";
         // $campos[0][count($campos[0])] = $fields['lot_codbar'];
 
