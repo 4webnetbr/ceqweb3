@@ -1075,4 +1075,85 @@ class MyPdf2025 extends FPDF
             $this->_out(sprintf('q %.5F %.5F %.5F %.5F %.2F %.2F cm 1 0 0 1 %.2F %.2F cm', $c, $s, -$s, $c, $cx, $cy, -$cx, -$cy));
         }
     }
+
+    function MultiCellSafe($w, $h, $txt, $border = 0, $align = 'J', $fill = false)
+    {
+        // Calcula a altura do MultiCell antes de adicioná-lo
+        $nbLines = $this->GetStringWidth($txt) / ($w - 2);
+        $multiCellHeight = ceil($nbLines) * $h;
+
+        // Verifica se cabe na página antes de adicionar
+        $this->CheckPageBreak($multiCellHeight);
+
+        // Agora adiciona o MultiCell
+        $this->MultiCell($w, $h, $txt, $border, $align, $fill);
+    }
+
+    function CheckPageBreak($h)
+    {
+        // Posição Y atual
+        $y = $this->GetY();
+
+        // Altura máxima da página (menos a margem inferior)
+        $pageHeight = $this->h - $this->bMargin;
+
+        // Se a altura do MultiCell ultrapassar a página, adiciona nova página
+        if ($y + $h > $pageHeight) {
+            $this->AddPage();
+        }
+    }
+
+    public function calculaLinhas($largura, $texto)
+    {
+        $texto = utf8_decode($texto);
+
+        if (!isset($this->CurrentFont) || !isset($this->CurrentFont['cw'])) {
+            return 1;
+        }
+
+        $cw = &$this->CurrentFont['cw'];
+        $wmax = ($largura - 2 * $this->cMargin) * 1000 / $this->FontSize;
+
+        $s = str_replace("\r", '', $texto);
+        $nb = strlen($s);
+        $sep = -1;
+        $i = 0;
+        $j = 0;
+        $l = 0;
+        $nl = 1;
+
+        while ($i < $nb) {
+            $c = $s[$i];
+            if ($c == "\n") {
+                $i++;
+                $sep = -1;
+                $j = $i;
+                $l = 0;
+                $nl++;
+                continue;
+            }
+            if ($c == ' ') $sep = $i;
+
+            if (!isset($cw[$c])) {
+                $i++;
+                continue;
+            }
+
+            $l += $cw[$c];
+            if ($l > $wmax) {
+                if ($sep == -1) {
+                    if ($i == $j) $i++;
+                } else {
+                    $i = $sep + 1;
+                }
+                $sep = -1;
+                $j = $i;
+                $l = 0;
+                $nl++;
+            } else {
+                $i++;
+            }
+        }
+        return $nl;
+    }
 }                                                                             // FIN DE CLASSE

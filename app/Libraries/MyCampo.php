@@ -723,6 +723,7 @@ class MyCampo
                     $disp    = 'd-block';
                 }
                 $this->propriedades();
+                $lab = "<label class='form-check-label px-1 m-auto mx-0 duasOpcoes' for='$id'> $label </label>";
                 $campo .= "<div class='form-check form-switch form-check-inline form-control ps-1 pe-3 duasOpcoes $disp $cor $disabled' style='width: auto;height:33px;padding-top:2px'>";
                 $campo .= "<div class='d-inline-flex' style='width: auto;'>";
                 $campo .= form_radio($this->field, $valor, $checked) . $lab;

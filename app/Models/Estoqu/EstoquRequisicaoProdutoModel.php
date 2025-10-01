@@ -23,6 +23,7 @@ class EstoquRequisicaoProdutoModel extends Model
         'pro_id',
         'lot_id',
         'rep_multiplicador',
+        'rep_seguranca',
         'rep_quantia',
     ];
 
