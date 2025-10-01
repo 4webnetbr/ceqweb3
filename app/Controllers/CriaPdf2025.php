@@ -123,7 +123,7 @@ class CriaPdf2025 extends BaseController
 
             $this->pdf->EtiqTexto('Tipo de Movimentação: ', $req['tmo_nome'], 'Arial', 10, 6, 0, 0, 0, 'L');
             $this->pdf->SetX(220);
-            $this->pdf->EtiqTexto('Repetir pedido para dias: ', $req['req_repetedias'], 'Arial', 10, 6, 0, 0, 1, 'R');
+            $this->pdf->EtiqTexto('',"Repetir pedido para {$req['req_repetedias']} dia(s)" , 'Arial', 10, 6, 0, 0, 1, 'R');
 
             $this->pdf->EtiqTexto('Consumo dia Anterior: ', ($req['req_consdiaanterior']=='S')?'Sim':'Não', 'Arial', 10, 6, 0, 0, 0, 'L');
             $this->pdf->SetX(220);

@@ -550,7 +550,7 @@ class MyCampo
     public function crBotao(): string
     {
         $this->acertaId();
-        $this->tipo = 'botao';
+        $this->tipo = 'button';
         // NÃO TEM FORMATO NO FORMULÁRIO
         $txtlabel    = isset($this->label) ? $this->label : "";
         $this->field = [

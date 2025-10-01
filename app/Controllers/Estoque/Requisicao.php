@@ -92,15 +92,27 @@ class Requisicao extends BaseController
                 if(trim($req['stt_edicao']) == 'N')
                 // se não pode editar, pode copiar e imprimir
                 {
+                    $bt_cop = new MyCampo();
+                    $bt_cop->id = $bt_cop->nome = 'bt_copy';
+                    $bt_cop->classep = 'btn btn-outline-primary btn-sm border-0 mx-0 fs-0';
+                    $bt_cop->i_cone = "<i class='fas fa-copy'></i>";
+                    $bt_cop->label = "";
+                    $bt_cop->place = "Copiar Requisição";
+                    $bt_cop->funcChan = "redireciona('{$url_cop}',event)";
+                    $btcop = $bt_cop->crBotao();
+
+                    $bt_prn = new MyCampo();
+                    $bt_prn->id = $bt_prn->nome = 'bt_print';
+                    $bt_prn->classep = 'btn btn-outline-dark btn-sm border-0 mx-0 fs-0';
+                    $bt_prn->i_cone = "<i class='fa-solid fa-print'></i>";
+                    $bt_prn->label = "";
+                    $bt_prn->place = "Imprimir Requisição";
+                    $bt_prn->funcChan = "openPDFModal('{$url_imp}','Imprimir Requisição')";
+                    $btprn = $bt_prn->crBotao();
+
                     $req['acao_person'] = [
-                        "<button class='btn btn-outline-primary btn-sm border-0 mx-0 fs-0' 
-                        data-mdb-toggle='tooltip' data-mdb-placement='top' 
-                        title='Copiar Requisição' onclick='redireciona(\"$url_cop\",event)'>
-                        <i class='fas fa-copy'></i></button>",
-                        "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0' 
-                        data-mdb-toggle='tooltip' data-mdb-placement='top' 
-                        title='Imprimir Requisição' onclick='openPDFModal(\"$url_imp\",\"Imprimir Requisição\")'>
-                        <i class='fa-solid fa-print'></i></button>"
+                        $btcop,
+                        $btprn
                     ];
                 }
 
@@ -175,7 +187,7 @@ class Requisicao extends BaseController
      */
     public function copy($id)
     {
-        $requisicao = $this->requisicao->find($id);
+        $requisicao = $this->requisicao->getRequisicao($id)[0];
         // unset($requisicao['req_id']);
 
         if (!$requisicao) {
@@ -324,6 +336,8 @@ class Requisicao extends BaseController
 
         $campos[0][count($campos[0])] = view('partials/pw_show_produtos_req',$data); // mesma estrutura do add()
 
+        $this->data['metodo']     = ' ';
+        $this->data['title']     = '';
         $this->data['desc_metodo']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['secoes']    = $secao;
         $this->data['campos']    = $campos;
@@ -342,7 +356,7 @@ class Requisicao extends BaseController
      */
     public function edit($id)
     {
-        $requisicao = $this->requisicao->find($id);
+        $requisicao = $this->requisicao->getRequisicao($id)[0];
 
         if (!$requisicao) {
             session()->setFlashdata('erromsg', 'Requisição não encontrada.');

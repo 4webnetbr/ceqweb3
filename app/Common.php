@@ -1,13 +1,14 @@
 <?php
 // require('vendor/autoload.php');
 
-use App\Libraries\Campos;
-use App\Models\Config\ConfigDicDadosModel;
-use App\Models\Config\ConfigMenuModel;
-use App\Models\Config\ConfigPerfilItemModel;
-use App\Models\Config\ConfigTelaListaModel;
-use App\Models\Config\ConfigTelaModel;
 use WebSocket\Client;
+use App\Libraries\Campos;
+use App\Libraries\MyCampo;
+use App\Models\Config\ConfigMenuModel;
+use App\Models\Config\ConfigTelaModel;
+use App\Models\Config\ConfigDicDadosModel;
+use App\Models\Config\ConfigTelaListaModel;
+use App\Models\Config\ConfigPerfilItemModel;
 
 /**
  * The goal of this file is to allow developers a location
@@ -270,29 +271,57 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
             (strpbrk($data_lis['permissao'], 'C') &&
                 !$podeeditar)
         ) { // mas tem acesso de consulta
-            $edit = anchor(
-                $data_lis['controler'] . '/show/' . $dat_i[$chave],
-                '<i class="far fa-eye"></i>',
-                [
-                    'class' => 'btn btn-outline-info border-0 mx-0 fs-0',
-                    'data-mdb-toggle' => 'tooltip',
-                    'data-mdb-placement' => 'top',
-                    'title' => 'Detalhes',
-                ]
-            );
+                $url_con = $data_lis['controler'] . '/show/' . $dat_i[$chave];
+                $bt_con = new MyCampo();
+                $bt_con->id = $bt_con->nome = 'bt_show';
+                $bt_con->classep = 'btn btn-outline-info btn-sm border-0 mx-0 fs-0';
+                $bt_con->i_cone = "<i class='far fa-eye'></i>";
+                $bt_con->label = "";
+                $bt_con->place = "Consulta";
+                $bt_con->funcChan = "redireciona('{$url_con}',event)";
+                $edit = $bt_con->crBotao();
+                // $edit = 
+                //     "<button class='btn btn-outline-info btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
+                //     data-mdb-placement='top' title='Alterar' onclick='redireciona(\"" .
+                //     $url_con ."\")'><i class='far fa-eye'></i></button>";
+            // $edit = anchor(
+            //     $data_lis['controler'] . '/show/' . $dat_i[$chave],
+            //     '<i class="far fa-eye"></i>',
+            //     [
+            //         'class' => 'btn btn-outline-info border-0 mx-0 fs-0',
+            //         'data-mdb-toggle' => 'tooltip',
+            //         'data-mdb-placement' => 'top',
+            //         'title' => 'Detalhes',
+            //     ]
+            // );
         }
         if (strpbrk($data_lis['permissao'], 'E')) {
             if ($podeeditar && $edicao) {
-                $edit = anchor(
-                    $data_lis['controler'] . '/edit/' . $dat_i[$chave],
-                    '<i class="far fa-edit"></i>',
-                    [
-                        'class' => 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0',
-                        'data-mdb-toggle' => 'tooltip',
-                        'data-mdb-placement' => 'top',
-                        'title' => 'Alterar',
-                    ]
-                );
+                $url_edi = $data_lis['controler'] . '/edit/' . $dat_i[$chave];
+                $bt_edt = new MyCampo();
+                $bt_edt->id = $bt_edt->nome = 'bt_edit';
+                $bt_edt->classep = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0';
+                $bt_edt->i_cone = "<i class='fas fa-edit'></i>";
+                $bt_edt->label = "";
+                $bt_edt->place = "Alterar";
+                $bt_edt->funcChan = "redireciona('{$url_edi}',event)";
+                $edit = $bt_edt->crBotao();
+
+                // $edit = 
+                //     "<button class='btn btn-outline-warning btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
+                //     data-mdb-placement='top' title='Alterar' onclick='redireciona(\"" .
+                //     $url_edi ."\")'><i class='far fa-edit'></i></button>";
+
+                // $edit = anchor(
+                //     ,
+                //     '<i class="far fa-edit"></i>',
+                //     [
+                //         'class' => 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0',
+                //         'data-mdb-toggle' => 'tooltip',
+                //         'data-mdb-placement' => 'top',
+                //         'title' => 'Alterar',
+                //     ]
+                // );
             }
         }
         if ($temativo) {
