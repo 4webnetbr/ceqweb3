@@ -157,18 +157,12 @@ function montaListaDados(tabela, url) {
         });
       // }
     },
-
-    // drawCallback: function () {
-    //     jQuery('[data-toggle="tooltip"]').tooltip();
-    // }
   });
 
   jQuery("#" + tabela).on("click", 'tbody tr td:not(".acao")', function () {
-    link = jQuery(this).parent().find("a")[0].href;
-    if (link != null) {
-      if (link.indexOf("edit/") > -1 || link.indexOf("show/") > -1) {
-        redireciona(link);
-      }
+    var btn = jQuery(this).closest("tr").find(".btn").first()[0];
+    if (btn && typeof btn.onclick === "function") {
+      btn.onclick(); // executa o evento
     }
   });
 

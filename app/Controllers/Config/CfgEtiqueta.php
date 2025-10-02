@@ -60,7 +60,7 @@ class CfgEtiqueta extends BaseController
         // if (!$etiqt = cache('etiqt')) {
         $campos = montaColunasCampos($this->data, 'etq_id');
         $dados_etiqt = $this->etiqueta->getEtiqueta();
-        $url_eti = base_url('/CriaEtiquetaZPL/emiteEtiqueta/');
+        $url_eti = base_url('/CriaEtiquetaZPL/emiteEtiqueta');
         $base_cop = base_url($this->data['controler'].'/copy/');
 
         foreach ($dados_etiqt as &$etq) {

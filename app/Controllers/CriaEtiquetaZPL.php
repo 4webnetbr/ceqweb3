@@ -595,7 +595,7 @@ class CriaEtiquetaZPL extends BaseController
 
         // Busca 1 linha de dados (até N colunas) — mesma fonte que você já usa
         $modelo = false;
-        if ($chave === false) {
+        if ($chave === false || $chave == 'false') {
             $fields = array_column($camp, 'etc_campo');
             $telid  = $etq['tel_id'];
             $telas  = $this->tela->getTelaId($telid)[0] ?? null;
@@ -714,7 +714,7 @@ class CriaEtiquetaZPL extends BaseController
         $this->linhas     = (int)   $etq['let_linhas'];
 
         // Busca o LOTE completo (mesma fonte de dados)
-        if ($chave === false) {
+        if ($chave === false || $chave == 'false') {
             $fields = array_column($camp, 'etc_campo');
             $telid  = $etq['tel_id'];
             $telas  = $this->tela->getTelaId($telid)[0] ?? null;

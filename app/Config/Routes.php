@@ -24,7 +24,7 @@ $routes->set404Override(function () {
         Informe o Problema ao Administrador do Sistema!",
     ]);
 });
-$routes->setAutoRoute(false);
+$routes->setAutoRoute(true);
 
 // Rotas Padrão
 $routes->get('/', 'Login::index', ['as' => 'login']);
@@ -67,6 +67,7 @@ $routes->group('CriaEtiquetaZPL', static function ($routes) {
     $routes->get('/', 'CriaEtiquetaZPL::emiteEtiqueta', ['as' => 'criaetiquetazpl_emiteEtiqueta']);
     $routes->match(['get', 'post'], 'emiteEtiqueta/(:any)', 'CriaEtiquetaZPL::emiteEtiqueta/$1', ['as' => 'criaetiquetazpl_emiteEtiqueta_match1']);
     $routes->match(['get', 'post'], 'emiteEtiqueta/(:any)/(:any)', 'CriaEtiquetaZPL::emiteEtiqueta/$1/$2', ['as' => 'criaetiquetazpl_emiteEtiqueta_match2']);
+    $routes->match(['get', 'post'], 'imprimeEtiqueta/(:any)/(:any)/(:any)', 'CriaEtiquetaZPL::imprimeEtiqueta/$1/$2/$3', ['as' => 'criaetiquetazpl_imprimeEtiqueta_match3']);
     $routes->match(['get', 'post'], 'previewEtiquetaViaAjax/(:any)', 'CriaEtiquetaZPL::previewZPL/$1', ['as' => 'criaetiquetazpl_previewZPL_match']);
 });
 

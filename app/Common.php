@@ -280,20 +280,6 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
                 $bt_con->place = "Consulta";
                 $bt_con->funcChan = "redireciona('{$url_con}',event)";
                 $edit = $bt_con->crBotao();
-                // $edit = 
-                //     "<button class='btn btn-outline-info btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
-                //     data-mdb-placement='top' title='Alterar' onclick='redireciona(\"" .
-                //     $url_con ."\")'><i class='far fa-eye'></i></button>";
-            // $edit = anchor(
-            //     $data_lis['controler'] . '/show/' . $dat_i[$chave],
-            //     '<i class="far fa-eye"></i>',
-            //     [
-            //         'class' => 'btn btn-outline-info border-0 mx-0 fs-0',
-            //         'data-mdb-toggle' => 'tooltip',
-            //         'data-mdb-placement' => 'top',
-            //         'title' => 'Detalhes',
-            //     ]
-            // );
         }
         if (strpbrk($data_lis['permissao'], 'E')) {
             if ($podeeditar && $edicao) {
@@ -306,57 +292,40 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
                 $bt_edt->place = "Alterar";
                 $bt_edt->funcChan = "redireciona('{$url_edi}',event)";
                 $edit = $bt_edt->crBotao();
-
-                // $edit = 
-                //     "<button class='btn btn-outline-warning btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
-                //     data-mdb-placement='top' title='Alterar' onclick='redireciona(\"" .
-                //     $url_edi ."\")'><i class='far fa-edit'></i></button>";
-
-                // $edit = anchor(
-                //     ,
-                //     '<i class="far fa-edit"></i>',
-                //     [
-                //         'class' => 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0',
-                //         'data-mdb-toggle' => 'tooltip',
-                //         'data-mdb-placement' => 'top',
-                //         'title' => 'Alterar',
-                //     ]
-                // );
             }
         }
         if ($temativo) {
             if ($podeinativar && strpbrk($data_lis['permissao'], 'X')) {
                 $url_ati = $data_lis['controler'] . '/ativinativ/' . $dat_i[$chave] . '/1';
-                $url_ina = $data_lis['controler'] . '/ativinativ/' . $dat_i[$chave] . '/0';
-                $inativa =
-                    "<button class='btn btn-outline-secondary btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
-                    data-mdb-placement='top' title='Ativar' onclick='ativInativ(\"" .
-                    $url_ati .
-                    "\",\"" .
-                    $dat_i[$nome] .
-                    "\",false)'><i class='fa-solid fa-toggle-off fa-rotate-270'></i></button>";
-                if ($ativo) {
-                    $inativa =
-                        "<button class='btn btn-outline-success btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
-                    data-mdb-placement='top' title='Inativar' onclick='ativInativ(\"" .
-                        $url_ina .
-                        "\",\"" .
-                        $dat_i[$nome] .
-                        "\",true)'><i class='fa-solid fa-toggle-off fa-rotate-90'></i></button>";
+                $bt_ati = new MyCampo();
+                $bt_ati->id = $bt_ati->nome = 'bt_ativinat';
+                $bt_ati->label = "";
+                $bt_ati->i_cone = "<i class='fa-solid fa-toggle-off fa-rotate-270'></i>";
+                $bt_ati->place = "Ativar";
+                $bt_ati->classep = 'btn btn-outline-secondary btn-sm border-0 mx-0 fs-0';
+                $bt_ati->funcChan = "ativInativ('{$url_ati}','{$dat_i[$nome]}', false)";
+                if($ativo){
+                    $url_ina = $data_lis['controler'] . '/ativinativ/' . $dat_i[$chave] . '/0';
+                    $bt_ati->i_cone = "<i class='fa-solid fa-toggle-on fa-rotate-270'></i>";
+                    $bt_ati->place = "Inativar";
+                    $bt_ati->classep = 'btn btn-outline-success btn-sm border-0 mx-0 fs-0';
+                    $bt_ati->funcChan = "ativInativ('{$url_ina}','{$dat_i[$nome]}', true)";
                 }
+                $inativa = $bt_ati->crBotao();
             }
         }
         if (strpbrk($data_lis['permissao'], 'X')) {
             if ($podeinativar && $exclusao) {
-                $url_del =
-                    $data_lis['controler'] . '/delete/' . $dat_i[$chave];
-                $exclui =
-                    "<button class='btn btn-outline-danger btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
-                        data-mdb-placement='top' title='Excluir' onclick='excluir(\"" .
-                    $url_del .
-                    "\",\"" .
-                    $dat_i[$nome] .
-                    "\")'><i class='far fa-trash-alt'></i></button>";
+                $url_del = $data_lis['controler'] . '/delete/' . $dat_i[$chave];
+                
+                $bt_del = new MyCampo();
+                $bt_del->id = $bt_del->nome = 'bt_delete';
+                $bt_del->classep = 'btn btn-outline-danger btn-sm border-0 mx-0 fs-0';
+                $bt_del->i_cone = "<i class='far fa-trash-alt'></i>";
+                $bt_del->label = "";
+                $bt_del->place = "Excluir";
+                $bt_del->funcChan = "excluir('{$url_del}','{$dat_i[$nome]}')";
+                $exclui = $bt_del->crBotao();
             }
         }
 
