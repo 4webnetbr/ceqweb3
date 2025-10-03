@@ -892,7 +892,7 @@ class Analise extends BaseController
                     $chave = uniqid('etq_');
                     cache()->save($chave, $dados, 300); // 1 minuto
 
-                    $link = base_url('/CriaEtiquetaZPL/emiteEtiqueta/');
+                    $link = base_url('/CriaEtiquetaZPL/emiteEtiqueta');
                     session()->setFlashdata('modal', $link);
                     session()->setFlashdata('chave', $chave);
                     session()->setFlashdata('modal-title', 'Imprimir Etiqueta');
