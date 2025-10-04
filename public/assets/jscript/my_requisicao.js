@@ -500,8 +500,12 @@ async function carregarProdutos(url, aba, obj) {
           parseInt(tr.attr("data-saldo-disponivel")) || 0;
         let maxOriginal = parseInt(tr.attr("data-max")) || 0;
         let maxAntesOri = maxOriginal;
-        maxOriginal = maxOriginal === 0 ? saldoDisponivelAtual : maxOriginal;
 
+        // maxOriginal = maxOriginal === 0 ? saldoDisponivelAtual : maxOriginal;
+
+        const desconsideraMaximo = minOriginal === 0 && maxOriginal === 0;
+
+        // if (!desconsideraMaximo) {
         const codproAtual = tr.attr("data-codpro");
         let saldoDestinoAtual = 0;
 
@@ -517,65 +521,72 @@ async function carregarProdutos(url, aba, obj) {
         let motivo = 0;
         let novoValor = valAtual;
 
-        if (saldoDestinoAtual > maxOriginal) {
+        if (saldoDestinoAtual > maxOriginal && !desconsideraMaximo) {
           novoValor = 0;
           input.val(novoValor);
           // motivos.push(12);
           motivo = 12;
           // motivos.push(`Saldo Atual (${saldoDestinoAtual}) maior que o Máximo (${maxOriginal})`);
         } else {
-          const desconsideraMaximo = minOriginal === 0 && maxOriginal === 0;
           let max = 0;
-          if (maxAntesOri == 0) {
-            max = Math.max(0, maxOriginal);
+          if (!desconsideraMaximo) {
+            if (maxAntesOri == 0) {
+              max = Math.max(0, maxOriginal);
+            } else {
+              max = Math.max(0, maxOriginal - saldoDestinoAtual);
+            }
+            const min = Math.min(minOriginal, minOriginal - saldoDestinoAtual);
+
+            let restantePermitido = 0;
+
+            // if (!desconsideraMaximo) {
+            const lotesDoProduto = jQuery(`.requisicao`).filter(function () {
+              return jQuery(this).closest("tr").attr("data-codpro") === codigo;
+            });
+
+            let somaOutros = 0;
+
+            lotesDoProduto.each(function () {
+              const otherInput = jQuery(this);
+              if (otherInput.is(input)) return;
+
+              const val = parseInt(otherInput.val()) || 0;
+              somaOutros += val;
+            });
+
+            restantePermitido = max - somaOutros;
+            novoValor = Math.min(novoValor, restantePermitido);
+            // }
+
+            novoValor = Math.min(novoValor, saldoDisponivelAtual);
+            novoValor = Math.max(min, novoValor);
+
+            if (novoValor !== valAtual) {
+              input.val(novoValor);
+
+              if (valAtual > restantePermitido) {
+                motivo = 12;
+                // motivos.push(`Máximo permitido (${max})`);
+              }
+              if (valAtual < min) {
+                motivo = 13;
+                // motivos.push(`Mínimo permitido (${min})`);
+              }
+
+              if (valAtual > saldoDisponivelAtual) {
+                motivo = 30;
+                // motivos.push(`Saldo disponível do lote (${saldoDisponivelAtual})`);
+              }
+              // motivos.push(`Valor ajustado para não ultrapassar`);
+            } else {
+              input.val(novoValor); // Garante valor inteiro mesmo se não alterado
+            }
           } else {
-            max = Math.max(0, maxOriginal - saldoDestinoAtual);
-          }
-          const min = Math.min(minOriginal, minOriginal - saldoDestinoAtual);
-
-          let restantePermitido = 0;
-
-          // if (!desconsideraMaximo) {
-          const lotesDoProduto = jQuery(`.requisicao`).filter(function () {
-            return jQuery(this).closest("tr").attr("data-codpro") === codigo;
-          });
-
-          let somaOutros = 0;
-
-          lotesDoProduto.each(function () {
-            const otherInput = jQuery(this);
-            if (otherInput.is(input)) return;
-
-            const val = parseInt(otherInput.val()) || 0;
-            somaOutros += val;
-          });
-
-          restantePermitido = max - somaOutros;
-          novoValor = Math.min(novoValor, restantePermitido);
-          // }
-
-          novoValor = Math.min(novoValor, saldoDisponivelAtual);
-          novoValor = Math.max(min, novoValor);
-
-          if (novoValor !== valAtual) {
-            input.val(novoValor);
-
-            if (valAtual > restantePermitido) {
-              motivo = 12;
-              // motivos.push(`Máximo permitido (${max})`);
-            }
-            if (valAtual < min) {
-              motivo = 13;
-              // motivos.push(`Mínimo permitido (${min})`);
-            }
-
             if (valAtual > saldoDisponivelAtual) {
+              novoValor = Math.min(valAtual, saldoDisponivelAtual);
+              input.val(novoValor);
               motivo = 30;
-              // motivos.push(`Saldo disponível do lote (${saldoDisponivelAtual})`);
             }
-            // motivos.push(`Valor ajustado para não ultrapassar`);
-          } else {
-            input.val(novoValor); // Garante valor inteiro mesmo se não alterado
           }
         }
         if (motivo > 0) {
@@ -584,6 +595,7 @@ async function carregarProdutos(url, aba, obj) {
           const mensagem = msg_id.msg_mensagem;
           mostranoToast(motivo, true);
         }
+        // }
       } else {
         input.val(valAtual); // Garante valor inteiro mesmo se não alterado
       }
@@ -617,6 +629,7 @@ async function carregarProdutos(url, aba, obj) {
     jQuery(document).on("input change", ".requisicao", function () {
       atualizarEstadoBotaoSalvar();
     });
+    // bindEvents();
   } catch (error) {
     console.error("Erro na requisição AJAX:", error);
   }

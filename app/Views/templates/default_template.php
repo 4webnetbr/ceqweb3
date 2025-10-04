@@ -85,7 +85,7 @@ $title ??= $controler;
 
 
   <!-- Scripts customizados -->
-  <script src="<?=base_url('assets/fontawesome/js/all.min.js');?>" defer></script>
+  <!-- <script src="<?//=base_url('assets/fontawesome/js/all.min.js');?>" defer></script> -->
   <script src="<?= base_url('assets/jscript/my_default.js'); ?>"></script>
   <script src="<?= base_url('assets/jscript/my_menu.js'); ?>"></script>
   <script src="<?= base_url('assets/jscript/my_wsconn.js'); ?>"></script>
