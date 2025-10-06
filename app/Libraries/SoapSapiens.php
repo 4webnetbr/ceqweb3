@@ -90,7 +90,11 @@ class SoapSapiens
             log_message('info', 'TransferenciaProdutos resposta ' . json_encode($result));
             // debug($result, true);
             $status = 'OK';
-            $msgretorno = $result->mensagemRetorno;
+            if (is_array($result) && isset($result['mensagemRetorno'])) {
+                $msgretorno = $result['mensagemRetorno'];
+            } elseif (is_object($result) && isset($result->mensagemRetorno)) {
+                $msgretorno = $result->mensagemRetorno;
+            }
             if($result->tipoRetorno > 1){
                 $status = 'Erro';
             }
