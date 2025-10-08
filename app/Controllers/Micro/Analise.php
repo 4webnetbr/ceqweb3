@@ -637,6 +637,7 @@ class Analise extends BaseController
     {
         $ret = ['erro' => false];
         $post = $this->request->getPost();
+        // debug($post, true);
         $movs = [];
         $sqlAna = [];
         $sqlLot = null;
@@ -762,6 +763,7 @@ class Analise extends BaseController
                             'qt'  => intval($post['ana_qtde_micro']),
                             'msg' => 'Análise liberada'
                         ];
+                        // debug($movs, true);
                         // Atualização do lote para liberado
                         $sqlLot = [
                             'lot_id' => $post['lot_id'],
@@ -835,79 +837,87 @@ class Analise extends BaseController
             }
 
             // Inicia a transação
-            $this->analise->transBegin();
-
+            
             // Gera movimentos se existirem
-            // if (!empty($movs)) {
-            //     cache()->clean();
-            //     $movim = $this->geraMovimento($movs, $post);
-            //     // debug($movim, true);
-            //     if($movim->tipoRetorno > 1){
-            //         $ret['erro'] = true;
-            //         $ret['msg'] = $movim->mensagemRetorno;
-            //         // Rollback em ambas transações
-            //         $this->analise->transRollback();
-            //     }
-            // }
+            if (!empty($movs)) {
+                cache()->clean();
+                $movim = geraMovimentoSOAP($movs, $post, $this->data);
+                // debug($movim, true);
+                if($movim['status'] == 'Erro'){
+                    $ret['erro'] = true;
+                    $ret['msg'] = $movim['mensagem'];
+                }
+            }
             
             if(!$ret['erro']){
+                $this->analise->transBegin();
                 // Salva dados da análise
                 if (!$this->analise->save($sqlAna)) {
+                    $this->analise->transRollback();
+                    $ret['erro'] = true;
+                    $ret['msg'] = $this->analise->errors();
                     throw new \Exception(implode(' ', $this->analise->errors()));
-                }
+                } else {
+                    // Trata upload e processamento de arquivo quando estiver EM ANDAMENTO e não for reprovação
+                    if ($post['stt_id'] == 12 && $post['ana_reprovar'] != 'S') {
+                        $files = $this->request->getFiles();
+                        if (isset($files['ana_arqlaudo']) && $files['ana_arqlaudo']->getSize() > 0) {
+                            $uploadRet = $this->processaArquivoLaudo($files['ana_arqlaudo'], $post['ana_id']);
+                            if ($uploadRet !== true) {
+                                $ret['erro'] = true;
+                                $ret['msg'] = $this->analise->errors();
+                                $this->analise->transRollback();
+                                throw new \Exception($uploadRet);
+                            }
+                        }
+                    }
+                    if(!$ret['erro']){
+                        // Atualiza o lote, se necessário
+                        if ($sqlLot) {
+                            // Inicia transação para lote
+                            $this->lote->transBegin();
+                            if (!$this->lote->save($sqlLot)) {
+                                $this->analise->transRollback();
+                                $this->lote->transRollback();
+                                $ret['erro'] = true;
+                                $ret['msg'] = $this->lote->errors();
+                                throw new \Exception(implode(' ', $this->lote->errors()));
+                            } else {
+                                $this->lote->transCommit();
+                            }
+                        }
 
+                        if(!$ret['erro']){
+                            // Commit final
+                            $this->analise->transCommit();
+                            cache()->clean();
+                            $ret['msg'] = 'Dados da Analise gravados com Sucesso!!!';
+                            session()->setFlashdata('msg', $ret['msg']);
 
-                // Trata upload e processamento de arquivo quando estiver EM ANDAMENTO e não for reprovação
-                if ($post['stt_id'] == 12 && $post['ana_reprovar'] != 'S') {
-                    $files = $this->request->getFiles();
-                    if (isset($files['ana_arqlaudo']) && $files['ana_arqlaudo']->getSize() > 0) {
-                        $uploadRet = $this->processaArquivoLaudo($files['ana_arqlaudo'], $post['ana_id']);
-                        if ($uploadRet !== true) {
-                            throw new \Exception($uploadRet);
+                            if($post['stt_id'] == 10){ // ESTAVA BLOQUEADO
+                                $dados = $this->analise->getListaAnalise($post['ana_id'])[0] ?? null;
+
+                                $numetiquetas = (int) $dados['ana_qtde_micro'];
+                                $dados = array_fill(0, $numetiquetas, $dados);
+                                $chave = uniqid('etq_');
+                                cache()->save($chave, $dados, 300); // 1 minuto
+
+                                $link = base_url('/CriaEtiquetaZPL/emiteEtiqueta/');
+                                $script = "gerarEtiquetaZPL(\"" . $link . "\",false,\"" .$chave . "\");";
+                                session()->setFlashdata('modal', $link);
+                                session()->setFlashdata('chave', $chave);
+                                session()->setFlashdata('script', $script);
+                                session()->setFlashdata('modal-title', 'Imprimir Etiqueta');
+                            }
+
+                            $ret['url'] = site_url($this->data['controler']);
                         }
                     }
                 }
-
-                // Atualiza o lote, se necessário
-                if ($sqlLot) {
-                    // Inicia transação para lote
-                    $this->lote->transBegin();
-                    if (!$this->lote->save($sqlLot)) {
-                        throw new \Exception(implode(' ', $this->lote->errors()));
-                    }
-                    $this->lote->transCommit();
-                }
-
-                // Commit final
-                $this->analise->transCommit();
-                cache()->clean();
-                $ret['msg'] = 'Dados da Analise gravados com Sucesso!!!';
-                session()->setFlashdata('msg', $ret['msg']);
-
-                if($post['stt_id'] == 10){ // ESTAVA BLOQUEADO
-                    $dados = $this->analise->getListaAnalise($post['ana_id'])[0] ?? null;
-
-                    $numetiquetas = (int) $dados['ana_qtde_micro'];
-                    $dados = array_fill(0, $numetiquetas, $dados);
-                    $chave = uniqid('etq_');
-                    cache()->save($chave, $dados, 300); // 1 minuto
-
-                    $link = base_url('/CriaEtiquetaZPL/emiteEtiqueta');
-                    session()->setFlashdata('modal', $link);
-                    session()->setFlashdata('chave', $chave);
-                    session()->setFlashdata('modal-title', 'Imprimir Etiqueta');
-                }
-
-                $ret['url'] = site_url($this->data['controler']);
             }
         } catch (\Exception $e) {
             $ret['erro'] = true;
             $ret['msg'] = $e->getMessage();
-            // Rollback em ambas transações
-            $this->analise->transRollback();
-            if ($this->lote) {
-                $this->lote->transRollback();
-            }
         }
 
         echo json_encode($ret);
@@ -945,36 +955,5 @@ class Analise extends BaseController
         return true;
     }
 
-    public function geraMovimento($movimentos, $postado)
-    {
-        for ($m = 0; $m < count($movimentos); $m++) {
-            $mov = $movimentos[$m];
-            $produto = $this->produto->getProduto($postado['pro_id'], false)[0];
-            $codpro = $produto['pro_codpro'];
-
-            $msg =  'Produto ' . $codpro . ' Lote ' . $postado['lot_lote'] . $mov['msg'];
-            envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
-
-            $datmov = date('d/m/Y');
-            $codlot = $postado['lot_lote'];
-            $qtdmov = $mov['qt'];
-            $qtdmov = str_replace(['.', ','], '', $qtdmov);
-            // BUSCA TIPO MOVIMENTO
-            $movim  = $this->tipomovimento->getTipoMovimentacao($mov['id']);
-            $codtns = $movim[0]['tmo_transacao_erp'];
-            $depori = $movim[0]['dep_codorigem'];
-            $depdes = $movim[0]['dep_coddestino'];
-            $valida = data_br($postado['lot_validade']);
-
-            log_message('info', 'Movimento '.json_encode($movim));
-
-
-            // DESCOMENTAR AQUI QDO FOR PRA  MOVIMENTAR EFETIVAMENTE
-            $soaptrf = new SoapSapiens();
-            $movimenta = $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
-            // debug($movimenta, true);
-            return $movimenta;
-        }
-    }
 
 }

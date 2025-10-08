@@ -48,11 +48,15 @@
   salvaPagina();
 </script>
   <?
-  if (session()->getFlashdata('modal')) {
-    $link = session()->getFlashdata('modal');
+  $modal = session()->getFlashdata('modal');
+
+  if ($modal) {
+    $link  = $modal;  
     $titu = session()->getFlashdata('modal-title');
     $chave = session()->getFlashdata('chave');
-    echo "<script>gerarEtiquetaZPL(\"" . $link . "\",false,\"" .$chave . "\");</script>";
+    $script = session()->getFlashdata('script');
+    echo "<script>{$script}</script>";
+    // echo "<script>gerarEtiquetaZPL(\"" . $link . "\",false,\"" .$chave . "\");</script>";
   }
   ?>
 

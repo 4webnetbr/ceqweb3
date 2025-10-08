@@ -393,7 +393,7 @@ class AteRequisicao extends BaseController
     public function store()
     {
         $postado = $this->request->getPost();
-        // debug($postado, true);
+        // debug($postado);
 
         $dadosAgrupados = [];
 
@@ -409,6 +409,12 @@ class AteRequisicao extends BaseController
                     if (str_ends_with($campo, "_$id") && $campo !== "repid_$id") {
                         $nomeCampo = substr($campo, 0, -strlen("_$id"));
                         $dadosTemp[$nomeCampo] = $val;
+                    }
+                    if($campo === "req_id"){
+                        $dadosTemp[$campo] = $val;
+                    }
+                    if($campo === "tmo_id"){
+                        $dadosTemp[$campo] = $val;
                     }
                 }
 
@@ -431,6 +437,7 @@ class AteRequisicao extends BaseController
             $ret['url'] = site_url($this->data['controler']);
             $ret['erro'] = false;
         } else {
+            debug($dadosAgrupados, true);
             $ret['erro'] = false;
             $db = \Config\Database::connect();
 
@@ -451,8 +458,17 @@ class AteRequisicao extends BaseController
                     $db->transRollback();
                     echo json_encode($ret);
                     return;
+                } else {
+                    // pega o movimento
+                    $idmov  = $val['tmo_id'];
+                    $qtia   = $val['rpa_atendida'];
+                    // cria os movimentos
+                    $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
+                        'id'  => $idmov,
+                        'qt'  => $qtia,
+                        'msg' => 'Atendimento de Requisição'
+                    ];
                 }
-
             }
             $db->transComplete();
 
@@ -460,6 +476,8 @@ class AteRequisicao extends BaseController
                 $ret['erro'] = true;
                 $ret['msg'] = 'Erro na transação. Nenhum dado foi gravado.';
             } else {
+
+
                 $saldos = $this->reqprodutoate->getSaldoRequisicao($postado['req_id']);
                 $sald = 0;
                 $status = 18;
