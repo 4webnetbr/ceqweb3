@@ -118,13 +118,16 @@ class EstoquRequisicaoModel extends Model
         return $builder->get()->getResultArray();
     }
 
-    public function getRequisicaoProdutos($req_id = false)
+    public function getRequisicaoProdutos($req_id = false, $pro_id = false)
     {
         $db = db_connect('dbEstoque');
         $builder = $db->table($this->viewoutra);
         $builder->select('*');
         if ($req_id) {
             $builder->where('req_id', $req_id);
+        }
+        if ($pro_id) {
+            $builder->where('pro_id', $pro_id);
         }
         $ret = $builder->get()->getResultArray();
         // debug($db->getLastQuery(), true);
@@ -141,7 +144,7 @@ class EstoquRequisicaoModel extends Model
         return $builder->get()->getResultArray();
     }
 
-        public function getRequisicaoRep($rep_id = false)
+    public function getRequisicaoRep($rep_id = false)
     {
         $db = db_connect('dbEstoque');
         $builder = $db->table($this->viewoutra);

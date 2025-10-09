@@ -213,10 +213,12 @@ function acertamenuaberto() {
     jQuery(".sidebar").addClass("active");
     jQuery(".content").addClass("menuaberto");
     jQuery(".title").addClass("menuaberto");
+    jQuery(".rodape").addClass("menuaberto");
   } else {
     jQuery(".sidebar").removeClass("active");
     jQuery(".content").removeClass("menuaberto");
     jQuery(".title").removeClass("menuaberto");
+    jQuery(".rodape").removeClass("menuaberto");
     jQuery("#show_user").removeClass("active");
   }
 }

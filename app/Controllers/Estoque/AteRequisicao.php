@@ -437,12 +437,12 @@ class AteRequisicao extends BaseController
             $ret['url'] = site_url($this->data['controler']);
             $ret['erro'] = false;
         } else {
-            debug($dadosAgrupados, true);
+            // debug($dadosAgrupados, true);
             $ret['erro'] = false;
-            $db = \Config\Database::connect();
 
-            $db->transStart(); // Início da transação
+            $this->reqprodutoate->transStart(); // Início da transação
 
+            $movs = [];
 
             foreach ($dadosAgrupados as $campo => $val) {
                 $sql_save = [
@@ -455,49 +455,67 @@ class AteRequisicao extends BaseController
                 if (!$this->reqprodutoate->insert($sql_save)) {
                     $ret['erro'] = true;
                     $ret['msg'] = 'Erro ao gravar o Atendimento.';
-                    $db->transRollback();
+                    $this->reqprodutoate->transRollback();
                     echo json_encode($ret);
                     return;
                 } else {
                     // pega o movimento
                     $idmov  = $val['tmo_id'];
                     $qtia   = $val['rpa_atendida'];
+                    $proid  = $val['proid'];
+                    $requisicao = $this->requisicao->getRequisicaoRep($val['repid'])[0];
                     // cria os movimentos
                     $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
                         'id'  => $idmov,
                         'qt'  => $qtia,
-                        'msg' => 'Atendimento de Requisição'
+                        'msg' => 'Atendimento de Requisição',
+                        'pro_id' => $proid,
+                        'lot_lote' => $requisicao['lot_lote'],
+                        'lot_validade' => $requisicao['lot_validade'],
                     ];
                 }
             }
-            $db->transComplete();
-
-            if ($db->transStatus() === false) {
-                $ret['erro'] = true;
-                $ret['msg'] = 'Erro na transação. Nenhum dado foi gravado.';
-            } else {
-
-
-                $saldos = $this->reqprodutoate->getSaldoRequisicao($postado['req_id']);
-                $sald = 0;
-                $status = 18;
-                for ($s=0; $s < count($saldos) ; $s++) { 
-                    $sald += $saldos[$s]['saldo'];
+            if (!$ret['erro']) {
+                if (!empty($movs)) {
+                    cache()->clean();
+                    debug($movs);
+                    $movim = geraMovimentoSOAP($movs, $this->data, 'A');
+                    if($movim['status'] == 'Erro'){
+                        $ret['erro'] = true;
+                        $ret['msg'] = $movim['mensagem'];
+                    }
                 }
-                if($sald > 0){
-                    $status = 21;
+                if(!$ret['erro']){
+                    $saldos = $this->reqprodutoate->getSaldoRequisicao($postado['req_id']);
+                    $sald = 0;
+                    $status = 18;
+                    for ($s=0; $s < count($saldos) ; $s++) { 
+                        $sald += $saldos[$s]['saldo'];
+                    }
+                    if($sald > 0){
+                        $status = 21;
+                    }
+                    $dadosReq = [
+                        'stt_id' => $status
+                    ];
+                    $this->requisicao->transStart();
+                    $salvareq = $this->requisicao->update($postado['req_id'], $dadosReq);
+                    if($salvareq){
+                        $this->reqprodutoate->transCommit();
+                        $this->requisicao->transCommit();
+
+                        $ret['msg'] = 'Atendimento gravada com sucesso!';
+                        $ret['url'] = site_url($this->data['controler']);
+                        session()->setFlashdata('msg', $ret['msg']);
+                    } else {
+                        $ret['erro'] = true;
+                        $ret['msg'] = 'Erro ao realizar os Movimentos de Estoque.';
+                        $this->reqprodutoate->transRollback();
+                    }
                 }
-                $dadosReq = [
-                    'stt_id' => $status
-                ];
-                $this->requisicao->update($postado['req_id'], $dadosReq);
-                $ret['msg'] = 'Atendimento gravada com sucesso!';
-                $ret['url'] = site_url($this->data['controler']);
-                session()->setFlashdata('msg', $ret['msg']);
             }
+            echo json_encode($ret);
+            // cache()->clean();
         }
-
-        echo json_encode($ret);
-        // cache()->clean();
     }
 }

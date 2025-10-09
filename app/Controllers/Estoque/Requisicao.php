@@ -81,8 +81,12 @@ class Requisicao extends BaseController
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
         $dados_requis = $this->requisicao->getRequisicaoLista(false);
-        // debug($dados_requis, true);
+        $tipomov = (new EstoquTipoMovimentacaoModel())->getTipoMovimentacao();
+        debug($tipomov); 
+        $movperm = array_column($tipomov,'prf_id','tmo_id');
+        debug($movperm, true); 
         $base_url = base_url($this->data['controler']);
+
         foreach ($dados_requis as &$req) {
             if ($req['req_id']) {
                 // Concatenar o URL de forma mais eficiente

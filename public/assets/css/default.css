@@ -217,6 +217,12 @@ a:hover {
     transform-origin: top bottom;
     transform-style: preserve-3D;
 }
+.rodape.menuaberto {
+    padding-left: 20rem !important;
+    transition: all 0.3s linear;
+    transform-origin: top bottom;
+    transform-style: preserve-3D;
+}
 
 /* Fim das configurações do Layout menu aberto ou não */
 

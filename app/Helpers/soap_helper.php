@@ -6,23 +6,23 @@ use App\Models\Produt\ProdutProdutoModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
     
     
-    function geraMovimentoSOAP($movimentos, $postado, $data, $reserva = false)
+    function geraMovimentoSOAP($movimentos, $data, $reserva = false)
     {
-        $produto      = model(ProdutProdutoModel::class);
-        $tipomovimento         = model(EstoquTipoMovimentacaoModel::class);
-        $common       = model(CommonModel::class);
+        $produto                = model(ProdutProdutoModel::class);
+        $tipomovimento          = model(EstoquTipoMovimentacaoModel::class);
+        $common                 = model(CommonModel::class);
 
         $soaptrf = new SoapSapiens();
         for ($m = 0; $m < count($movimentos); $m++) {
             $mov = $movimentos[$m];
-            $produto = $produto->getProduto($postado['pro_id'], false)[0];
+            $produto = $produto->getProduto($mov['pro_id'], false)[0];
             $codpro = $produto['pro_codpro'];
 
-            $msg =  'Produto ' . $codpro . ' Lote ' . $postado['lot_lote'] . $mov['msg'];
+            $msg =  'Produto ' . $codpro . ' Lote ' . $mov['lot_lote'] . $mov['msg'];
             envia_msg_ws($data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
 
             $datmov = date('d/m/Y');
-            $codlot = $postado['lot_lote'];
+            $codlot = $mov['lot_lote'];
             $qtdmov = $mov['qt'];
             $qtdmov = str_replace(['.', ','], '', $qtdmov);
             // BUSCA TIPO MOVIMENTO
@@ -30,35 +30,45 @@ use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
             $codtns = $movim[0]['tmo_transacao_erp'];
             $depori = $movim[0]['dep_codorigem']; 
             $depdes = $movim[0]['dep_coddestino'];
-            if($reserva){
-                $depdes = $movim[0]['dep_reserva'];
+            if ($reserva) {
+                $reserva = strtoupper($reserva);
+                if ($reserva === 'A') {
+                    $depdes = $movim[0]['dep_reserva'];
+                } elseif ($reserva === 'C') {
+                    $depori = $movim[0]['dep_reserva'];
+                }
             }
-            $valida = data_br($postado['lot_validade']);
+            $valida = data_br($mov['lot_validade']);
 
             log_message('info', 'Movimento '.json_encode($movim));
             log_message('info', 'Depósito Origem '.$depori);
             log_message('info', 'Depósito Destino '.$depdes);
-            
+
+            debug( 'Movimento '.json_encode($movim));
+            debug( 'Depósito Origem '.$depori);
+            debug( 'Depósito Destino '.$depdes);
+
             if($depdes == null || $depdes == ''){
                 log_message('info', 'Sem depósito de Destino, vou movimentar');
-                $movimenta = $soaptrf->movimProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
+                // $movimenta = $soaptrf->movimProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
             } else {
                 log_message('info', 'Com depósito de Destino, vou transferir');
-                $movimenta = $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
+                // $movimenta = $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
             }
+            $movimenta['status'] = 'OK';
             if($movimenta['status'] == 'Erro'){
                 // se o movimento deu erro, verifica se teve movimentos anteriores e desfaz
                 if($m > 0){
                     for ($rv=($m-1); $rv >= 0; $rv--) { 
                         $rev = $movimentos[$rv];
-                        $produto = $produto->getProduto($postado['pro_id'], false)[0];
+                        $produto = $produto->getProduto($rev['pro_id'], false)[0];
                         $codpro = $produto['pro_codpro'];
 
-                        $msg =  'Produto ' . $codpro . ' Lote ' . $postado['lot_lote'] . $rev['msg'];
+                        $msg =  'Produto ' . $codpro . ' Lote ' . $rev['lot_lote'] . $rev['msg'];
                         envia_msg_ws($data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
 
                         $datmov = date('d/m/Y');
-                        $codlot = $postado['lot_lote'];
+                        $codlot = $rev['lot_lote'];
                         $qtdmov = $rev['qt'];
                         $qtdmov = str_replace(['.', ','], '', $qtdmov);
                         // BUSCA TIPO MOVIMENTO
@@ -68,7 +78,7 @@ use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
                         $depdes = $movim[0]['dep_codorigem'];
                         // depósito de origem é o destino, para reverter
                         $depori = $movim[0]['dep_coddestino'];
-                        $valida = data_br($postado['lot_validade']);
+                        $valida = data_br($rev['lot_validade']);
 
                         log_message('info', 'Movimento Reverso '.json_encode($movim));
                         $reverte = $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
