@@ -83,6 +83,7 @@ class AteRequisicao extends BaseController
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
         $dados_requis = $this->requisicao->getRequisicaoLista(false, [4, 21]);
+        $dados_requis = filtrarRequisicoesPorPerfil($dados_requis);
 
         $base_url = base_url($this->data['controler']);
         foreach ($dados_requis as &$req) {
@@ -479,7 +480,7 @@ class AteRequisicao extends BaseController
                 if (!empty($movs)) {
                     cache()->clean();
                     debug($movs);
-                    $movim = geraMovimentoSOAP($movs, $this->data, 'A');
+                    $movim = geraMovimentoRequisicoes($movs, $this->data, 'A');
                     if($movim['status'] == 'Erro'){
                         $ret['erro'] = true;
                         $ret['msg'] = $movim['mensagem'];

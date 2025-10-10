@@ -4,17 +4,24 @@
     position: absolute;
     z-index: 100;
     top: 0.3rem;
+    left: 0;
     width: 3.8rem;
     padding-right: 0.2rem;
     border: 1px solid #ccc;
     border-radius: 0 0.8rem 0.8rem 0rem;
-    transition: width 0.2s ease-in-out;
-    transform-origin: left;
-    transform-style: preserve-3D;
     min-height: calc(100vh - 1rem);
     max-height: calc(100vh - 1rem);
-    overflow: hidden;
-    overflow-y: auto;
+    overflow: hidden auto;
+
+    /* Transições para largura e transformações */
+    transition: width 0.2s ease-in-out, transform 0.2s ease-in-out;
+    transform-origin: left center;
+    transform: scaleX(1);
+}
+
+.sidebar.active {
+    width: 20rem;
+    transform: scaleX(1); /* mantém normal */
 }
 
 .sideetapa {
@@ -28,14 +35,6 @@
     max-height: calc(100vh - 5rem);
 }
 
-.sidebar.active {
-    transition: width 0.2s ease-in-out;
-    transform-origin: left;
-    transform-style: preserve-3D;
-    width: 20rem;
-    min-width: 3.5rem;
-    max-width: 25rem;
-}
 
 .sideetapa.active {
     transition: width 0.2s ease-in-out;

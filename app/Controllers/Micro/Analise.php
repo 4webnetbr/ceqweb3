@@ -101,13 +101,22 @@ class Analise extends BaseController
 
             if ($ana['req_id']) {
                 // Concatenar o URL de forma mais eficiente
-                $url_ati = $base_url . $ana['req_id'];
+                $chave = uniqid('etq_');
+                cache()->save($chave, $ana, 300); // 1 minuto
+
+                $link = base_url('/CriaEtiquetaZPL/emiteEtiqueta/');
                 // Gerar a ação do botão
                 $ana['acao_person'] = [
                     "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end' 
-            data-mdb-toggle='tooltip' data-mdb-placement='top' 
-            title='Imprimir Requisição' onclick='openPDFModal(\"$url_ati\",\"Imprimir Requisição\")'>
-            <i class='fas fa-print'></i></button>"
+                    data-mdb-toggle='tooltip' data-mdb-placement='top'
+                    title='Imprimir Etiqueta'
+                    onclick='gerarEtiquetaZPL(\"" . $link . "\",false,\"" .$chave . "\");'>
+                    <i class='fas fa-print'></i></button>"
+
+            //         "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end' 
+            // data-mdb-toggle='tooltip' data-mdb-placement='top' 
+            // title='Imprimir Requisição' onclick='openPDFModal(\"$url_ati\",\"Imprimir Requisição\")'>
+            // <i class='fas fa-print'></i></button>"
                 ];
             }
         }

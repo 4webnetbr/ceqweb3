@@ -1,9 +1,10 @@
 <?php
 
-use App\Models\Config\ConfigMenuModel;
-use App\Models\Config\ConfigPerfilItemModel;
-use App\Models\Config\ConfigTelaModel;
 use App\Models\LogMonModel;
+use App\Models\Config\ConfigMenuModel;
+use App\Models\Config\ConfigTelaModel;
+use App\Models\Config\ConfigPerfilItemModel;
+use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 
 /**
  * detalhesTela
@@ -811,4 +812,49 @@ function isValidDate($date, $format = 'Y-m-d') {
  */
 function funcExemplo(string $nomeTela){
 
+};;
+
+/**
+ * Filtra array de requisições com base nas autorizações por perfil.
+ *
+ * @param array $dados_requis    Lista de requisições (cada item deve conter 'tmo_id')
+ * @param int|null $perfilId     ID do perfil do usuário (se nulo, pega da sessão)
+ * @return array                 Array filtrado com apenas requisições autorizadas
+ */
+function filtrarRequisicoesPorPerfil(array $dados_requis, ?int $perfilId = null): array
+{
+    $tipomov = (new EstoquTipoMovimentacaoModel())->getTipoMovimentacao();
+    $autorizacoes = array_column($tipomov,'prf_id','tmo_id');
+
+    if (is_null($perfilId)) {
+        $perfilId = session()->get('usu_perfil_id');
+    }
+    // debug('Perfil '.$perfilId);
+    
+    foreach ($dados_requis as $key => $req) {
+        if (!isset($req['tmo_id'])) {
+            unset($dados_requis[$key]);
+            continue;
+        }
+        
+        $tmo_id = $req['tmo_id'];
+        // debug($tmo_id);
+        
+        if (!isset($autorizacoes[$tmo_id])) {
+            // debug('Tipo não encontrado nas autorizações');
+            unset($dados_requis[$key]);
+            continue;
+        }
+        
+        $prf_autorizados = explode(',', $autorizacoes[$tmo_id]);
+        
+        if (!in_array($perfilId, $prf_autorizados)) {
+            // debug('Tipo não autorizado');
+            unset($dados_requis[$key]);
+            continue;
+        }
+    }
+
+    sort($dados_requis);
+    return $dados_requis;
 };;

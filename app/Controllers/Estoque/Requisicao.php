@@ -81,11 +81,9 @@ class Requisicao extends BaseController
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
         $dados_requis = $this->requisicao->getRequisicaoLista(false);
-        $tipomov = (new EstoquTipoMovimentacaoModel())->getTipoMovimentacao();
-        debug($tipomov); 
-        $movperm = array_column($tipomov,'prf_id','tmo_id');
-        debug($movperm, true); 
         $base_url = base_url($this->data['controler']);
+
+        $dados_requis = filtrarRequisicoesPorPerfil($dados_requis);
 
         foreach ($dados_requis as &$req) {
             if ($req['req_id']) {
@@ -119,8 +117,6 @@ class Requisicao extends BaseController
                         $btprn
                     ];
                 }
-
-                // Gerar a ação do botão
             }
         }
         $requis = [

@@ -6,7 +6,7 @@ use App\Models\Produt\ProdutProdutoModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
     
     
-    function geraMovimentoSOAP($movimentos, $data, $reserva = false)
+    function geraMovimentoRequisicoes($movimentos, $data, $reserva = false)
     {
         $produto                = model(ProdutProdutoModel::class);
         $tipomovimento          = model(EstoquTipoMovimentacaoModel::class);

@@ -80,6 +80,7 @@ class ConfRequisicao extends BaseController
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
         $dados_requis = $this->requisicao->getRequisicaoLista(false, [18,21]);
+        $dados_requis = filtrarRequisicoesPorPerfil($dados_requis);
 
         $base_url = base_url($this->data['controler']);
         foreach ($dados_requis as &$req) {
