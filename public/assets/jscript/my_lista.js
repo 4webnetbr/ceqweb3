@@ -157,6 +157,14 @@ function montaListaDados(tabela, url) {
         });
       // }
     },
+    initComplete: function (settings, json) {
+      const table = new $.fn.dataTable.Api(settings);
+
+      setTimeout(function () {
+        // Força ajuste de largura das colunas
+        table.columns.adjust().draw(false);
+      }, 10);
+    },
   });
 
   jQuery("#" + tabela).on("click", 'tbody tr td:not(".acao")', function () {

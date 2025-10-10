@@ -10,20 +10,21 @@
     <?
     }
   ?>
+  &nbsp;
   </div>
   <!-- fim da div de mensagem -->
-  <!-- div do identificador da tela -->
   <!-- div do status do servidor -->
   <div id="stat_server" class="col-1 float-start d-grid text-success cursor-pointer truck-icon pt-1" role="button" title="Servidor Conectado" onclick="executa_php()">
     <i class="fa-solid fa-truck-moving"></i>
   </div>
+  <!-- div do identificador da tela -->
   <div class="col-1 float-start d-grid"><?= $identificador; ?></div>
 </div>
 <style>
   .truck-icon i {
     font-size: 1em;
     position: relative;
-    animation: moverCaminhao 2s infinite ease-in-out;
+    animation: moverCaminhao 8s infinite ease-in-out;
   }
 
   @keyframes moverCaminhao {
