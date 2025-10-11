@@ -101,8 +101,12 @@ class Analise extends BaseController
 
             if ($ana['req_id']) {
                 // Concatenar o URL de forma mais eficiente
+                $dados = $this->analise->getListaAnalise($ana['ana_id'])[0] ?? null;
+
+                $numetiquetas = (int) $dados['ana_qtde_micro'];
+                $dados = array_fill(0, $numetiquetas, $dados);
                 $chave = uniqid('etq_');
-                cache()->save($chave, $ana, 300); // 1 minuto
+                cache()->save($chave, $dados, 300); // 1 minuto
 
                 $link = base_url('/CriaEtiquetaZPL/emiteEtiqueta/');
                 // Gerar a ação do botão
@@ -111,7 +115,7 @@ class Analise extends BaseController
                     data-mdb-toggle='tooltip' data-mdb-placement='top'
                     title='Imprimir Etiqueta'
                     onclick='gerarEtiquetaZPL(\"" . $link . "\",false,\"" .$chave . "\");'>
-                    <i class='fas fa-print'></i></button>"
+                    <i class='fas fa-tag'></i></button>"
 
             //         "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end' 
             // data-mdb-toggle='tooltip' data-mdb-placement='top' 

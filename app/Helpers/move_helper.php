@@ -50,12 +50,11 @@ use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 
             if($depdes == null || $depdes == ''){
                 log_message('info', 'Sem depósito de Destino, vou movimentar');
-                // $movimenta = $soaptrf->movimProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
+                $movimenta = $soaptrf->movimProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
             } else {
                 log_message('info', 'Com depósito de Destino, vou transferir');
-                // $movimenta = $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
+                $movimenta = $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida);
             }
-            $movimenta['status'] = 'OK';
             if($movimenta['status'] == 'Erro'){
                 // se o movimento deu erro, verifica se teve movimentos anteriores e desfaz
                 if($m > 0){

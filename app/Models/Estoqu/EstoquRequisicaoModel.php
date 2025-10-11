@@ -190,7 +190,7 @@ class EstoquRequisicaoModel extends Model
         $ret['req_dataentrega']   = $entr->crInput();
 
         $tipomovs = new EstoquTipoMovimentacaoModel();
-        $lst_tipomov = $tipomovs->getTipoMovimentacao();
+        $lst_tipomov = $tipomovs->getTipoMovimentacao(false, session()->get('usu_perfil_id'));
         $opc_tipomov = array_column($lst_tipomov, 'tmo_nome', 'tmo_id');
 
         $tmov                 = new MyCampo('est_requisicao', 'tmo_id', false);

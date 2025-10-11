@@ -106,7 +106,7 @@ class EstoquTipoMovimentacaoModel extends Model
         return $data;
     }
 
-    public function getTipoMovimentacao($tmo_id = false)
+    public function getTipoMovimentacao($tmo_id = false, $prf_id = false)
     {
         $db = db_connect('dbEstoque');
         $builder = $db->table('vw_est_tipo_movimentacao_relac_lista');
@@ -114,14 +114,15 @@ class EstoquTipoMovimentacaoModel extends Model
         if ($tmo_id) {
             $builder->where('tmo_id', $tmo_id);
         }
+        if ($prf_id) {
+            $builder->where("FIND_IN_SET($prf_id, prf_id) >", 0);
+        }
         $builder->orderBy('tmo_ativo, tmo_nome');
         return $builder->get()->getResultArray();
     }
 
     public function getTipoMovimentacaoSearch($termo)
     {
-        // TODO implementar
-
         $array = ['tmo_nome' => $termo . '%'];
         $db = db_connect('dbEstoque');
         $builder = $db->table('vw_est_tipo_movimentacao_relac_lista');

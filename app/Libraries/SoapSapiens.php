@@ -95,28 +95,35 @@ class SoapSapiens
             } elseif (is_object($result) && isset($result->mensagemRetorno)) {
                 $msgretorno = $result->mensagemRetorno;
             }
+            // $msgretorno = $result->mensagemRetorno;
             if($result->tipoRetorno > 1){
                 $status = 'Erro';
             }
             // sucesso
             log_message('info', 'SOAP retorno OK');
 
+            $ret = [
+                'status' => $status,
+                'mensagem' => $msgretorno,
+            ];
+
         } catch (\SoapFault $e) {
             // falha de conexão ou erro na resposta
             $msgretorno = 'Erro SOAP: ' . $e->getMessage();
             $status = 'Erro';
             log_message('error', 'Erro SOAP: ' . $e->getMessage());
-
-            // se quiser, pode lançar exceção ou retornar erro customizado
-            return $this->response->setStatusCode(500)->setJSON([
-                'erro' => 'Falha na comunicação com o serviço SOAP',
-                'mensagem' => $e->getMessage()
-            ]);
+            $ret = [
+                'status' => $status,
+                'mensagem' => $msgretorno,
+            ];
         }
 
         $movdb = new MovimMonModel();
+        if($depdes == null || $depdes == ''){
+            $depdes = 'Baixa';
+        }
         $movim = $movdb->insertMovimento($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida, $status, $msgretorno);
-        return $result;
+        return $ret;
     }
 
     public function movimProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida)
@@ -166,29 +173,38 @@ class SoapSapiens
             log_message('info', 'MovimentarEstoque resposta ' . json_encode($result));
             // debug($result, true);
             $status = 'OK';
-            $msgretorno = $result->mensagemRetorno;
+            if (is_array($result) && isset($result['mensagemRetorno'])) {
+                $msgretorno = $result['mensagemRetorno'];
+            } elseif (is_object($result) && isset($result->mensagemRetorno)) {
+                $msgretorno = $result->mensagemRetorno;
+            }
+            // $msgretorno = $result->mensagemRetorno;
             if($result->tipoRetorno > 1){
                 $status = 'Erro';
             }
             // sucesso
             log_message('info', 'SOAP retorno OK');
 
+            $ret = [
+                'status' => $status,
+                'mensagem' => $msgretorno,
+            ];
+
         } catch (\SoapFault $e) {
             // falha de conexão ou erro na resposta
             $msgretorno = 'Erro SOAP: ' . $e->getMessage();
             $status = 'Erro';
             log_message('error', 'Erro SOAP: ' . $e->getMessage());
-
-            // se quiser, pode lançar exceção ou retornar erro customizado
-            return $this->response->setStatusCode(500)->setJSON([
-                'erro' => 'Falha na comunicação com o serviço SOAP',
-                'mensagem' => $e->getMessage()
-            ]);
+            $ret = [
+                'status' => $status,
+                'mensagem' => $msgretorno,
+            ];
         }
 
         $movdb = new MovimMonModel();
+        $depdes = 'Baixa';
         $movim = $movdb->insertMovimento($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida, $status, $msgretorno);
-        return $result;
+        return $ret;
     }
 
     public function clientesSapiens()
