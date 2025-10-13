@@ -479,7 +479,7 @@ class AteRequisicao extends BaseController
             if (!$ret['erro']) {
                 if (!empty($movs)) {
                     cache()->clean();
-                    debug($movs);
+                    // debug($movs);
                     $movim = geraMovimentoRequisicoes($movs, $this->data, 'A');
                     if($movim['status'] == 'Erro'){
                         $ret['erro'] = true;

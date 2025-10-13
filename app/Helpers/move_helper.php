@@ -44,9 +44,9 @@ use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
             log_message('info', 'Depósito Origem '.$depori);
             log_message('info', 'Depósito Destino '.$depdes);
 
-            debug( 'Movimento '.json_encode($movim));
-            debug( 'Depósito Origem '.$depori);
-            debug( 'Depósito Destino '.$depdes);
+            // debug( 'Movimento '.json_encode($movim));
+            // debug( 'Depósito Origem '.$depori);
+            // debug( 'Depósito Destino '.$depdes);
 
             if($depdes == null || $depdes == ''){
                 log_message('info', 'Sem depósito de Destino, vou movimentar');

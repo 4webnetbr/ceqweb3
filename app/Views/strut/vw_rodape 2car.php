@@ -16,17 +16,17 @@
   <!-- div do status do servidor -->
   <div id="stat_server" class="col-1 float-start d-grid cursor-pointer truck-icon pt-1" role="button" title="Servidor Conectado" onclick="executa_php()">
     <i class="verde text-success fa-solid fa-truck-moving"></i>
-    <i class="verde2 text-success fa-solid fa-truck-moving"></i>
-    <i class="verde3 text-success fa-solid fa-truck-moving"></i>
+    <i class="verde text-success fa-solid fa-truck-moving"></i>
+    <i class="verde text-success fa-solid fa-truck-moving"></i>
     <i class="amarelo text-warning fa-solid fa-truck-moving"></i>
-    <i class="amarelo2 text-warning fa-solid fa-truck-moving"></i>
-    <i class="amarelo3 text-warning fa-solid fa-truck-moving"></i>
+    <i class="amarelo text-warning fa-solid fa-truck-moving"></i>
+    <i class="amarelo text-warning fa-solid fa-truck-moving"></i>
   </div>
   <!-- div do identificador da tela -->
   <div class="col-1 float-start d-grid"><?= $identificador; ?></div>
 </div>
 <style>
-  .truck-icon .verde, .truck-icon .verde2, .truck-icon .verde3 {
+  .truck-icon .verde {
     font-size: 1em;
     position: absolute;
     left: 0;
