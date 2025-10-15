@@ -158,7 +158,7 @@ function montaListaDados(tabela, url) {
       // }
     },
     initComplete: function (settings, json) {
-      const table = new $.fn.dataTable.Api(settings);
+      const table = new jQuery.fn.dataTable.Api(settings);
 
       setTimeout(function () {
         // Força ajuste de largura das colunas

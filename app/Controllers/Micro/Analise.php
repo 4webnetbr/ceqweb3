@@ -99,7 +99,7 @@ class Analise extends BaseController
             // Verificar se o log já está disponível para esse ana_id
             $ana['usu_nome'] = $log[$ana['ana_id']]['usua_alterou'] ?? '';
 
-            if ($ana['req_id']) {
+            if ($ana['stt_id'] == 11) { // se estiver pendente
                 // Concatenar o URL de forma mais eficiente
                 $dados = $this->analise->getListaAnalise($ana['ana_id'])[0] ?? null;
 
@@ -116,11 +116,6 @@ class Analise extends BaseController
                     title='Imprimir Etiqueta'
                     onclick='gerarEtiquetaZPL(\"" . $link . "\",false,\"" .$chave . "\");'>
                     <i class='fas fa-tag'></i></button>"
-
-            //         "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end' 
-            // data-mdb-toggle='tooltip' data-mdb-placement='top' 
-            // title='Imprimir Requisição' onclick='openPDFModal(\"$url_ati\",\"Imprimir Requisição\")'>
-            // <i class='fas fa-print'></i></button>"
                 ];
             }
         }

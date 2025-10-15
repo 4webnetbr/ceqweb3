@@ -367,4 +367,65 @@ class EstoquRequisicaoModel extends Model
         $ret['rpa_atendida']      = $aten->crInput(); 
         return $ret;
     }
+
+        public function defCamposProdutoConf($dados = false, $show = false)
+    {
+        $ret = [];
+        // debug($dados);
+        // $canc                 = new MyCampo('est_requisicao_produto_atendimento', 'rpa_cancelada', false);
+        // $canc->id = $canc->nome = "rpa_cancelada_".$dados['rep_id'];
+        // $canc->valor          = $dados['rpa_cancelada']??0;
+        // $canc->label          = '';
+        // $canc->leitura        = false;
+        // if(intval($dados['rep_quantia']) == (intval($dados['rpa_atendida']) + intval($dados['rpa_cancelada']))){
+        //     $canc->leitura        = true;
+        // }
+        // $canc->classep        = 'mb2';
+        // $canc->minimo           = 0;
+        // $canc->maximo           = $dados['rep_quantia'];
+        // $canc->dispForm       = 'col-12';
+        // $canc->funcChan       = 'acertaSaldoReq(this)';
+        // $canc->largura        = 30;
+        // $ret['rpa_cancelada']      = $canc->crInput();
+
+        // $aten                 = new MyCampo('est_requisicao_produto_atendimento', 'rpa_atendida', false);
+        // $aten->id = $aten->nome = "rpa_atendida_".$dados['rep_id'];
+        // $aten->valor          = $dados['rpa_atendida']??0;
+        // $aten->label          = '';
+        // $aten->leitura        = true;
+        // if($dados['pre_cbfabricante'] == 'N' && $dados['pre_undfabricante'] == 'N'){
+        //     $aten->leitura        = false;
+        // }
+        // if(intval($dados['rep_quantia']) == (intval($dados['rpa_atendida']) + intval($dados['rpa_cancelada']))){
+        //     $aten->leitura        = true;
+        // }
+        // $aten->classep        = 'mb2';
+        // $aten->dispForm       = 'col-12';
+        // $aten->minimo           = 0;
+        // $aten->maximo           = $dados['rep_quantia'];
+        // $aten->funcChan       = 'acertaSaldoReq(this)';
+        // $aten->largura        = 30;
+        // $ret['rpa_atendida']      = $aten->crInput(); 
+
+        $conf                 = new MyCampo('est_requisicao_produto_atendimento', 'rpa_conferida', false);
+        $conf->id = $conf->nome = "rpa_conferida_".$dados['rep_id'];
+        $conf->valor          = $dados['rpa_conferida']??0;
+        $conf->label          = '';
+        $conf->leitura        = true;
+        $conf->classep        = 'mb2';
+        $conf->dispForm       = 'col-12';
+        $conf->minimo         = 0;
+        $conf->maximo         = intval($dados['rpa_atendida']);
+        $conf->funcChan       = 'acertaSaldoConf(this)';
+        $conf->largura        = 20;
+        if($dados['pre_cbfabricante'] == 'N' && $dados['pre_undfabricante'] == 'N'){
+            $conf->leitura        = false;
+        }
+        if(intval($dados['rep_quantia']) == intval($dados['rpa_conferida'])){
+            $conf->leitura        = true;
+        }
+        $ret['rpa_conferida']      = $conf->crInput(); 
+        return $ret;
+    }
+
 }

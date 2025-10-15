@@ -226,7 +226,6 @@ class ConfRequisicao extends BaseController
             $resultado = $produtos;
         }
         // debug($resultado, true);
-        
         for ($p=0; $p < count($resultado); $p++) { 
             $prod = $resultado[$p];
             if(!isset($prod['pre_cbfabricante'])){
@@ -239,15 +238,16 @@ class ConfRequisicao extends BaseController
                 $prod['pre_cblote'] = 'N';
                 $prod['pre_undlote'] = 'N';
             }
-            // $fields = $this->requisicao->defCamposProdutoAte($prod);
+            $fields = $this->requisicao->defCamposProdutoConf($prod);
             $resultado[$p]['rpa_cancelada'] = $prod['rpa_cancelada'];
             $resultado[$p]['rpa_atendida'] = $prod['rpa_atendida'];
             $resultado[$p]['rpa_cancelada_val'] = $prod['rpa_cancelada'];
             $resultado[$p]['rpa_atendida_val'] = $prod['rpa_atendida'];
-            $resultado[$p]['saldo'] = intval($resultado[$p]['rep_quantia']) - (intval($resultado[$p]['rpa_cancelada']) + intval($resultado[$p]['rpa_atendida']));
+            $resultado[$p]['rpa_conferida'] = $fields['rpa_conferida'];
+            $resultado[$p]['saldo'] = intval($resultado[$p]['rpa_atendida']) - intval($resultado[$p]['rpa_conferida']);
         }
         // $secao[1] = 'Produtos';
-        $campos[0][count($campos[0])] = view('partials/pw_produtos_requisicao',['produtos' => $resultado]); // mesma estrutura do add()
+        $campos[0][count($campos[0])] = view('partials/pw_produtos_conferencia',['produtos' => $resultado]); // mesma estrutura do add()
 
 
         $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);

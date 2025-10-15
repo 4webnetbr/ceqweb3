@@ -468,3 +468,36 @@ function acertaSaldoReq(obj) {
   jQuery("#stt_" + idBase).removeClass("bg-danger");
   jQuery("#stt_" + idBase).addClass(fundo);
 }
+
+function acertaSaldoConf(obj) {
+  var linha = jQuery(obj).closest("tr")[0]; // pega a linha
+
+  // Extrai o ID base (assumindo que o codbar está na mesma linha do stt_169)
+  var idBase = linha.id;
+
+  var aten = parseInt(jQuery("#at_" + idBase).html());
+  var conf = parseInt(jQuery("#rpa_conferida_" + idBase).val());
+
+  saldo = aten - conf;
+  jQuery("#sl_" + idBase).text(saldo);
+
+  fundo = "";
+  if (saldo == 0 && aten == conf) {
+    fundo = "bg-success";
+  } else if (saldo == 0 && conf != aten) {
+    fundo = "bg-danger";
+  } else if (saldo > 0 && saldo < aten) {
+    fundo = "bg-warning";
+  } else if (saldo > 0 && saldo > aten) {
+    fundo = "bg-danger";
+  } else if (saldo < 0) {
+    fundo = "bg-danger";
+  } else if (saldo == aten) {
+    fundo = "bg-white";
+  }
+  jQuery("#stt_" + idBase).removeClass("bg-white");
+  jQuery("#stt_" + idBase).removeClass("bg-warning");
+  jQuery("#stt_" + idBase).removeClass("bg-success");
+  jQuery("#stt_" + idBase).removeClass("bg-danger");
+  jQuery("#stt_" + idBase).addClass(fundo);
+}

@@ -35,8 +35,9 @@ if(!isset($show)){
                             <th>Validade</th>
                             <th>Caixas</th>
                             <th>Qtde. Requerida</th>
-                            <th>Qtde. Cancelada</th>
                             <th>Qtde. Atendida</th>
+                            <th>Qtde. Cancelada</th>
+                            <th>Qtde. Conferida</th>
                             <th>Saldo</th>
                             <?
                             if(!$show){?>
@@ -48,14 +49,6 @@ if(!isset($show)){
                         <?php foreach ($produtos as $produto): 
                             $corlegenda = 'bg-white';
                             $corleglote = 'border-secondary';
-                            if(intval($produto['saldo']) == 0){
-                                $corleglote = 'bg-success';
-                                if(intval($produto['rpa_cancelada_val']) == 0){
-                                    $corlegenda = 'bg-success';
-                                } else {
-                                    $corlegenda = 'bg-danger';
-                                }
-                            }
                         ?>
                         <tr id='<?= $produto["rep_id"]?>'>
                             <?
@@ -92,9 +85,9 @@ if(!isset($show)){
                             <td><?= data_br($produto['lot_validade']) ?></td>
                             <td id='cx_<?= $produto["rep_id"]?>'><?= $produto['qtd_caixa'] ?></td>
                             <td id='qt_<?= $produto["rep_id"]?>'><?= $produto['rep_quantia'] ?></td>
-                            <td id='ca_<?= $produto["rep_id"]?>'><?= $produto['rpa_cancelada'] ?></td>
                             <td id='at_<?= $produto["rep_id"]?>'><?= $produto['rpa_atendida'] ?></td>
-                            <td id='at_<?= $produto["rep_id"]?>'><?= $produto['rpa_conferida'] ?></td>
+                            <td id='ca_<?= $produto["rep_id"]?>'><?= $produto['rpa_cancelada'] ?></td>
+                            <td id='cf_<?= $produto["rep_id"]?>'><?= $produto['rpa_conferida'] ?></td>
                             <td id='sl_<?= $produto["rep_id"]?>'><?= $produto['saldo'] ?></td>
                             <?if(!$show){?>
                             <td></td>
