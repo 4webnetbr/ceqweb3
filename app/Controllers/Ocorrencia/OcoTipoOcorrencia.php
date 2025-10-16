@@ -1,5 +1,6 @@
 <?php
 namespace App\Controllers\Ocorrencia;
+use App\Models\CommonModel;
 use App\Controllers\BaseController;
 use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
 
@@ -7,6 +8,7 @@ class OcoTipoOcorrencia extends BaseController {
     public $data = [];
     public $permissao = '';
     public $tipoocorrencia;
+    public $common;
 
     /**
     * Construtor da Classe
@@ -17,6 +19,8 @@ class OcoTipoOcorrencia extends BaseController {
         $this->data      = session()->getFlashdata('dados_tela');
         $this->permissao = $this->data['permissao'];
         $this->tipoocorrencia = new OcorreTipoOcorrenciaModel();
+        $this->common    = new CommonModel();
+
         
         if ($this->data['erromsg'] != '') {
         $this->__erro();
@@ -73,6 +77,7 @@ class OcoTipoOcorrencia extends BaseController {
         $campos[0][0] = $fields['tpo_id'];  
         $campos[0][count($campos[0])] = $fields['tpo_nome'];
         $campos[0][count($campos[0])] = $fields['cla_id'];
+        $campos[0][count($campos[0])] = $fields['tpo_ativo'];
 
         $secao[1] = 'Telas Aplicaveis'; 
         $fields = $this->tipoocorrencia->defCamposTelasAplicaveis();
@@ -181,32 +186,40 @@ class OcoTipoOcorrencia extends BaseController {
     {
         $ret = [];
         $postado = $this->request->getPost();
-        $erros = [];
-        if ($postado['tpo_id'] == '') {
-            if ($this->tipoocorrencia->save($postado)) {
-                $ret['erro'] = false;
-            } else {
-                $erros = $this->tipoocorrencia->errors();
-                $ret['erro'] = true;
-            }
-        } else {
-            if ($this->tipoocorrencia->update($postado['tpo_id'], $postado)) {
-                $ret['erro'] = false;
-            } else {
-                $erros = $this->tipoocorrencia->errors();
-                $ret['erro'] = true;
-            }
-        }
 
-        if ($ret['erro']) {
-            $ret['msg']  = 'Não foi possível gravar o Tipo da Ocorrência, Verifique!<br><br>';
-            foreach ($erros as $erro) {
-                $ret['msg'] .= $erro . '<br>';
-            }
+        $exists = $this->common->verificaUnico($this->tipoocorrencia, 'tpo_nome', $postado['tpo_nome'], 'tpo_id', $postado['tpo_id']);
+        if ($exists > 0) {
+            $ret['erro'] = true;
+            $ret['msg'] = 8;
+            $erros = [8];
         } else {
-            $ret['msg']  = 'Tipo de Ocorrência gravada com Sucesso!!!';
-            session()->setFlashdata('msg', $ret['msg']);
-            $ret['url']  = site_url($this->data['controler']);
+            $erros = [];
+            if ($postado['tpo_id'] == '') {
+                if ($this->tipoocorrencia->save($postado)) {
+                    $ret['erro'] = false;
+                } else {
+                    $erros = $this->tipoocorrencia->errors();
+                    $ret['erro'] = true;
+                }
+            } else {
+                if ($this->tipoocorrencia->update($postado['tpo_id'], $postado)) {
+                    $ret['erro'] = false;
+                } else {
+                    $erros = $this->tipoocorrencia->errors();
+                    $ret['erro'] = true;
+                }
+            }
+
+            if ($ret['erro']) {
+                $ret['msg']  = 'Não foi possível gravar o Tipo da Ocorrência, Verifique!<br><br>';
+                foreach ($erros as $erro) {
+                    $ret['msg'] .= $erro . '<br>';
+                }
+            } else {
+                $ret['msg']  = 'Tipo de Ocorrência gravada com Sucesso!!!';
+                session()->setFlashdata('msg', $ret['msg']);
+                $ret['url']  = site_url($this->data['controler']);
+            }
         }
         echo json_encode($ret);
     }

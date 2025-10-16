@@ -18,7 +18,7 @@ class OcorreTipoOcorrenciaModel extends Model
 {
     protected $DBGroup          = 'dbOcorrencia';
     protected $table            = 'oco_tipo_ocorrencia';
-    protected $view             = 'oco_tipo_ocorrencia';
+    protected $view             = 'vw_oco_tpo_ocorrencia_relac';
     protected $primaryKey       = 'tpo_id';
     protected $useAutoIncremodt = true;
 
@@ -32,16 +32,16 @@ class OcorreTipoOcorrenciaModel extends Model
     ];
 
     protected $validationRules = [
-        'tpo_nome' => 'required|max_length[50]|min_length[5]|isUniqueValue[dbOcorrencia.oco_tipo_ocorrencia.tpo_nome, tpo_id]',
+        'tpo_nome' => 'required|max_length[50]|min_length[5]',
         'toc_rotulo' => 'required|min_lenght[5]|max_lenght[30]'
     ];
 
     protected $validationMessages = [
         'tpo_nome' => [
             'required' => 'O campo Nome do Tipo da Ocorrência é Obrigatório',
-            'isUniqueValue' => '8',
             'max_lenght'  => 'O Campo deve Conter no Máximo 50 Caracteres',
             'min_lenght' => 'O Campo Devente Conter no Minimo 5 Caracteres',
+            'isUniqueValue' => '8',
         ],
         'toc_rotulo' => [
             'max_lenght'  => 'O Campo deve Conter no Máximo 30 Caracteres',
@@ -100,21 +100,28 @@ class OcorreTipoOcorrenciaModel extends Model
 
     public function getTipoOcorrencia($tpo_id = false)
     {
-        $this->builder()->select('*');
+        $db = db_connect('dbOcorrencia');
+        $builder = $db->table('vw_oco_tpo_ocorrencia_relac');
+
+        $builder->select('*');
         if ($tpo_id) {
-            $this->builder()->where('tpo_id', $tpo_id);
+            $builder->where('tpo_id', $tpo_id);
         }
-        $this->orderBy('tpo_ativo, tpo_nome');
-        return $this->builder()->get()->getResultArray();
+        $builder->orderBy('tpo_ativo, tpo_nome');
+        return $builder->get()->getResultArray();
     }
 
     public function getTipoOcorrenciaSearch($termo)
     {
         $array = ['tpo_nome' => $termo . '%'];
-        $this->builder()->select(['tpo_id', 'tpo_nome']);
-        $this->builder()->like($array);
 
-        return $this->builder()->get()->getResultArray();
+        $db = db_connect('dbOcorrencia');
+        $builder = $db->table('vw_oco_tpo_ocorrencia_relac');
+
+        $builder->select('*');
+        $builder->like($array);
+        $builder->orderBy('tpo_ativo, tpo_nome');
+        return $builder->get()->getResultArray();
     }
 
     public function defCampos($dados = false, $show = false)
@@ -128,13 +135,22 @@ class OcorreTipoOcorrenciaModel extends Model
         $nome->valor     = (isset($dados['tpo_nome'])) ? $dados['tpo_nome'] : '';
         $nome->obrigatorio = true;
         $nome->leitura   = $show;
+        $nome->largura   = 80;
         $ret['tpo_nome'] = $nome->crInput();
+
+        $simnao['A'] = 'Ativo';
+        $simnao['I'] = 'Inativo';
+        $teste          = new MyCampo('oco_tipo_ocorrencia','tpo_ativo');
+        $teste->valor   = (isset($dados['tpo_ativo'])) ? $dados['tpo_ativo'] : 'A';
+        $teste->leitura = $show;
+        $teste->opcoes  = $simnao;
+        $ret['tpo_ativo'] = $teste->cr2opcoes();
 
         $classes = new ProdutClasseModel();
         $lst_classes = $classes->getClasse();
         $opc_classes = array_column($lst_classes, 'cla_nome', 'cla_id');
 
-        $cla_id = new MyCampo('oco_tpo_pro_classe', 'cla_id', false);
+        $cla_id                 = new MyCampo('oco_tpo_pro_classe', 'cla_id', false);
         $cla_id->valor          = (isset($dados['cla_id'])) ? $dados['cla_id'][0] : '';
         $cla_id->selecionado    = (isset($dados['cla_id'])) ? $dados['cla_id'] : [];
         $cla_id->opcoes         = $opc_classes;
