@@ -503,4 +503,5 @@ class CfgPerfil extends BaseController
             echo json_encode($retorno);
         }
     }
+
 }

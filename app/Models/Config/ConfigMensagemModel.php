@@ -30,7 +30,7 @@ class ConfigMensagemModel extends Model
     protected $deletedField  = 'msg_excluido';
 
     protected $validationRules = [
-        'msg_titulo' => 'required|min_length[5]|isUniqueValue[default.cfg_mensagem.msg_titulo, msg_id]',
+        'msg_titulo' => 'required|min_length[5]',
         'msg_tipo'  => 'required',
         'msg_cor'   => 'required',
         'msg_mensagem' => 'required|min_length[5]'

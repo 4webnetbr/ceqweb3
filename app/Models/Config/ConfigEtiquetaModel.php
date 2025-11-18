@@ -115,7 +115,7 @@ class ConfigEtiquetaModel extends Model
         if ($etq_id) {
             $builder->where('etq_id', $etq_id);
         }
-        $builder->where('etq_ativo', 'A');
+        // $builder->where('etq_ativo', 'A');
         $builder->orderBy('etq_ativo, etq_nome');
         // $sql = $builder->getCompiledSelect();
         // debug($sql, true);

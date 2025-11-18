@@ -183,6 +183,7 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_campo              = new MyCampo('cfg_etiqueta_campo', 'etc_campo');
         $etc_campo->valor       = (isset($dados['etc_campo'])) ? $dados['etc_campo'] : '';
         $etc_campo->selecionado = $etc_campo->valor;
+        $etc_campo->obrigatorio = true;
         $etc_campo->opcoes      = $opc_dic;
         $etc_campo->ordem       = $pos;
         $etc_campo->leitura     = $show;
@@ -218,6 +219,8 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_caract->obrigatorio = true;
         $etc_caract->leitura    = $show;
         $etc_caract->ordem       = $pos;
+        $etc_caract->largura        = 10;
+        $etc_caract->size       = 2;
         $etc_caract->dispForm    = "col-3";
         $etc_caract->funcChan    = "prevEtiqueta('".$base_url."')";
         $ret['etc_caracteres']  = $etc_caract->crInput();
@@ -227,6 +230,8 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_linhas->minimo        = 1;
         $etc_linhas->maximo        = 5;
         $etc_linhas->step        = 1;
+        $etc_linhas->size        = 1;
+        $etc_linhas->largura        = 10;
         $etc_linhas->obrigatorio = true;
         $etc_linhas->leitura    = $show;
         $etc_linhas->ordem       = $pos;
@@ -240,6 +245,8 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_colunas->minimo        = 5;
         $etc_colunas->maximo        = 100;
         $etc_colunas->step        = 5;
+        $etc_colunas->size        = 3;
+        $etc_colunas->largura        = 15;
         $etc_colunas->obrigatorio = true;
         $etc_colunas->leitura     = $show;
         $etc_colunas->ordem       = $pos;
@@ -271,9 +278,10 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_taman->minimo        = 4;
         $etc_taman->maximo        = 30;
         $etc_taman->step        = 1;
+        $etc_taman->size        = 2;
         $etc_taman->obrigatorio = true;
         $etc_taman->leitura     = $show;
-        $etc_taman->largura     = 20;
+        $etc_taman->largura        = 10;
         $etc_taman->ordem       = $pos;
         $etc_taman->dispForm    = "col-4";
         $etc_taman->funcChan    = "prevEtiqueta('".$base_url."')";
@@ -288,6 +296,7 @@ class ConfigEtiquetaCampoModel extends Model
         $etc_alinh->selecionado = $etc_alinh->valor;
         $etc_alinh->opcoes      = $opc_alinhamento;
         $etc_alinh->leitura     = $show;
+        $etc_alinh->obrigatorio     = true;
         $etc_alinh->largura     = 25;
         $etc_alinh->ordem       = $pos;
         $etc_alinh->dispForm    = "col-4";

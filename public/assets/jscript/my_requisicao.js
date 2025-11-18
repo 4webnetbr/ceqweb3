@@ -1,4 +1,4 @@
-function buscaTipoMovimentacao(orig, depori, depdes) {
+function buscaTipoMovimentacao(orig, depori, depdes, deppad) {
   url = window.location.origin + "/buscas/buscaTipoMovimentacao";
   dados = { busca: orig.value };
   retornoAjax = false;
@@ -19,6 +19,7 @@ function buscaTipoMovimentacao(orig, depori, depdes) {
         .removeClass("disabled");
       jQuery("#" + depori).selectpicker("val", retornoAjax.depori);
       jQuery("#" + depdes).selectpicker("val", retornoAjax.depdes);
+      jQuery("#" + deppad).val(retornoAjax.deppad);
       if (retornoAjax.depori != null) {
         jQuery("#" + depori)
           .closest(".dropdown")
@@ -490,16 +491,21 @@ async function carregarProdutos(url, aba, obj) {
       }
 
       const index = input.attr("data-index");
+      const multiplicador =
+        parseInt(jQuery(`#pro_multiplica_${index}`).val()) || 1;
       const valAtual = Math.round(parseInt(input.val()) || 0);
       if (valAtual != 0) {
         const tr = jQuery(`tr[data-index="${index}"]`);
 
         const codigo = tr.attr("data-codpro");
-        const minOriginal = parseInt(tr.attr("data-min")) || 0;
+        let minOriginal = parseInt(tr.attr("data-min")) || 0;
         const saldoDisponivelAtual =
           parseInt(tr.attr("data-saldo-disponivel")) || 0;
         let maxOriginal = parseInt(tr.attr("data-max")) || 0;
         let maxAntesOri = maxOriginal;
+
+        maxOriginal = maxOriginal * multiplicador;
+        minOriginal = minOriginal * multiplicador;
 
         // maxOriginal = maxOriginal === 0 ? saldoDisponivelAtual : maxOriginal;
 
@@ -660,30 +666,46 @@ function normalizarNomeColuna(texto) {
     .replace(/\s+/g, "_");
 }
 
-function enviarRequisicoes(tipo = 0) {
+async function enviarRequisicoes(tipo = 0, event) {
   const requisicoes = [];
-  const form = jQuery("#form1");
-  if (tipo == 1) {
-    form.find('input[name="req_status"]').remove();
-    form.append('<input type="hidden" name="req_status" value="' + tipo + '">');
+  const form = document.getElementById("form1");
+  const jqForm = jQuery(form);
+
+  if (tipo === 1) {
+    jqForm.find('input[name="req_status"]').remove();
+    jqForm.append(`<input type="hidden" name="req_status" value="${tipo}">`);
   }
 
-  jQuery("tr[data-index]").each(function () {
-    const tr = jQuery(this);
-    const index = tr.attr("data-index");
+  const repeteDias = parseInt(jQuery("#req_repetedias").val()) || 0;
+  const linhasProduto = jQuery("tr.linha-produto");
+
+  for (let i = 0; i < linhasProduto.length; i++) {
+    const tr = jQuery(linhasProduto[i]);
+    const index = tr.data("index");
     const inputRequisicao = jQuery(`.requisicao[data-index="${index}"]`);
     const valorRequisicao = parseInt(inputRequisicao.val()) || 0;
+    const saldoDisponivel = parseInt(tr.data("saldo-disponivel")) || 0;
 
     if (valorRequisicao !== 0) {
+      if (repeteDias > 0) {
+        const saldoNecessario = valorRequisicao * (repeteDias + 1);
+        if (saldoNecessario > saldoDisponivel) {
+          event.preventDefault();
+          event.stopPropagation();
+          await boxAlert(35, true, "", true, 1, false);
+          if (tipo === 1) return;
+          return false;
+        }
+      }
+
       const dados = {};
 
-      // Captura colunas visíveis relevantes (ignora colunas com input)
       tr.find("td").each(function (i) {
         const th = tr.closest("table").find("thead th").eq(i);
         const nomeColuna = normalizarNomeColuna(th.text());
 
-        if (["multiplica", "seguranca", "requisicao"].includes(nomeColuna))
-          return;
+        // if (["multiplica", "seguranca", "requisicao"].includes(nomeColuna))
+        //   return;
 
         const texto = jQuery(this)
           .clone()
@@ -697,16 +719,13 @@ function enviarRequisicoes(tipo = 0) {
         }
       });
 
-      // Campos de input da linha
       dados.multiplica = jQuery(`#pro_multiplica_${index}`).val();
       dados.seguranca = jQuery(`#pro_pctseguranca_${index}`).val();
       dados.requisicao = valorRequisicao;
 
-      // Classe e cla_id do accordion
       const acc = tr.closest(".accordion-item");
       if (acc.length) {
-        dados.cla_id =
-          acc.attr("data-cla_id") || acc.attr("data-claid") || null;
+        dados.cla_id = acc.data("cla_id") || acc.data("claid") || null;
         dados.classe = acc
           .find(".accordion-header, .accordion-button")
           .first()
@@ -716,16 +735,53 @@ function enviarRequisicoes(tipo = 0) {
 
       requisicoes.push(dados);
     }
-  });
+  }
 
-  // Injeta o JSON no form e envia
-  form.find('input[name="json_requisicoes"]').remove();
-  form.append(
+  jqForm.find('input[name="json_requisicoes"]').remove();
+  jqForm.append(
     `<input type="hidden" name="json_requisicoes" value='${JSON.stringify(
       requisicoes
     )}'>`
   );
+
   if (tipo > 0) {
-    form.trigger("submit");
+    form.classList.add("was-validated");
+
+    const isValido = validador(form);
+    if (!isValido) {
+      event.preventDefault();
+      event.stopPropagation();
+      desBloqueiaTela();
+    } else {
+      jQuery(form).trigger("submit");
+    }
+  } else {
+    return true;
   }
+}
+
+async function enviarAteRequisicoes(event) {
+  const trs = jQuery("tr").toArray();
+
+  for (let tr of trs) {
+    if (tr.id != "" && tr.id != undefined) {
+      const index = parseInt(tr.id);
+      const saldo = parseInt(jQuery("#sl_" + index).html());
+      const qtde = parseInt(jQuery("#qt_" + index).html());
+      const canc = jQuery("#rpa_cancelada_" + index).val();
+
+      if (saldo > 0 && saldo != qtde) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const resposta = await boxAlert(33, false, "", false, 1, true);
+
+        if (!resposta) {
+          return false; // Interrompe o processamento
+        }
+      }
+    }
+  }
+
+  return true; // Tudo ok, pode continuar
 }

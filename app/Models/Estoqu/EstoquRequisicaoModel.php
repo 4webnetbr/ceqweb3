@@ -103,7 +103,9 @@ class EstoquRequisicaoModel extends Model
             $builder->whereIn('stt_id', $status);
         }
         $builder->orderBy('stt_ordem, req_data, req_id');
-        return $builder->get()->getResultArray();
+        $ret = $builder->get()->getResultArray();
+        // debug($db->getLastQuery(), true);
+        return $ret;
     }
 
     public function getRequisicao($req_id = false)
@@ -159,7 +161,7 @@ class EstoquRequisicaoModel extends Model
     }
 
 
-    public function defCampos($dados = false, $show = false)
+    public function defCampos($dados = false, $show = false, $tipo = false)
     {
         $ret = [];
         $simnao['S'] = 'Sim';
@@ -171,7 +173,7 @@ class EstoquRequisicaoModel extends Model
 
         $hoje = new DateTime();
         $data                 = new MyCampo('est_requisicao', 'req_data', false);
-        $data->valor          = (isset($dados['req_data'])) ? $dados['req_data'] : $hoje->format('Y-m-d');
+        $data->valor          = (isset($dados['req_data'])) ? $dados['req_data'] : $hoje->format('Y-m-d H:i:s');
         $data->leitura        = true;
         $data->dispForm       = 'col-6';
         $data->classep        = 'mb3';
@@ -186,7 +188,9 @@ class EstoquRequisicaoModel extends Model
         $entr->obrigatorio    = true;
         $entr->dispForm       = 'col-6';
         $entr->classep        = 'mb3';
-        $entr->funcBlur       = 'validaDataMinima(this)';
+        if(!$show){
+            $entr->funcBlur       = 'validaDataMinima(this)';
+        }
         $ret['req_dataentrega']   = $entr->crInput();
 
         $tipomovs = new EstoquTipoMovimentacaoModel();
@@ -200,12 +204,14 @@ class EstoquRequisicaoModel extends Model
         $tmov->opcoes         = $opc_tipomov;
         $tmov->largura        = 50;
         $tmov->leitura        = $show;
-        $tmov->funcChan       = "buscaTipoMovimentacao(this,'req_deporigem','req_depdestino')";
+        if(!$show){
+            $tmov->funcChan       = "buscaTipoMovimentacao(this,'req_deporigem','req_depdestino','req_deppadrao')";
+        }
         $tmov->dispForm       = 'col-6';
         $ret['tmo_id'] = $tmov->crSelect();
 
         $mudi                 = new MyCampo('est_requisicao', 'req_repetedias', false);
-        $mudi->valor          = (isset($dados['req_repetedias'])) ? $dados['req_repetedias'] : 1;
+        $mudi->valor          = (isset($dados['req_repetedias'])) ? $dados['req_repetedias'] : 0;
         $mudi->leitura        = $show;
         $mudi->minimo         = 0;
         $mudi->step           = 1;
@@ -230,6 +236,11 @@ class EstoquRequisicaoModel extends Model
         }
         $ret['req_deporigem'] = $deor->crSelect();
 
+        $depr                 = new MyCampo('est_requisicao', 'req_deporigem', false);
+        $depr->id = $depr->nome = 'req_deppadrao';
+        $depr->valor          = (isset($dados['req_deppadrao'])) ? $dados['req_deppadrao'] : '';
+        $ret['req_deppadrao'] = $depr->crOculto();
+
         $dede                 = new MyCampo('est_requisicao', 'req_depdestino', false);
         $dede->valor          = (isset($dados['req_depdestino'])) ? $dados['req_depdestino'] : '';
         $dede->obrigatorio    = true;
@@ -249,7 +260,9 @@ class EstoquRequisicaoModel extends Model
         $coda->selecionado    = $coda->valor;
         $coda->classep        = 'semmb';
         $coda->dispForm       = ($show)?'col-6':'col-3';
-        $coda->funcChan       = "mostraOcultaCampo(this,'N','req_medconsumodias,req_meddias');mudaCheck2opcoes(this,'req_medconsumodias');";
+        if(!$show){
+            $coda->funcChan       = "mostraOcultaCampo(this,'N','req_medconsumodias,req_meddias');mudaCheck2opcoes(this,'req_medconsumodias');";
+        }
         $ret['req_consdiaanterior']          = $coda->cr2opcoes();
 
 
@@ -260,7 +273,9 @@ class EstoquRequisicaoModel extends Model
         $mcdi->selecionado    = $mcdi->valor;
         $mcdi->classep        = 'mb2';
         $mcdi->dispForm       = ($show)?'col-6':'col-3';
-        $mcdi->funcChan       = "mostraOcultaCampo(this,'S','req_meddias');mudaCheck2opcoes(this,'req_consdiaanterior');";
+        if(!$show){
+            $mcdi->funcChan       = "mostraOcultaCampo(this,'S','req_meddias');mudaCheck2opcoes(this,'req_consdiaanterior');";
+        }
         $ret['req_medconsumodias']          = $mcdi->cr2opcoes();
 
         $medi                 = new MyCampo('est_requisicao', 'req_meddias', false);
@@ -312,6 +327,9 @@ class EstoquRequisicaoModel extends Model
         $codb->largura        = '30';
         $codb->size           = '30';
         $codb->funcBlur       = 'validaCodBar(this)';
+        if($tipo && $tipo == 'conf'){
+            $codb->funcBlur       = 'validaCodBarConf(this)';
+        }
         $ret['lot_codbar']      = $codb->crInput();
 
         $btca            = new MyCampo();
@@ -322,6 +340,26 @@ class EstoquRequisicaoModel extends Model
         $btca->classep   = "btn-outline-success btn-sm align-items-center d-flex m-3";
         $btca->funcChan  = "carregarProdutos('" . base_url("Requisicao/produtos/") . "','produtos',this)";
         $ret['bt_carregar']   = $btca->crBotao();
+
+        $usua                 = new MyCampo();
+        $usua->valor          = (isset($dados['usu_nome'])) ? $dados['usu_nome'] : '';
+        $usua->id = $usua->nome        = 'usu_nome';
+        $usua->label          = 'Usuário';
+        $usua->size           = 50;
+        $usua->largura        = 50;
+        $usua->dispForm       = 'col-6';
+        $usua->leitura      = true;
+        $ret['usu_nome'] = $usua->crInput();
+
+        $stat                 = new MyCampo();
+        $stat->valor          = (isset($dados['stt_nome'])) ? fmtEtiquetaCorBst($dados['stt_cor'], $dados['stt_nome']) : '';
+        $stat->id = $stat->nome        = 'stt_nome';
+        $stat->label          = 'Status';
+        $stat->size           = 50;
+        $stat->largura        = 50;
+        $stat->dispForm       = 'col-4';
+        $stat->leitura      = true;
+        $ret['stt_nome'] = $stat->crShow();
 
         return $ret;
     }
@@ -339,7 +377,7 @@ class EstoquRequisicaoModel extends Model
         if(intval($dados['rep_quantia']) == (intval($dados['rpa_atendida']) + intval($dados['rpa_cancelada']))){
             $canc->leitura        = true;
         }
-        $canc->classep        = 'mb2';
+        $canc->classep        = 'semmb';
         $canc->minimo           = 0;
         $canc->maximo           = $dados['rep_quantia'];
         $canc->dispForm       = 'col-12';
@@ -347,9 +385,10 @@ class EstoquRequisicaoModel extends Model
         $canc->largura        = 30;
         $ret['rpa_cancelada']      = $canc->crInput();
 
+
         $aten                 = new MyCampo('est_requisicao_produto_atendimento', 'rpa_atendida', false);
         $aten->id = $aten->nome = "rpa_atendida_".$dados['rep_id'];
-        $aten->valor          = $dados['rpa_atendida']??0;
+        $aten->valor          = $dados['rpa_atendida']?$dados['rpa_atendida']:0;
         $aten->label          = '';
         $aten->leitura        = true;
         if($dados['pre_cbfabricante'] == 'N' && $dados['pre_undfabricante'] == 'N'){
@@ -358,7 +397,7 @@ class EstoquRequisicaoModel extends Model
         if(intval($dados['rep_quantia']) == (intval($dados['rpa_atendida']) + intval($dados['rpa_cancelada']))){
             $aten->leitura        = true;
         }
-        $aten->classep        = 'mb2';
+        $aten->classep        = 'semmb';
         $aten->dispForm       = 'col-12';
         $aten->minimo           = 0;
         $aten->maximo           = $dados['rep_quantia'];
@@ -368,51 +407,24 @@ class EstoquRequisicaoModel extends Model
         return $ret;
     }
 
-        public function defCamposProdutoConf($dados = false, $show = false)
+    public function defCamposProdutoConf($dados = false, $show = false)
     {
         $ret = [];
-        // debug($dados);
-        // $canc                 = new MyCampo('est_requisicao_produto_atendimento', 'rpa_cancelada', false);
-        // $canc->id = $canc->nome = "rpa_cancelada_".$dados['rep_id'];
-        // $canc->valor          = $dados['rpa_cancelada']??0;
-        // $canc->label          = '';
-        // $canc->leitura        = false;
-        // if(intval($dados['rep_quantia']) == (intval($dados['rpa_atendida']) + intval($dados['rpa_cancelada']))){
-        //     $canc->leitura        = true;
-        // }
-        // $canc->classep        = 'mb2';
-        // $canc->minimo           = 0;
-        // $canc->maximo           = $dados['rep_quantia'];
-        // $canc->dispForm       = 'col-12';
-        // $canc->funcChan       = 'acertaSaldoReq(this)';
-        // $canc->largura        = 30;
-        // $ret['rpa_cancelada']      = $canc->crInput();
 
-        // $aten                 = new MyCampo('est_requisicao_produto_atendimento', 'rpa_atendida', false);
-        // $aten->id = $aten->nome = "rpa_atendida_".$dados['rep_id'];
-        // $aten->valor          = $dados['rpa_atendida']??0;
-        // $aten->label          = '';
-        // $aten->leitura        = true;
-        // if($dados['pre_cbfabricante'] == 'N' && $dados['pre_undfabricante'] == 'N'){
-        //     $aten->leitura        = false;
-        // }
-        // if(intval($dados['rep_quantia']) == (intval($dados['rpa_atendida']) + intval($dados['rpa_cancelada']))){
-        //     $aten->leitura        = true;
-        // }
-        // $aten->classep        = 'mb2';
-        // $aten->dispForm       = 'col-12';
-        // $aten->minimo           = 0;
-        // $aten->maximo           = $dados['rep_quantia'];
-        // $aten->funcChan       = 'acertaSaldoReq(this)';
-        // $aten->largura        = 30;
-        // $ret['rpa_atendida']      = $aten->crInput(); 
+        $aten                 = new MyCampo('est_requisicao_produto_atendimento', 'rpa_atendida', false);
+        $aten->id = $aten->nome = "rpa_atendida_".$dados['rep_id'];
+        $aten->valor          = $dados['rpa_atendida']??0;
+        $aten->label          = '';
+        $aten->minimo           = 0;
+        $aten->maximo           = $dados['rep_quantia'];
+        $ret['rpa_atendida']      = $aten->crOculto(); 
 
         $conf                 = new MyCampo('est_requisicao_produto_atendimento', 'rpa_conferida', false);
         $conf->id = $conf->nome = "rpa_conferida_".$dados['rep_id'];
         $conf->valor          = $dados['rpa_conferida']??0;
         $conf->label          = '';
         $conf->leitura        = true;
-        $conf->classep        = 'mb2';
+        $conf->classep        = 'semmb';
         $conf->dispForm       = 'col-12';
         $conf->minimo         = 0;
         $conf->maximo         = intval($dados['rpa_atendida']);

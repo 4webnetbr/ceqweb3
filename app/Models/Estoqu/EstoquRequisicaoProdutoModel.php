@@ -73,7 +73,7 @@ class EstoquRequisicaoProdutoModel extends Model
     protected function depoisDelete(array $data)
     {
         $logdb = new LogMonModel();
-        $registro = $data['id'][0];
+        $registro = $data['id'][0]??null;
         $log = $logdb->insertLog($this->table, 'Excluído', $registro, $data['data']);
         return $data;
     }

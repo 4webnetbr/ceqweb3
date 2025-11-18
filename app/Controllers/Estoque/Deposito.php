@@ -138,6 +138,11 @@ class Deposito extends BaseController
 
         $this->depositos->transBegin();
         $erros = [];
+        if (isset($postado['dep_padrao']) && $postado['dep_padrao'] === 'S') {
+           // Atualiza todos os registros para dep_padrao = 'N'
+            $this->depositos->where('dep_padrao', 'S')->set(['dep_padrao' => 'N'])->update();
+        }
+        
         $sql_tmo = [
             'dep_codDep' => $postado['dep_codDep'],
             'dep_padrao' => $postado['dep_padrao'],

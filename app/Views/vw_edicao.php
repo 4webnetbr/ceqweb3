@@ -164,7 +164,7 @@
 
 <!-- <script src="<?= base_url('assets/jscript/my_consulta.js'); ?>"></script> -->
 <script>
-    carregamentos_iniciais();
+    // carregamentos_iniciais();
     jQuery("#form1").attr('data-alter', false);
     jQuery('.dependente').selectpicker('toggle'); // Abre o select
     setTimeout(function() {

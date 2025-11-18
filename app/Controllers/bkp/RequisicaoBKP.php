@@ -385,7 +385,7 @@ class Requisicao extends BaseController
             envia_msg_ws($this->data['controler'], "Buscando " . ucfirst($tipo), 'MsgServer', session()->get('usu_id'), 1);
 
             $res = api_request(
-                "https://secure.ceqnep.com.br/producao/home/ajax/{$endpoint}",
+                "https://ceqweb2.ceqnep.com.br/producao/home/ajax/{$endpoint}",
                 ['inicio' => $inicio, 'final' => $ontem],
                 'get'
             );

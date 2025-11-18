@@ -2,9 +2,11 @@
 
 namespace App\Models\Ocorre;
 
+use CodeIgniter\Model;
 use App\Libraries\MyCampo;
 use App\Models\LogMonModel;
-use CodeIgniter\Model;
+use App\Models\Config\ConfigTelaModel;
+use App\Models\Config\ConfigModuloModel;
 
 class OcorreTipoAcaoModel extends Model
 {
@@ -20,19 +22,21 @@ class OcorreTipoAcaoModel extends Model
     protected $allowedFields    = [
         'tpa_id',
         'tpa_nome',
-        'tpa_ativo'
+        'tpa_ativo',
+        'tpa_tipo',
     ];
 
     protected $deletedField  = 'tpa_excluido';
 
     protected $validationRules = [
-        'tpa_nome' => 'required|isUniqueValue[dbOcorrencia.oco_tipo_acao.tpa_nome, tpa_id]',
+        'tpa_nome' => 'required|max_length[50]|min_length[5]',
     ];
 
     protected $validationMessages = [
         'tpa_nome' => [
             'required' => 'O campo Nome do Tipo da Ação é Obrigatório',
-            'isUniqueValue' => '8',
+            'max_lenght'  => 'O Nome deve Conter no Máximo 50 Caracteres',
+            'min_lenght' => 'O Nome deve Conter no Minimo 5 Caracteres',
         ],
     ];
 
@@ -118,6 +122,18 @@ class OcorreTipoAcaoModel extends Model
         $nome->obrigatorio = true;
         $nome->leitura  = $show;
         $ret['tpa_nome'] = $nome->crInput();
+
+        $opcex['1'] = 'Justificar';
+        $opcex['2'] = 'Listar Telas';
+        $opcex['3'] = 'Listar Movimentações';
+        $opcex['4'] = 'Listar Status';
+        $tipo           =  new MyCampo('oco_tipo_acao', 'tpa_tipo');
+        $tipo->valor    = (isset($dados['tpa_tipo'])) ? $dados['tpa_tipo'] : '';
+        $tipo->selecionado    = $tipo->valor;
+        $tipo->opcoes   = $opcex;
+        $tipo->dispForm     = 'col-2';
+        $tipo->classep     = 'mb-2';
+        $ret['tpa_tipo'] = $tipo->crRadio();
 
         return $ret;
     }

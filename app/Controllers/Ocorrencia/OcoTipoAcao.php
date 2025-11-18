@@ -1,5 +1,6 @@
 <?php
 namespace App\Controllers\Ocorrencia;
+use App\Models\CommonModel;
 use App\Controllers\BaseController;
 use App\Models\Ocorre\OcorreTipoAcaoModel;
 
@@ -7,6 +8,7 @@ class OcoTipoAcao extends BaseController {
     public $data = [];
     public $permissao = '';
     public $tipoacao;
+    public $common;
 
     /**
     * Construtor da Classe
@@ -16,7 +18,8 @@ class OcoTipoAcao extends BaseController {
     {
         $this->data      = session()->getFlashdata('dados_tela');
         $this->permissao = $this->data['permissao'];
-        $this->tipoacao = new OcorreTipoAcaoModel();
+        $this->tipoacao  = new OcorreTipoAcaoModel();
+        $this->common    = new CommonModel();
         
         if ($this->data['erromsg'] != '') {
             $this->__erro();
@@ -71,6 +74,7 @@ class OcoTipoAcao extends BaseController {
         $secao[0] = 'Dados Gerais'; 
         $campos[0][0] = $fields['tpa_id'];  
         $campos[0][1] = $fields['tpa_nome'];
+        $campos[0][2] = $fields['tpa_tipo'];
 
         $this->data['secoes']     = $secao;
         $this->data['campos']     = $campos;
@@ -93,6 +97,7 @@ class OcoTipoAcao extends BaseController {
         $secao[0] = 'Dados Gerais';
         $campos[0][0] = $fields['tpa_id'];  
         $campos[0][1] = $fields['tpa_nome'];
+        $campos[0][2] = $fields['tpa_tipo'];
 
         $this->data['secoes']     = $secao;
         $this->data['campos']     = $campos;
@@ -116,10 +121,11 @@ class OcoTipoAcao extends BaseController {
         try {
             $this->tipoacao->update($id, $dad_atin);
             $ret['erro'] = false;
-            session()->setFlashdata('msg', 'Ocorrência Alterada com Sucesso');
+            session()->setFlashdata('msg', 'Tipo de Ação Alterada com Sucesso');
+            $ret['msg']  = 'Tipo de Ação Alterada com Sucesso';
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
             $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível Alterar a Ocorrência, Verifique!<br><br>';
+            $ret['msg']  = 'Não foi possível Alterar o Tipo de Ação, Verifique!<br><br>';
         }
         echo json_encode($ret);
     }
@@ -136,10 +142,11 @@ class OcoTipoAcao extends BaseController {
         try {
             $this->tipoacao->delete($id);
             $ret['erro'] = false;
-            session()->setFlashdata('msg', 'Ocorrência Excluída com Sucesso');
+            session()->setFlashdata('msg', 'Tipo de Ação Excluído com Sucesso');
+            $ret['msg']  = 'Tipo de Ação Excluído com Sucesso';
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
             $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível Excluir Ocorrência, Verifique!<br><br>';
+            $ret['msg']  = 'Não foi possível Excluir o Tipo de Ação, Verifique!<br><br>';
         }
         echo json_encode($ret);
         
@@ -155,33 +162,50 @@ class OcoTipoAcao extends BaseController {
         $ret = [];
         $postado = $this->request->getPost();
         $erros = [];
-        if ($postado['tpa_id'] == '') {
-            if ($this->tipoacao->save($postado)) {
-                $ret['erro'] = false;
-            } else {
-                $erros 
-                = $this->tipoacao->errors();
-                $ret['erro'] = true;
-            }
-        } else {
-            if ($this->tipoacao->update($postado['tpa_id'], $postado)) {
-                $ret['erro'] = false;
-            } else {
-                $erros = $this->tipoacao->errors();
-                $ret['erro'] = true;
-            }
-        }
 
-        if ($ret['erro']) {
-            $ret['msg']  = 'Não foi possível gravar Ocorrência, Verifique!<br><br>';
-            foreach ($erros as $erro) {
-                $ret['msg'] .= $erro . '<br>';
+        $this->tipoacao->transBegin();
+
+        // if (!empty($postado['tpa_id'])) {
+            $exists = $this->common->verificaUnico($this->tipoacao, 'tpa_nome', $postado['tpa_nome'], 'tpa_id', $postado['tpa_id']);
+            if ($exists > 0) {
+                $ret['erro'] = true;
+                $ret['msg'] = 8;
+                $erros = [8];
             }
-        } else {
-            cache()->clean();
-            $ret['msg']  = 'Ocorrência gravada com Sucesso!!!';
-            session()->setFlashdata('msg', $ret['msg']);
-            $ret['url']  = site_url($this->data['controler']);
+        // }
+        if(count($erros) == 0){
+            try {
+                if (!$this->tipoacao->save($postado)) {
+                    throw new \Exception('Erro ao salvar os dados.');
+                }
+
+                // Commit se tudo der certo
+                $this->tipoacao->transCommit();
+                cache()->clean();
+
+                $ret['erro'] = false;
+                $ret['msg']  = 'Tipo de Ação gravada com Sucesso!!!';
+                session()->setFlashdata('msg', $ret['msg']);
+                $ret['url']  = site_url($this->data['controler']);
+            } catch (\Exception $e) {
+                // Se houver erro, faz rollback
+                $this->tipoacao->transRollback();
+
+                $ret['erro'] = true;
+                $ret['msg']  = 'Não foi possível gravar Tipo de Ação, Verifique!<br><br>';
+
+                $erros = $this->tipoacao->errors();
+                if (!empty($erros)) {
+                    foreach ($erros as $erro) {
+                        $ret['msg'] .= $erro . '<br>';
+                        if (is_numeric($erro)) {
+                            $ret['msg'] = $erro;
+                        }
+                    }
+                } else {
+                    $ret['msg'] .= $e->getMessage(); // Mensagem genérica do erro
+                }
+            }
         }
         echo json_encode($ret);
     }

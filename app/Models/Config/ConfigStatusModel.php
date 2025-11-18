@@ -105,7 +105,7 @@ class ConfigStatusModel extends Model
         return $ret;
     }
 
-    public function getStatusNomeTela($tel_id,$nome, $stt_id)
+    public function getStatusNomeTela($tel_id, $nome, $stt_id)
     {
         $db = db_connect('default');
         $builder = $db->table($this->view);
@@ -113,6 +113,18 @@ class ConfigStatusModel extends Model
         $builder->where("tel_id", $tel_id);
         $builder->where("stt_nome", $nome);
         $builder->where("stt_id !=", $stt_id);
+        $ret = $builder->get()->getResultArray();
+        // debug($this->db->getLastQuery());
+
+        return $ret;
+    }
+
+    public function getStatusTela($tel_id)
+    {
+        $db = db_connect('default');
+        $builder = $db->table($this->view);
+        $builder->select('*');
+        $builder->where("tel_id", $tel_id);
         $ret = $builder->get()->getResultArray();
         // debug($this->db->getLastQuery());
 

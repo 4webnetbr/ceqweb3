@@ -24,6 +24,9 @@ class EstoquRequisicaoProdutoAtendimentoModel extends Model
             'rpa_cancelada',
             'rpa_atendida',
             'rpa_data',
+            'rpa_conferida',
+            'rpa_data_conferencia',
+
     ];
 
     // protected $deletedField  = 'req_excluido';

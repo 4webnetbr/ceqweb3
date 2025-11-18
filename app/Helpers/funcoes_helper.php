@@ -855,6 +855,9 @@ function filtrarRequisicoesPorPerfil(array $dados_requis, ?int $perfilId = null)
         }
     }
 
-    sort($dados_requis);
+    usort($dados_requis, function($a, $b) {
+        return intval($a['stt_ordem']) - intval($b['stt_ordem']);
+    });
+    // sort($dados_requis);
     return $dados_requis;
 };;

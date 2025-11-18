@@ -296,6 +296,29 @@ class ProdutProdutoModel extends Model
         // debug($sql, true);
         return $ret;
     }
+    public function getProdutoEstoqueCeqweb($pro_id = false, $deposito = false)
+    {
+        $db = db_connect('dbProduto');
+        $builder = $db->table('vw_pro_est_ceq_relac');
+
+        $builder->select('*');
+
+        if ($pro_id) {
+            if (is_array($pro_id)) {
+                $builder->whereIn('pro_id', $pro_id);
+            } else {
+                $builder->where('pro_id', $pro_id);
+            }
+        }
+        if($deposito){
+            $builder->where('dep_codDep', $deposito);
+        }
+
+        $ret = $builder->get()->getResultArray();
+        $sql = $db->getLastQuery();
+        // debug($sql, true);
+        return $ret;
+    }
 
     public function getProdutoOrigemFamiliaClasse($origem = false, $familia = false, $classe = false)
     {
@@ -729,9 +752,9 @@ class ProdutProdutoModel extends Model
         $mini->valor        = (isset($dados['pre_minimo'])) ? $dados['pre_minimo'] : 0;
         $mini->obrigatorio  = true;
         $mini->leitura      = $show;
-        $mini->minimo       = 1;
+        $mini->minimo       = 0;
         $mini->maximo       = 9999;
-        $mini->largura      = 20;
+        $mini->largura      = 40;
         $mini->maxLength    = 4;
         $mini->dispForm     = 'col-6';
         $ret['pre_minimo']  = $mini->crInput();
@@ -755,7 +778,7 @@ class ProdutProdutoModel extends Model
         $pmax->minimo       = 0;
         $pmax->maximo       = 999;
         $pmax->maxLength    = 3;
-        $pmax->largura      = 20;
+        $pmax->largura      = 40;
         $pmax->dispForm     = 'col-4';
         $ret['pre_porcmaximo']  = $pmax->crInput();
 
@@ -764,10 +787,10 @@ class ProdutProdutoModel extends Model
         $maxi->valor        = (isset($dados['pre_maximo'])) ? $dados['pre_maximo'] : 0;
         $maxi->obrigatorio  = false;
         $maxi->leitura      = $show;
-        $maxi->minimo       = 1;
+        $maxi->minimo       = 0;
         $maxi->maximo       = 9999;
         $maxi->maxLength    = 4;
-        $maxi->largura      = 20;
+        $maxi->largura      = 40;
         $maxi->dispForm     = 'col-4';
         $ret['pre_maximo']  = $maxi->crInput();
 
@@ -778,7 +801,7 @@ class ProdutProdutoModel extends Model
         $suge->leitura      = $show;
         $suge->minimo       = 0;
         $suge->maximo       = 9999;
-        $suge->largura      = 20;
+        $suge->largura      = 40;
         $suge->maxLength    = 4;
         $suge->dispForm     = 'col-3';
         $ret['pre_sugerida']  = $suge->crInput();

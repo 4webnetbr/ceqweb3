@@ -383,13 +383,13 @@ class CriaEtiquetaZPL extends BaseController
             }
 
             // Resolve o texto
-            if ($tipoCampo === '0') {
+            if ($tipoCampo === '99') { // texto livre
                 $linhas = 1;
                 $texto  = (string) $rotulo;
-            } elseif ($tipoCampo === '2') {
+            } elseif ($tipoCampo === '2') { // data atual
                 $linhas = 1;
                 $texto  = date('d/m/Y');
-            } elseif ($tipoCampo === '3') {
+            } elseif ($tipoCampo === '3') { // data e hora atual
                 $linhas = 1;
                 $texto  = date('d/m/Y H:i:s');
             } else {

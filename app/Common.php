@@ -238,7 +238,7 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
     for ($p = 0; $p < sizeof($dados); $p++) {
         $dat_i = $dados[$p];
         $temativo = false;
-        $ativo = false;
+        $ativo = 0;
         $inativa = '';
         $podeinativar = true;
         $podeeditar = true;
@@ -259,14 +259,17 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
         foreach ($dat_i as $key => $value) {
             if (substr($key, -5) == 'ativo') {
                 $temativo = true;
-                if ($value == 'A') {
-                    $ativo = true;
+                // debug($value);
+                if (trim($value) === 'A') {
+                    $ativo = 1;
                 }
+                // debug('Ativo '.$ativo);
+                break;
             }
         }
         $edit = '';
         $exclui = '';
-        if ((strlen($data_lis['permissao']) < 3 && //se não tem todos os acessos
+        if ((strlen($data_lis['permissao']) <= 3 && //se não tem todos os acessos
                 strpbrk($data_lis['permissao'], 'C')) ||
             (strpbrk($data_lis['permissao'], 'C') &&
                 !$podeeditar)
@@ -305,6 +308,8 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
                 $bt_ati->classep = 'btn btn-outline-secondary btn-sm border-0 mx-0 fs-0';
                 $bt_ati->funcChan = "ativInativ('{$url_ati}','{$dat_i[$nome]}', false)";
                 if($ativo){
+                    // debug('etq_ativo '.$dat_i['etq_ativo']);
+                    // debug('etq_nome '.$dat_i[$nome]);
                     $url_ina = $data_lis['controler'] . '/ativinativ/' . $dat_i[$chave] . '/0';
                     $bt_ati->i_cone = "<i class='fa-solid fa-toggle-on fa-rotate-270'></i>";
                     $bt_ati->place = "Inativar";

@@ -81,6 +81,7 @@ class CfgEtiqueta extends BaseController
             ];
         }
 
+        $this->data['exclusao'] = false;
         $etiqt = [
             'data' => montaListaColunas($this->data, 'etq_id', $dados_etiqt, $campos[1]),
         ];
@@ -300,6 +301,31 @@ class CfgEtiqueta extends BaseController
         echo json_encode($campos);
         exit;
     }
+
+    public function ativinativ($id, $ip)
+    {
+        if ($ip == 1) {
+            $dad_atin = [
+                'etq_ativo' => 'A'
+            ];
+        } else {
+            $dad_atin = [
+                'etq_ativo' => 'I'
+            ];
+        }
+        $ret = [];
+        try {
+            $this->etiqueta->update($id, $dad_atin);
+            $ret['erro'] = false;
+            session()->setFlashdata('msg', 'Etiqueta Alterada com Sucesso');
+            $ret['msg']  = 'Etiqueta Alterada com Sucesso';
+        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+            $ret['erro'] = true;
+            $ret['msg']  = 'Não foi possível Alterar a Etiqueta, Verifique!<br><br>';
+        }
+        echo json_encode($ret);
+    }
+
     /**
      * Exclusão
      * delete

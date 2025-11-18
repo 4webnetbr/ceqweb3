@@ -94,7 +94,7 @@ if(!isset($show)){
                             <td id='qt_<?= $produto["rep_id"]?>'><?= $produto['rep_quantia'] ?></td>
                             <td id='ca_<?= $produto["rep_id"]?>'><?= $produto['rpa_cancelada'] ?></td>
                             <td id='at_<?= $produto["rep_id"]?>'><?= $produto['rpa_atendida'] ?></td>
-                            <td id='at_<?= $produto["rep_id"]?>'><?= $produto['rpa_conferida'] ?></td>
+                            <!-- <td id='at_<?= $produto["rep_id"]?>'><?= $produto['rpa_conferida'] ?></td> -->
                             <td id='sl_<?= $produto["rep_id"]?>'><?= $produto['saldo'] ?></td>
                             <?if(!$show){?>
                             <td></td>

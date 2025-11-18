@@ -1,4 +1,6 @@
+// serve para utilizar com outras bibliotecas javascript, e não gerar conflito
 jQuery.noConflict();
+// variável globas de retono da função executaAjax
 var retornoAjax;
 var executandoAjax = false;
 jQuery(document).ready(function () {
@@ -17,6 +19,7 @@ jQuery(document).ready(function () {
 
   // Gera ou recupera um identificador único para a guia
   if (!sessionStorage.getItem("tabId")) {
+    // grava na seção local data
     sessionStorage.setItem(
       "tabId",
       Date.now() + "-" + Math.random().toString(36).substr(2, 9)
@@ -37,6 +40,7 @@ jQuery(document).ready(function () {
    * se a div Toast tiver conteúdo mostra por 3 segundos
    * Document Ready my_default
    */
+  // variável que armazena o texto contido na div que conte
   texto = jQuery(".toast-body").html();
   if (jQuery.trim(texto) != "") {
     confirma = erro = false;
@@ -92,66 +96,88 @@ jQuery(document).ready(function () {
     jQuery(".toast-body").html("");
   });
 
-  jQuery("#bt_salvar").on("click", function (event) {
+  jQuery("#bt_salvar").on("click", async function (event) {
     bloqueiaTela();
+    event.preventDefault();
+    event.stopPropagation();
     const controller = jQuery("#controler").val();
 
+    let submeter = false;
     if (controller.toLowerCase() == "requisicao") {
       // event.preventDefault(); // impede submit automático
-      enviarRequisicoes();
+      submeter = await enviarRequisicoes(0, event);
+      if (!submeter) {
+        desBloqueiaTela();
+        return; // para aqui e não executa mais nada
+      }
     }
-    var elemAlterado = false;
-    var form = jQuery("#form1");
-    // elemAlterado = Boolean(form[0].getAttribute('data-alter'));
-    if (
-      form[0].getAttribute("data-alter") === true ||
-      form[0].getAttribute("data-alter") === "true"
-    ) {
-      elemAlterado = true;
-    }
-    // }
-    if (!elemAlterado) {
-      event.preventDefault();
-      event.stopPropagation();
-      url = "/buscas/gravasessao";
-      var mens = 7;
-      let dados = { msg: mens };
-      executaAjax(url, "json", dados);
-      if (retornoAjax) {
-        retorna_listagem();
+    if (controller.toLowerCase() === "aterequisicao") {
+      submeter = await enviarAteRequisicoes(event);
+      if (!submeter) {
+        desBloqueiaTela();
+        return; // para aqui e não executa mais nada
       }
     } else {
-      jQuery("[id*='-valid']").addClass("d-none");
-      jQuery("[id*='-fival']").removeClass("d-block");
-      var form = jQuery(this)[0].form;
-
-      form.classList.add("was-validated");
-      isvalido = validador(form);
-      if (!isvalido) {
-        event.preventDefault();
-        event.stopPropagation();
-        desBloqueiaTela();
-      } else {
-        // verificar se o campo select foi alterado
-        jQuery("input[data-valid], select[data-valid]").each(async function () {
-          let validar = this.getAttribute("data-valid");
-
-          if (!validar || validar === "0") return;
-          let valororig = this.getAttribute("data-valor");
-          let value = jQuery(this).val();
-
-          // Se for um array (como em selects múltiplos), converte para string
-          if (Array.isArray(value)) {
-            value = value.join(",");
-          }
-
-          if (valororig !== value) {
-            event.preventDefault();
-            event.stopPropagation();
-            boxAlert(20, false, "submit", true, 1, true, "");
-          }
-        });
+      submeter = true;
+    }
+    if (submeter) {
+      var elemAlterado = false;
+      var form = jQuery("#form1");
+      // elemAlterado = Boolean(form[0].getAttribute('data-alter'));
+      if (
+        form[0].getAttribute("data-alter") === true ||
+        form[0].getAttribute("data-alter") === "true"
+      ) {
+        elemAlterado = true;
       }
+      // }
+      if (!elemAlterado) {
+        url = "/buscas/gravasessao";
+        var mens = 7;
+        let dados = { msg: mens };
+        executaAjax(url, "json", dados);
+        if (retornoAjax) {
+          retorna_listagem();
+        }
+      } else {
+        jQuery("[id*='-valid']").addClass("d-none");
+        jQuery("[id*='-fival']").removeClass("d-block");
+        var form = jQuery(this)[0].form;
+
+        form.classList.add("was-validated");
+        isvalido = validador(form);
+        if (!isvalido) {
+          event.preventDefault();
+          event.stopPropagation();
+          desBloqueiaTela();
+        } else {
+          // verificar se o campo select foi alterado
+          jQuery("input[data-valid], select[data-valid]").each(
+            async function () {
+              let validar = this.getAttribute("data-valid");
+
+              if (!validar || validar === "0") return;
+              let valororig = this.getAttribute("data-valor");
+              let value = jQuery(this).val();
+
+              // Se for um array (como em selects múltiplos), converte para string
+              if (Array.isArray(value)) {
+                value = value.join(",");
+              }
+
+              if (valororig !== value) {
+                event.preventDefault();
+                event.stopPropagation();
+                boxAlert(20, false, "submit", true, 1, true, "");
+              }
+            }
+          );
+          jQuery("#form1").submit();
+          // form.submit();
+        }
+      }
+    } else {
+      desBloqueiaTela();
     }
   });
 
@@ -161,6 +187,7 @@ jQuery(document).ready(function () {
    */
   jQuery("#form1, #form_modal").on("submit", function (event) {
     // se não foi clicado no botão salvar, cancela o submit
+    console.trace("Submit está sendo aberto aqui");
     bt_clic = event.originalEvent
       ? event.originalEvent.submitter.id
       : this[0].id;
@@ -198,6 +225,7 @@ jQuery(document).ready(function () {
         disabled.attr("disabled", "disabled");
         // console.log(dadosForm.values);
         var url = form.attr("action");
+        console.trace("Submit está sendo aberto aqui");
         executaAjax(url, "json", dadosForm);
         if (retornoAjax) {
           if (tipo != "modal") {
@@ -432,6 +460,15 @@ async function bloqueiaTela() {
     });
     await sleep(500);
   }
+}
+
+function isTelaBloqueada() {
+  const $tela = jQuery("#bloqueiaTela");
+  return (
+    $tela.is(":visible") &&
+    $tela.css("visibility") === "visible" &&
+    parseFloat($tela.css("opacity")) > 0
+  );
 }
 
 /**
@@ -761,185 +798,15 @@ function ativInativ(url, registro, ativo) {
  * Se for confirmação de exclusão, a url deve ser vazia e o box retornará a opção escolhida (Sim/Não)
  *
  * @param {string} msg    - Mensagem que será exibida
- * @param {string} titulo    - Título do Alerta
  * @param {boolean} erro  - verdadeiro, caso seja uma mensagem de ERRO
  * @param {url}     url   - url que será executada no callback
  * @param {boolean} close - verdadeiro, Mostra o botão para fechar o Alerta
  * @param {integer} tipo  - Determina as características do Box 1 = Atenção, 2 = Informação
  * @param {boolean} confirma  - verdadeiro, Mostra os botões Sim ou Não para Confirmação
+ * @param {string} titulo    - Título do Alerta
  * @param {array} opcoes  - verdadeiro, Mostra os botões Sim ou Não para Confirmação
  */
-// function boxAlert(
-//   msg,
-//   erro = false,
-//   url,
-//   close = false,
-//   tipo = 1,
-//   confirma = false,
-//   titulo = "",
-//   opcoes = false
-// ) {
-//   if (!isNaN(msg)) {
-//     //mensagem é um número
-//     // busca os dados da  mensagem no array de mensagens
-//     msg_id = msg_cfg[msg - 1];
-//     msg = msg_id.msg_mensagem;
-//     tipo = msg_id.msg_tipo;
-//     if (tipo == "P") {
-//       titulo =
-//         '<h3><i class="fa-solid fa-circle-question fa-lg"></i><span class="mx-2">' +
-//         msg_id.msg_titulo +
-//         "</span></h3>";
-//       confirma = true;
-//     } else if (tipo == "A") {
-//       titulo =
-//         '<h3><i class="fa-solid fa-circle-exclamation fa-lg"></i><span class="mx-2">' +
-//         msg_id.msg_titulo +
-//         "</span></h3>";
-//       tipo = 1;
-//     } else if (tipo == "E") {
-//       titulo =
-//         '<h3><i class="fa-solid fa-circle-xmark fa-lg"></i><span class="mx-2">' +
-//         msg_id.msg_titulo +
-//         "</span></h3>";
-//       erro = true;
-//     } else if (tipo == "I") {
-//       titulo =
-//         '<h3><i class="fa-solid fa-circle-info fa-lg"></i><span class="mx-2">' +
-//         msg_id.msg_titulo +
-//         "</span></h3>";
-//     }
-//     cor = msg_id.msg_cor;
-//   } else {
-//     if (tipo == 1) {
-//       // ATENÇÃO
-//       titulo =
-//         '<h3><i class="fas fa-exclamation-triangle"></i><span class="mx-2">Atenção</span></h3>';
-//       tipo = "A";
-//       cor = "bg-warning";
-//     } else if (tipo == 2) {
-//       // INFORMAÇÃO
-//       titulo =
-//         '<h3><i class="fas fa-info-circle"></i><span class="mx-2">Informação</span></h3>';
-//       tipo = "I";
-//       cor = "bg-success";
-//     } else if (tipo == 3) {
-//       // ERRO
-//       titulo =
-//         '<h3><i class="fas fa-circle-xmark"></i><span class="mx-2">ERRO!</span></h3>';
-//       tipo = "E";
-//       cor = "bg-danger";
-//     }
-//   }
-//   if (!confirma) {
-//     if (opcoes) {
-//       // se tem opções é um Select de Opções
-//       bootbox.prompt({
-//         title: titulo,
-//         message: "<div class='text-center'><h5>" + msg + "</h5></div>",
-//         centerVertical: true,
-//         size: "large",
-//         closeButton: false,
-//         inputType: "select",
-//         inputOptions: [
-//           ...opcoes.map(({ id, text }) => ({
-//             text,
-//             value: String(id), // garante string
-//           })),
-//         ],
-//         callback: function (result) {
-//           console.log(result);
-//           return result;
-//         },
-//       });
-//     } else {
-//       bootbox.alert({
-//         title: titulo,
-//         message: "<div class='text-center'><h5>" + msg + "</h5></div>",
-//         centerVertical: true,
-//         closeButton: close,
-//         size: "large",
-//         className: "rubberBand animated",
-//         callback: function () {
-//           if (!erro) {
-//             redireciona(url);
-//           }
-//         },
-//       });
-//     }
-//   } else {
-//     if (titulo == "") {
-//       titulo =
-//         '<h3><i class="fas fa-question-circle"></i><span class="mx-2">Exclusão de Registro</span></h3>';
-//     }
-//     bootbox.confirm({
-//       title: titulo,
-//       message: "<div class='text-center'><h5>" + msg + "</h5></div>",
-//       centerVertical: true,
-//       size: "large",
-//       closeButton: false,
-//       swapButtonOrder: true,
-//       buttons: {
-//         cancel: {
-//           label: '<i class="fa fa-times"></i> Não',
-//           className: "btn-secondary",
-//         },
-//         confirm: {
-//           label: '<i class="fa fa-check"></i> Sim',
-//           className: "btn-danger ",
-//         },
-//       },
-//       callback: function (result) {
-//         if (result) {
-//           if (url == "submit") {
-//             jQuery("#form1").trigger("submit");
-//           } else {
-//             if (url.indexOf("location") > -1) {
-//               eval(url);
-//             } else if (url.indexOf("back") > -1) {
-//               window.history.back();
-//             } else {
-//               if (tipo == "P") {
-//                 retornoAjax = false;
-//                 executaAjax(url, "json", "");
-//                 if (retornoAjax) {
-//                   if (retornoAjax.erro) {
-//                     boxAlert(retornoAjax.msg, true, "", false, 1, false);
-//                   } else {
-//                     var arr = location.href.split("/");
-//                     var controler = arr[0] + "//" + arr[2] + "/" + arr[3];
-//                     location.href = controler;
-//                   }
-//                 }
-//               } else {
-//                 redireciona(url);
-//               }
-//             }
-//           }
-//         }
-//       },
-//     });
-//   }
-//   jQuery(".modal-header").addClass(cor);
-//   if (tipo == "A") {
-//     // ATENÇÃO
-//     jQuery(".modal-header").css("color", "black");
-//   } else if (tipo == "I") {
-//     // INFORMAÇÃO
-//     // jQuery('.modal-header').css("background-color", "green");
-//     jQuery(".modal-header").css("color", "white");
-//   } else if (tipo == "E") {
-//     // ERRO
-//     // jQuery('.modal-header').css("background-color", "orange");
-//     jQuery(".modal-header").css("color", "yellow");
-//   } else if (tipo == "P") {
-//     // PERGUNTA
-//     // jQuery('.modal-header').css("background-color", "orange");
-//     jQuery(".modal-header").css("color", "black");
-//   }
-// }
-
-function boxAlert(
+async function boxAlert(
   msg,
   erro = false,
   url,
@@ -1039,6 +906,7 @@ function boxAlert(
 
   // ---- retorna Promise para permitir await (mantendo callbacks originais)
   return new Promise((resolve) => {
+    console.trace("Modal está sendo aberto aqui");
     if (!confirma) {
       if (opcoes) {
         // SELECT (prompt)
@@ -1121,6 +989,10 @@ function boxAlert(
           resolve(true);
           return;
         }
+        if (url === "") {
+          resolve(true);
+          return;
+        }
 
         if (typeof url === "string" && url.indexOf("location") > -1) {
           // ex.: "location.href='...'"
@@ -1151,7 +1023,13 @@ function boxAlert(
               // volta para o controller atual
               const arr = location.href.split("/");
               const controler = arr[0] + "//" + arr[2] + "/" + arr[3];
-              location.href = controler;
+              // location.href = controler;
+              jQuery("#table").DataTable().ajax.reload(null, false);
+              msgtoast = retornoAjax.msg;
+              if (msgtoast != "") {
+                mostranoToast(msgtoast);
+              }
+
               resolve(true);
             }
           } else {
@@ -1400,7 +1278,7 @@ function mostranorodape(texto) {
 
   // Cria um novo timeout
   processandoTimeout = setTimeout(function () {
-    jQuery("#msgrodape").html("");
+    jQuery("#msgrodape").html("&nbsp;");
     jQuery("#msgprocessando").html(" Processando..");
   }, 1500);
 }
@@ -1491,82 +1369,6 @@ function viuNotifica($id) {
   }
 }
 
-// function validador(form) {
-//     if (!form.checkValidity()) {
-//         jQuery('.was-validated :invalid').each(function (index) {
-//             nid = jQuery(this)[0].id;
-//             jQuery("[id='" + nid + "-fival']").removeClass('d-none');
-//             jQuery("[id='" + nid + "-fival']").addClass('d-block');
-//             tab = jQuery(this)[0].closest('.tab-pane').id;
-//             jQuery("[id='" + tab + "-valid']").removeClass('d-none');
-//             if (this.validity.badInput) {
-//                 jQuery("[id='" + nid + "-fival']").html("Valor inserido é inválido");
-//             }
-//             if (this.validity.patternMismatch) {
-//                 jQuery("[id='" + nid + "-fival']").html("Valor não corresponde ao formato esperado");
-//             }
-//             if (this.validity.rangeOverflow) {
-//                 nome = this.title;
-//                 lmax = this.max;
-//                 jQuery("[id='" + nid + "-fival']").html("Valor máximo permitido é " + lmax);
-//             }
-//             if (this.validity.rangeUnderflow) {
-//                 nome = this.title;
-//                 lmin = this.min;
-//                 jQuery("[id='" + nid + "-fival']").html("Valor mínimo permitido é " + lmin);
-//             }
-//             if (this.validity.stepMismatch) {
-//                 jQuery("[id='" + nid + "-fival']").html("Valor não é permitido para este intervalo.");
-//             }
-//             if (this.validity.tooLong) {
-//                 nome = this.title;
-//                 maxl = this.maxLength;
-//                 jQuery("[id='" + nid + "-fival']").html("O campo " + nome + ", aceita no máximo " + maxl + " caracteres");
-//             }
-//             if (this.validity.tooShort) {
-//                 nome = this.title;
-//                 minl = this.minLength;
-//                 jQuery("[id='" + nid + "-fival']").html('Digite pelo menos ' + minl + ' caracteres para ' + nome);
-//             }
-//             if (this.validity.typeMismatch) {
-//                 jQuery("[id='" + nid + "-fival']").html("Valor não corresponde ao tipo esperado");
-//             }
-//             if (this.validity.valueMissing) {
-//                 nome = this.title;
-//                 jQuery("[id='" + nid + "-fival']").html(nome + ' é Obrigatório!');
-//             }
-//         });
-//         valido = false;
-//     } else {
-//         valido = true;
-//         jQuery('.was-validated :valid').each(function (index) {
-//             if (jQuery(this).is("select")) {
-//                 if (jQuery(this).prop('required')) {
-//                     if (jQuery(this).val() <= 0 ||
-//                         jQuery(this).val() == '' ||
-//                         jQuery(this).val() == null) {
-//                         this.selectedIndex = -1;
-//                         valido = false;
-//                         validador(form);
-//                         return false;
-//                     }
-//                 }
-//             }
-//             if (jQuery(this).is("number")) {
-//                 if (jQuery(this).prop('required')) {
-//                     if (jQuery(this).val() < 0 ||
-//                         jQuery(this).val() == '' ||
-//                         jQuery(this).val() == null) {
-//                         valido = false;
-//                         validador(form);
-//                         return false;
-//                     }
-//                 }
-//             }
-//         });
-//     }
-//     return valido;
-// }
 function validador(form) {
   let valido = true;
 
@@ -1664,7 +1466,12 @@ function validador(form) {
  * @return {Object} retorno
  */
 function executaAjax(urldest, tipo = "json", dados = {}, funcao = "") {
-  bloqueiaTela();
+  // console.trace("ExecutaAjax está sendo aberto aqui");
+  eubloquiei = false;
+  if (!isTelaBloqueada()) {
+    eubloquiei = true;
+    bloqueiaTela();
+  }
   var options = {};
   if (dados.entries != undefined) {
     options = {
@@ -1677,13 +1484,17 @@ function executaAjax(urldest, tipo = "json", dados = {}, funcao = "") {
       async: false,
       dataType: tipo,
       beforeSend: function () {
-        bloqueiaTela();
+        // bloqueiaTela();
       },
       complete: function () {
-        desBloqueiaTela();
+        if (eubloquiei) {
+          desBloqueiaTela();
+        }
       },
       error: function () {
-        desBloqueiaTela();
+        if (eubloquiei) {
+          desBloqueiaTela();
+        }
       },
     };
   } else {
@@ -1695,13 +1506,17 @@ function executaAjax(urldest, tipo = "json", dados = {}, funcao = "") {
       async: false,
       dataType: tipo,
       beforeSend: function () {
-        bloqueiaTela();
+        // bloqueiaTela();
       },
       complete: function () {
-        desBloqueiaTela();
+        if (eubloquiei) {
+          desBloqueiaTela();
+        }
       },
       error: function () {
-        desBloqueiaTela();
+        if (eubloquiei) {
+          desBloqueiaTela();
+        }
       },
     };
   }

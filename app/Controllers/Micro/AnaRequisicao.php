@@ -82,7 +82,7 @@ class AnaRequisicao extends BaseController
             ];
         }
         $this->data['edicao'] = false;
-        $this->data['exclusao'] = false;
+        // $this->data['exclusao'] = false;
         $anarequis = [
             'data' => montaListaColunas($this->data, 'req_id', $dados_tela, $campos[1]),
         ];
@@ -227,6 +227,85 @@ class AnaRequisicao extends BaseController
     }
 
     /**
+     * Exclusão
+     * delete
+     *
+     * @param mixed $id 
+     * @return void
+     */
+    public function delete($id)
+    {
+        $requis = $this->anarequisicao->getListaRequisicao($id);
+        // debug($requis);
+        $ret = [];
+        if ($requis) {
+            $ret['erro'] = false;
+            $req = $requis[0];
+            $reqid = $req['req_id'];
+            $analises = $this->analise->getListaAnaliseComReq($reqid);
+            if($analises){
+                $resultado = $this->atualizaStatusAnalise($analises);
+
+                switch ($resultado) {
+                    case 0:
+                        $ret['erro'] = true;
+                        $ret['msg']  = 'Não foi possível Atualizar as Análise, Verifique!<br><br>';
+                        break;
+                    case 2:
+                        $ret['erro'] = true;
+                        $ret['msg']  = 3;
+                        break;
+                }
+            } else {
+                $ret['erro'] = true;
+                $ret['msg']  = 3;
+            }
+            if(!$ret['erro']){
+                try {
+                    $this->analise->delete($id);
+                    $ret['erro'] = false;
+                    cache()->clean();
+                    session()->setFlashdata('msg', 'Requisição Excluída com Sucesso');
+                    $ret['msg']  = 'Requisição Excluída com Sucesso';
+                } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+                    $ret['erro'] = true;
+                    $ret['msg']  = 'Não foi possível Excluir essa Requisição, Verifique!<br><br>';
+                }
+            }
+        }
+        echo json_encode($ret);
+    }
+
+    private function atualizaStatusAnalise(array $analises): int
+    {
+        // Verifica antes se todos têm stt_id == 14
+        foreach ($analises as $item) {
+            if (!isset($item['stt_id']) || $item['stt_id'] != 14) { //14 é status realizada
+                return 2; // Tem pelo menos um com status diferente de 14
+            }
+        }
+
+        $this->analise->transStart();
+        try {
+            foreach ($analises as $item) {
+                if (!empty($item['ana_id'])) {
+                    $this->analise->save([
+                        'ana_id' => $item['ana_id'],
+                        'req_id' => NULL,
+                        'stt_id' => 11 // PENDENTE
+                    ]);
+                }
+            }
+            $this->analise->transCommit();
+            return 1; // Sucesso
+        } catch (\Exception $e) {
+            $this->analise->transRollback();
+            log_message('error', 'Erro ao atualizar análise: ' . $e->getMessage());
+            return 0; // Falha com exceção
+        }
+    }
+
+   /**
      * Lista das Requisições
      * listarequisicao
      *

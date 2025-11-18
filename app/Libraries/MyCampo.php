@@ -86,6 +86,8 @@ class MyCampo
     public function acertaId()
     {
         // QUANDO TEM ORDEM, ALTERA O ID ANTES DE CRIAR AS OPÇÕES
+        // debug($this->field);
+        // debug($this->ordem);
         if ($this->ordem != -1) {
             if (strpos($this->nome, "[") === false) {
                 $this->nome = $this->nome . "[" . $this->ordem . "]";
@@ -93,7 +95,7 @@ class MyCampo
             if (strpos($this->id, "[") === false) {
                 $this->id = $this->id . "[" . $this->ordem . "]";
             }
-            $this->field['data-index'] = $this->ordem;
+            // debug($this->field);
         }
     }
     /**
@@ -125,7 +127,6 @@ class MyCampo
         $dicionario = new ConfigDicDadosModel();
         // debug($tabela.' '.$campo);
         $dados_campo = $dicionario->getDetalhesCampo($tabela, $campo);
-        // debug($dados_campo);
         if (count($dados_campo)) {
             $dad_camp = $dados_campo[0];
 
@@ -331,7 +332,7 @@ class MyCampo
             $colunas = $this->dispForm;
         }
         $mb = 'mb-3';
-        if ($this->classep == 'semmb') {
+        if (str_contains($this->classep, 'semmb')) {
             $mb = 'm-0';
         }
         $respf .= "<div id='ig_$this->id' class='row $colunas float-start align-items-center d-inline-flex $mb'>";
@@ -442,7 +443,7 @@ class MyCampo
     public function propriedades()
     {
         $selec = '';
-        if (isset($this->selecionado)) {
+        if (!isset($this->field['multiple']) && isset($this->selecionado)) {
             if (gettype($this->selecionado) == 'array') {
                 $selec = implode(',', $this->selecionado);
             } else {
@@ -462,6 +463,9 @@ class MyCampo
         $this->field['label']            = isset($this->label) ? $this->label : "";
         $this->field['hint']             = isset($this->hint) ? $this->hint : "";
         $this->field['autocomplete']     = 'off';
+        if($this->ordem > -1 && $this->objeto != 'cr2opcoes'){
+            $this->field['data-index'] = $this->ordem;
+        }
         if ($this->tipo != 'botao' && $this->tipo != 'button') {
             $this->field['onchange'] = isset($this->funcChan) ? $this->funcChan : "";
             $this->field['onblur']   = isset($this->funcBlur) ? $this->funcBlur : "";
@@ -520,7 +524,7 @@ class MyCampo
     public function crShow(): string
     {
         $resp = '';
-        $resp = "<div class='row col-12 col-lg-12 align-items-center float-start d-inline-flex mb-0 mt-2'>";
+        $resp = "<div class='row $this->dispForm align-items-center float-start d-inline-flex'>";
         if ($this->label != '') {
             $resp .= $this->crLabel();
         }
@@ -750,7 +754,7 @@ class MyCampo
         $campo      = '';
 
         $campo .= "<div class='form-check form-switch form-check-inline
-                                form-control px-1' style='width: auto'>";
+                                form-control px-1 ' style='width: auto'>";
         $cont = 0;
         foreach ($this->opcoes as $valor => $label) {
             $id = $this->id . '[' . $cont . ']';
@@ -763,7 +767,7 @@ class MyCampo
                 'value'      => $valor,
                 'data-selec' => $this->selecionado,
                 'data-salva' => true,
-                'class'      => "form-check-input ml-2 $this->classep",
+                'class'      => "form-check-input ml-2",
             ];
             if ($valor == $this->selecionado) {
                 $this->field['checked'] = true;
@@ -771,7 +775,7 @@ class MyCampo
             $this->propriedades();
 
             $lab = "<label class='form-check-label px-1 m-auto mx-0' for='$id'> $label </label>";
-            $campo .= "<div class='d-inline-flex' style='width: auto'>";
+            $campo .= "<div class='d-inline-flex  $this->classep' style='width: auto'>";
             $campo .= form_radio($this->field) . $lab;
             $campo .= '</div>';
             $cont++;
@@ -1275,8 +1279,18 @@ class MyCampo
 
         // debug($this->opcoes);
         // debug($this->selecionado, true);
-        $extras = 'data-actions-box="true"; data-size="5"; data-selected-text-format="count > 3"';
+        $extras = [
+            'data-actions-box'          => 'true',
+            'data-size'                 => '5',
+            'data-selected-text-format' => 'count > 3',
+            'style' => "height:130px; overflow-y:auto max-height:130px;",
+        ];
 
+
+        // debug($this->field);
+        // debug($this->opcoes);
+        // debug($extras);
+        // debug($this->selecionado, true);
         $campo = form_multiselect($this->field, $this->opcoes, $this->selecionado, $extras);
 
         $resp .= $this->fmtDisplay($campo);
@@ -1349,11 +1363,12 @@ class MyCampo
         if (! isset($this->size) || $this->size == '') {
             $this->size = -1;
         }
-            $this->propriedades();
-            $this->field['placeholder'] = str_replace('Informe', 'Selecione', $this->field['placeholder']);
-            $campo = form_dropdown($this->field, $this->opcoes, $this->selecionado);
+        $this->propriedades();
+        $this->field['placeholder'] = str_replace('Informe', 'Selecione', $this->field['placeholder']);
+        // debug($this->field);
+        $campo = form_dropdown($this->field, $this->opcoes, $this->selecionado);
 
-            $resp .= $this->fmtDisplay($campo);
+        $resp .= $this->fmtDisplay($campo);
         return $resp;
     }
 
@@ -1552,6 +1567,7 @@ class MyCampo
 
         $resp = '';
 
+
         $this->field = [
             'name'             => $this->nome . '[]',
             'id'               => $this->id . '[]',
@@ -1572,7 +1588,7 @@ class MyCampo
             $this->opcoes = ['' => 'Escolha ' . $this->place] + $this->opcoes;
         }
 
-        $extras = 'size=3; data-actions-box="true"; data-size="5"; data-selected-text-format="count > 3"; style = "height:auto; overflow-y:auto; max-height:100px;"; ';
+        $extras = 'size=3; data-actions-box="true"; data-size="5"; data-selected-text-format="count > 3"; style = "height:auto; overflow-y:auto max-height:100px;"; ';
 
         // debug($this->selecionado);
         $campo = form_multiselect($this->field, $this->opcoes, $this->selecionado, $extras);

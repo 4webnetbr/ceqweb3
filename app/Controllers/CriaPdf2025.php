@@ -133,7 +133,7 @@ class CriaPdf2025 extends BaseController
             $texto = $req['req_observacao'];
             $linha = $this->pdf->GetY();
             $this->imprimeDescricao($texto, $linha);
-
+ 
 
             // Cabeçalho da tabela
             $this->pdf->SetFont('Arial','B',9);

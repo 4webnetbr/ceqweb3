@@ -121,6 +121,17 @@ class EstoquTipoMovimentacaoModel extends Model
         return $builder->get()->getResultArray();
     }
 
+    public function getTipoMovimentacaoDepositos($dorig, $ddest)
+    {
+        $db = db_connect('dbEstoque');
+        $builder = $db->table('vw_est_tipo_movimentacao_relac_lista');
+        $builder->select('*');
+        $builder->where('dep_codorigem', $dorig);
+        $builder->where('dep_coddestino', $ddest);
+        $builder->orderBy('tmo_ativo, tmo_nome');
+        return $builder->get()->getResultArray();
+    }
+
     public function getTipoMovimentacaoSearch($termo)
     {
         $array = ['tmo_nome' => $termo . '%'];

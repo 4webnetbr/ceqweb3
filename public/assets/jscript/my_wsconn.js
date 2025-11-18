@@ -54,6 +54,16 @@ jQuery(document).ready(function () {
       if (data.usuario == usuario) {
         mostranorodape(data.msg); // isso vai mudar
       }
+    } else if (data.tipo == "AtualizarControler") {
+      let path = window.location.pathname; // Ex: /produtos
+      let segments = path.split("/").filter(Boolean); // remove strings vazias
+      let lastSegment = segments[segments.length - 1];
+
+      // Verifica se só existe um segmento na URL (ou seja, ele é o último e único "controller")
+      if (segments.length === 1 && lastSegment === data.msg) {
+        // location.reload();
+        jQuery("#table").DataTable().ajax.reload(null, false);
+      }
     } else if (data.tipo == "Login") {
       mostranoToast(data.msg);
     }

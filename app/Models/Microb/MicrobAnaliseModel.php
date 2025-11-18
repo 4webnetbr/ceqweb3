@@ -136,6 +136,20 @@ class MicrobAnaliseModel extends Model
         return $ret;
     }
 
+    public function getListaAnaliseComReq($req_id)
+    {
+        $db = db_connect('dbProduto');
+        $builder = $db->table('vw_pro_mic_analise_relac_v2');
+
+        $builder->select('*');
+        $builder->where('req_id', $req_id);
+        // $builder->where('stt_id', 14); // somente status realizada
+        $builder->orderBy('stt_ordem, pro_despro');
+        $ret = $builder->get()->getResultArray();
+        // debug($this->db->getLastQuery());
+        return $ret;
+    }
+
     public function atualizaEvento()
     {
         $db = db_connect('dbProduto');

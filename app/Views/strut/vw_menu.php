@@ -55,7 +55,7 @@ if ($avatar != '') {
 </div>
 
 <!-- Vertical navbar -->
-<div class="col-lg-2 col-8 position-absolute bg-white shadow sidebar" id="sidebar">
+<div class="col-lg-2 col-8 position-absolute bg-white shadow sidebar active" id="sidebar">
   <div class="pt-2 pb-3 ps-1 pe-1">
     <div id='sistema' class='div-user text-start w-100'>
       <a href="<?=site_url();?>" >

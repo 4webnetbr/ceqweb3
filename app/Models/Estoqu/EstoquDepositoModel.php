@@ -58,10 +58,13 @@ class EstoquDepositoModel extends Model
      */
     protected function depoisUpdate(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'][0];
-        $log = $logdb->insertLog($this->table, 'Alteração', $registro, $data['data']);
-        return $data;
+        // debug($data, true);
+        if(isset($data['id'][0])){
+            $logdb = new LogMonModel();
+            $registro = $data['id'][0];
+            $log = $logdb->insertLog($this->table, 'Alteração', $registro, $data['data']);
+            return $data;
+        }
     }
 
     /**

@@ -167,6 +167,6 @@ Class CfgMensagem extends BaseController
             $ret['url']  = site_url($this->data['controler']);
         }
         echo json_encode($ret);
-    }
+    } 
 
 }

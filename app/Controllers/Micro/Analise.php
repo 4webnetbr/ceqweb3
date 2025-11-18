@@ -781,6 +781,7 @@ class Analise extends BaseController
                         $sqlAna = [
                             'ana_id'       => intval($post['ana_id']),
                             'ana_descmetodo' => $post['ana_descmetodo'],
+                            'ana_lotemb'   => $post['ana_lotemb'],
                         ];
                     }
                     break;

@@ -8,10 +8,12 @@ use App\Models\Config\ConfigEtiquetaModel;
 use App\Models\Config\ConfigImpressoraModel;
 use App\Models\Config\ConfigMenuModel;
 use App\Models\Config\ConfigModuloModel;
+use App\Models\Config\ConfigStatusModel;
 use App\Models\Config\ConfigTelaModel;
 use App\Models\Config\ConfigUsuarioModel;
 use App\Models\Estoqu\EstoquDepositoModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
+use App\Models\Ocorre\OcorreTipoAcaoModel;
 use App\Models\Produt\ProdutFamiliaModel;
 use App\Models\Produt\ProdutIngredienteModel;
 use App\Models\Produt\ProdutProdutoModel;
@@ -24,6 +26,7 @@ class Buscas extends BaseController
     public $tela;
     public $usuario;
     public $admDados;
+    public $status;
 
 
     public function __construct()
@@ -33,6 +36,7 @@ class Buscas extends BaseController
         $this->tela                 = new ConfigTelaModel();
         $this->usuario              = new ConfigUsuarioModel();
         $this->admDados             = new ConfigDicDadosModel();
+        $this->status               = new ConfigStatusModel();
     }
 
     public function busca_hierarquia()
@@ -192,6 +196,26 @@ class Buscas extends BaseController
                     $ret[$c]['id']      = $class[$c]['tel_id'];
                     $ret[$c]['text']    = $class[$c]['tel_nome'];
                     $ret[$c]['icone']    = $class[$c]['tel_icone'];
+                }
+            }
+        }
+        echo json_encode($ret);
+        exit;
+    }
+
+    public function busca_status_tela()
+    {
+        $ret    = [];
+        if ($_REQUEST['busca']) {
+            $termo              = $_REQUEST['busca'];
+            $status = $this->status->getStatusTela($termo);
+            if (sizeof($status) <= 0) {
+                $ret[0]['id'] = '-1';
+                $ret[0]['text'] = 'Tela não encontrada...';
+            } else {
+                for ($c = 0; $c < sizeof($status); $c++) {
+                    $ret[$c]['id']      = $status[$c]['stt_id'];
+                    $ret[$c]['text']    = $status[$c]['stt_nome'];
                 }
             }
         }
@@ -378,6 +402,26 @@ class Buscas extends BaseController
                 $ret['id']     = $tmovimen[0]['tmo_id'];
                 $ret['depori'] = $tmovimen[0]['dep_codorigem'];
                 $ret['depdes'] = $tmovimen[0]['dep_coddestino'];
+                $ret['deppad'] = $tmovimen[0]['dep_codpadrao'];
+            }
+        }
+        echo json_encode($ret);
+    }
+
+    public function buscaTipoAcao()
+    {
+        $ret    = [];
+        // debug($_REQUEST,false);
+        if ($_REQUEST['busca']) {
+            $termo            = $_REQUEST['busca'];
+            $tacao            = new OcorreTipoAcaoModel();
+            $tacaos           = $tacao->getTipoAcao($termo);
+            if (sizeof($tacaos) <= 0) {
+                $ret['id'] = '-1';
+                $ret['text'] = 'Tipo de Movimentação não encontrado...';
+            } else {
+                $ret['id']     = $tacaos[0]['tpa_id'];
+                $ret['acao']   = $tacaos[0]['tpa_tipo'];
             }
         }
         echo json_encode($ret);
@@ -500,8 +544,23 @@ class Buscas extends BaseController
     public function busca_campo_tela()
     {
         $ret    = [];
+        $etiq   = true;
         if ($_REQUEST['busca']) {
             $termo              = $_REQUEST['busca'];
+            $referer = $_SERVER['HTTP_REFERER'] ?? null;
+
+            if ($referer) {
+                $path = parse_url($referer, PHP_URL_PATH); // extrai apenas "/produtos/editar/5"
+                
+                $segments = explode('/', trim($path, '/')); // quebra em ['produtos', 'editar', '5']
+                
+                $controller = $segments[0] ?? null; // pega 'produtos'
+
+                if(strtolower($controller) != 'cfgetiqueta'){
+                    $etiq = false;
+                }
+            }
+
             $telas = $this->tela->getTelaId($termo)[0];
             if (isset($telas['tel_model']) && $telas['tel_model'] != null) {
                 $model = $telas['tel_model'];
@@ -523,21 +582,23 @@ class Buscas extends BaseController
                     $ret[0]['text'] = 'Campos não encontrados...';
                 } else {
                     $c = 0;
-                    $ret[$c]['id']      = 0;
-                    $ret[$c]['text']    = 'Texto Livre';
-                    $c++;
-                    $ret[$c]['id']      = 1;
-                    $ret[$c]['text']    = 'Linha Horizontal';
-                    $c++;
-                    $ret[$c]['id']      = 2;
-                    $ret[$c]['text']    = 'Data Atual';
-                    $c++;
-                    $ret[$c]['id']      = 3;
-                    $ret[$c]['text']    = 'Data e Hora Atual';
-                    $c++;
-                    $ret[$c]['id']      = -10;
-                    $ret[$c]['text']    = '';
-                    $c++;
+                    if($etiq){
+                        $ret[$c]['id']      = '99';
+                        $ret[$c]['text']    = 'Texto Livre';
+                        $c++;
+                        $ret[$c]['id']      = '1';
+                        $ret[$c]['text']    = 'Linha Horizontal';
+                        $c++;
+                        $ret[$c]['id']      = '2';
+                        $ret[$c]['text']    = 'Data Atual';
+                        $c++;
+                        $ret[$c]['id']      = '3';
+                        $ret[$c]['text']    = 'Data e Hora Atual';
+                        $c++;
+                        $ret[$c]['id']      = -10;
+                        $ret[$c]['text']    = '';
+                        $c++;
+                    }
                     foreach ($campos_lis as $key => $value) {
                         $ret[$c]['id']      = $key;
                         $ret[$c]['text']    = $value;

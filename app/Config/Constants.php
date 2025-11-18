@@ -2,6 +2,7 @@
 
 
 define('NAME_APP', 'CeqWeb 3.0');
+define('LINK_CEQWEB2', 'https://ceqweb2.ceqnep.com.br/producao/home/ajax/');
 /*
  | --------------------------------------------------------------------
  | App Namespace

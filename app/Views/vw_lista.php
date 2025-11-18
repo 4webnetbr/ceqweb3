@@ -56,7 +56,6 @@
     $chave = session()->getFlashdata('chave');
     $script = session()->getFlashdata('script');
     echo "<script>{$script}</script>";
-    // echo "<script>gerarEtiquetaZPL(\"" . $link . "\",false,\"" .$chave . "\");</script>";
   }
   ?>
 

@@ -40,6 +40,8 @@ use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
             }
             $valida = data_br($mov['lot_validade']);
 
+            // debug($movim);
+
             log_message('info', 'Movimento '.json_encode($movim));
             log_message('info', 'Depósito Origem '.$depori);
             log_message('info', 'Depósito Destino '.$depdes);

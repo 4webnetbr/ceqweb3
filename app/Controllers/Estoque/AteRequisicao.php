@@ -84,11 +84,14 @@ class AteRequisicao extends BaseController
         $campos = montaColunasCampos($this->data, 'req_id');
         $dados_requis = $this->requisicao->getRequisicaoLista(false, [4, 21]);
         $dados_requis = filtrarRequisicoesPorPerfil($dados_requis);
+        $req_ids_assoc = array_column($dados_requis, 'req_id');
+        $log = buscaLogTabela('est_requisicao', $req_ids_assoc);
 
         $base_url = base_url($this->data['controler']);
         foreach ($dados_requis as &$req) {
             // Verificar se o log já está disponível para esse ana_id
             if ($req['req_id']) {
+                $req['usu_nome'] = $log[$req['req_id']]['usua_alterou'] ?? '';
                 // Concatenar o URL de forma mais eficiente
                 $url_eti = $base_url .'/EtqProduto/' . $req['req_id'];
                 $url_ate = $base_url .'/atende/' . $req['req_id'];
@@ -258,26 +261,14 @@ class AteRequisicao extends BaseController
         // $secao[1] = 'Produtos';
         $campos[0][count($campos[0])] = view('partials/pw_produtos_requisicao',['produtos' => $resultado]); // mesma estrutura do add()
 
-        // $envr          = new MyCampo();
-        // $envr->nome    = 'bt_envia';
-        // $envr->id      = 'bt_envia';
-        // $envr->i_cone  = '<div class="align-items-center py-1 text-start float-start font-weight-bold" style="">
-        //                     <i class="fa-solid fa-check" style="font-size: 2rem;" aria-hidden="true"></i></div>';
-        // $envr->i_cone  .= '<div class="align-items-start txt-bt-manut">Finalizar Atendimento</div>';
-        // $envr->place    = 'Finalizar Atendimento';
-        // // $envr->funcChan = 'enviarRequisicoes(1)';
-        // $envr->classep  = 'btn-success bt-manut btn-sm mb-2 float-end';
-        // $this->bt_envia = $envr->crBotao();
-
-        // $this->data['botao'] = $this->bt_envia;
-
         $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['desc_metodo']     = ' Atendimento de ';
         $this->data['secoes']    = $secao;
         $this->data['campos']    = $campos;
         $this->data['destino']   = 'store'; // ou 'update' se você for criar
         $this->data['scripts']   = 'my_requisicao';
-
+        
+        $this->data['script']   = "<SCRIPT>jQuery('#lot_codbar').focus();</SCRIPT>";
         echo view('vw_edicao', $this->data);
     }
 
@@ -397,6 +388,7 @@ class AteRequisicao extends BaseController
         // debug($postado);
 
         $dadosAgrupados = [];
+        $temprodutopendente = false;
 
         foreach ($postado as $key => $value) {
             if (preg_match('/^repid_(\d+)$/', $key, $matches)) {
@@ -428,6 +420,8 @@ class AteRequisicao extends BaseController
                 if ($qtia === $somaStatus) {
                     // Somente adiciona se a condição for satisfeita
                     $dadosAgrupados[$id] = $dadosTemp;
+                } else {
+                    $temprodutopendente = true;
                 }
             }
         }
@@ -445,6 +439,7 @@ class AteRequisicao extends BaseController
 
             $movs = [];
 
+            $qtiaatendida = 0;
             foreach ($dadosAgrupados as $campo => $val) {
                 $sql_save = [
                     'rep_id' => $val['repid'],
@@ -453,7 +448,13 @@ class AteRequisicao extends BaseController
                     'rpa_atendida' => $val['rpa_atendida'],
                     'rpa_data' => date('Y-m-d H:i:s'),
                 ];
-                if (!$this->reqprodutoate->insert($sql_save)) {
+                $ate = $this->reqprodutoate->getProdutoRequisicaoAtendimento($val['repid'], $val['proid']);
+                if($ate){
+                    $salva = $this->reqprodutoate->update($ate[0]['rpa_id'],$sql_save);
+                } else {
+                    $salva = $this->reqprodutoate->insert($sql_save);
+                }
+                if (!$salva) {
                     $ret['erro'] = true;
                     $ret['msg'] = 'Erro ao gravar o Atendimento.';
                     $this->reqprodutoate->transRollback();
@@ -463,6 +464,7 @@ class AteRequisicao extends BaseController
                     // pega o movimento
                     $idmov  = $val['tmo_id'];
                     $qtia   = $val['rpa_atendida'];
+                    $qtiaatendida += intval($qtia);
                     $proid  = $val['proid'];
                     $requisicao = $this->requisicao->getRequisicaoRep($val['repid'])[0];
                     // cria os movimentos
@@ -477,24 +479,19 @@ class AteRequisicao extends BaseController
                 }
             }
             if (!$ret['erro']) {
-                if (!empty($movs)) {
-                    cache()->clean();
-                    // debug($movs);
-                    $movim = geraMovimentoRequisicoes($movs, $this->data, 'A');
-                    if($movim['status'] == 'Erro'){
-                        $ret['erro'] = true;
-                        $ret['msg'] = $movim['mensagem'];
-                    }
-                }
                 if(!$ret['erro']){
-                    $saldos = $this->reqprodutoate->getSaldoRequisicao($postado['req_id']);
-                    $sald = 0;
-                    $status = 18;
-                    for ($s=0; $s < count($saldos) ; $s++) { 
-                        $sald += $saldos[$s]['saldo'];
-                    }
-                    if($sald > 0){
-                        $status = 21;
+                    if($qtiaatendida == 0 && !$temprodutopendente){
+                        $status = 7;
+                    } else {
+                        $saldos = $this->reqprodutoate->getSaldoRequisicao($postado['req_id']);
+                        $sald = 0;
+                        $status = 18;
+                        for ($s=0; $s < count($saldos) ; $s++) { 
+                            $sald += $saldos[$s]['saldo'];
+                        }
+                        if($sald > 0){
+                            $status = 21;
+                        }
                     }
                     $dadosReq = [
                         'stt_id' => $status
@@ -515,8 +512,8 @@ class AteRequisicao extends BaseController
                     }
                 }
             }
-            echo json_encode($ret);
             // cache()->clean();
         }
+        echo json_encode($ret);
     }
 }

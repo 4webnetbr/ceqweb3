@@ -574,7 +574,24 @@ function carregamentos_iniciais() {
    * Mostra quantos caracteres já foram digitados e qual o total de Caracteres aceitos
    *
    */
-  jQuery("input, textarea").on("keyup", function () {
+  jQuery(document).on("keydown", "input, select, textarea", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      jQuery(this).blur();
+    }
+  });
+
+  // jQuery("input, textarea").on("keydown", function (e) {
+  //   if (e.which === 13) {
+  //     // 13 é o código da tecla Enter
+  //     console.log("Enter detectado após leitura do código de barras.");
+  //     e.preventDefault(); // impede o submit
+  //     e.stopPropagation();
+  //     jQuery(this).blur();
+  //     // aqui você pode tratar o valor lido
+  //   }
+  // });
+  jQuery("input, textarea").on("keyup", function (e) {
     var id = jQuery(this)[0].id;
     id = id.replace("[", "\\[");
     id = id.replace("]", "\\]");
@@ -590,6 +607,12 @@ function carregamentos_iniciais() {
     }
     console.log("Tamanho " + tam);
     console.log("Digitado " + dig);
+    if (e.which === 13) {
+      // 13 é o código da tecla Enter
+      e.preventDefault(); // impede o submit
+      console.log("Enter detectado após leitura do código de barras.");
+      // aqui você pode tratar o valor lido
+    }
   });
 
   /**
@@ -1532,8 +1555,9 @@ function testa_dep(id_dep) {
  * @param {integer} selec - Dependente pré-selecionado
  */
 function busca_dependente(obj, id_dep, url_busca, selec) {
-  id_dep = id_dep.replace("[", "\\[");
-  id_dep = id_dep.replace("]", "\\]");
+  id_dep = id_dep.replace(/[\[\]]/g, (match) => "\\" + match);
+  // id_dep = id_dep.replace("[", "\\[");
+  // id_dep = id_dep.replace("]", "\\]");
   if (selec == "") {
     if (jQuery("#" + id_dep).data("valor")) {
       selec = jQuery("#" + id_dep).getAttribute("data-valor");
@@ -2295,5 +2319,36 @@ function validaDataMinima(obj) {
   if (valor < minimo) {
     boxAlert(5, true, "", true, 1, false, "");
     obj.value = "";
+  }
+}
+
+function verificaTipoAcao(obj) {
+  let busca = obj.value;
+  url = window.location.origin + "/buscas/buscaTipoAcao";
+  retornoAjax = false;
+  dados = { busca: busca };
+  executaAjax(url, "json", dados);
+  if (retornoAjax) {
+    acao = retornoAjax.acao;
+    let ind = parseInt(obj.getAttribute("data-index"));
+    jQuery("#divtela\\[" + ind + "\\]")
+      .not(".d-none")
+      .addClass("d-none");
+    jQuery("#divmovi\\[" + ind + "\\]")
+      .not(".d-none")
+      .addClass("d-none");
+    jQuery("#divstat\\[" + ind + "\\]")
+      .not(".d-none")
+      .addClass("d-none");
+    if (acao == 2) {
+      // LISTAR TELAS
+      jQuery("#divtela\\[" + ind + "\\]").removeClass("d-none");
+    } else if (acao == 3) {
+      // Listar Movimentações
+      jQuery("#divmovi\\[" + ind + "\\]").removeClass("d-none");
+    } else if (acao == 4) {
+      // Listar Status
+      jQuery("#divstat\\[" + ind + "\\]").removeClass("d-none");
+    }
   }
 }
