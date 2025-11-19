@@ -99,7 +99,6 @@ class OcoModOcorrencia extends BaseController {
         $campos[2][0][] = $fields2['bt_addtp'];  
         $campos[2][0][] = $fields2['bt_deltp'];  
 
-
 		$this->data['secoes']     = $secao;
         $this->data['campos']     = $campos;
         $this->data['displ']      = $displ;
