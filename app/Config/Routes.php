@@ -147,6 +147,10 @@ $routes->group('OcoTipoOcorrencia', static function ($routes) {
     $routes->get('/', 'Ocorrencia\\OcoTipoOcorrencia::index', ['as' => 'ocotipoocorrencia_index']);
     $routes->match(['get', 'post'], '(:any)', 'Ocorrencia\\OcoTipoOcorrencia::$1', ['as' => 'ocotipoocorrencia_match']);
 });
+$routes->group('OcoModOcorrencia', static function ($routes) {
+    $routes->get('/', 'Ocorrencia\\OcoModOcorrencia::index', ['as' => 'ocomodocorrencia_index']);
+    $routes->match(['get', 'post'], '(:any)', 'Ocorrencia\\OcoModOcorrencia::$1', ['as' => 'ocomodcorrencia_match']);
+});
 
 // Grupo: WebService
 $routes->group('WsCeqweb', static function ($routes) {
