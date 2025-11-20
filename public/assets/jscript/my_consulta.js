@@ -674,6 +674,10 @@ function acertaSaldoReq(obj) {
   var canc = parseInt(jQuery("#rpa_cancelada_" + idBase).val());
 
   saldo = qtde - canc - aten;
+  if(canc > 0){ // recalcula a quantidade de caixas
+    qtaten = qtde - canc;
+    
+  }
   jQuery("#sl_" + idBase).text(saldo);
 
   fundo = "";
