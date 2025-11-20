@@ -71,6 +71,7 @@ if(!isset($show)){
                                 <input type='hidden' id='ctami_<?= $produto["rep_id"]?>' name='ctami_<?= $produto["rep_id"]?>' value='0'></input>
                                 <input type='hidden' id='proid_<?= $produto["rep_id"]?>' name='proid_<?= $produto["rep_id"]?>' value='<?= $produto['pro_id'] ?>'></input>
                                 <input type='hidden' id='repqtia_<?= $produto["rep_id"]?>' name='repqtia_<?= $produto["rep_id"]?>' value='<?= $produto['rep_quantia'] ?>'></input>
+                                <input type='hidden' id='qtdemb_<?= $produto["rep_id"]?>' name='qtdemb_<?= $produto["rep_id"]?>' value='<?= $produto['pro_qtdemb'] ?>'></input>
                                 <?= $produto['pro_codpro'] ?></td>
                             <td class='text-start'><?= $produto['pro_despro'] ?></td>
                             <td id='<?= $produto['pro_codbar_fabricante'] ?>' data-id='cbFab' class='text-start'><?= $produto['fab_apeFab'] ?></td>
