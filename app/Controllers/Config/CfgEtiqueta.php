@@ -66,19 +66,20 @@ class CfgEtiqueta extends BaseController
         foreach ($dados_etiqt as &$etq) {
             $etiq = $etq['etq_id'];
             $url_cop = $base_cop . $etiq;
+
             // Gerar a ação do botão
-            $etq['acao_person'] = [
-                "<button class='btn btn-outline-info btn-sm border-0 mx-0 fs-0' 
-                data-mdb-toggle='tooltip' data-mdb-placement='top' 
-                title='Copiar Etiqueta' onclick='redireciona(\"$url_cop\",event)'>
-                <i class='fas fa-copy'></i></button>",
-
-                "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0' 
-                data-mdb-toggle='tooltip' data-mdb-placement='top'
-                title='Imprimir Etiqueta' onclick='gerarEtiquetaZPL(\"$url_eti\", $etiq)'>
-                <i class='fas fa-print'></i></button>",
-
-            ];
+            if($etq['etq_ativo'] == 'A'){
+                $etq['acao_person'][] = 
+                    "<button class='btn btn-outline-info btn-sm border-0 mx-0 fs-0' 
+                    data-mdb-toggle='tooltip' data-mdb-placement='top' 
+                    title='Copiar Etiqueta' onclick='redireciona(\"$url_cop\",event)'>
+                    <i class='fas fa-copy'></i></button>";
+                $etq['acao_person'][] = 
+                    "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0' 
+                    data-mdb-toggle='tooltip' data-mdb-placement='top'
+                    title='Imprimir Etiqueta' onclick='gerarEtiquetaZPL(\"$url_eti\", $etiq)'>
+                    <i class='fas fa-print'></i></button>";
+            }
         }
 
         $this->data['exclusao'] = false;
@@ -363,14 +364,14 @@ class CfgEtiqueta extends BaseController
         $this->etiqueta->transBegin();
 
                 // Verifica se é uma inclusão ou atualização
-        if (empty($postado['etq_id'])) {
+        // if (empty($postado['etq_id'])) {
             $exists = $this->common->verificaUnico($this->etiqueta, 'etq_nome', $postado['etq_nome'], 'etq_id', $postado['etq_id']);
             if ($exists > 0) {
                 $ret['erro'] = true;
                 $ret['msg'] = 8;
                 $erros = [8];
             }
-        }
+        // }
         if(count($erros) == 0){
             try {
                 // Gravação da etiqueta

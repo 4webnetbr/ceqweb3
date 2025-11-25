@@ -381,7 +381,7 @@ class MicrobAnaliseModel extends Model
         $lsm->leitura  = $show;
         $lsm->opcoes   = $simnao;
         $lsm->dispForm = '2col';
-        $lsm->funcChan = "mostraOcultaCampo(this,'N','ana_lotemb,ana_laudo,ana_arqlaudo,ana_liberar,ana_reprovar')";
+        $lsm->funcChan = "mostraOcultaCampo(this,'N','ana_lotemb,ana_laudo,ana_arqlaudo,ana_liberar,ana_reprovar,ana_descmetodo')";
         $ret['ana_liberarsemmicro']    = $lsm->cr2opcoes();
 
         $dlt           =  new MyCampo('pro_mic_analise', 'ana_datalotemb', false);

@@ -308,7 +308,9 @@ class OcoTipoOcorrencia extends BaseController {
             );
 
             if ($exists > 0) {
-                throw new \Exception('Nome do Tipo de Ocorrência já cadastrado.');
+                $ret['erro'] = true;
+                $ret['msg'] = 8;
+                $erros = [8];
             }
 
             // Salvar Tipo de Ocorrência (principal)

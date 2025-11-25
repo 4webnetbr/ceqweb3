@@ -382,6 +382,7 @@ class EstoquRequisicaoModel extends Model
         $canc->maximo           = $dados['rep_quantia'];
         $canc->dispForm       = 'col-12';
         $canc->funcChan       = 'acertaSaldoReq(this)';
+        $canc->size           = 4;
         $canc->largura        = 30;
         $ret['rpa_cancelada']      = $canc->crInput();
 
@@ -390,6 +391,7 @@ class EstoquRequisicaoModel extends Model
         $aten->id = $aten->nome = "rpa_atendida_".$dados['rep_id'];
         $aten->valor          = $dados['rpa_atendida']?$dados['rpa_atendida']:0;
         $aten->label          = '';
+        $aten->size           = 4;
         $aten->leitura        = true;
         if($dados['pre_cbfabricante'] == 'N' && $dados['pre_undfabricante'] == 'N'){
             $aten->leitura        = false;

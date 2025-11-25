@@ -669,14 +669,18 @@ function acertaSaldoReq(obj) {
   var idBase = linha.id;
 
   var qtde = parseInt(jQuery("#qt_" + idBase).text());
+  var qemb = parseInt(jQuery("#qtdemb_" + idBase).val());
 
   var aten = parseInt(jQuery("#rpa_atendida_" + idBase).val());
   var canc = parseInt(jQuery("#rpa_cancelada_" + idBase).val());
 
   saldo = qtde - canc - aten;
-  if(canc > 0){ // recalcula a quantidade de caixas
+  if (canc > 0) {
+    // recalcula a quantidade de caixas
     qtaten = qtde - canc;
-    
+    qtcaix = Math.ceil(qtaten / qemb);
+    jQuery("#cx_" + idBase).text(qtcaix);
+    jQuery("#rpa_atendida_" + idBase).prop("max", qtaten);
   }
   jQuery("#sl_" + idBase).text(saldo);
 
