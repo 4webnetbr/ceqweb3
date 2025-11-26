@@ -40,7 +40,7 @@ class CommCeqweb implements MessageComponentInterface {
         log_message('info',"Connection {$conn->resourceId} has disconnected");
     }
 
-    public function onError(ConnectionInterface $conn, \Exception $e) {
+    public function onError(ConnectionInterface $conn, \Throwable $e) {
         log_message('info', "An error has occurred: {$e->getMessage()}");
         $conn->close();
     }

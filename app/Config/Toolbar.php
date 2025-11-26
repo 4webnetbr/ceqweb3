@@ -88,4 +88,5 @@ class Toolbar extends BaseConfig
      * `$maxQueries` defines the maximum amount of queries that will be stored.
      */
     public int $maxQueries = 100;
+
 }
