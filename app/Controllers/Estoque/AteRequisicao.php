@@ -93,7 +93,8 @@ class AteRequisicao extends BaseController
             if ($req['req_id']) {
                 $req['usu_nome'] = $log[$req['req_id']]['usua_alterou'] ?? '';
                 // Concatenar o URL de forma mais eficiente
-                $url_eti = $base_url .'/EtqProduto/' . $req['req_id'];
+                // $url_eti = $base_url .'/EtqProduto/' . $req['req_id'];
+                $url_eti = base_url('/EtqProduto/Etiqueta/' . $req['req_id']);
                 $url_ate = $base_url .'/atende/' . $req['req_id'];
                 $url_imp = base_url('/CriaPdf2025/PrintRequisicaoEstoq/' . $req['req_id']);
                 // Gerar a ação do botão

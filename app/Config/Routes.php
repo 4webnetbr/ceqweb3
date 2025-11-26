@@ -99,8 +99,7 @@ $routes->group('CfgModulo', static function ($routes) {
 $estoqueControllers = [
     'SaldoEstoque', 'Movimento', 'Deposito', 'Transacao',
     'TipoMovimentacao', 'Requisicao', 'CfgEtiqueta',
-    'AteRequisicao', 'ConfRequisicao'
-];
+    'AteRequisicao', 'ConfRequisicao', 'EtqProduto'];
 
 foreach ($estoqueControllers as $ctrl) {
     $routes->group($ctrl, static function ($routes) use ($ctrl) {
@@ -111,6 +110,8 @@ foreach ($estoqueControllers as $ctrl) {
 }
 
 $routes->get('AteRequisicao/GeraEtiqueta/(:num)/(:num)', 'Estoque\\AteRequisicao::GeraEtiqueta/$1/$2', ['as' => 'aterequisicao_GeraEtiqueta_match']);
+$routes->get('EtqProduto/Etiqueta/(:num)', 'Estoque\\EtqProduto::Etiqueta/$1', ['as' => 'etqproduto_match']);
+$routes->get('EtqProduto/GeraEtiqueta/(:num)/(:num)', 'Estoque\\EtqProduto::GeraEtiqueta/$1/$2', ['as' => 'etqproduto_GeraEtiqueta_match']);
 
 // Controladores de Produto
 $produtoControllers = [

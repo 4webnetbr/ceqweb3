@@ -96,13 +96,18 @@ class OcoModOcorrencia extends BaseController {
         $campos[2][0][] = "<div id='divmovi[0]' class='d-none row col-6'>".$fields2['tmo_id']."</div>";  
         $campos[2][0][] = "<div id='divtela[0]' class='d-none row col-6'>".$fields2['mod_id'].$fields2['tel_id']."</div>";  
         $campos[2][0][] = "<div id='divstat[0]' class='d-none row col-6'>".$fields2['stt_id']."</div>";  
-        $campos[2][0][] = $fields2['bt_addtp'];  
+        $campos[2][0][] = $fields2['bt_addtp'];
         $campos[2][0][] = $fields2['bt_deltp'];  
 
 		$this->data['secoes']     = $secao;
         $this->data['campos']     = $campos;
         $this->data['displ']      = $displ;
 		$this->data['destino']    = 'store';
+        $this->data['script'] = "<script>
+            
+                acerta_botoes_rep('telas_aplicaveis');
+                acerta_botoes_rep('acoes');
+        </script>";
 
         echo view('vw_edicao', $this->data);
     }

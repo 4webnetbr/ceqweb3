@@ -173,6 +173,7 @@ class OcorreModOcorrenciaModel extends Model
         $tpoid->obrigatorio    = true;
         $tpoid->largura        = 40;
         $tpoid->dispForm       = 'col-4';
+        $tpoid->funcChan       = 'carregaTelaAcaoTipo(this);';
         $ret['tpo_id'] = $tpoid->crSelect();
 
         $simnao['A'] = 'Ativo';
@@ -242,7 +243,7 @@ class OcorreModOcorrenciaModel extends Model
         $add->id        = "bt_addta[$pos]";
         $add->i_cone    = "<i class='fas fa-plus'></i>";
         $add->place     = "Adicionar Campo";
-        $add->classep   = "btn-outline-success btn-sm bt-repete";
+        $add->classep   = "btn-outline-success btn-sm bt-repete esconder";
         $add->funcChan  = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTa/") . "','telas_aplicaveis',this)";
         $ret['bt_addta']   = $add->crBotao();
 
@@ -288,7 +289,7 @@ class OcorreModOcorrenciaModel extends Model
         $add->id        = "bt_addta[$pos]";
         $add->i_cone    = "<i class='fas fa-plus'></i>";
         $add->place     = "Adicionar Campo";
-        $add->classep   = "btn-outline-success btn-sm bt-repete";
+        $add->classep   = "btn-outline-success btn-sm bt-repete esconder";
         $add->funcChan  = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTp/") . "','acoes',this)";
         $ret['bt_addtp']   = $add->crBotao();
 
