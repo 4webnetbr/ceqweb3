@@ -3,20 +3,21 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
-use App\Models\Config\ConfigDicDadosModel;
-use App\Models\Config\ConfigEtiquetaModel;
-use App\Models\Config\ConfigImpressoraModel;
 use App\Models\Config\ConfigMenuModel;
+use App\Models\Config\ConfigTelaModel;
 use App\Models\Config\ConfigModuloModel;
 use App\Models\Config\ConfigStatusModel;
-use App\Models\Config\ConfigTelaModel;
 use App\Models\Config\ConfigUsuarioModel;
-use App\Models\Estoqu\EstoquDepositoModel;
-use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
-use App\Models\Ocorre\OcorreTipoAcaoModel;
 use App\Models\Produt\ProdutFamiliaModel;
-use App\Models\Produt\ProdutIngredienteModel;
 use App\Models\Produt\ProdutProdutoModel;
+use App\Models\Config\ConfigDicDadosModel;
+use App\Models\Config\ConfigEtiquetaModel;
+use App\Models\Estoqu\EstoquDepositoModel;
+use App\Models\Ocorre\OcorreTipoAcaoModel;
+use App\Models\Config\ConfigImpressoraModel;
+use App\Models\Produt\ProdutIngredienteModel;
+use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
+use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 
 class Buscas extends BaseController
 {
@@ -422,6 +423,27 @@ class Buscas extends BaseController
             } else {
                 $ret['id']     = $tacaos[0]['tpa_id'];
                 $ret['acao']   = $tacaos[0]['tpa_tipo'];
+            }
+        }
+        echo json_encode($ret);
+    }
+
+    public function buscatelasaplicaveis()
+    {
+        $ret    = [];
+        // debug($_REQUEST,false);
+        if ($_REQUEST['tipoocor']) {
+            $termo            = $_REQUEST['tipoocor'];
+            $ttipo            = new OcorreTipoOcorrenciaModel();
+            $ttelas           = $ttipo->getTOTelasAplicaveis($termo);
+            if (sizeof($ttelas) <= 0) {
+                $ret['id'] = '-1';
+                $ret['text'] = 'Tipo de Ocorrência não encontrado...';
+            } else {
+                for ($c = 0; $c < sizeof($ttelas); $c++) {
+                    $ret[$c]['id'] = $ttelas[$c]['tot_id'];
+                    $ret[$c]['text'] = '';
+                }
             }
         }
         echo json_encode($ret);

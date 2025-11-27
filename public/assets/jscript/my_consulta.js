@@ -734,4 +734,37 @@ function acertaSaldoConf(obj) {
 
 function carregaTelaAcaoTipo(obj) {
   tipo = obj.value;
+  objdest = "telas_aplicaveis";
+  url = window.location.origin + "/OcoModOcorrencia/addCampoTa/" + tipo + "/0";
+  retornoAjax = false;
+  executaAjax(url, "json", dados);
+  if (retornoAjax) {
+    text = "";
+    for (tt = 0; tt < retornoAjax.length; tt++) {
+      text +=
+        "<div class='row tableDiv table2 mb-4 table-" +
+        objdest +
+        "' width='100 % ' data-index=" +
+        tt +
+        " >";
+      text += "<div class='col-11'>";
+      // text = '<table class="table2 table-sm" data-index="' + proximo + '"><tbody><tr>';
+      indice = retornoAjax[tt].length;
+      for (ct = 0; ct < indice - 2; ct++) {
+        quebra = retornoAjax[tt][ct].indexOf("quebralinha");
+        oculto = retornoAjax[tt][ct].indexOf("hidden");
+        text += retornoAjax[tt][ct];
+      }
+      text += "</div>";
+      text += "<div class='col-1 d-initial h-auto p-0'>";
+      text += "<div class='col-9 d-block float-start text-center p-0'>";
+      text += retornoAjax[tt][indice - 2];
+      text += retornoAjax[tt][indice - 1];
+      text += "</div>";
+      text += "</div>";
+      text += "</div>";
+    }
+    jQuery("#rep_" + objdest).html(text);
+    jQuery("select").selectpicker();
+  }
 }

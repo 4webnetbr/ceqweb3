@@ -117,16 +117,22 @@ class OcoModOcorrencia extends BaseController {
      * @param mixed $ind
      * @return never
      */
-    public function addCampoTa($ind)
+    public function addCampoTa($tipo, $ind)
     {
-        $fields = $this->modocorrencia->defCamposTelasAplicaveis(false, $ind);
+        $ttipo            = new OcorreTipoOcorrenciaModel();
+        $ttelas           = $ttipo->getTOTelasAplicaveis($tipo);
+        // debug($ttelas);
+        for ($t=0; $t < sizeof($ttelas) ; $t++) { 
+            $fields = $this->modocorrencia->defCamposTelasAplicaveis($ttelas[$t], $ind);
         // debug($fields);
-        $campo[0] = $fields['mod_id'];  
-        $campo[1] = $fields['tel_id'];
-        $campo[2] = $fields['tof_campo'];
-        $campo[3] = $fields['bt_addta'];
-        $campo[4] = $fields['bt_delta'];
+            $campo[$t][0] = $fields['mod_id'];  
+            $campo[$t][1] = $fields['tel_id'];
+            $campo[$t][2] = $fields['mof_campo'];
+            $campo[$t][3] = $fields['bt_addta'];
+            $campo[$t][4] = $fields['bt_delta'];
+            $ind++; 
 
+        }
         echo json_encode($campo);
         exit;
     }

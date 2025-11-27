@@ -119,7 +119,6 @@ class OcorreTipoOcorrenciaModel extends Model
         return $builder->get()->getResultArray();
     }
 
-
     public function getTOAcao($tpo_id = false)
     {
         $db = db_connect('dbOcorrencia');
@@ -194,7 +193,7 @@ class OcorreTipoOcorrenciaModel extends Model
         $mod_id->selecionado    = $mod_id->valor;
         $mod_id->ordem          = $pos;
         $mod_id->opcoes         = $opc_modulos;
-        $mod_id->obrigatorio    = true;
+        $mod_id->obrigatorio    = false;
         $mod_id->largura        = 40;
         $mod_id->dispForm       = 'col-4';
         $ret['mod_id'] = $mod_id->crSelect();
