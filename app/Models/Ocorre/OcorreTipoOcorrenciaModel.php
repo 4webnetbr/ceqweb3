@@ -306,7 +306,7 @@ class OcorreTipoOcorrenciaModel extends Model
 
         $tmo_id               =  new MyCampo('oco_tpo_acao', 'tmo_id');
         $tmo_id->nome = $tmo_id->id = 'tmo_id_tpa';
-        $tmo_id->obrigatorio  =  true;
+        $tmo_id->obrigatorio  =  false;
         $tmo_id->valor        =  (isset($dados['tmo_id'])) ? $dados['tmo_id'] : '';
         $tmo_id->dispForm     =  '2col';
         $tmo_id->largura      =  30;

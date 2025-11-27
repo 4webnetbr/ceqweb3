@@ -757,14 +757,63 @@ function carregaTelaAcaoTipo(obj) {
       }
       text += "</div>";
       text += "<div class='col-1 d-initial h-auto p-0'>";
-      text += "<div class='col-9 d-block float-start text-center p-0'>";
+      text += "<div class='col-12 d-block float-start text-center p-0'>";
       text += retornoAjax[tt][indice - 2];
       text += retornoAjax[tt][indice - 1];
       text += "</div>";
-      text += "</div>";
+      // text += "</div>";
       text += "</div>";
     }
     jQuery("#rep_" + objdest).html(text);
     jQuery("select").selectpicker();
+  }
+}
+
+function carregaAcaoTipo(obj) {
+  let tipo = obj.value;
+  let objdest = "acoes";
+  let url =
+    window.location.origin + "/OcoModOcorrencia/addCampoTp/" + tipo + "/0";
+
+  retornoAjax = false;
+  executaAjax(url, "json", dados);
+
+  if (retornoAjax) {
+    let text = "";
+
+    for (let tt = 0; tt < retornoAjax.length; tt++) {
+      text +=
+        "<div class='row tableDiv table2 mb-4 table-" +
+        objdest +
+        "' data-index='" +
+        tt +
+        "'>";
+
+      // COL-11
+      text += "<div class='col-11 d-flex row'>";
+
+      text += retornoAjax[tt][0];
+      text += retornoAjax[tt][1];
+      text += retornoAjax[tt][2];
+      text += retornoAjax[tt][3];
+
+      text += "</div>";
+
+      // COL-1
+      text += "<div class='col-1 p-0'>";
+      text += retornoAjax[tt][5];
+      text += "</div>";
+
+      text += "</div>";
+    }
+
+    jQuery("#rep_" + objdest).html(text);
+    jQuery("select").selectpicker();
+
+    jQuery(".tableDiv.table-" + objdest + " select[id^='tpa']").each(
+      function () {
+        verificaTipoAcao(this);
+      }
+    );
   }
 }

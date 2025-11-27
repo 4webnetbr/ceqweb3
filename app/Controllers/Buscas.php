@@ -563,13 +563,14 @@ class Buscas extends BaseController
         echo json_encode($ret);
     }
 
-    public function busca_campo_tela()
+    public function busca_campo_tela(?string $busca = null)
     {
-        $ret    = [];
-        $etiq   = true;
-        if ($_REQUEST['busca']) {
-            $termo              = $_REQUEST['busca'];
-            $referer = $_SERVER['HTTP_REFERER'] ?? null;
+        $ret  = [];
+        $etiq = true;
+
+        if ($busca) {
+            $termo = $busca ?? ($_SERVER['HTTP_REFERER']);
+            $referer = ($_SERVER['HTTP_REFERER'] ?? null);
 
             if ($referer) {
                 $path = parse_url($referer, PHP_URL_PATH); // extrai apenas "/produtos/editar/5"

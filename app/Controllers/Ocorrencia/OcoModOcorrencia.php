@@ -123,6 +123,7 @@ class OcoModOcorrencia extends BaseController {
         $ttelas           = $ttipo->getTOTelasAplicaveis($tipo);
         // debug($ttelas);
         for ($t=0; $t < sizeof($ttelas) ; $t++) { 
+            // debug($ttelas, true);
             $fields = $this->modocorrencia->defCamposTelasAplicaveis($ttelas[$t], $ind);
         // debug($fields);
             $campo[$t][0] = $fields['mod_id'];  
@@ -142,20 +143,27 @@ class OcoModOcorrencia extends BaseController {
      * @param mixed $ind
      * @return never
      */
-    public function addCampoTp($ind)
+    public function addCampoTp($tpo_id, $ind)
     {
-        $fields = $this->modocorrencia->defCamposAcao(false, $ind);
-        // debug($fields);
-        $campo[0] = $fields['tpa_id'];  
-        $campo[1] = "<div id='divmovi[$ind]' class='d-none row col-6'>".$fields['tmo_id']."</div>";  
-        $campo[2] = "<div id='divtela[$ind]' class='d-none row col-6'>".$fields['mod_id'].$fields['tel_id']."</div>";  
-        $campo[3] = "<div id='divstat[$ind]' class='d-none row col-6'>".$fields['stt_id']."</div>";  
-        $campo[4] = $fields['bt_addtp'];  
-        $campo[5] = $fields['bt_deltp'];  
-
+      $tipoAcaoModel = new OcorreTipoOcorrenciaModel();
+      $tacao = $tipoAcaoModel->getTOAcao($tpo_id); 
+  
+        for ($a = 0; $a < sizeof($tacao); $a++) {
+            $fields = $this->modocorrencia->defCamposAcao($tacao[$a], $ind);
+    
+            $campo[$a][0] = $fields['tpa_id'];
+            $campo[$a][1] = "<div id='divmovi[$ind]' class='d-none row col-6'>".$fields['tmo_id']."</div>";
+            $campo[$a][2] = "<div id='divtela[$ind]' class='d-none row col-6'>".$fields['mod_id'].$fields['tel_id']."</div>";
+            $campo[$a][3] = "<div id='divstat[$ind]' class='d-none row col-6'>".$fields['stt_id']."</div>";
+            $campo[$a][4] = $fields['bt_addtp'];
+            $campo[$a][5] = $fields['bt_deltp'];
+            $ind++; 
+            
+        }
         echo json_encode($campo);
         exit;
     }
+
 
     /**
     * Edição
