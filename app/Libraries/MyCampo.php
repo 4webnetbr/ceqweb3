@@ -490,6 +490,7 @@ class MyCampo
             }
         }
         if ($this->leitura) {
+            $this->field['required'] = false;
             $this->field['readonly'] = "readonly";
             $this->field['disabled'] = "disabled";
             $this->field['onfocus']  = "this.blur()";

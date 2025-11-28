@@ -568,8 +568,9 @@ class Buscas extends BaseController
         $ret  = [];
         $etiq = true;
 
-        if ($busca) {
-            $termo = $busca ?? ($_SERVER['HTTP_REFERER']);
+        $termo = $busca ?? (($_REQUEST['busca']) ?? null);
+        // debug($termo, true);
+        if ($termo) {
             $referer = ($_SERVER['HTTP_REFERER'] ?? null);
 
             if ($referer) {
@@ -633,7 +634,12 @@ class Buscas extends BaseController
                 $ret[0]['text'] = 'Tela não Encontrada...';
             }
         }
-        echo json_encode($ret);
+        // debug($ret, true);
+        if($busca){
+            return $ret;
+        } else {
+            echo json_encode($ret);
+        }
         exit;
     }
 }

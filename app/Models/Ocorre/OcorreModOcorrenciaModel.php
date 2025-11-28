@@ -199,7 +199,7 @@ class OcorreModOcorrenciaModel extends Model
         $mod_id->selecionado    = $mod_id->valor;
         $mod_id->ordem          = $pos;
         $mod_id->opcoes         = $opc_modulos;
-        $mod_id->obrigatorio    = true;
+        $mod_id->leitura        = true;
         $mod_id->largura        = 40;
         $mod_id->dispForm       = 'col-4';
         $ret['mod_id'] = $mod_id->crSelect();
@@ -214,21 +214,21 @@ class OcorreModOcorrenciaModel extends Model
         $tela->urlbusca     = base_url('buscas/busca_tela_modulo');
         $tela->opcoes       = $opc_telas;
         $tela->ordem          = $pos;
-        $tela->obrigatorio  = true;
+        $tela->leitura      = true;
         $tela->largura      = 40;
         $tela->dispForm     = 'col-4';
         $tela->pai          = "mod_id[$pos]";
         $ret['tel_id']      = $tela->crDepende();
 
+        //  debug($dados, true);
         if(!isset($dados['tof_campo']) || $dados['tof_campo'] == ''){
-            //  debug($dados, true);
             $tipoCampo  = new ConfigTelaModel();
             $lst_campo = $tipoCampo->getTelaId();
             $opc_campo = array_column($lst_campo, 'tel_nome', 'tel_id');
 
             $mof_campo               = new MyCampo('oco_moc_campos', 'mof_campo');
             $mof_campo->valor        = '';
-            $mof_campo->selecionado  = explode(',',$mof_campo->valor);
+            $mof_campo->selecionado  = [];
             $mof_campo->opcoes       = $opc_campo;
             $mof_campo->urlbusca     = base_url('buscas/busca_campo_tela');
             $mof_campo->obrigatorio  = true;
@@ -238,15 +238,22 @@ class OcorreModOcorrenciaModel extends Model
             $mof_campo->pai          = "tel_id[$pos]";
             $ret['mof_campo']           = $mof_campo->crDependeMultiplo();
         } else {
+            // debug("Entrei aqui");
             $buscas = new Buscas();
+            // debug(var_dump($buscas));
+            // $buscas->busca_campo_tela($dados['tel_id']);
+            // $jsonOutput = ob_get_clean(); // Captura o que foi "echoado"
+
+            // $campos = json_decode($buscas->busca_campo_tela($dados['tel_id']), true); // Transforma em array associativo
+
             $campos = $buscas->busca_campo_tela($dados['tel_id']);
-            debug($campos, true);
+            // debug(var_dump($campos), true);
             // $lst_campo = $tipoCampo->getTelaId();
             $opc_campo = array_column($campos, 'text', 'id');
-            debug($opc_campo, true);
+            // debug($dados['tof_campo'], true);
             $mof_campo               = new MyCampo('oco_moc_campos', 'mof_campo');
-            $mof_campo->valor        = (isset($dados['mof_campo'])) ? $dados['mof_campo'] : '';
-            $mof_campo->selecionado  = explode(',',$mof_campo->valor);
+            $mof_campo->valor        = (isset($dados['tof_campo'])) ? $dados['tof_campo'] : '';
+            $mof_campo->selecionado  = explode(',',$dados['tof_campo']);
             $mof_campo->opcoes       = $opc_campo;
             // $mof_campo->urlbusca     = base_url('buscas/busca_campo_tela');
             $mof_campo->leitura      = true;
@@ -254,6 +261,7 @@ class OcorreModOcorrenciaModel extends Model
             $mof_campo->dispForm     = 'col-4';
             $mof_campo->ordem        = $pos;
             // $mof_campo->pai          = "tel_id[$pos]";
+            // debug($mof_campo, true);
             $ret['mof_campo']           = $mof_campo->crMultiple();
         }
 
