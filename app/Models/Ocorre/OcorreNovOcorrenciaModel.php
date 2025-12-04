@@ -19,8 +19,10 @@ class OcorreNovOcorrenciaModel extends Model
         'oco_lote',
         'oco_qtd',
         'oco_produto',
-        'oco_status',
         'oco_data',
+        'stt_id',
+        'stt_cor'
+        
     ];
 
     protected $validationRules = [
@@ -39,26 +41,14 @@ class OcorreNovOcorrenciaModel extends Model
     protected $allowCallbacks = true;
 
     protected $afterInsert   = ['depoisInsert'];
+    protected $afterUpdate   = ['depoisUpdate'];
     protected $afterDelete   = ['depoisDelete'];
 
     protected $logdb;
 
 
-public function getStatusIdByNome($nome)
-{
-    $db = \Config\Database::connect(); 
-
-    $row = $db->table('config_ceqweb_db.cfg_status')
-        ->select('stt_id')
-        ->where('stt_nome', $nome)
-        ->where('tel_id', 56)
-        ->get()
-        ->getRow();
-
-    return $row->stt_id ?? null;
-}
-
-
+    
+    
     protected function depoisInsert(array $data)
     {
         $logdb = new LogMonModel();
@@ -67,6 +57,19 @@ public function getStatusIdByNome($nome)
         return $data;
     }
 
+    /**
+     * This method saves the session "usu_id" value to "updated_by" array element before
+     * the row is inserted into the database.
+     *
+     */
+    protected function depoisUpdate(array $data)
+    {
+        $logdb = new LogMonModel();
+        $registro = $data['id'][0];
+        $log = $logdb->insertLog($this->table, 'Alteração', $registro, $data['data']);
+        return $data;
+    }
+    
     protected function depoisDelete(array $data)
     {
         $logdb = new LogMonModel();
@@ -74,13 +77,28 @@ public function getStatusIdByNome($nome)
         $log = $logdb->insertLog($this->table, 'Excluído', $registro, $data['data']);
         return $data;
     }
+    
+    public function getStatusIdByNome(string $nome, ?int $telId = null): ?int
+    {
+        $db = \Config\Database::connect();
+        $builder = $db->table('config_ceqweb_db.cfg_status')
+            ->select('stt_id')
+            ->where('stt_nome', $nome);
+    
+        if ($telId !== null) {
+            $builder->where('tel_id', $telId);
+        }
 
-
+        $row = $builder->orderBy('stt_id', 'DESC')->get()->getRow();
+    
+        return $row->stt_id ?? null;
+    }
+    
     public function defCampos($dados = [], $show = false, $tabela = '', $view = '')
     {
         helper('form');
         $fields = [];
-
+        
         // TIPO DE OCORRÊNCIA
         $tipo              = new MyCampo('oco_nov_ocorrencia', 'oco_tipo');
         $tipo->nome        = 'oco_tipo';
@@ -131,7 +149,6 @@ public function getStatusIdByNome($nome)
         $desc->linhas      = 3;
         $desc->colunas     = 56;
         $desc->dispForm    = '2col';
-        $desc->leitura     = $show;
         $desc->place       = 'Digite a descrição da ocorrência';
         $fields['oco_descricao'] = $desc->crTexto();
 
@@ -142,9 +159,8 @@ public function getStatusIdByNome($nome)
         $lote->valor       = $dados['oco_lote'] ?? '';
         $lote->label       = 'Lote';
         $lote->obrigatorio = true;
-        $lote->tipo        = 'select';
+        $lote->tipo        = 'text';
         $lote->dispForm    = 'linha';
-        $lote->leitura     = $show;
 
         $busca      = new \App\Controllers\BuscasSapiens();
         $lotes      = $busca->buscaLotes();
@@ -153,7 +169,7 @@ public function getStatusIdByNome($nome)
             $opcoesLote[$lot->codlot] = $lot->codlot;
         }
         $lote->opcoes = $opcoesLote;
-        $fields['oco_lote'] = $lote->crSelect();
+        $fields['oco_lote'] = $lote->crInput();
 
         // QUANTIDADE
         $qtd               = new MyCampo('oco_nov_ocorrencia', 'oco_qtd'); 
@@ -163,7 +179,6 @@ public function getStatusIdByNome($nome)
         $qtd->label        = 'Quantidade';
         $qtd->tipo         = 'number';
         $qtd->dispForm     = '2col';
-        $qtd->leitura      = $show;
         $qtd->minimo       = 1;
         $qtd->step         = 1;
         $qtd->largura      = 10;
@@ -185,7 +200,6 @@ public function getStatusIdByNome($nome)
 
         $fields['oco_produto'] = $produto->crInput();
 
-        return $fields;
         
         // DATA 
         $data              = new MyCampo('oco_nov_ocorrencia', 'oco_data');
@@ -196,11 +210,12 @@ public function getStatusIdByNome($nome)
         $data->tipo        = 'datetime-local';
         $data->dispForm    = '2col';
         $data->largura     = 30;
-        $data->leitura     = $show;
         $data->obrigatorio = true;
 
         $fields['oco_data'] = $data->crInput();
 
         return $fields;
     }
+
+    
 }
