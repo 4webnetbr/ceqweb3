@@ -197,7 +197,15 @@ class ConfigDicDadosModel extends Model
             substr($nome_tabela,0,6) == 'vw_cfg') {
             $this->DBGroup          = 'default';
             $schema                 = 'config_ceqweb_db';
+        } else 
+        {
+                    $this->DBGroup = 'default';
+                    $schema = 'ocorrencia_db';
         }
+        // else {
+        //     $this->DBGroup          = 'default';
+        //     $schema                 = 'config_ceqweb_db';
+        // }
         // debug($schema);
         $db = db_connect($this->DBGroup);
         $query = $db->query("SELECT TABLE_NAME, 

@@ -4,7 +4,8 @@ use App\Models\CommonModel;
 use App\Controllers\BaseController;
 use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
 
-class OcoTipoOcorrencia extends BaseController {
+class OcoTipoOcorrencia extends BaseController 
+{
     public $data = [];
     public $permissao = '';
     public $tipoocorrencia;
@@ -146,7 +147,7 @@ class OcoTipoOcorrencia extends BaseController {
         echo json_encode($campo);
         exit;
     }
-
+    
     /**
     * Edição
     * edit
@@ -282,6 +283,7 @@ class OcoTipoOcorrencia extends BaseController {
         echo json_encode($ret);
     }
 
+
     /**
     * Gravação
     * store
@@ -326,10 +328,10 @@ class OcoTipoOcorrencia extends BaseController {
 
             // Se for update, apaga os registros relacionados
             if (!empty($tpo_id)) {
-                $this->common->deleteReg($grupo, 'oco_tpo_acao', "tpo_id = {$tpo_id}");
-                $this->common->deleteReg($grupo, 'oco_tpo_classe', "tpo_id = {$tpo_id}");
-                $this->common->deleteReg($grupo, 'oco_tpo_tela', "tpo_id = {$tpo_id}");
-                $this->common->deleteReg($grupo, 'oco_tpo_campos', "tpo_id = {$tpo_id}");
+                $this->common->deleteReg($grupo, 'oco_tpo_acao',      "tpo_id = {$tpo_id}");
+                $this->common->deleteReg($grupo, 'oco_tpo_classe',    "tpo_id = {$tpo_id}");
+                $this->common->deleteReg($grupo, 'oco_tpo_tela',      "tpo_id = {$tpo_id}");
+                $this->common->deleteReg($grupo, 'oco_tpo_campos',    "tpo_id = {$tpo_id}");
                 $this->common->deleteReg($grupo, 'oco_tpo_permissao', "tpo_id = {$tpo_id}");
             }
 

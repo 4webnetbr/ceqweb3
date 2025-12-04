@@ -52,7 +52,7 @@ class CfgTela extends BaseController
     {
         $this->data      = session()->getFlashdata('dados_tela');
         $this->permissao = $this->data['permissao'];
-        $this->tela    = new ConfigTelaModel();
+        $this->tela       = new ConfigTelaModel();
         $this->telalista    = new ConfigTelaListaModel();
         $this->dicionario = new ConfigDicDadosModel();
         $this->usuario   = new ConfigUsuarioModel();

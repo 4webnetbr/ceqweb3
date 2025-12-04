@@ -38,9 +38,9 @@ class OcorreTipoOcorrenciaModel extends Model
 
     protected $validationMessages = [
         'tpo_nome' => [
-            'required' => 'O campo Nome do Tipo da Ocorrência é Obrigatório',
+            'required'    => 'O campo Nome do Tipo da Ocorrência é Obrigatório',
             'max_lenght'  => 'O Campo deve Conter no Máximo 50 Caracteres',
-            'min_lenght' => 'O Campo Devente Conter no Minimo 5 Caracteres',
+            'min_lenght'  => 'O Campo Devente Conter no Minimo 5 Caracteres',
         ],
     ];
 

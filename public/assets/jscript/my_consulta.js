@@ -817,3 +817,50 @@ function carregaAcaoTipo(obj) {
     );
   }
 }
+
+
+
+function vinculaProdutoAoLote() {
+  const loteSelect = document.getElementById('oco_lote');
+  const produtoInput = document.getElementById('oco_produto'); 
+
+  if (!loteSelect || !produtoInput) return;
+
+  loteSelect.addEventListener('change', function () {
+    const codLote = this.value.trim();
+
+    if (!codLote) {
+      produtoInput.value = ''; // limpa
+      return;
+    }
+
+    fetch(window.location.origin + '/OcoNovOcorrencia/getProdutoLote', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: `codLote=${encodeURIComponent(codLote)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Resposta produto:', data);
+
+      if (data.descpro) {
+        produtoInput.value = data.descpro;
+      } else {
+        produtoInput.value = data.erro || 'Produto não encontrado';
+      }
+
+    })
+    .catch(error => {
+      console.error('Erro ao buscar produto do lote:', error);
+      produtoInput.value = 'Erro ao buscar produto';
+    });
+  });
+}
+document.addEventListener('DOMContentLoaded', function () {
+  vinculaProdutoAoLote();
+});
+
+
+

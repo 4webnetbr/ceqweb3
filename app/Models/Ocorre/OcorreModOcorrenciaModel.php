@@ -32,7 +32,7 @@ class OcorreModOcorrenciaModel extends Model
                 'moc_nome',
                 'moc_ativo',
                 'moc_excluido',
-                'moc_id',
+                'tpo_id',
     ];
 
     protected $validationRules = [
@@ -112,7 +112,7 @@ class OcorreModOcorrenciaModel extends Model
     public function getTOTelasAplicaveis($moc_id = false)
     {
         $db = db_connect('dbOcorrencia');
-        $builder = $db->table('vw_oco_tela_campo_relac');
+        $builder = $db->table('vw_oco_mod_campo_relac');
 
         $builder->select('*');
         if ($moc_id) {
@@ -121,6 +121,7 @@ class OcorreModOcorrenciaModel extends Model
         $builder->orderBy('moc_id');
         return $builder->get()->getResultArray();
     }
+    
 
     public function getTOAcao($moc_id = false)
     {
@@ -174,7 +175,7 @@ class OcorreModOcorrenciaModel extends Model
         $tpoid->obrigatorio    = true;
         $tpoid->largura        = 40;
         $tpoid->dispForm       = 'col-4';
-        $tpoid->funcChan       = 'carregaTelaAcaoTipo(this);';
+        $tpoid->funcChan       = 'carregaTelaAcaoTipo(this); carregaAcaoTipo(this);';
         $ret['tpo_id'] = $tpoid->crSelect();
 
         $simnao['A'] = 'Ativo';
@@ -188,7 +189,7 @@ class OcorreModOcorrenciaModel extends Model
         return $ret;
     }
 
-    public function defCamposTelasAplicaveis($dados = false, $pos = 0, $show = false)
+    public function defCamposTelasAplicaveis($dados = false, $pos = 0,  $total = 1)
     {
         $modulos = new ConfigModuloModel();
         $lst_modulos = $modulos->getModulo();
@@ -231,7 +232,8 @@ class OcorreModOcorrenciaModel extends Model
             $mof_campo->selecionado  = [];
             $mof_campo->opcoes       = $opc_campo;
             $mof_campo->urlbusca     = base_url('buscas/busca_campo_tela');
-            $mof_campo->obrigatorio  = true;
+            // $mof_campo->obrigatorio  = true;
+            $mof_campo->leitura      = true;
             $mof_campo->largura      = 40;
             $mof_campo->dispForm     = 'col-4';
             $mof_campo->ordem        = $pos;
@@ -284,6 +286,9 @@ class OcorreModOcorrenciaModel extends Model
         $del->id        = "bt_delta[$pos]";
         $del->i_cone    = "<i class='fas fa-trash'></i>";
         $del->classep   = "btn-outline-danger btn-sm bt-exclui";
+        if ($total == 1) {
+          $del->classep .= " d-none";  
+        }
         $del->funcChan  = "exclui_campo('telas_aplicaveis',this)";
         $del->place     = "Excluir Campo";
         $ret['bt_delta']   = $del->crBotao();
@@ -300,7 +305,8 @@ class OcorreModOcorrenciaModel extends Model
         $opc_tipoacao = array_column($lst_tipoacao, 'tpa_nome', 'tpa_id');
 
         $tpa_id               =  new MyCampo('oco_moc_acao', 'tpa_id');
-        $tpa_id->obrigatorio  =  true;
+        // $tpa_id->obrigatorio  =  true;
+        $tpa_id->leitura      = true;
         $tpa_id->ordem        =  $pos;
         $tpa_id->valor        =  (isset($dados['tpa_id'])) ? $dados['tpa_id'] : '';
         $tpa_id->selecionado  =  [$tpa_id->valor];
@@ -320,7 +326,7 @@ class OcorreModOcorrenciaModel extends Model
         $add->i_cone    = "<i class='fas fa-plus'></i>";
         $add->place     = "Adicionar Campo";
         $add->classep   = "btn-outline-success btn-sm bt-repete esconder";
-        $add->funcChan  = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTp/") . "','acoes',this)";
+        $add->funcChan  = "addCampo('" . base_url("OcoModOcorrencia/addCampoTp/") . "','acoes',this)";
         $ret['bt_addtp']   = $add->crBotao();
 
         $del            = new MyCampo();
@@ -340,7 +346,8 @@ class OcorreModOcorrenciaModel extends Model
 
         $tmo_id               =  new MyCampo('oco_moc_acao', 'tmo_id');
         $tmo_id->nome = $tmo_id->id = 'tmo_id_tpa';
-        $tmo_id->obrigatorio  =  true;
+        // $tmo_id->obrigatorio  =  true;
+        $tmo_id->leitura      = true;
         $tmo_id->valor        =  (isset($dados['tmo_id'])) ? $dados['tmo_id'] : '';
         $tmo_id->dispForm     =  '2col';
         $tmo_id->largura      =  30;
@@ -361,6 +368,7 @@ class OcorreModOcorrenciaModel extends Model
         $mod_id->opcoes         = $opc_modulos;
         $mod_id->ordem          = $pos;
         // $mod_id->obrigatorio    = true;
+        $mod_id->leitura      = true;
         $mod_id->largura        = 30;
         $mod_id->dispForm       = '2col';
         $ret['mod_id'] = $mod_id->crSelect();
@@ -377,6 +385,7 @@ class OcorreModOcorrenciaModel extends Model
         $tela->opcoes       = $opc_telas;
         $tela->ordem        = $pos;
         // $tela->obrigatorio  = true;
+        $tela->leitura      = true;
         $tela->largura      = 30;
         $tela->dispForm     = '2col';
         $tela->pai          = "mod_id_tpa[$pos]";
@@ -394,6 +403,7 @@ class OcorreModOcorrenciaModel extends Model
         $statu->ordem        = $pos;
         $statu->opcoes       = $opc_stat;
         // $statu->obrigatorio  = true;
+        $statu->leitura      = true;
         $statu->largura      = 50;
         $statu->dispForm     = '2col';
         $ret['stt_id']     = $statu->crSelect();
@@ -401,6 +411,7 @@ class OcorreModOcorrenciaModel extends Model
         return $ret;
     }
 
+    
     public function defCamposParaMostrar($dados = false, $show = false)
     {
         $ret = [];

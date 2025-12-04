@@ -83,6 +83,17 @@ class CfgUsuario extends BaseController
         $this->data['secoes'] = $secao;
         $this->data['campos'] = $campos;
         $this->data['destino'] = 'store';
+        if (empty($usuario['usu_id'])) {
+        $this->data['script'] = '<script>
+            document.addEventListener("DOMContentLoaded", function () {
+            const login = document.getElementById("usu_login");
+            if (login) {
+                login.value = "";
+                setTimeout(() => login.value = "", 700);
+            }
+            });
+        </script>';
+        }
 
         echo view('vw_edicao', $this->data);
     }
@@ -207,11 +218,11 @@ class CfgUsuario extends BaseController
         $login->leitura         = false;
         $login->obrigatorio     = true;
         $login->hint    	    = 'Informe o Login';
-        $login->classs       = 'text-lowercase';
-        $login->size   	    = 35;
-		$login->tamanho      = 40;
-		$login->valor	    = (isset($dados['usu_login']))?$dados['usu_login']:'';
-        $this->usu_login    = $login->create();
+        $login->classs          = 'text-lowercase';
+        $login->size   	        = 35;
+		$login->tamanho         = 40;
+		$login->valor	        = (isset($dados['usu_login']))?$dados['usu_login']:'';
+        $this->usu_login        = $login->create();
 
         $perfis             = array_column($this->perfil->getPerfil(),'prf_nome','prf_id');
 		$perfil             =  new Campos();
@@ -232,8 +243,14 @@ class CfgUsuario extends BaseController
         }
         $this->usu_perfil   = $perfil->create();
 
-        $telas = array_column($this->tela->getTelaId(), 'tel_nome', 'tel_id');
-        array_unshift($telas, '');
+        $ttelas = $this->tela->getTelaId();
+        foreach ($ttelas as $tel) {
+            $telas[$tel['tel_id']] = $tel['tel_nome'];
+        }
+
+        // $telas = array_column($ttelas, 'tel_nome', 'tel_id');
+        // array_unshift($telas, '');
+        // debug($telas, true);
         $dash                  =  new Campos();
 		$dash->objeto  	       = 'select';
         $dash->nome    	       = 'usu_dashboard';
@@ -265,8 +282,6 @@ class CfgUsuario extends BaseController
             $nova_senha->infotop   = 'Para manter a mesma senha, deixe-a em branco';
         }
         $this->usu_nova_senha = $nova_senha->create();
-
-               
 
         $contra_senha =  new Campos();
 		$contra_senha->objeto  	= 'input';

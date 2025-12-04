@@ -4,9 +4,10 @@
 echo $this->section('menu');
 
 $url_sair = base_url('/login');
-$avatar = session()->get('usu_avatar');
-$nomeus = session()->get('usu_nome');
-$idusua = session()->get('usu_id'); 
+$avatar = session()->get('usu_avatar')??'avatar';
+$nomeus = session()->get('usu_nome')??'Sem nome';
+$idusua = session()->get('usu_id')??'Sem id'; 
+
 $cont_accord = 1;
 $accordraiz = false;
 if ($avatar != '') {

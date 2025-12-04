@@ -783,5 +783,5 @@ async function enviarAteRequisicoes(event) {
     }
   }
 
-  return true; // Tudo ok, pode continuar
+  return true; 
 }

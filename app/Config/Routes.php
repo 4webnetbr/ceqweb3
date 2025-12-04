@@ -33,6 +33,17 @@ $routes->match(['get', 'post'], '/login/(:any)', 'Login::$1', ['as' => 'loginlog
 $routes->get('home_config', 'Config\\Home_config::index', ['as' => 'home_config_index']);
 $routes->get('WorkAnalise', 'WorkAnalise::index', ['as' => 'workanalise_index']);
 
+$routes->get('OcoModOcorrencia/getInfoTipoOcorrencia/(:num)', 'Ocorrencia\OcoModOcorrencia::getInfoTipoOcorrencia/$1');
+$routes->get('OcoNovOcorrencia', 'Ocorrencia\OcoNovOcorrencia::index');
+$routes->post('ocorrencia/get-produto-lote', 'Ocorrencia\OcoNovOcorrencia::getProdutoPorLote');
+
+// Nova Ocorrência
+$routes->post('OcoNovOcorrencia/getProdutoLote', 'Ocorrencia\OcoNovOcorrencia::getProdutoLote');
+$routes->post('OcoNovOcorrencia/store', 'Ocorrencia\OcoNovOcorrencia::store');
+
+
+
+
 $routes->match(['get', 'post'], 'buscas/(:any)/(:any)', 'Buscas::$1/$2', ['as' => 'buscas_two_params']);
 $routes->match(['get', 'post'], 'buscas/(:any)', 'Buscas::$1', ['as' => 'buscas_one_params']);
 
@@ -99,7 +110,8 @@ $routes->group('CfgModulo', static function ($routes) {
 $estoqueControllers = [
     'SaldoEstoque', 'Movimento', 'Deposito', 'Transacao',
     'TipoMovimentacao', 'Requisicao', 'CfgEtiqueta',
-    'AteRequisicao', 'ConfRequisicao', 'EtqProduto'];
+    'AteRequisicao', 'ConfRequisicao'
+];
 
 foreach ($estoqueControllers as $ctrl) {
     $routes->group($ctrl, static function ($routes) use ($ctrl) {
@@ -110,8 +122,6 @@ foreach ($estoqueControllers as $ctrl) {
 }
 
 $routes->get('AteRequisicao/GeraEtiqueta/(:num)/(:num)', 'Estoque\\AteRequisicao::GeraEtiqueta/$1/$2', ['as' => 'aterequisicao_GeraEtiqueta_match']);
-$routes->get('EtqProduto/Etiqueta/(:num)', 'Estoque\\EtqProduto::Etiqueta/$1', ['as' => 'etqproduto_match']);
-$routes->get('EtqProduto/GeraEtiqueta/(:num)/(:num)', 'Estoque\\EtqProduto::GeraEtiqueta/$1/$2', ['as' => 'etqproduto_GeraEtiqueta_match']);
 
 // Controladores de Produto
 $produtoControllers = [
@@ -152,6 +162,10 @@ $routes->group('OcoModOcorrencia', static function ($routes) {
     $routes->get('/', 'Ocorrencia\\OcoModOcorrencia::index', ['as' => 'ocomodocorrencia_index']);
     $routes->match(['get', 'post'], '(:any)', 'Ocorrencia\\OcoModOcorrencia::$1', ['as' => 'ocomodcorrencia_match']);
 });
+$routes->group('OcoNovOcorrencia', static function ($routes) {
+    $routes->get('/', 'Ocorrencia\\OcoNovOcorrencia::index', ['as' => 'oconovocorrencia_index']);
+    $routes->match(['get', 'post'], '(:any)', 'Ocorrencia\\OcoNovOcorrencia::$1', ['as' => 'oconovcorrencia_match']);
+});
 
 // Grupo: WebService
 $routes->group('WsCeqweb', static function ($routes) {
@@ -164,3 +178,4 @@ $routes->group('WsCeqweb', static function ($routes) {
 if (is_file(APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php')) {
     require APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php';
 }
+

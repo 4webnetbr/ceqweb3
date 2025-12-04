@@ -11,7 +11,7 @@ use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
 
-class loginFilter implements FilterInterface
+class LoginFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)
     {

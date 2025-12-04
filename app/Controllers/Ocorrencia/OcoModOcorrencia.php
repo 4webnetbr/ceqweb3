@@ -48,7 +48,7 @@ class OcoModOcorrencia extends BaseController {
         echo view('vw_lista', $this->data);
     }
     /**
-    * Listagem
+    * ListagemF
     * lista
     *
     * @return void
@@ -145,12 +145,11 @@ class OcoModOcorrencia extends BaseController {
      */
     public function addCampoTp($tpo_id, $ind)
     {
-      $tipoAcaoModel = new OcorreTipoOcorrenciaModel();
-      $tacao = $tipoAcaoModel->getTOAcao($tpo_id); 
+      $tipoAcaoModel  = new OcorreTipoOcorrenciaModel();
+      $tacao          = $tipoAcaoModel->getTOAcao($tpo_id); 
   
         for ($a = 0; $a < sizeof($tacao); $a++) {
             $fields = $this->modocorrencia->defCamposAcao($tacao[$a], $ind);
-    
             $campo[$a][0] = $fields['tpa_id'];
             $campo[$a][1] = "<div id='divmovi[$ind]' class='d-none row col-6'>".$fields['tmo_id']."</div>";
             $campo[$a][2] = "<div id='divtela[$ind]' class='d-none row col-6'>".$fields['mod_id'].$fields['tel_id']."</div>";
@@ -158,6 +157,7 @@ class OcoModOcorrencia extends BaseController {
             $campo[$a][4] = $fields['bt_addtp'];
             $campo[$a][5] = $fields['bt_deltp'];
             $ind++; 
+            //debug($campo);
             
         }
         echo json_encode($campo);
@@ -174,39 +174,44 @@ class OcoModOcorrencia extends BaseController {
     */
     public function edit($id)
     {   
-        $dados_TipoOcorrencia = $this->modocorrencia->getTipoOcorrencia($id);
+        $dados_ModOcorrencia = $this->modocorrencia->getModOcorrencia($id);
         // debug($dados_TipoOcorrencia);
-        $fields = $this->modocorrencia->defCampos($dados_TipoOcorrencia[0]);
+        $fields = $this->modocorrencia->defCampos($dados_ModOcorrencia[0]);
                 
-        $secao[0] = 'Dados Gerais'; 
+        $secao [0]   = 'Dados Gerais'; 
         $campos[0][] = $fields['moc_id'];  
         $campos[0][] = $fields['moc_nome'];
-        $campos[0][] = $fields['cla_id'];
+        // $campos[0][] = $fields['cla_id'];
         
         $secao[1] = 'Telas Aplicaveis'; 
         $displ[1] = 'tabela';
+        // $moc_id = $dados_ModOcorrencia[0]['moc_id'];
         $dados_TelasAplicaveis = $this->modocorrencia->getTOTelasAplicaveis($id);
+        $total = count($dados_TelasAplicaveis);
         // debug($dados_TelasAplicaveis, true);
+        
         if (count($dados_TelasAplicaveis) > 0) {
+            
             for ($c = 0; $c < count($dados_TelasAplicaveis); $c++) {
-                $fields = $this->modocorrencia->defCamposTelasAplicaveis($dados_TelasAplicaveis[$c], $c);
+                $fields = $this->modocorrencia->defCamposTelasAplicaveis($dados_TelasAplicaveis[$c], $c, $total);
+
                 $campos[1][$c][] = $fields['mod_id'];  
                 $campos[1][$c][] = $fields['tel_id'];
-                $campos[1][$c][] = $fields['tof_campo'];
+                $campos[1][$c][] = $fields['mof_campo'];
                 $campos[1][$c][] = $fields['bt_addta'];
                 $campos[1][$c][] = $fields['bt_delta'];
             }
         } else {
             $fields = $this->modocorrencia->defCamposTelasAplicaveis(false, 0);
             $campos[1][0][0] = $fields['mod_id'];  
-            $campos[1][0][] = $fields['tel_id'];
-            $campos[1][0][] = $fields['tof_campo'];
-            $campos[1][0][] = $fields['bt_addta'];
-            $campos[1][0][] = $fields['bt_delta'];
+            $campos[1][0][]  = $fields['tel_id'];
+            $campos[1][0][]  = $fields['mof_campo'];
+            $campos[1][0][]  = $fields['bt_addta'];
+            $campos[1][0][]  = $fields['bt_delta'];
         }
         
         $secao[2] = 'Ações'; 
-        $displ[2] = 'tabela';
+        $displ[2]   = 'tabela';
         $dados_Acao = $this->modocorrencia->getTOAcao($id);
         // debug($dados_Acao, true);
         if (count($dados_Acao) > 0) {
@@ -241,18 +246,22 @@ class OcoModOcorrencia extends BaseController {
             $campos[2][0][] = $fields['bt_deltp'];
         }
 
-        $secao[3] = 'Permissões';
-        $fields3 = $this->modocorrencia->defPermissoes($dados_TipoOcorrencia[0]);
-        $campos[3][0] = $fields3['prf_id'];
+        // $secao[3] = 'Permissões';
+        // $fields3 = $this->modocorrencia->defPermissoes($dados_TipoOcorrencia[0]);
+        // $campos[3][0] = $fields3['prf_id'];
 
-		$this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
-        $this->data['displ']      = $displ;
-		$this->data['destino']    = 'store';
+	     $this->data['secoes']     = $secao;
+         $this->data['campos']     = $campos;
+         $this->data['displ']      = $displ;
+		 $this->data['destino']    = 'store';
 
         echo view('vw_edicao', $this->data);
         
     }
+
+
+
+
     /**
     * Exclusão
     * delete
@@ -318,7 +327,7 @@ class OcoModOcorrencia extends BaseController {
 
             // Verifica unicidade
             $exists = $this->common->verificaUnico(
-                $this->tipoocorrencia,
+                $this->modocorrencia,
                 'moc_nome',
                 $postado['moc_nome'],
                 'moc_id',
@@ -342,11 +351,11 @@ class OcoModOcorrencia extends BaseController {
 
             // Se for update, apaga os registros relacionados
             if (!empty($moc_id)) {
-                $this->common->deleteReg($grupo, 'oco_moc_acao', "moc_id = {$moc_id}");
-                $this->common->deleteReg($grupo, 'oco_moc_classe', "moc_id = {$moc_id}");
-                $this->common->deleteReg($grupo, 'oco_moc_tela', "moc_id = {$moc_id}");
+                $this->common->deleteReg($grupo, 'oco_moc_acao',   "moc_id = {$moc_id}");
+                // $this->common->deleteReg($grupo, 'oco_moc_classe', "moc_id = {$moc_id}");
+                $this->common->deleteReg($grupo, 'oco_moc_tela',   "moc_id = {$moc_id}");
                 $this->common->deleteReg($grupo, 'oco_moc_campos', "moc_id = {$moc_id}");
-                $this->common->deleteReg($grupo, 'oco_moc_permissao', "moc_id = {$moc_id}");
+                // $this->common->deleteReg($grupo, 'oco_moc_permissao', "moc_id = {$moc_id}");
             }
 
             // Inserir ações com dados complementares
@@ -366,13 +375,13 @@ class OcoModOcorrencia extends BaseController {
             }
 
             // Inserir classes
-            if (!empty($postado['cla_id'])) {
-                $classes = [];
-                foreach ($postado['cla_id'] as $cla_id) {
-                    $classes[] = ['moc_id' => $moc_id, 'cla_id' => $cla_id];
-                }
-                $this->common->insertRegBatch($grupo, 'oco_moc_classe', $classes);
-            }
+            // if (!empty($postado['cla_id'])) {
+            //     $classes = [];
+            //     foreach ($postado['cla_id'] as $cla_id) {
+            //         $classes[] = ['moc_id' => $moc_id, 'cla_id' => $cla_id];
+            //     }
+            //     $this->common->insertRegBatch($grupo, 'oco_moc_classe', $classes);
+            // }
 
             // Inserir telas
             if (!empty($postado['mod_id']) && !empty($postado['tel_id'])) {
@@ -391,22 +400,22 @@ class OcoModOcorrencia extends BaseController {
             }
 
             // Inserir campos (relacionados às telas)
-            if (!empty($postado['tof_campo'])) {
+            if (!empty($postado['mof_campo'])) {
                 $campos = [];
 
-                foreach ($postado['tof_campo'] as $index => $camposTela) {
+                foreach ($postado['mof_campo'] as $index => $camposTela) {
                     $tel_id = $postado['tel_id'][$index] ?? null;
 
                     if (!$tel_id || !is_array($camposTela)) {
                         continue;
                     }
 
-                    foreach ($camposTela as $tof_campo) {
-                        if ($tof_campo) {
+                    foreach ($camposTela as $mof_campo) {
+                        if ($mof_campo) {
                             $campos[] = [
                                 'moc_id'    => $moc_id,
                                 'tel_id'    => $tel_id,
-                                'tof_campo' => $tof_campo
+                                'mof_campo' => $mof_campo
                             ];
                         }
                     }
@@ -418,13 +427,13 @@ class OcoModOcorrencia extends BaseController {
             }
 
             // Inserir permissões
-            if (!empty($postado['prf_id'])) {
-                $permissoes = [];
-                foreach ($postado['prf_id'] as $prf_id) {
-                    $permissoes[] = ['moc_id' => $moc_id, 'prf_id' => $prf_id];
-                }
-                $this->common->insertRegBatch($grupo, 'oco_moc_permissao', $permissoes);
-            }
+            // if (!empty($postado['prf_id'])) {
+            //     $permissoes = [];
+            //     foreach ($postado['prf_id'] as $prf_id) {
+            //         $permissoes[] = ['moc_id' => $moc_id, 'prf_id' => $prf_id];
+            //     }
+            //     $this->common->insertRegBatch($grupo, 'oco_moc_permissao', $permissoes);
+            // }
 
             $db->transCommit();
 

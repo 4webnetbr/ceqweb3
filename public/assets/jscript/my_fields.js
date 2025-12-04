@@ -1,3 +1,4 @@
+
 jQuery(document).ajaxError(function (event, xhr, settings) {
   if (xhr.status === 303) {
     urllogin = window.location.origin + "/";
@@ -9,6 +10,7 @@ jQuery(document).ready(function () {
 });
 
 function carregamentos_iniciais() {
+  
   var temNumero = /[0-9]/;
   var temMaiusc = /[A-Z]/;
   var temMinusc = /[a-z]/;
@@ -169,6 +171,7 @@ function carregamentos_iniciais() {
   jQuery(function () {
     jQuery(document).on(
       "mouseenter mouseleave",
+      
       ".show_password",
       function (e) {
         e.preventDefault();
@@ -649,6 +652,7 @@ function carregamentos_iniciais() {
   });
 
   jQuery("select").selectpicker();
+
 }
 
 function oculta_passinfo() {
@@ -1093,41 +1097,44 @@ function addCampo(url, objdest, obj) {
       acertaOcultos();
     }
   }
-  // jQuery.ajax({
-  //     type: 'POST',
-  //     async: true,
-  //     dataType: 'json',
-  //     url: url + '/' + proximo,
-  //     success: function (retorno) {
-  //         text = "<div class='row tableDiv table2 table-" + objdest + "' width='100 % ' data-index=" + proximo + " >";
-  //         text += "<div class='col-11'>";
-  //         // text = '<table class="table2 table-sm" data-index="' + proximo + '"><tbody><tr>';
-  //         indice = 0;
-  //         for (const ind in retorno) {
-  //             if (ind < retorno.length - 2) {
-  //                 quebra = retorno[ind].indexOf("quebralinha");
-  //                 oculto = retorno[ind].indexOf("hidden");
-  //                 text += retorno[ind];
-  //             }
-  //         }
-  //         text += "</div>";
-  //         text += "<div class='col-1 d-initial h-auto p-0'>";
-  //         text += "<div class='col-9 d-block float-start text-center p-0'>";
-  //         text += retorno[retorno.length - 2];
-  //         text += retorno[retorno.length - 1];
-  //         text += '</div>';
-  //         text += "<div class='col-3 d-block float-end text-end'>";
-  //         text += "<button name='bt_up[" + proximo + "]' type='button' id='bt_up[" + proximo + "]' class='btn btn-outline-info btn-sm bt-up mt-0 float-end' onclick='sobe_desce_item(this,\"sobe\",\"" + objdest + "\")' title='Acima' data-index='" + proximo + "'><i class='fa fa-arrow-up' aria-hidden='true'></i></button>";
-  //         text += "<button name='bt_down[" + proximo + "]' type='button' id='bt_down[" + proximo + "]' class='btn btn-outline-info btn-sm bt-down mt-0 float-end' onclick='sobe_desce_item(this,\"desce\",\"" + objdest + "\")' title='Abaixo' data-index='" + proximo + "'><i class='fa fa-arrow-down' aria-hidden='true'></i></button>";
-  //         text += '</div>';
-  //         text += '</div>';
-  //         text += '</div>';
-  //         jQuery('#rep_' + objdest).append(text);
-  //         jQuery('select').selectpicker();
-  //         carregamentos_iniciais();
-  //         acerta_botoes_rep(objdest);
-  //     }
-  // });
+
+
+
+//   jQuery.ajax({
+//       type: 'POST',
+//       async: true,
+//       dataType: 'json',
+//       url: url + '/' + proximo,
+//       success: function (retorno) {
+//           text = "<div class='row tableDiv table2 table-" + objdest + "' width='100 % ' data-index=" + proximo + " >";
+//           text += "<div class='col-11'>";
+//           // text = '<table class="table2 table-sm" data-index="' + proximo + '"><tbody><tr>';
+//           indice = 0;
+//           for (const ind in retorno) {
+//               if (ind < retorno.length - 2) {
+//                   quebra = retorno[ind].indexOf("quebralinha");
+//                   oculto = retorno[ind].indexOf("hidden");
+//                   text += retorno[ind];
+//               }
+//           }
+//           text += "</div>";
+//           text += "<div class='col-1 d-initial h-auto p-0'>";
+//           text += "<div class='col-9 d-block float-start text-center p-0'>";
+//           text += retorno[retorno.length - 2];
+//           text += retorno[retorno.length - 1];
+//           text += '</div>';
+//           text += "<div class='col-3 d-block float-end text-end'>";
+//           text += "<button name='bt_up["   + proximo + "]' type='button' id='bt_up["   + proximo + "]' class='btn btn-outline-info btn-sm bt-up mt-0 float-end' onclick='sobe_desce_item(this,\"sobe\",\"" + objdest + "\")' title='Acima' data-index='" + proximo + "'><i class='fa fa-arrow-up' aria-hidden='true'></i></button>";
+//           text += "<button name='bt_down[" + proximo + "]' type='button' id='bt_down[" + proximo + "]' class='btn btn-outline-info btn-sm bt-down mt-0 float-end' onclick='sobe_desce_item(this,\"desce\",\"" + objdest + "\")' title='Abaixo' data-index='" + proximo + "'><i class='fa fa-arrow-down' aria-hidden='true'></i></button>";
+//           text += '</div>';
+//           text += '</div>';
+//           text += '</div>';
+//           jQuery('#rep_' + objdest).append(text);
+//           jQuery('select').selectpicker();
+//           carregamentos_iniciais();
+//           acerta_botoes_rep(objdest);
+//       }
+//   });
 }
 
 /**
@@ -2331,6 +2338,7 @@ function verificaTipoAcao(obj) {
   if (retornoAjax) {
     acao = retornoAjax.acao;
     let ind = parseInt(obj.getAttribute("data-index"));
+
     jQuery("#divtela\\[" + ind + "\\]")
       .not(".d-none")
       .addClass("d-none");
@@ -2352,3 +2360,5 @@ function verificaTipoAcao(obj) {
     }
   }
 }
+
+
