@@ -82,6 +82,12 @@ if ($avatar != '') {
         </div>
       </button>    
     </div>
+    <div id='div_search' class='text-start w-100 float-start d-none' style='height: 2.5rem'>
+        <div class="input-group mt-0  " style="width: 34ch !important; max-width: 34ch !important;">
+            <div class="input-group-text input-group-addon pe-auto" data-refer="inp_search" id="dw_inp_search"><i class="fas fa-search"></i></div>
+            <input type="search" name="inp_search" value="" id="inp_search" size="30" maxlength="30" class="form-control p-0 ps-1" data-live-search="true" placeholder="" hint="Pesquisar" autocomplete="off" onchange="" onblur="" onkeyup="buscaMenu(this)" data-mdb-toggle="tooltip" data-mdb-placement="top" title="Pesquisar">
+        </div>
+    </div>
     <?
     foreach ($it_menu as $ke => $valu) {
       $opcao = $it_menu[$ke];
@@ -111,7 +117,7 @@ if ($avatar != '') {
         if (isset($opcao['niv1'])) {
           if (!$accordraiz) {
             $accordraiz = true;
-            echo "<div class='accordion acc_base' id='accordion1'>";
+            echo "<div class='accordion acc_base' id='accordionMenu'>";
           }
       ?>
             <div class="accordion-item">
@@ -125,7 +131,7 @@ if ($avatar != '') {
                   </div>
                 </button>
               </h2>
-              <div id="collapsemenu<?=$opcao['men_id'];?>" class="accordion-collapse collapse" aria-labelledby="head<?=$opcao['men_id'];?>" data-bs-parent="#accordion1">
+              <div id="collapsemenu<?=$opcao['men_id'];?>" class="accordion-collapse collapse" aria-labelledby="head<?=$opcao['men_id'];?>" data-bs-parent="#accordionMenu">
                 <div class="accordion-body ms-1 py-1 px-0 h-auto bg-blue-claro">
                 <?
                   // $subopc = $opcao[$m];
@@ -135,7 +141,7 @@ if ($avatar != '') {
                     if ($subopc['men_hierarquia'] == '4') { // é Opção do Menu
                     ?>
                       <a id="<?=strtolower($subopc['tel_controler']);?>" href="<?=base_url($subopc['tel_controler']);?>" class="text-body-emphasis" >
-                        <div id="<?=strtolower($subopc['tel_controler']);?>" data-menu='accordion1'  data-collapse='collapsemenu<?=$opcao['men_id'];?>' class='nav-dropdown-menu mt-0 ms-1 mb-1'>
+                        <div id="<?=strtolower($subopc['tel_controler']);?>" data-menu='accordionMenu'  data-collapse='collapsemenu<?=$opcao['men_id'];?>' class='nav-dropdown-menu mt-0 ms-1 mb-1'>
                           <div class='align-items-center rounded-circle p-0 me-2 text-center float-start'  
                                 style='width:1.65rem; height:1.65rem;'>
                             <i class='<?=$subopc['men_icone'];?>'></i>
@@ -148,7 +154,7 @@ if ($avatar != '') {
                       $cont_accord++;
                       if (isset($subopc['niv2'])) {
                       ?> 
-                        <div class="accordion" id="accordion<?=$cont_accord;?>" data-menu='accordion1' data-collapse='collapsemenu<?=$opcao['men_id'];?>'>
+                        <div class="accordion" id="accordion<?=$cont_accord;?>" data-menu='accordionMenu' data-collapse='collapsemenu<?=$opcao['men_id'];?>'>
                           <div class="accordion-item">
                             <h2 class="accordion-header" id="head<?=$subopc['men_id'];?>">
                               <button class="accordion-button submenu px-0 pt-0 pb-0 collapsed text-body-emphasis" type="button" data-bs-toggle="collapse" data-bs-target="#collapsemenu<?=$subopc['men_id'];?>" aria-expanded="false" aria-controls="collapsemenu<?=$subopc['men_id'];?>">

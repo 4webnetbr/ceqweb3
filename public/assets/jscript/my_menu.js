@@ -13,109 +13,254 @@ jQuery(document).ready(function () {
   atualizaMenu();
 });
 
+// function atualizaMenu() {
+//   acertamenuaberto();
+//   jQuery(".nav-dropdown-menu-etapa").each(function (index) {
+//     if (jQuery(this)[0].id == jQuery("#id_ref").val()) {
+//       jQuery(this).addClass("active");
+//     }
+//   });
+//   jQuery(".nav-dropdown-menu").each(function (index) {
+//     if (
+//       jQuery(this)[0].id.toLowerCase() ==
+//       jQuery("#controler").val().toLowerCase()
+//     ) {
+//       submenu = jQuery(this)[0].getAttribute("data-submenu");
+//       if (submenu) {
+//         collapsesub = jQuery(this)[0].getAttribute("data-collapse");
+//         botaosub = jQuery("#" + collapsesub)
+//           .parent()
+//           .children()
+//           .children("button")[0];
+
+//         if (jQuery("#" + submenu).length) {
+//           menu = jQuery("#" + submenu)[0].getAttribute("data-menu");
+//           collapse = jQuery("#" + submenu)[0].getAttribute("data-collapse");
+//           botao = jQuery("#" + collapse)
+//             .parent()
+//             .children()
+//             .children("button")[0];
+//         } else {
+//           collapse = jQuery(this)[0].getAttribute("data-collapse");
+//           botao = jQuery("#" + collapse)
+//             .parent()
+//             .children()
+//             .children("button")[0];
+//         }
+
+//         jQuery(botaosub).removeClass("collapsed");
+//         jQuery("#" + collapsesub).addClass("show");
+//       } else {
+//         collapse = jQuery(this)[0].getAttribute("data-collapse");
+//         botao = jQuery("#" + collapse)
+//           .parent()
+//           .children()
+//           .children("button")[0];
+//       }
+//       jQuery(botao).removeClass("collapsed");
+//       jQuery("#" + collapse).addClass("show");
+//       jQuery(this).addClass("active");
+//     } else {
+//       jQuery(botao).addClass("collapsed");
+//       jQuery("#" + collapse).removeClass("show");
+//       jQuery(this).removeClass("active");
+//     }
+//   });
+
+//   jQuery("#bt_user").on("click", function () {
+//     jQuery("#show_user").toggleClass("active");
+//   });
+//   jQuery(".content, .titulo").on("click", function () {
+//     if (jQuery("#show_user").hasClass("active")) {
+//       jQuery("#show_user").toggleClass("active");
+//       if (!menuaberto) {
+//         jQuery(".sidebar").toggleClass("active");
+//       }
+//     }
+//     if (jQuery("#show_ajuda").hasClass("show")) {
+//       jQuery("#bt_ajuda").trigger("click");
+//     }
+//     if (jQuery("#show_notifica").hasClass("show")) {
+//       jQuery("#bt_notifica").trigger("click");
+//     }
+//   });
+//   jQuery(".sidebar").hover(
+//     function () {
+//       if (!menuaberto) {
+//         if (!jQuery(".sidebar").hasClass("active")) {
+//           jQuery(".sidebar").toggleClass("active");
+//         }
+//       }
+//     },
+//     function () {
+//       if (!menuaberto) {
+//         if (!jQuery("#show_user").hasClass("active")) {
+//           jQuery(".sidebar").toggleClass("active");
+//         }
+//       }
+//     }
+//   );
+//   jQuery(".bt-manut.add").hover(
+//     function () {
+//       jQuery(this).find(".txt-bt-manut").removeClass("d-none");
+//     },
+//     function () {
+//       jQuery(this).find(".txt-bt-manut").addClass("d-none");
+//     }
+//   );
+
+//   jQuery(".manutencao").hover(
+//     function () {
+//       jQuery(".manut").toggleClass("active");
+//       if (jQuery("#show_user").hasClass("active")) {
+//         jQuery("#show_user").toggleClass("active");
+//       }
+//     },
+//     function () {
+//       jQuery(".manut").toggleClass("active");
+//     }
+//   );
+
+//   jQuery("#menuaberto").prop("checked", menuaberto);
+//   verificaNotificacao();
+// }
+
 function atualizaMenu() {
   acertamenuaberto();
-  jQuery(".nav-dropdown-menu-etapa").each(function (index) {
-    if (jQuery(this)[0].id == jQuery("#id_ref").val()) {
-      jQuery(this).addClass("active");
+
+  const controllerVal = String(jQuery("#controler").val() || "").toLowerCase();
+  const idRefVal = jQuery("#id_ref").val();
+
+  // Marca como "active" o menu de etapa correspondente
+  jQuery(".nav-dropdown-menu-etapa").each(function () {
+    const $item = jQuery(this);
+    if ($item.attr("id") === idRefVal) {
+      $item.addClass("active");
+    } else {
+      $item.removeClass("active");
     }
   });
-  jQuery(".nav-dropdown-menu").each(function (index) {
-    if (
-      jQuery(this)[0].id.toLowerCase() ==
-      jQuery("#controler").val().toLowerCase()
-    ) {
-      submenu = jQuery(this)[0].getAttribute("data-submenu");
+
+  // Fecha todos os menus antes
+  // Fecha todos os colapsáveis: submenus, accordions, etc.
+  jQuery(".collapse.show").each(function () {
+    const $collapseEl = jQuery(this);
+    const collapseId = $collapseEl.attr("id");
+
+    if (collapseId) {
+      // Encontra qualquer botão que controla esse collapse
+      const $button = jQuery('[data-bs-target="#' + collapseId + '"]');
+      $button.addClass("collapsed");
+    }
+
+    $collapseEl.removeClass("show");
+  });
+
+  // Remove a classe 'active' de todos os itens do menu (se necessário)
+  jQuery(".nav-dropdown-menu").removeClass("active");
+
+  // Agora ativa apenas o item correspondente ao controller
+  jQuery(".nav-dropdown-menu").each(function () {
+    const $menuItem = jQuery(this);
+    const itemId = String($menuItem.attr("id") || "").toLowerCase();
+
+    if (itemId === controllerVal) {
+      const submenu = $menuItem.data("submenu");
+      let collapseId, $collapseEl, $button;
+
       if (submenu) {
-        collapsesub = jQuery(this)[0].getAttribute("data-collapse");
-        botaosub = jQuery("#" + collapsesub)
+        const collapsesub = $menuItem.data("collapse");
+        const $collapseSubEl = jQuery("#" + collapsesub);
+
+        const $subButton = $collapseSubEl
           .parent()
           .children()
-          .children("button")[0];
+          .children("button")
+          .first();
 
-        if (jQuery("#" + submenu).length) {
-          menu = jQuery("#" + submenu)[0].getAttribute("data-menu");
-          collapse = jQuery("#" + submenu)[0].getAttribute("data-collapse");
-          botao = jQuery("#" + collapse)
-            .parent()
-            .children()
-            .children("button")[0];
-        } else {
-          collapse = jQuery(this)[0].getAttribute("data-collapse");
-          botao = jQuery("#" + collapse)
-            .parent()
-            .children()
-            .children("button")[0];
-        }
+        $subButton.removeClass("collapsed");
+        $collapseSubEl.addClass("show");
 
-        jQuery(botaosub).removeClass("collapsed");
-        jQuery("#" + collapsesub).addClass("show");
+        const $subMenu = jQuery("#" + submenu);
+        collapseId = $subMenu.length ? $subMenu.data("collapse") : collapsesub;
       } else {
-        collapse = jQuery(this)[0].getAttribute("data-collapse");
-        botao = jQuery("#" + collapse)
-          .parent()
-          .children()
-          .children("button")[0];
+        collapseId = $menuItem.data("collapse");
       }
-      jQuery(botao).removeClass("collapsed");
-      jQuery("#" + collapse).addClass("show");
-      jQuery(this).addClass("active");
+
+      if (collapseId) {
+        $collapseEl = jQuery("#" + collapseId);
+        $button = $collapseEl.parent().children().children("button").first();
+
+        $button.removeClass("collapsed");
+        $collapseEl.addClass("show");
+      }
+
+      $menuItem.addClass("active");
     }
   });
 
-  jQuery("#bt_user").on("click", function () {
-    jQuery("#show_user").toggleClass("active");
-  });
-  jQuery(".content, .titulo").on("click", function () {
-    if (jQuery("#show_user").hasClass("active")) {
+  jQuery("#bt_user")
+    .off("click")
+    .on("click", function () {
       jQuery("#show_user").toggleClass("active");
-      if (!menuaberto) {
-        jQuery(".sidebar").toggleClass("active");
-      }
-    }
-    if (jQuery("#show_ajuda").hasClass("show")) {
-      jQuery("#bt_ajuda").trigger("click");
-    }
-    if (jQuery("#show_notifica").hasClass("show")) {
-      jQuery("#bt_notifica").trigger("click");
-    }
-  });
-  jQuery(".sidebar").hover(
-    function () {
-      if (!menuaberto) {
-        if (!jQuery(".sidebar").hasClass("active")) {
-          jQuery(".sidebar").toggleClass("active");
-        }
-      }
-    },
-    function () {
-      if (!menuaberto) {
-        if (!jQuery("#show_user").hasClass("active")) {
-          jQuery(".sidebar").toggleClass("active");
-        }
-      }
-    }
-  );
-  jQuery(".bt-manut.add").hover(
-    function () {
-      jQuery(this).find(".txt-bt-manut").removeClass("d-none");
-    },
-    function () {
-      jQuery(this).find(".txt-bt-manut").addClass("d-none");
-    }
-  );
+    });
 
-  jQuery(".manutencao").hover(
-    function () {
-      jQuery(".manut").toggleClass("active");
+  jQuery(".content, .titulo")
+    .off("click")
+    .on("click", function () {
       if (jQuery("#show_user").hasClass("active")) {
         jQuery("#show_user").toggleClass("active");
+        if (!menuaberto) {
+          jQuery(".sidebar").toggleClass("active");
+        }
       }
-    },
-    function () {
-      jQuery(".manut").toggleClass("active");
-    }
-  );
+      if (jQuery("#show_ajuda").hasClass("show")) {
+        jQuery("#bt_ajuda").trigger("click");
+      }
+      if (jQuery("#show_notifica").hasClass("show")) {
+        jQuery("#bt_notifica").trigger("click");
+      }
+    });
+
+  jQuery(".sidebar")
+    .off("mouseenter mouseleave")
+    .hover(
+      function () {
+        if (!menuaberto && !jQuery(".sidebar").hasClass("active")) {
+          jQuery(".sidebar").toggleClass("active");
+        }
+      },
+      function () {
+        if (!menuaberto && !jQuery("#show_user").hasClass("active")) {
+          jQuery(".sidebar").toggleClass("active");
+        }
+      }
+    );
+
+  jQuery(".bt-manut.add")
+    .off("mouseenter mouseleave")
+    .hover(
+      function () {
+        jQuery(this).find(".txt-bt-manut").removeClass("d-none");
+      },
+      function () {
+        jQuery(this).find(".txt-bt-manut").addClass("d-none");
+      }
+    );
+
+  jQuery(".manutencao")
+    .off("mouseenter mouseleave")
+    .hover(
+      function () {
+        jQuery(".manut").toggleClass("active");
+        if (jQuery("#show_user").hasClass("active")) {
+          jQuery("#show_user").removeClass("active");
+        }
+      },
+      function () {
+        jQuery(".manut").toggleClass("active");
+      }
+    );
 
   jQuery("#menuaberto").prop("checked", menuaberto);
   verificaNotificacao();
@@ -313,3 +458,65 @@ function executarScriptsInline($html) {
 window.addEventListener("popstate", function () {
   carregarPaginaComSecoes(location.href, false);
 });
+
+function buscaMenu(busca) {
+  const termoBusca = busca.value.trim().toLowerCase();
+  // Reexibe todos os elementos dentro do menu antes de filtrar
+  jQuery("#accordionMenu .d-none").removeClass("d-none");
+  jQuery("#accordionMenu .nav-dropdown-menu.d-none").removeClass("d-none");
+
+  if (termoBusca === "") {
+    atualizaMenu();
+    return;
+  }
+
+  // Abre todos os colapsáveis (submenus e accordions)
+  jQuery("#accordionMenu .collapse").each(function () {
+    const $collapse = jQuery(this);
+    const collapseId = $collapse.attr("id");
+
+    if (collapseId) {
+      const $botao = jQuery('[data-bs-target="#' + collapseId + '"]');
+      $botao.removeClass("collapsed");
+      $collapse.addClass("show");
+    }
+  });
+
+  // Filtra os itens dentro do menu
+  jQuery(
+    "#accordionMenu .nav-dropdown-menu, #accordionMenu .accordion-item"
+  ).each(function () {
+    const $item = jQuery(this);
+    const textoItem = $item.text().trim().toLowerCase();
+
+    if (!textoItem.includes(termoBusca)) {
+      $item.addClass("d-none");
+    } else {
+      $item.removeClass("d-none");
+    }
+  });
+
+  // Oculta submenus cujos itens estão todos ocultos
+  jQuery("#accordionMenu .nav-dropdown-menu").each(function () {
+    const $submenu = jQuery(this);
+    const collapseId = $submenu.data("collapse");
+    const $collapse = jQuery("#" + collapseId);
+
+    if ($collapse.length) {
+      const $visiveis = $collapse.find(".nav-dropdown-menu:not(.d-none)");
+      if ($visiveis.length === 0) {
+        $submenu.addClass("d-none");
+      }
+    }
+  });
+
+  // Oculta accordions que não têm nenhum item visível
+  jQuery("#accordionMenu .accordion").each(function () {
+    const $accordion = jQuery(this);
+    const $visiveis = $accordion.find(".accordion-item:not(.d-none)");
+
+    if ($visiveis.length === 0) {
+      $accordion.addClass("d-none");
+    }
+  });
+}

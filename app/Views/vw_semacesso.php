@@ -1,4 +1,4 @@
-<?=$this->extend('templates/default_template')?>
+<?=$this->extend('templates/login_template')?>
 
 <?=$this->section('content');?>
   <div class="container text-center col-lg-6 col-10">
