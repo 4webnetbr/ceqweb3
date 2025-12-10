@@ -4,25 +4,29 @@ namespace App\Models\Ocorre;
 
 use CodeIgniter\Model;
 use App\Models\LogMonModel;
+use App\Controllers\BuscasSapiens;
 use App\Libraries\MyCampo;
+use App\Models\Ocorre\OcorreModOcorrenciaModel;
+
 
 class OcorreNovOcorrenciaModel extends Model
 {
     protected $DBGroup    = 'dbOcorrencia';
-    protected $table      = 'oco_nov_ocorrencia';
-    protected $view       = 'vw_oco_nov_ocorrencia_relac';
+    protected $table      = 'oco_ocorrencia';
+    protected $view       = 'vw_oco_ocorrencia_relac';
     protected $primaryKey = 'oco_id';
     protected $allowedFields = [
-        'oco_tipo',
-        'tpo_nome',
+        'oco_id',
+        'tpo_id',
+        'lot_lote',
+        'moc_id',
         'oco_descricao',
-        'oco_lote',
+        'lot_id',
         'oco_qtd',
-        'oco_produto',
         'oco_data',
         'stt_id',
+        'tpa_id',
         'stt_cor'
-        
     ];
 
     protected $validationRules = [
@@ -46,27 +50,19 @@ class OcorreNovOcorrenciaModel extends Model
 
     protected $logdb;
 
-
-    
-    
     protected function depoisInsert(array $data)
     {
         $logdb = new LogMonModel();
         $registro = $data['id'];
-        $log = $logdb->insertLog($this->table, 'Incluído', $registro, $data['data']);
+        $logdb->insertLog($this->table, 'Incluído', $registro, $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "updated_by" array element before
-     * the row is inserted into the database.
-     *
-     */
     protected function depoisUpdate(array $data)
     {
         $logdb = new LogMonModel();
         $registro = $data['id'][0];
-        $log = $logdb->insertLog($this->table, 'Alteração', $registro, $data['data']);
+        $logdb->insertLog($this->table, 'Alteração', $registro, $data['data']);
         return $data;
     }
     
@@ -74,148 +70,315 @@ class OcorreNovOcorrenciaModel extends Model
     {
         $logdb = new LogMonModel();
         $registro = $data['id'][0];
-        $log = $logdb->insertLog($this->table, 'Excluído', $registro, $data['data']);
+        $logdb->insertLog($this->table, 'Excluído', $registro, $data['data']);
         return $data;
     }
     
+    
     public function getStatusIdByNome(string $nome, ?int $telId = null): ?int
     {
-        $db = \Config\Database::connect();
-        $builder = $db->table('config_ceqweb_db.cfg_status')
+        $builder = $this->db->table('config_ceqweb_db.cfg_status')
             ->select('stt_id')
             ->where('stt_nome', $nome);
     
         if ($telId !== null) {
             $builder->where('tel_id', $telId);
         }
-
         $row = $builder->orderBy('stt_id', 'DESC')->get()->getRow();
     
         return $row->stt_id ?? null;
     }
     
-    public function defCampos($dados = [], $show = false, $tabela = '', $view = '')
+
+    public function getListaCompleta()
     {
-        helper('form');
-        $fields = [];
+        // Buscar VIEW
+        $dados = $this->db->table($this->view)
+                    ->get()
+                    ->getResultArray(); 
+        // Buscar LOG
+        $ids = array_column($dados, 'oco_id');
+        $log = buscaLogTabela('oco_ocorrencia', $ids);
+    
+        // Inject usu_nome
+        foreach ($dados as &$d) {
+            $d['usu_nome'] = $log[$d['oco_id']]['usua_alterou'] ?? '';
+        }
+        return $dados;
+    }
+    
+
+    public function getById($id)
+    {
+        $dados = $this->db->table($this->view)
+                    ->where('oco_id', $id)
+                    ->get()
+                    ->getRowArray();
+        if (!$dados) {
+            return null;
+        }
+        return $dados;
+    }
+
+
+    public function getAcoesByModelo($moc_id)
+    {
+        return $this->db->table('oco_moc_acao')
+                        ->where('moc_id', $moc_id)
+                        ->get()
+                        ->getResultArray();
+    }
+
+
+    public function salvarOcorrencia(array $dados)
+    {
+        $db = \Config\Database::connect($this->DBGroup);
+        try {
+            $db->transBegin();
+    
+            $statusPendente = $this->getStatusIdByNome('Pendente', 56);
+            $statusFinaliza = $this->getStatusIdByNome('Finalização automática', 56);
+    
+            $status = $statusPendente;
+            $moc_id = $dados['moc_id'] ?? null;
+    
+            if ($moc_id) {
+                $acoes = $this->getAcoesByModelo($moc_id);
+    
+                if (empty($acoes)) {
+                    $status = $statusFinaliza;
+                } else {
+                    $todasNenhuma = true;
+    
+                    foreach ($acoes as $acao) {
+                        if ($acao['tpa_id'] != 1) {
+                            $todasNenhuma = false;
+                            break;
+                        }
+                    }
+    
+                    $status = $todasNenhuma ? $statusFinaliza : $statusPendente;
+                }
+            }
+            $insert = [
+                'tpo_id'        => $dados['tpo_id'],
+                'moc_id'        => $dados['moc_id'],
+                'oco_descricao' => $dados['oco_descricao'],
+                'lot_id'        => $dados['lot_id'],
+                'lot_lote'      => $dados['lot_lote'],
+                'oco_qtd'       => $dados['oco_qtd'],
+                'oco_data'      => $dados['oco_data'],
+                'stt_id'        => $status,
+            ];
+    
+            if (!$this->insert($insert)) {
+                throw new \Exception('Erro ao inserir ocorrência.');
+            }
+    
+            $db->transCommit();
+    
+            return [
+                'erro' => false,
+                'msg'  => 'Ocorrência registrada com sucesso!',
+                'url'  => site_url('OcoNovOcorrencia')
+            ];
+        } catch (\Exception $e) {
+    
+            $db->transRollback();
+    
+            return [
+                'erro' => true,
+                'msg'  => 'Erro ao gravar a Ocorrência:<br><br>' . $e->getMessage()
+            ];
+        }
+    }
+
+
+    public function atualizarOcorrencia(int $id, array $dados)
+    {
+        $db = $this->db;
+    
+        try {
+            $db->transBegin();
+    
+    
+            $ocorrencia = $this->find($id);
+            if (!$ocorrencia) {
+                throw new \Exception('Ocorrência não encontrada.');
+            }
+    
+    
+            $statusPendente = $this->getStatusIdByNome('Pendente', 56);
+            $statusFinaliza = $this->getStatusIdByNome('Finalização automática', 56);
+    
+            $status = $statusPendente;
+            $moc_id = $dados['moc_id'] ?? null;
+    
+    
+            if ($moc_id) {
+                $acoes = $this->getAcoesByModelo($moc_id);
+    
+                if (empty($acoes)) {
+                    $status = $statusFinaliza;
+                } else {
+                    $todasNenhuma = true;
+                    foreach ($acoes as $acao) {
+                        if ($acao['tpa_id'] != 1) {
+                            $todasNenhuma = false;
+                            break;
+                        }
+                    }
+                    $status = $todasNenhuma ? $statusFinaliza : $statusPendente;
+                }
+            }
+    
+    
+            $atualiza = [
+                'tpo_id'        => $dados['tpo_id'],
+                'moc_id'        => $dados['moc_id'],
+                'oco_descricao' => $dados['oco_descricao'],
+                'lot_id'        => $dados['lot_id'],
+                'lot_lote'      => $dados['lot_lote'],
+                'oco_qtd'       => $dados['oco_qtd'],
+                'oco_data'      => $dados['oco_data'],
+                'stt_id'        => $status,
+            ];
+    
+            if (!$this->update($id, $atualiza)) {
+                throw new \Exception('Erro ao atualizar ocorrência.');
+            }
+    
+            $db->transCommit();
+    
+            return [
+                'erro' => false,
+                'msg'  => 'Ocorrência atualizada com sucesso!',
+                'url'  => site_url('OcoNovOcorrencia')
+            ];
+    
+        } catch (\Exception $e) {
+    
+            $db->transRollback();
+    
+            return [
+                'erro' => true,
+                'msg'  => 'Erro ao atualizar a ocorrência:<br><br>' . $e->getMessage()
+            ];
+        }
+    }
+
+
+    public function getSelectPorTipo(int $tpo_id): array
+    {
+        $modelMod    = new OcorreModOcorrenciaModel();
+        $ocorrencias = $modelMod->buscarPorTipo($tpo_id);
+    
+        $retorno = [];
+        foreach ($ocorrencias as $ocorrencia) {
+            $retorno[$ocorrencia['moc_id']] = $ocorrencia['moc_nome'];
+        }
+        return $retorno;
+    }
+    
+    
+
+    public function defCampos($dados = false)
+    {
+        $ret = [];
+        $mid             = new MyCampo('oco_id_ocorrencia', 'tpo_id');
+        $mid->nome       = 'tpo_id';
+        $mid->valor      = (isset($dados['tpo_id'])) ? $dados['tpo_id'] : '';
+        $ret['tpo_id']   = $mid->crOculto();
         
+
         // TIPO DE OCORRÊNCIA
-        $tipo              = new MyCampo('oco_nov_ocorrencia', 'oco_tipo');
-        $tipo->nome        = 'oco_tipo';
-        $tipo->id          = 'oco_tipo';
-        $tipo->valor       = $dados['oco_tipo'] ?? '';
+        $modelTipo = new OcorreTipoOcorrenciaModel();
+        $tipos = $modelTipo->findAll();
+        
+        foreach ($tipos as $t) {
+            $opcoes[$t['tpo_id']] = $t['tpo_nome'];
+        }
+        
+        $tipo              = new MyCampo('oco_ocorrencia', 'tpo_id');
+        $tipo->opcoes      = $opcoes;
+        $tipo->valor       = (isset($dados['tpo_id'])) ? $dados['tpo_id'] : '';
         $tipo->label       = 'Tipo de Ocorrência';
         $tipo->obrigatorio = true;
-        $tipo->tipo        = 'select';
         $tipo->dispForm    = '2col';
         $tipo->largura     = 58;
+        
+        $ret['tpo_id'] = $tipo->crSelect();
 
-        $modelTipo = new \App\Models\Ocorre\OcorreTipoOcorrenciaModel();
-        $tipos     = $modelTipo->findAll();
-        $opcoes    = ['' => 'Selecione o tipo de ocorrência'];
-        foreach ($tipos as $tipo_oc) {
-            $opcoes[$tipo_oc['tpo_id']] = $tipo_oc['tpo_nome'];
-        }
-        $tipo->opcoes = $opcoes;
-        $fields['oco_tipo'] = $tipo->crSelect();
-
-        // MOD OCORRÊNCIA
-        $quebra              = new MyCampo('oco_nov_ocorrencia', 'tpo_nome'); 
-        $quebra->nome        = 'tpo_nome';
-        $quebra->id          = 'tpo_nome';
-        $quebra->valor       = $dados['tpo_nome'] ?? '';
-        $quebra->label       = 'Ocorrência';
-        $quebra->obrigatorio = true;
-        $quebra->tipo        = 'select';
-        $quebra->dispForm    = '2col';
-        $quebra->largura     = 58;
-
-        $modelMod  = new \App\Models\Ocorre\OcorreModOcorrenciaModel();
-        $modelos   = $modelMod->getModOcorrencia();
-        $opcoesMod = ['' => 'Selecione a ocorrência'];
+        // OCORRÊNCIA
+        $modelMod            = new OcorreModOcorrenciaModel();
+        $modelos             = $modelMod->getModOcorrencia();
         foreach ($modelos as $mod) {
             $opcoesMod[$mod['moc_id']] = $mod['moc_nome'];
         }
-        $quebra->opcoes = $opcoesMod;
-        $fields['tpo_nome'] = $quebra->crSelect();
+
+        $quebra              = new MyCampo('oco_ocorrencia', 'moc_id'); 
+        $quebra->valor       = (isset($dados['moc_id'])) ? $dados['moc_id'] : '';
+        $quebra->opcoes      = $opcoesMod;
+        $quebra->label       = 'Ocorrência';
+        $quebra->obrigatorio = true;
+        $quebra->dispForm    = '2col';
+        $quebra->largura     = 58;
+
+        $ret['moc_id'] = $quebra->crSelect();
+
 
         // DESCRIÇÃO
-        $desc              = new MyCampo('oco_nov_ocorrencia', 'oco_descricao');  
-        $desc->nome        = 'oco_descricao';
-        $desc->id          = 'oco_descricao';
-        $desc->valor       = $dados['oco_descricao'] ?? '';
-        $desc->label       = 'Descrição';
+        $desc              = new MyCampo('oco_ocorrencia', 'oco_descricao');  
+        $desc->valor       = (isset($dados['oco_descricao'])) ? $dados['oco_descricao'] : '';
         $desc->obrigatorio = true;
         $desc->linhas      = 3;
         $desc->colunas     = 56;
         $desc->dispForm    = '2col';
-        $desc->place       = 'Digite a descrição da ocorrência';
-        $fields['oco_descricao'] = $desc->crTexto();
+
+        $ret['oco_descricao'] = $desc->crTexto();
 
         // LOTE
-        $lote              = new MyCampo('oco_nov_ocorrencia', 'oco_lote');  
-        $lote->nome        = 'oco_lote';
-        $lote->id          = 'oco_lote';
-        $lote->valor       = $dados['oco_lote'] ?? '';
-        $lote->label       = 'Lote';
+        $lote              = new MyCampo('pro_sap_lote', 'lot_lote'); 
+        $lote->valor       = (isset($dados['lot_lote'])) ? $dados['lot_lote'] : '';
         $lote->obrigatorio = true;
-        $lote->tipo        = 'text';
-        $lote->dispForm    = 'linha';
+        $lote->size        = 54;
+        $lote->funcBlur    = "buscaLoteProduto(this,'".base_url('/buscas/buscaProdutoporLote')."')";
+        $ret['lot_lote'] = $lote->crInput();
 
-        $busca      = new \App\Controllers\BuscasSapiens();
-        $lotes      = $busca->buscaLotes();
-        $opcoesLote = ['' => 'Selecione o lote'];
-        foreach ($lotes as $lot) {
-            $opcoesLote[$lot->codlot] = $lot->codlot;
-        }
-        $lote->opcoes = $opcoesLote;
-        $fields['oco_lote'] = $lote->crInput();
+        $lotid             = new MyCampo('oco_ocorrencia', 'lot_id');
+        $lotid->valor      = (isset($dados['lot_id'])) ? $dados['lot_id'] : '';
+        $ret['lot_id']     = $lotid->crOculto();
+
+        // PRODUTO 
+        $produto           = new MyCampo('pro_sap_produto', 'pro_despro');
+        $produto->valor    = (isset($dados['pro_despro'])) ? $dados['pro_despro'] : '';
+        $produto->dispForm = '2col';
+        $produto->size     = 54;
+        $produto->leitura  = true;
+        $ret['pro_despro'] = $produto->crInput();
 
         // QUANTIDADE
-        $qtd               = new MyCampo('oco_nov_ocorrencia', 'oco_qtd'); 
-        $qtd->nome         = 'oco_qtd';
-        $qtd->id           = 'oco_qtd';
+        $qtd               = new MyCampo('oco_ocorrencia', 'oco_qtd'); 
         $qtd->valor        = $dados['oco_qtd'] ?? 0;
         $qtd->label        = 'Quantidade';
-        $qtd->tipo         = 'number';
         $qtd->dispForm     = '2col';
         $qtd->minimo       = 1;
         $qtd->step         = 1;
         $qtd->largura      = 10;
         $qtd->obrigatorio  = true;
-        $fields['oco_qtd'] = $qtd->crInput();
 
-        // PRODUTO 
-        $produto          = new MyCampo('oco_nov_ocorrencia', 'oco_produto');  
-        $produto->nome    = 'oco_produto';
-        $produto->id      = 'oco_produto';
-        $produto->valor   = '';
-        $produto->objeto  = '';
-        $produto->place   = 'Nome do produto selecionado';
-
-        $produto->label    = 'Produto';
-        $produto->dispForm = '2col';
-        $produto->size     = 54;
-        $produto->leitura  = true;
-
-        $fields['oco_produto'] = $produto->crInput();
-
+        $ret['oco_qtd'] = $qtd->crInput();
         
         // DATA 
-        $data              = new MyCampo('oco_nov_ocorrencia', 'oco_data');
-        $data->nome        = 'oco_data';
-        $data->id          = 'oco_data';
+        $data              = new MyCampo('oco_ocorrencia', 'oco_data');
         $data->valor       = $dados['oco_data'] ?? date('Y-m-d\TH:i'); 
         $data->label       = 'Data da Ocorrência';
-        $data->tipo        = 'datetime-local';
         $data->dispForm    = '2col';
+        $data->leitura     = true;
         $data->largura     = 30;
-        $data->obrigatorio = true;
 
-        $fields['oco_data'] = $data->crInput();
+        $ret['oco_data'] = $data->crInput();
 
-        return $fields;
+        return $ret;
     }
-
-    
 }

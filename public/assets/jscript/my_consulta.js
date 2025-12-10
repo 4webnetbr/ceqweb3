@@ -818,49 +818,90 @@ function carregaAcaoTipo(obj) {
   }
 }
 
+function buscaLoteProduto(obj, url) {
+  lote = obj.value;
+  dados = { busca: lote };
+  retornoAjax = false;
+  executaAjax(url, "json", dados);
 
-
-function vinculaProdutoAoLote() {
-  const loteSelect = document.getElementById('oco_lote');
-  const produtoInput = document.getElementById('oco_produto'); 
-
-  if (!loteSelect || !produtoInput) return;
-
-  loteSelect.addEventListener('change', function () {
-    const codLote = this.value.trim();
-
-    if (!codLote) {
-      produtoInput.value = ''; // limpa
-      return;
+  if (retornoAjax) {
+    if (retornoAjax.lotid > 0) {
+      jQuery("#lot_id").val(retornoAjax.lotid);
+      jQuery("#pro_despro").val(retornoAjax.despro);
+    } else {
+      boxAlert(10, true, "", true);
     }
-
-    fetch(window.location.origin + '/OcoNovOcorrencia/getProdutoLote', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `codLote=${encodeURIComponent(codLote)}`
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Resposta produto:', data);
-
-      if (data.descpro) {
-        produtoInput.value = data.descpro;
-      } else {
-        produtoInput.value = data.erro || 'Produto não encontrado';
-      }
-
-    })
-    .catch(error => {
-      console.error('Erro ao buscar produto do lote:', error);
-      produtoInput.value = 'Erro ao buscar produto';
-    });
-  });
+  }
 }
-document.addEventListener('DOMContentLoaded', function () {
-  vinculaProdutoAoLote();
-});
 
+// function vinculaProdutoAoLote() {
+//   const loteSelect = document.getElementById("lot_id");
+//   const produtoInput = document.getElementById("lot_lote");
 
+//   if (!loteSelect || !produtoInput) return;
 
+//   loteSelect.addEventListener("change", function () {
+//     const codLote = this.value.trim();
+
+//     if (!codLote) {
+//       produtoInput.value = ""; // limpa
+//       return;
+//     }
+
+//     fetch(window.location.origin + "/OcoNovOcorrencia/getProdutoLote", {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/x-www-form-urlencoded",
+//       },
+//       body: `codLote=${encodeURIComponent(codLote)}`,
+//     })
+//       .then((response) => response.json())
+//       .then((data) => {
+//         console.log('Resposta produto:', data);
+
+//         if (data.descpro) {
+//           produtoInput.value = data.descpro;
+//         } else {
+//           produtoInput.value = data.erro || "Produto não encontrado";
+//         }
+//       })
+//       .catch((error) => {
+//         console.error("Erro ao buscar produto do lote:", error);
+//         produtoInput.value = "Erro ao buscar produto";
+//       });
+//   });
+// }
+
+// document.addEventListener("DOMContentLoaded", function () {
+//   vinculaProdutoAoLote();
+// });
+
+// function testa_dep(paiId) {
+//   let pai = document.getElementById(paiId);
+//   let filho = document.querySelector('[data-pai="' + paiId + '"]');
+
+//   if (!pai || !filho) return;
+
+//   let url = filho.dataset.busca;
+//   let valorPai = pai.value;
+
+//   if (!valorPai) return;
+
+//   fetch(url, {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/x-www-form-urlencoded",
+//     },
+//     body: `valor=${valorPai}`,
+//   })
+//     .then((response) => response.json())
+//     .then((data) => {
+//       filho.innerHTML = "";
+//       for (let key in data) {
+//         let option = document.createElement("option");
+//         option.value = key;
+//         option.textContent = data[key];
+//         filho.appendChild(option);
+//       }
+//     });
+// }

@@ -477,24 +477,26 @@ class MyCampo
         if ($this->tipo == 'senha') {
             $this->field['type'] = "password";
         }
-        if (
+        if ($this->leitura) {
+            $this->obrigatorio = false;
+            unset($this->field['required']);
+            $this->field['readonly'] = true;
+            $this->field['disabled'] = "disabled";
+            $this->field['onfocus']  = "this.blur()";
+            $this->field['tabindex'] = -1;
+        } else if (
             $this->obrigatorio &&
             $this->tipo != 'login' &&
             $this->tipo != 'password' &&
             $this->tipo != 'senha' &&
-            ! $this->leitura
+            !$this->leitura
         ) {
+            unset($this->field['readonly']);
+            unset($this->field['disabled']);
             $this->field['required'] = true;
             if ($this->tipo == 'text' || $this->objeto == 'texto') {
                 $this->field['minLength'] = isset($this->minLength) ? isset($this->minLength) : 5;
             }
-        }
-        if ($this->leitura) {
-            $this->field['required'] = false;
-            $this->field['readonly'] = "readonly";
-            $this->field['disabled'] = "disabled";
-            $this->field['onfocus']  = "this.blur()";
-            $this->field['tabindex'] = -1;
         }
 
         if (isset($this->hint) && $this->hint != '') {
@@ -503,17 +505,6 @@ class MyCampo
             $this->field['title']              = $this->hint;
         }
 
-        // QUANDO TEM ORDEM DEFINIDA ALTERA O ID E O NOME COLOCANDO A ORDEM
-        // OS CAMPOS DO TIPO CHECK ESSA AÇÃO É FEITA ANTES DE CRIAR AS OPÇÕES
-        // if ($this->ordem != -1 && $this->tipo != 'check') {
-        //     if (strpos("[", $this->field['name']) === false) {
-        //         $this->field['name'] = $this->field['name'] . "[" . $this->ordem . "]";
-        //     }
-        //     if (strpos("[", $this->field['id']) === false) {
-        //         $this->field['id'] = $this->field['id'] . "[" . $this->ordem . "]";
-        //     }
-        //     $this->field['data-index'] = $this->ordem;
-        // }
         return;
     }
 

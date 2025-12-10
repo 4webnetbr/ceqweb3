@@ -261,7 +261,7 @@ class OcorreTipoOcorrenciaModel extends Model
     {
         $ret = [];
 
-        $tipoacao = new OcorreTipoAcaoModel;
+        $tipoacao     = new OcorreTipoAcaoModel;
         $lst_tipoacao = $tipoacao->getTipoAcao();
         $opc_tipoacao = array_column($lst_tipoacao, 'tpa_nome', 'tpa_id');
 

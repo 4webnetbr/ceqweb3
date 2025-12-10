@@ -22,7 +22,7 @@ class OcorreModOcorrenciaModel extends Model
     protected $table            = 'oco_mod_ocorrencia';
     protected $view             = 'vw_oco_mod_ocorrencia_relac';
     protected $primaryKey       = 'moc_id';
-    protected $useAutoIncremodt = true;
+    protected $useAutoIncrement = true;
 
     protected $returnType       = 'array';
     protected $useSoftDeletes   = false;
@@ -109,6 +109,23 @@ class OcorreModOcorrenciaModel extends Model
         return $builder->get()->getResultArray();
     }
 
+    public function getModOcorrenciaPorTipo($tpo_id = null)
+    {
+        $db = db_connect('dbOcorrencia');
+        $builder = $db->table('vw_oco_mod_ocorrencia_relac');
+    
+        $builder->select('*');
+    
+        if ($tpo_id !== null) {
+            $builder->where('tpo_id', $tpo_id);
+        }
+    
+        $builder->orderBy('moc_ativo, moc_nome');
+        
+        return $builder->get()->getResultArray();
+    }
+
+
     public function getTOTelasAplicaveis($moc_id = false)
     {
         $db = db_connect('dbOcorrencia');
@@ -149,6 +166,20 @@ class OcorreModOcorrenciaModel extends Model
         return $builder->get()->getResultArray();
     }
 
+    public function buscarPorTipo($tipoNome)
+    {
+        $db = db_connect('default');
+        $builder = $db->table('vw_oco_mod_ocorrencia_relac');
+        $builder->select('moc_id, moc_nome');
+    
+        if ($tipoNome) {
+            $builder->where("tpo_nome", $tipoNome); 
+        }
+    
+        return $builder->get()->getResultArray();
+    }
+
+
     public function defCampos($dados = false, $show = false)
     {
         $ret = [];
@@ -188,6 +219,7 @@ class OcorreModOcorrenciaModel extends Model
 
         return $ret;
     }
+    
 
     public function defCamposTelasAplicaveis($dados = false, $pos = 0,  $total = 1)
     {
@@ -324,6 +356,7 @@ class OcorreModOcorrenciaModel extends Model
         $add->nome      = "bt_addta[$pos]";
         $add->id        = "bt_addta[$pos]";
         $add->i_cone    = "<i class='fas fa-plus'></i>";
+        
         $add->place     = "Adicionar Campo";
         $add->classep   = "btn-outline-success btn-sm bt-repete esconder";
         $add->funcChan  = "addCampo('" . base_url("OcoModOcorrencia/addCampoTp/") . "','acoes',this)";

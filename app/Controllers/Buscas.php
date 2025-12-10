@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Models\Config\ConfigMenuModel;
 use App\Models\Config\ConfigTelaModel;
+use App\Models\Produt\ProdutLoteModel;
 use App\Models\Config\ConfigModuloModel;
 use App\Models\Config\ConfigStatusModel;
 use App\Models\Config\ConfigUsuarioModel;
@@ -362,6 +363,24 @@ class Buscas extends BaseController
                     $pro_despro = $produtos[$c]['pro_despro'];
                     $ret[$c]['text'] = $pro_despro;
                 }
+            }
+        }
+        echo json_encode($ret);
+    }
+
+    public function buscaProdutoporLote()
+    {
+        $ret    = [];
+        // debug($_REQUEST,false);
+        if ($_REQUEST['busca']) {
+            $termo            = $_REQUEST['busca'];
+            $lotesm            = new ProdutLoteModel();
+            $lote              = $lotesm->getLoteCodproLote(false, $termo);
+            if (sizeof($lote) <= 0) {
+                $ret['lotid'] = '-1';
+            } else {
+                $ret['lotid']     = $lote[0]['lot_id'];
+                $ret['despro'] = $lote[0]['pro_despro'];
             }
         }
         echo json_encode($ret);

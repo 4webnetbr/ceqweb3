@@ -93,8 +93,7 @@ class AteRequisicao extends BaseController
             if ($req['req_id']) {
                 $req['usu_nome'] = $log[$req['req_id']]['usua_alterou'] ?? '';
                 // Concatenar o URL de forma mais eficiente
-                // $url_eti = $base_url .'/EtqProduto/' . $req['req_id'];
-                $url_eti = base_url('/EtqProduto/Etiqueta/' . $req['req_id']);
+                $url_eti = $base_url .'/EtqProduto/' . $req['req_id'];
                 $url_ate = $base_url .'/atende/' . $req['req_id'];
                 $url_imp = base_url('/CriaPdf2025/PrintRequisicaoEstoq/' . $req['req_id']);
                 // Gerar a ação do botão
@@ -103,10 +102,12 @@ class AteRequisicao extends BaseController
                     data-mdb-toggle='tooltip' data-mdb-placement='top' 
                     title='Atendimento' onclick='redireciona(\"$url_ate\")'>
                     <i class='fas fa-bell-concierge'></i></button>",
+
                     "<button class='btn btn-outline-warning btn-sm border-0 mx-0 fs-0' 
                     data-mdb-toggle='tooltip' data-mdb-placement='top' 
                     title='Etiquetas de Produtos' onclick='redireciona(\"$url_eti\")'>
                     <i class='fas fa-tag'></i></button>",
+                    
                     "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end' 
                     data-mdb-toggle='tooltip' data-mdb-placement='top' 
                     title='Imprimir Requisição' onclick='openPDFModal(\"$url_imp\",\"Imprimir Requisição\")'>

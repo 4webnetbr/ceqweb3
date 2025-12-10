@@ -3,6 +3,7 @@
 namespace App\Controllers\Ocorrencia;
 
 use App\Controllers\BaseController;
+use App\Models\Ocorre\OcorreTrataOcorrenciaModel;
 use App\Models\Ocorre\OcorreNovOcorrenciaModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
@@ -11,10 +12,11 @@ use App\Controllers\BuscasSapiens;
 use App\Models\Produt\ProdutLoteModel;
 use CodeIgniter\Controller;
 
-class OcoNovOcorrencia extends BaseController
+class OcoTrataOcorrencia extends BaseController
 {
     public $data = [];
-    public $novocorrencia;
+    public $trataocorrencia;
+    public $OcorreTrataOcorrenciaMode;
     public $novaOcorrencia;
     public $modelTipo;
     public $modelMod;
@@ -24,7 +26,7 @@ class OcoNovOcorrencia extends BaseController
 
     public function __construct()
     {
-        $this->novocorrencia = new OcorreNovOcorrenciaModel();
+        $this->trataocorrencia = new OcorreTrataOcorrenciaModel();
         $this->data = session()->get('dados_tela') ?? [];
 
         $this->novaOcorrencia           = new EstoquRequisicaoModel();
@@ -36,8 +38,8 @@ class OcoNovOcorrencia extends BaseController
 
 
         $this->data = session()->get('dados_tela') ?? [];
-        $this->data['tabela']  = $this->novocorrencia->table;
-        $this->data['view']    = $this->novocorrencia->view ?? '';
+        $this->data['tabela']  = $this->trataocorrencia->table;
+        $this->data['view']    = $this->trataocorrencia->view ?? '';
         session()->set('dados_tela', $this->data); 
     }
 
@@ -53,12 +55,17 @@ class OcoNovOcorrencia extends BaseController
     public function lista()
     {
         $campos = montaColunasCampos($this->data, 'oco_id');
-        $dados = $this->novocorrencia->getListaCompleta();
-        $oco_ids_assoc = array_column($dados, 'oco_id');
-        $log = buscaLogTabela('oco_ocorrencia', $oco_ids_assoc);  
-
+        $dados = $this->trataocorrencia->getListaCompleta();
+    
         foreach ($dados as &$nov) {
-            $nov['usu_nome'] = $log[$nov['oco_id']]['usua_alterou'] ?? '';
+
+            // $id = $nov['oco_id'];
+            // $numero = $nov['oco_numero'];
+       
+            // // LINK para visualização
+            // $url = base_url("OcoTrataOcorrencia/view/$id");
+            // $nov['oco_numero'] = "<a href='{$url}' title='Visualizar ocorrência #{$numero}'>{$numero}</a>";
+    
             // $url_imp = base_url('/CriaPdf2025/PrintRequisicaoEstoq/' . $nov['oco_id']);
             // $nov['acao_person'] = [
             //     "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end' 
@@ -75,44 +82,38 @@ class OcoNovOcorrencia extends BaseController
 
     public function add()
     {
-        $fields = $this->novocorrencia->defCampos();
-
-        $secao[0]     = 'Dados Gerais';
-        $campos[0][] = $fields['tpo_id'];      
-        $campos[0][] = $fields['moc_id'];    
-        $campos[0][] = $fields['oco_descricao'];
-        $campos[0][] = $fields['lot_id'];
-        $campos[0][] = $fields['lot_lote'];   
-        $campos[0][] = $fields['pro_despro'];   
-        $campos[0][] = $fields['oco_qtd'];
-        $campos[0][] = $fields['oco_data'];
-
-        $this->data['secoes']  = $secao;
-        $this->data['campos']  = $campos;
-        $this->data['destino'] = 'store';
-
-        echo view('vw_edicao', $this->data);
+        
     }
 
 
     public function edit($id)
     {
-        $dados = $this->novocorrencia->getById($id);
+        
+        $dados = $this->trataocorrencia->getById($id);
 
         if (!$dados) {
             throw new \Exception("Ocorrência não encontrada");
         }
-        $fields = $this->novocorrencia->defCampos($dados, true);
+
+        $log = buscaLogTabela('oco_ocorrencia', [$id]);
+        $dados['usu_nome'] = $log[$id]['usua_alterou'] ?? $dados['usu_nome'];
+
+        $fields = $this->trataocorrencia->defCampos($dados, true);
 
         $secao[0] = 'Dados Gerais';
     
-        $campos[0][0] = $fields['tpo_id'];      
-        $campos[0][1] = $fields['moc_id'];      
+        $campos[0][0] = $fields['tpo_id']; 
+        $campos[0][1] = $fields['usu_nome'];          
         $campos[0][2] = $fields['oco_descricao'];
-        $campos[0][3] = $fields['lot_id'];
-        $campos[0][4] = $fields['lot_lote'];   
-        $campos[0][5] = $fields['oco_qtd'];
-        $campos[0][6] = $fields['oco_data'];
+        $campos[0][3] = $fields['oco_data'];
+        $campos[0][4] = $fields['lot_id'];
+        $campos[0][5] = $fields['lot_lote'];   
+        $campos[0][6] = $fields['oco_qtd'];
+        $campos[0][7] = $fields['tpa_id'];
+        if (isset($fields['oco_justi'])) {
+            $campos[0][8] = $fields['oco_justi'];
+        }
+        // $campos[0][8] = $fields['tmo_id'];
     
         $this->data['secoes']  = $secao;
         $this->data['campos']  = $campos;
@@ -125,11 +126,7 @@ class OcoNovOcorrencia extends BaseController
 
     public function update($id)
     {
-        $dados = $this->request->getPost();
-    
-        $ret   = $this->ocorreNovOcorrenciaModel->atualizarOcorrencia($id, $dados);
-    
-        return $this->response->setJSON($ret);
+        
     }
 
 
@@ -137,7 +134,7 @@ class OcoNovOcorrencia extends BaseController
     {
         $ret = [];
         try {
-            $this->novocorrencia->delete($id);
+            $this->trataocorrencia->delete($id);
             $ret['erro'] = false;
             session()->setFlashdata('msg', 'Tipo de Ocorrência Excluída com Sucesso');
             $ret['msg'] = 'Tipo de Ocorrência Excluída com Sucesso';
@@ -151,48 +148,48 @@ class OcoNovOcorrencia extends BaseController
 
     public function store()
     {
-        $this->data['tabela'] = 'oco_ocorrencia';
-        session()->set('dados_tela', $this->data);
-    
-        $dados = $this->request->getPost();
-    
-        $ret = $this->ocorreNovOcorrenciaModel->salvarOcorrencia($dados);
-    
-        return $this->response->setJSON($ret);
+        
     }
+
+    public function view($id)
+    {
+        $dados = $this->trataocorrencia->getView($id);
+    
+        if (!$dados) {
+            throw new \Exception("Ocorrência não encontrada");
+        }
+    
+        $fields = $this->trataocorrencia->defCampos($dados, true);
+    
+        $secao[0] = 'Dados Gerais';
+    
+        $campos[0][0] = $fields['tpo_id']; 
+        $campos[0][1] = $fields['usu_nome'];          
+        $campos[0][2] = $fields['oco_descricao'];
+        $campos[0][3] = $fields['oco_data'];
+        $campos[0][4] = $fields['lot_id'];
+        $campos[0][5] = $fields['lot_lote'];   
+        $campos[0][6] = $fields['oco_qtd'];
+        $campos[0][7] = $fields['moc_id']; 
+    
+        $this->data['secoes']  = $secao;
+        $this->data['campos']  = $campos;
+        $this->data['destino'] = ''; 
+        $this->data['visualizacao'] = true; 
+    
+        echo view('vw_visualizacao', $this->data);
+    }
+
 
 
     public function getProdutoLote()
     {
-        $codLote = $this->request->getPost('codLote');
-
-        if (!$codLote) {
-            return $this->response->setJSON(['erro' => 'Lote não informado']);
-        }
-
-        $dados = $this->produtLoteModel->getLoteSearch($codLote);
-
-        if (!$dados || empty($dados)) {
-            return $this->response->setJSON(['erro' => 'Lote não encontrado']);
-        }
-
-        $lote = $dados[0];
-        return $this->response->setJSON([
-            'descpro' => $lote['pro_despro'] ?? '',
-        ]);
+        
     }
 
 
     public function buscaOcorrenciasPorTipo()
     {
-        $tpo_id = $this->request->getPost('valor');
-    
-        if (!$tpo_id) {
-            return $this->response->setJSON([]);
-        }
-    
-        return $this->response->setJSON(
-            $this->ocorreNovOcorrenciaModel->getSelectPorTipo($tpo_id)
-        );
+        
     }
 }

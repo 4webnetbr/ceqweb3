@@ -57,7 +57,7 @@ if ($avatar != '') {
 
 <!-- Vertical navbar -->
 <div class="col-lg-2 col-8 position-absolute bg-white shadow sidebar active" id="sidebar">
-  <div class="pt-2 pb-3 ps-1 pe-1">
+  <div class="pt-2 pb-1 ps-1 pe-1">
     <div id='sistema' class='div-user text-start w-100'>
       <a href="<?=site_url();?>" >
         <button id="bt_empresa" name="bt_empresa" title="Empresa" type="button" 
@@ -82,7 +82,7 @@ if ($avatar != '') {
         </div>
       </button>    
     </div>
-    <div id='div_search' class='text-start w-100 float-start d-none' style='height: 2.5rem'>
+    <div id='div_search' class='text-start w-100 float-start' style='height: 2.5rem'>
         <div class="input-group mt-0  " style="width: 34ch !important; max-width: 34ch !important;">
             <div class="input-group-text input-group-addon pe-auto" data-refer="inp_search" id="dw_inp_search"><i class="fas fa-search"></i></div>
             <input type="search" name="inp_search" value="" id="inp_search" size="30" maxlength="30" class="form-control p-0 ps-1" data-live-search="true" placeholder="" hint="Pesquisar" autocomplete="off" onchange="" onblur="" onkeyup="buscaMenu(this)" data-mdb-toggle="tooltip" data-mdb-placement="top" title="Pesquisar">
@@ -123,7 +123,7 @@ if ($avatar != '') {
             <div class="accordion-item">
               <h2 class="accordion-header" id="head<?=$opcao['men_id'];?>">
                 <button class="accordion-button menu px-1 pt-0 pb-0 collapsed text-body-emphasis" type="button" data-bs-toggle="collapse" data-bs-target="#collapsemenu<?=$opcao['men_id'];?>" aria-expanded="false" aria-controls="collapsemenu<?=$opcao['men_id'];?>">
-                  <div class='align-items-center rounded-circle p-0 text-center float-start font-weight-bold' style=''>
+                  <div class='align-items-center rounded-circle p-0 text-center float-start font-weight-bold'>
                       <div class='icon-menu'><i class='<?=$opcao['men_icone'];?>'></i></div>
                   </div>
                   <div class='align-items-start ms-2 mod_nome'>

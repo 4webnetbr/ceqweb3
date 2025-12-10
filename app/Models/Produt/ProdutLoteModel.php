@@ -124,7 +124,9 @@ class ProdutLoteModel extends Model
         $db = db_connect('dbProduto');
         $builder = $db->table('vw_pro_sap_lote_relac');
         $builder->select('*');
-        $builder->where('lot_codpro', $codpro);
+        if($codpro){
+            $builder->where('lot_codpro', $codpro);
+        }
         $builder->like($array);
 
         $ret = $builder->get()->getResultArray();

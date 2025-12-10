@@ -38,10 +38,15 @@ $routes->get('OcoNovOcorrencia', 'Ocorrencia\OcoNovOcorrencia::index');
 $routes->post('ocorrencia/get-produto-lote', 'Ocorrencia\OcoNovOcorrencia::getProdutoPorLote');
 
 // Nova Ocorrência
+$routes->post('OcoNovOcorrencia/buscaModelosPorTipo', 'Ocorrencia\OcoNovOcorrencia::buscaModelosPorTipo');
 $routes->post('OcoNovOcorrencia/getProdutoLote', 'Ocorrencia\OcoNovOcorrencia::getProdutoLote');
 $routes->post('OcoNovOcorrencia/store', 'Ocorrencia\OcoNovOcorrencia::store');
+$routes->post('ocorrencia/ocoNovOcorrencia/buscaOcorrenciasPorTipo', 'Ocorrencia\OcoNovOcorrencia::buscaOcorrenciasPorTipo');
 
-
+// // Tratativa
+// $routes->post('OcoTrataOcorrencia/buscaOcorrenciasPorTipo', 'Ocorrencia\OcoTrataOcorrencia::buscaOcorrenciasPorTipo');
+// $routes->post('OcoTrataOcorrencia/getProdutoLote', 'Ocorrencia\OcoTrataOcorrencia::getProdutoLote');
+// $routes->post('OcoTrataOcorrencia/store', 'Ocorrencia\OcoTrataOcorrencia::store');
 
 
 $routes->match(['get', 'post'], 'buscas/(:any)/(:any)', 'Buscas::$1/$2', ['as' => 'buscas_two_params']);
@@ -153,7 +158,6 @@ $routes->group('OcoTipoAcao', static function ($routes) {
     $routes->get('/', 'Ocorrencia\\OcoTipoAcao::index', ['as' => 'ocotipoacao_index']);
     $routes->match(['get', 'post'], '(:any)', 'Ocorrencia\\OcoTipoAcao::$1', ['as' => 'ocotipoacao_match']);
 });
-
 $routes->group('OcoTipoOcorrencia', static function ($routes) {
     $routes->get('/', 'Ocorrencia\\OcoTipoOcorrencia::index', ['as' => 'ocotipoocorrencia_index']);
     $routes->match(['get', 'post'], '(:any)', 'Ocorrencia\\OcoTipoOcorrencia::$1', ['as' => 'ocotipoocorrencia_match']);
@@ -166,6 +170,11 @@ $routes->group('OcoNovOcorrencia', static function ($routes) {
     $routes->get('/', 'Ocorrencia\\OcoNovOcorrencia::index', ['as' => 'oconovocorrencia_index']);
     $routes->match(['get', 'post'], '(:any)', 'Ocorrencia\\OcoNovOcorrencia::$1', ['as' => 'oconovcorrencia_match']);
 });
+$routes->group('OcoTrataOcorrencia', static function ($routes) {
+    $routes->get('/', 'Ocorrencia\\OcoTrataOcorrencia::index', ['as' => 'ocotrataocorrencia_index']);
+    $routes->match(['get', 'post'], '(:any)', 'Ocorrencia\\OcoTrataOcorrencia::$1', ['as' => 'ocotrataocorrencia_match']);
+});
+
 
 // Grupo: WebService
 $routes->group('WsCeqweb', static function ($routes) {
