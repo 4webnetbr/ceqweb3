@@ -1,7 +1,7 @@
 <?php
 
 use Workerman\Worker;
-use Workerman\Lib\Timer;
+use Workerman\Timer;
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
