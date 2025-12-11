@@ -1,86 +1,105 @@
 var conn;
 var contador = 0;
+var timerId = null;
 
 jQuery(document).ready(function () {
   conectaWs();
 
   function conectaWs() {
-    conn = new WebSocket("wss://ceqweb3.ceqnep.com.br/ws");
+    conn = new WebSocket("wss://dev.ceqnep.com.br:8443");
+
     conn.onopen = function (e) {
-      console.log("Conexão estabelecida com o Servidor");
-      jQuery("#stat_server").addClass("text-success");
-      jQuery("#stat_server").removeClass("text-danger");
-      jQuery("#stat_server").removeClass("text-danger");
+      console.log("Conexão estabelecida com o servidor WS");
+      jQuery("#stat_server")
+        .addClass("text-success")
+        .removeClass("text-danger");
+      jQuery("#stat_server").prop("title", "Servidor Conectado");
+
+      startKeepAlive();
     };
-    // keepAlive();
+
+    conn.onmessage = function (e) {
+      var data = JSON.parse(e.data);
+      console.log("Recebi: " + data.tipo + " - " + data.msg);
+
+      switch (data.tipo) {
+        case "Entrou":
+        case "Saiu":
+        case "Login":
+          mostranoToast(data.msg);
+          break;
+
+        case "Ativo":
+          // Cliente recebeu o keepalive e não precisa fazer nada
+          break;
+
+        case "Servidor Ativo":
+          // Servidor mandou ping, cliente responde com "ok"
+          conn.send(JSON.stringify({ msg: "ok", tipo: "Ativo" }));
+          break;
+
+        case "Servidor":
+          contador = 0;
+          var usuario = jQuery("#usu_id").val();
+          if (data.usuario == usuario) {
+            mostranoToast(data.msg); // ou outra ação
+            verificaNotificacao();
+          }
+          break;
+
+        case "MsgServer":
+          contador = 0;
+          var usuario = jQuery("#usu_id").val();
+          if (data.usuario == usuario) {
+            mostranorodape(data.msg);
+          }
+          break;
+
+        case "AtualizarControler":
+          let path = window.location.pathname;
+          let segments = path.split("/").filter(Boolean);
+          let lastSegment = segments[segments.length - 1];
+          if (segments.length === 1 && lastSegment === data.msg) {
+            jQuery("#table").DataTable().ajax.reload(null, false);
+          }
+          break;
+      }
+    };
+
+    conn.onclose = function (e) {
+      jQuery("#stat_server")
+        .removeClass("text-success")
+        .addClass("text-danger");
+      jQuery("#stat_server").prop("title", "Servidor Desconectado");
+      console.log("Conexão fechada. Tentando reconectar...");
+
+      stopKeepAlive();
+      //executa_php();
+
+      // Reconnect após um pequeno delay
+      //setTimeout(() => conectaWs(), 3000);
+    };
+
+    conn.onerror = function (err) {
+      console.error("Erro WebSocket:", err.message);
+    };
   }
 
-  function keepAlive() {
+  function startKeepAlive() {
+    stopKeepAlive(); // Garante que só tenha um timer ativo
     timerId = setInterval(function () {
-      var data = JSON.stringify({ msg: "Ativo", tipo: "Ativo" });
-      if (conn.readyState != WebSocket.OPEN) {
-        // Fecha e reconecta
-        conn.close();
-      } else {
+      if (conn && conn.readyState === WebSocket.OPEN) {
         contador++;
-        console.log("Ativo " + contador);
-        console.log("Timer " + timerId);
-        conn.send(data);
+        console.log("Enviando keepalive #" + contador);
+        conn.send(JSON.stringify({ msg: "Ativo", tipo: "Ativo" }));
       }
     }, 30000);
   }
 
-  conn.onmessage = function (e) {
-    // console.log(e.data);
-    // clearTimeout(timerId);
-    var data = JSON.parse(e.data);
-    console.log("Recebi " + data.tipo + " - " + data.msg);
-    if (data.tipo == "Entrou" || data.tipo == "Saiu") {
-      mostranoToast(data.msg);
-    } else if (data.tipo == "Ativo") {
-    } else if (data.tipo == "Servidor Ativo") {
-      var data = JSON.stringify({ msg: "ok", tipo: "Ativo" });
-      conn.send(data);
-    } else if (data.tipo == "Servidor") {
-      contador = 0;
-      usuario = jQuery("#usu_id").val();
-      if (data.usuario == usuario) {
-        mostranoToast(data.msg); // isso vai mudar
-        verificaNotificacao();
-      }
-    } else if (data.tipo == "MsgServer") {
-      contador = 0;
-      usuario = jQuery("#usu_id").val();
-      if (data.usuario == usuario) {
-        mostranorodape(data.msg); // isso vai mudar
-      }
-    } else if (data.tipo == "AtualizarControler") {
-      let path = window.location.pathname; // Ex: /produtos
-      let segments = path.split("/").filter(Boolean); // remove strings vazias
-      let lastSegment = segments[segments.length - 1];
-
-      // Verifica se só existe um segmento na URL (ou seja, ele é o último e único "controller")
-      if (segments.length === 1 && lastSegment === data.msg) {
-        // location.reload();
-        jQuery("#table").DataTable().ajax.reload(null, false);
-      }
-    } else if (data.tipo == "Login") {
-      mostranoToast(data.msg);
+  function stopKeepAlive() {
+    if (timerId !== null) {
+      clearInterval(timerId);
+      timerId = null;
     }
-    // keepAlive();
-  };
-
-  conn.onclose = function (e) {
-    jQuery("#stat_server").removeClass("text-success");
-    jQuery("#stat_server").removeClass("truck-icon");
-    jQuery("#stat_server").addClass("text-danger");
-    jQuery("#stat_server").prop("title", "Servidor Desconectado");
-    console.log("Fechou Conexão");
-    executa_php();
-    conectaWs();
-  };
-
-  conn.onerror = function (err) {
-    console.error("Socket encountered error: ", err.message, "Closing socket");
-  };
+  }
 });

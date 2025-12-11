@@ -700,33 +700,69 @@ function monta_filtro($data_lis, $dados_base)
     return $filtros;
 }
 
-function envia_msg_ws($controler, $mensagem, $tipo = 'Servidor', $usuario = 0, $id = 0)
-{
-    // $client = new Client("wss://estoque.ceqnep.com.br/ws");
-$client = new Client("ws://127.0.0.1:8443/ws", [
-    'context' => stream_context_create([
-        'ssl' => [
-            'verify_peer' => false,
-            'verify_peer_name' => false,
-            'allow_self_signed' => true,
-        ]
-    ])
-]);
 
-    if ($client) {
-        log_message('info', 'Conectou ao Servidor');
-        $msg['msg']         = $mensagem;
-        $msg['controler']   = $controler;
-        $msg['tipo']        = $tipo;
-        $msg['usuario']     = $usuario;
-        $msg['id']          = $id;
-        // debug($msg);
-        $client->send(json_encode($msg));
-        log_message('info', 'Enviou Mensagem ' . $msg['msg']);
-    } else {
-        log_message('info', 'Não conectou no Cliente');
+if (!function_exists('envia_msg_ws')) {
+    function envia_msg_ws($controler, $mensagem, $tipo = 'Servidor', $usuario = 0, $id = 0)
+    {
+        try {
+            $client = new Client("wss://127.0.0.1:8443/ws", [
+                'context' => stream_context_create([
+                    'ssl' => [
+                        'verify_peer'       => false,
+                        'verify_peer_name'  => false,
+                        'allow_self_signed' => true,
+                    ]
+                ])
+            ]);
 
+            if ($client) {
+                log_message('info', 'Conectou ao Servidor WS');
+                $msg = [
+                    'msg'       => $mensagem,
+                    'controler' => $controler,
+                    'tipo'      => $tipo,
+                    'usuario'   => $usuario,
+                    'id'        => $id,
+                ];
+
+                $client->send(json_encode($msg));
+                $client->close();
+
+                log_message('info', 'Enviou Mensagem WS: ' . $msg['msg']);
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Erro ao enviar WS: ' . $e->getMessage());
+        }
     }
-    // $client->close();
-    return;
 }
+
+// function envia_msg_ws($controler, $mensagem, $tipo = 'Servidor', $usuario = 0, $id = 0)
+// {
+//     // $client = new Client("wss://estoque.ceqnep.com.br/ws");
+// $client = new Client("ws://127.0.0.1:8443/ws", [
+//     'context' => stream_context_create([
+//         'ssl' => [
+//             'verify_peer' => false,
+//             'verify_peer_name' => false,
+//             'allow_self_signed' => true,
+//         ]
+//     ])
+// ]);
+
+//     if ($client) {
+//         log_message('info', 'Conectou ao Servidor');
+//         $msg['msg']         = $mensagem;
+//         $msg['controler']   = $controler;
+//         $msg['tipo']        = $tipo;
+//         $msg['usuario']     = $usuario;
+//         $msg['id']          = $id;
+//         // debug($msg);
+//         $client->send(json_encode($msg));
+//         log_message('info', 'Enviou Mensagem ' . $msg['msg']);
+//     } else {
+//         log_message('info', 'Não conectou no Cliente');
+
+//     }
+//     // $client->close();
+//     return;
+// }
