@@ -77,6 +77,8 @@ class MyCampo
         $this->maximo      = 100;
         $this->tabela      = $tabela;
         $this->campo       = $campo;
+        $this->nome        = $campo;
+        $this->id          = $campo;
         // se for passado a tabela e o campo na criação, busca as propriedades no banco
         if ($tabela != '' && $campo != '') {
             $this->doBanco($tabela, $campo, $showchave);

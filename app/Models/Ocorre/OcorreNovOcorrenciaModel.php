@@ -18,15 +18,18 @@ class OcorreNovOcorrenciaModel extends Model
     protected $allowedFields = [
         'oco_id',
         'tpo_id',
-        'lot_lote',
         'moc_id',
+        'tpa_id',
         'oco_descricao',
-        'lot_id',
+        'lot_lote',
+        'pro_id',
+        'pro_despro',
         'oco_qtd',
         'oco_data',
         'stt_id',
-        'tpa_id',
-        'stt_cor'
+        'tmo_id',
+        'oco_justi',
+        
     ];
 
     protected $validationRules = [
@@ -99,11 +102,6 @@ class OcorreNovOcorrenciaModel extends Model
         // Buscar LOG
         $ids = array_column($dados, 'oco_id');
         $log = buscaLogTabela('oco_ocorrencia', $ids);
-    
-        // Inject usu_nome
-        foreach ($dados as &$d) {
-            $d['usu_nome'] = $log[$d['oco_id']]['usua_alterou'] ?? '';
-        }
         return $dados;
     }
     
@@ -111,9 +109,9 @@ class OcorreNovOcorrenciaModel extends Model
     public function getById($id)
     {
         $dados = $this->db->table($this->view)
-                    ->where('oco_id', $id)
-                    ->get()
-                    ->getRowArray();
+                      ->where('oco_id', $id)
+                      ->get()
+                      ->getRowArray();
         if (!$dados) {
             return null;
         }
@@ -128,19 +126,35 @@ class OcorreNovOcorrenciaModel extends Model
                         ->get()
                         ->getResultArray();
     }
+    
 
 
     public function salvarOcorrencia(array $dados)
     {
-        $db = \Config\Database::connect($this->DBGroup);
         try {
-            $db->transBegin();
+            $this->db->transBegin();
     
             $statusPendente = $this->getStatusIdByNome('Pendente', 56);
             $statusFinaliza = $this->getStatusIdByNome('Finalização automática', 56);
     
             $status = $statusPendente;
             $moc_id = $dados['moc_id'] ?? null;
+
+            $tpa = $this->db->table('oco_tpo_acao')
+                ->select('tpa_id')
+                ->where('tpo_id', $dados['tpo_id'])
+                ->get()
+                ->getRowArray();
+            
+            $tpa_id = $tpa['tpa_id'] ?? null;
+
+            $tmo = $this->db->table('oco_tpo_acao')
+                ->select('tmo_id')
+                ->where('tpo_id', $dados['tpo_id'])
+                ->get()
+                ->getRowArray();
+            
+            $tmo_id = $tmo['tmo_id'] ?? null;
     
             if ($moc_id) {
                 $acoes = $this->getAcoesByModelo($moc_id);
@@ -164,18 +178,24 @@ class OcorreNovOcorrenciaModel extends Model
                 'tpo_id'        => $dados['tpo_id'],
                 'moc_id'        => $dados['moc_id'],
                 'oco_descricao' => $dados['oco_descricao'],
-                'lot_id'        => $dados['lot_id'],
                 'lot_lote'      => $dados['lot_lote'],
+                'pro_despro'    => $dados['pro_despro'],
                 'oco_qtd'       => $dados['oco_qtd'],
                 'oco_data'      => $dados['oco_data'],
                 'stt_id'        => $status,
+                'tpa_id'        => $tpa_id,
+                'tmo_id'        => $tmo_id,
             ];
-    
+            
+            if (isset($dados['oco_justi'])) {
+                $atualiza['oco_justi'] = $dados['oco_justi'];
+            }
+                
             if (!$this->insert($insert)) {
                 throw new \Exception('Erro ao inserir ocorrência.');
             }
     
-            $db->transCommit();
+            $this->db->transCommit();
     
             return [
                 'erro' => false,
@@ -184,7 +204,7 @@ class OcorreNovOcorrenciaModel extends Model
             ];
         } catch (\Exception $e) {
     
-            $db->transRollback();
+            $this->db->transRollback();
     
             return [
                 'erro' => true,
@@ -195,77 +215,97 @@ class OcorreNovOcorrenciaModel extends Model
 
 
     public function atualizarOcorrencia(int $id, array $dados)
-    {
-        $db = $this->db;
-    
-        try {
-            $db->transBegin();
-    
-    
-            $ocorrencia = $this->find($id);
-            if (!$ocorrencia) {
-                throw new \Exception('Ocorrência não encontrada.');
-            }
-    
-    
-            $statusPendente = $this->getStatusIdByNome('Pendente', 56);
-            $statusFinaliza = $this->getStatusIdByNome('Finalização automática', 56);
-    
-            $status = $statusPendente;
-            $moc_id = $dados['moc_id'] ?? null;
-    
-    
-            if ($moc_id) {
-                $acoes = $this->getAcoesByModelo($moc_id);
-    
-                if (empty($acoes)) {
-                    $status = $statusFinaliza;
-                } else {
-                    $todasNenhuma = true;
-                    foreach ($acoes as $acao) {
-                        if ($acao['tpa_id'] != 1) {
-                            $todasNenhuma = false;
-                            break;
-                        }
-                    }
-                    $status = $todasNenhuma ? $statusFinaliza : $statusPendente;
-                }
-            }
-    
-    
-            $atualiza = [
-                'tpo_id'        => $dados['tpo_id'],
-                'moc_id'        => $dados['moc_id'],
-                'oco_descricao' => $dados['oco_descricao'],
-                'lot_id'        => $dados['lot_id'],
-                'lot_lote'      => $dados['lot_lote'],
-                'oco_qtd'       => $dados['oco_qtd'],
-                'oco_data'      => $dados['oco_data'],
-                'stt_id'        => $status,
-            ];
-    
-            if (!$this->update($id, $atualiza)) {
-                throw new \Exception('Erro ao atualizar ocorrência.');
-            }
-    
-            $db->transCommit();
-    
-            return [
-                'erro' => false,
-                'msg'  => 'Ocorrência atualizada com sucesso!',
-                'url'  => site_url('OcoNovOcorrencia')
-            ];
-    
-        } catch (\Exception $e) {
-    
-            $db->transRollback();
-    
-            return [
-                'erro' => true,
-                'msg'  => 'Erro ao atualizar a ocorrência:<br><br>' . $e->getMessage()
-            ];
+{
+    try {
+        $this->db->transBegin();
+
+        $ocorrencia = $this->find($id);
+        if (!$ocorrencia) {
+            throw new \Exception('Ocorrência não encontrada.');
         }
+
+        // Status
+        $statusPendente = $this->getStatusIdByNome('Pendente', 56);
+        $statusFinaliza = $this->getStatusIdByNome('Finalização automática', 56);
+
+        $status = $statusPendente;
+        $moc_id = $dados['moc_id'] ?? null;
+
+        $tpa = $this->db->table('oco_tpo_acao')
+            ->select('tpa_id')
+            ->where('tpo_id', $dados['tpo_id'])
+            ->get()
+            ->getRowArray();
+        
+        $tpa_id = $tpa['tpa_id'] ?? null;
+
+                $tmo = $this->db->table('oco_tpo_acao')
+            ->select('tmo_id')
+            ->where('tpo_id', $dados['tpo_id'])
+            ->get()
+            ->getRowArray();
+        
+        $tmo_id = $tmo['tmo_id'] ?? null;
+
+        if ($moc_id) {
+            $acoes = $this->getAcoesByModelo($moc_id);
+
+            if (empty($acoes)) {
+                $status = $statusFinaliza;
+            } else {
+                $todasNenhuma = true;
+
+                foreach ($acoes as $acao) {
+                    if ($acao['tpa_id'] != 1) {
+                        $todasNenhuma = false;
+                        break;
+                    }
+                }
+
+                $status = $todasNenhuma ? $statusFinaliza : $statusPendente;
+            }
+        }
+
+        $atualiza = [
+            'tpo_id'        => $dados['tpo_id'],
+            'moc_id'        => $dados['moc_id'],
+            'oco_descricao' => $dados['oco_descricao'],
+            'lot_lote'      => $dados['lot_lote'],
+            'pro_despro'    => $dados['pro_despro'],
+            'oco_qtd'       => $dados['oco_qtd'],
+            'oco_data'      => $dados['oco_data'],
+            'stt_id'        => $status,
+            'tpa_id'        => $tpa_id,
+            'tmo_id'        => $tmo_id,
+        ];
+        
+        if (isset($dados['oco_justi'])) {
+           $atualiza['oco_justi'] = $dados['oco_justi'];
+        }
+        
+        if (!$this->update($id, $atualiza)) {
+            throw new \Exception('Erro ao atualizar ocorrência.');
+        }
+
+        $this->db->transCommit();
+
+        return [
+            'erro' => false,
+            'msg'  => 'Ocorrência atualizada com sucesso!',
+            'url'  => site_url('OcoNovOcorrencia')
+        ];
+
+    } catch (\Exception $e) {
+
+        $this->db->transRollback();
+
+        return [
+            'erro' => true,
+            'msg'  => 'Erro ao atualizar a ocorrência:<br><br>' . $e->getMessage()
+        ];
     }
+}
+
 
 
     public function getSelectPorTipo(int $tpo_id): array
@@ -277,6 +317,7 @@ class OcorreNovOcorrenciaModel extends Model
         foreach ($ocorrencias as $ocorrencia) {
             $retorno[$ocorrencia['moc_id']] = $ocorrencia['moc_nome'];
         }
+    
         return $retorno;
     }
     
@@ -293,7 +334,7 @@ class OcorreNovOcorrenciaModel extends Model
 
         // TIPO DE OCORRÊNCIA
         $modelTipo = new OcorreTipoOcorrenciaModel();
-        $tipos = $modelTipo->findAll();
+        $tipos = $modelTipo->where('tpo_ativo', 'A')->findAll();
         
         foreach ($tipos as $t) {
             $opcoes[$t['tpo_id']] = $t['tpo_nome'];
@@ -310,8 +351,9 @@ class OcorreNovOcorrenciaModel extends Model
         $ret['tpo_id'] = $tipo->crSelect();
 
         // OCORRÊNCIA
-        $modelMod            = new OcorreModOcorrenciaModel();
-        $modelos             = $modelMod->getModOcorrencia();
+        $modelMod = new OcorreModOcorrenciaModel();
+        $modelos  = $modelMod->where('moc_ativo', 'A')->findAll();
+
         foreach ($modelos as $mod) {
             $opcoesMod[$mod['moc_id']] = $mod['moc_nome'];
         }
@@ -337,6 +379,7 @@ class OcorreNovOcorrenciaModel extends Model
 
         $ret['oco_descricao'] = $desc->crTexto();
 
+
         // LOTE
         $lote              = new MyCampo('pro_sap_lote', 'lot_lote'); 
         $lote->valor       = (isset($dados['lot_lote'])) ? $dados['lot_lote'] : '';
@@ -345,9 +388,6 @@ class OcorreNovOcorrenciaModel extends Model
         $lote->funcBlur    = "buscaLoteProduto(this,'".base_url('/buscas/buscaProdutoporLote')."')";
         $ret['lot_lote'] = $lote->crInput();
 
-        $lotid             = new MyCampo('oco_ocorrencia', 'lot_id');
-        $lotid->valor      = (isset($dados['lot_id'])) ? $dados['lot_id'] : '';
-        $ret['lot_id']     = $lotid->crOculto();
 
         // PRODUTO 
         $produto           = new MyCampo('pro_sap_produto', 'pro_despro');

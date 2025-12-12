@@ -166,17 +166,67 @@ class OcorreModOcorrenciaModel extends Model
         return $builder->get()->getResultArray();
     }
 
-    public function buscarPorTipo($tipoNome)
+    public function getAcoesByTipoOcorrencia($tpo_id)
+    {
+        return $this->db->table('oco_tpo_acao o')
+            ->select('o.tpa_id, a.tpa_nome')
+            ->join('oco_tipo_acao a', 'a.tpa_id = o.tpa_id')
+            ->where('o.tpo_id', $tpo_id)
+            ->get()
+            ->getResultArray();
+    }
+
+    public function getStatusByTpoTpa($tpo_id, $tpa_id)
+    {
+        $row = $this->db->table('oco_tpo_acao')
+            ->select('stt_id')
+            ->where('tpo_id', $tpo_id)
+            ->where('tpa_id', $tpa_id)
+            ->get()
+            ->getRowArray();
+        return $row['stt_id'];
+    }
+    
+    public function getStatus()
+    {
+        return $this->db->table('config_ceqweb_db.cfg_status')
+            ->select('stt_id, stt_nome')
+            ->orderBy('stt_nome', 'ASC')
+            ->get()
+            ->getResultArray();
+    }
+
+    public function buscarPorTipo($tpo_id)
     {
         $db = db_connect('default');
         $builder = $db->table('vw_oco_mod_ocorrencia_relac');
         $builder->select('moc_id, moc_nome');
     
-        if ($tipoNome) {
-            $builder->where("tpo_nome", $tipoNome); 
+        if ($tpo_id) {
+            $builder->where("tpo_id", $tpo_id);
         }
-    
         return $builder->get()->getResultArray();
+    }
+
+    public function getTelaByTpoTpa($tpo_id, $tpa_id)
+    {
+        $row = $this->db->table('oco_tpo_acao')
+            ->select('tel_id')
+            ->where('tpo_id', $tpo_id)
+            ->where('tpa_id', $tpa_id)
+            ->get()
+            ->getRowArray();
+    
+        return $row['tel_id'];
+    }
+
+    public function getTelas()
+    {
+        return $this->db->table('config_ceqweb_db.cfg_tela')
+            ->select('tel_id, tel_nome')
+            ->orderBy('tel_nome', 'ASC')
+            ->get()
+            ->getResultArray();
     }
 
 

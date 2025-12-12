@@ -8,6 +8,7 @@ use App\Controllers\BuscasSapiens;
 use App\Libraries\MyCampo;
 use App\Models\Ocorre\OcorreModOcorrenciaModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
+use App\Models\Config\ConfigStatusModel;
 
 
 class OcorreTrataOcorrenciaModel extends Model
@@ -20,17 +21,14 @@ class OcorreTrataOcorrenciaModel extends Model
         'oco_id',
         'tpo_id',
         'tpa_id',
-        'tpa_nome',
         'lot_lote',
         'oco_descricao',
-        'lot_id',
+        'pro_despro',
         'oco_qtd',
         'oco_data',
         'stt_id',
         'tmo_id',
         'oco_justi',
-        'usu_nome',
-        'stt_cor'
     ];
 
     protected $validationRules = [
@@ -95,14 +93,10 @@ class OcorreTrataOcorrenciaModel extends Model
 
     public function getById($id)
     {
-        $dados = $this->db->table($this->view)
-                    ->where('oco_id', $id)
-                    ->get()
-                    ->getRowArray();
-        if (!$dados) {
-            return null;
-        }
-        return $dados;
+        return $this->db->table('oco_ocorrencia') 
+            ->where('oco_id', $id)
+            ->get()
+            ->getRowArray();
     }
     
 
@@ -110,24 +104,37 @@ class OcorreTrataOcorrenciaModel extends Model
     {
         // Buscar VIEW
         $dados = $this->db->table($this->view)
-                    ->get()
-                    ->getResultArray(); 
+                          ->get()
+                          ->getResultArray(); 
         // Buscar LOG
         $ids = array_column($dados, 'oco_id');
-        $log = buscaLogTabela('oco_ocorrencia', $ids);
-    
-        // Inject usu_nome
-        foreach ($dados as &$d) {
-            $d['usu_nome'] = $log[$d['oco_id']]['usua_alterou'] ?? '';
-        }
+        $log = buscaLogTabela('vw_oco_ocorrencia_relac', $ids);
+
         return $dados;
     }
+    
 
 
-    public function getView()
-    {
+public function getView($id)
+{
+    return $this->db->table($this->view)
+        ->where('oco_id', $id)
+        ->get()
+        ->getResultArray();
+}
 
-    }    
+public function getAcoesForTratativa($tpo_id)
+{
+    return $this->db->table('oco_tpo_acao a')
+        ->select('a.*, ta.tpa_nome, tm.tmo_nome, te.tel_nome, s.stt_nome')
+        ->join('oco_tipo_acao ta', 'ta.tpa_id = a.tpa_id', 'left')
+        ->join('estoqu_tipo_movimentacao tm', 'tm.tmo_id = a.tmo_id', 'left')
+        ->join('config_tela te', 'te.tel_id = a.tel_id', 'left')
+        ->join('cfg_status s', 's.stt_id = a.stt_id', 'left')
+        ->where('a.tpo_id', $tpo_id)
+        ->get()
+        ->getResultArray();
+}
 
 
 
@@ -141,15 +148,7 @@ class OcorreTrataOcorrenciaModel extends Model
         
 
         // OCORRÊNCIA
-        $modelTipo = new OcorreTipoOcorrenciaModel();
-        $tipos = $modelTipo->findAll();
-        
-        foreach ($tipos as $t) {
-            $opcoes[$t['tpo_id']] = $t['tpo_nome'];
-        }
-        
         $tipo              = new MyCampo('oco_ocorrencia', 'tpo_id');
-        $tipo->opcoes      = $opcoes;
         $tipo->valor       = (isset($dados['tpo_nome'])) ? $dados['tpo_nome'] : '';
         $tipo->label       = 'Ocorrência';
         $tipo->leitura     = true;
@@ -157,6 +156,7 @@ class OcorreTrataOcorrenciaModel extends Model
         $tipo->size        = 54;
         
         $ret['tpo_id'] = $tipo->crInput();
+
 
          // USUÁRIO 
         $usu           = new MyCampo('oco_ocorrencia', 'usu_nome');
@@ -169,109 +169,135 @@ class OcorreTrataOcorrenciaModel extends Model
 
         $ret['usu_nome'] = $usu->crInput();
 
-        // AÇÃO
-        $tpaId = $dados['tpa_id'] ?? null;
-        // Apenas mostra ação simples
-        $acaoNome = $dados['tpa_nome'] ?? '';
-    
-        $tpa_id = new MyCampo('oco_tpo_acao', 'tpa_id');
-        $tpa_id->valor = $acaoNome;
-        $tpa_id->label = 'Ação';
-        $tpa_id->leitura = true;
-        $tpa_id->dispForm = '2col';
-        $ret['tpa_id'] = $tpa_id->crInput();
-    
-    
-        // se existir tpa_id
-        if ($tpaId) {
-    
-            switch ($tpaId) {
-    
-                case 1: // Abrir Tela
-                    $mod = new MyCampo('oco_tpo_acao', 'mod_id');
-                    $mod->valor = $dados['mod_nome'] ?? '';
-                    $mod->label = 'Módulo';
-                    $mod->leitura = true;
-                    $mod->dispForm = '2col';
-                    $ret['mod_id'] = $mod->crInput();
-    
-                    $tel = new MyCampo('oco_tpo_acao', 'tel_id');
-                    $tel->valor = $dados['tel_nome'] ?? '';
-                    $tel->label = 'Tela';
-                    $tel->leitura = true;
-                    $tel->dispForm = '2col';
-                    $ret['tel_id'] = $tel->crInput();
-                    break;
-    
-                case 2: // Alterar Status
-                    $st = new MyCampo('oco_tpo_acao', 'stt_id');
-                    $st->valor = $dados['stt_tela_status'] ?? '';
-                    $st->label = 'Status';
-                    $st->leitura = true;
-                    $st->dispForm = '2col';
-                    $ret['stt_id'] = $st->crInput();
-                    break;
-    
-                case 3: // Movimentação
-                    $tm = new MyCampo('oco_tpo_acao', 'tmo_id');
-                    $tm->valor = $dados['tmo_nome'] ?? '';
-                    $tm->label = 'Movimentação';
-                    $tm->leitura = true;
-                    $tm->dispForm = '2col';
-                    $ret['tmo_id'] = $tm->crInput();
-                    break;
+
+         // AÇÃO
+        $modelMod  = new OcorreModOcorrenciaModel();
+        $modelos   = $modelMod->getAcoesByTipoOcorrencia($dados['tpo_id']);
+        
+        $opcoesMod = [];
+        foreach ($modelos as $mod) {
+            $opcoesMod[$mod['tpa_id']] = $mod['tpa_nome'];
+        }
+        $acaoNome = $opcoesMod[$dados['tpa_id']] ?? '';
+        
+        $acao = new MyCampo('', 'tpa_nome');
+        $acao->valor    = $acaoNome;
+        $acao->label    = 'Ação';
+        $acao->leitura  = true;
+        $acao->dispForm = '2col';
+        $acao->largura  = 50;
+        $acao->size     = 50; 
+        
+        $ret['tpa_id'] = $acao->crInput();
+
+            // JUSTIFICAR 
+            if (($dados['tpa_id']) == 6) {
+               $justi               = new MyCampo('', 'oco_justi');
+               $justi->valor        = isset($dados['oco_justi']) ? $dados['oco_justi'] : '';
+               $justi->label        = 'Justificar';
+               $justi->obrigatorio  = true;
+               $justi->dispForm     = '2col';
+               $justi->linhas       = 3;
+               $justi->colunas      = 56;
+           
+               $ret['oco_justi'] = $justi->crTexto();
             }
-        }
-        // Se for JUSTIFICAR 
-        if ($tpaId == 6) {
-            $just = new \App\Libraries\MyCampo('oco_ocorrencia', 'oco_justi');
-            $just->valor = $dados['oco_justi'] ?? '';
-            $just->label = 'Justificar';
-            $just->leitura = false; 
-            $just->linhas = 4;
-            $just->colunas = 56;
-            $just->dispForm = '2col';
+   
+            // MOVIMENTAÇÂO
+            if (($dados['tpa_id'] ?? null) == 3) {
+
+                $tmoModel = new EstoquTipoMovimentacaoModel();
+                $lst_tmo  = $tmoModel->getTipoMovimentacao();
+                $opc_tmo  = array_column($lst_tmo, 'tmo_nome', 'tmo_id');
             
-            $ret['oco_justi'] = $just->crTexto();
-        }
+                $idMov = $dados['tmo_id'] ?? '';
+                $tmoNome = $opc_tmo[$idMov] ?? '';
+            
+                $movNome = new MyCampo('oco_tpo_acao', 'tmo_nome');
+                $movNome->valor   = $tmoNome;
+                $movNome->label   = 'Movimentação';
+                $movNome->leitura = true;
+                $movNome->dispForm = '2col';
+                $movNome->size     = 50;
+            
+                $ret['tmo_id'] = $movNome->crInput();
+            }
+
+            // STATUS
+            if (($dados['tpa_id'] ?? null) == 7) {
+
+                $statModel = new OcorreModOcorrenciaModel();
+                $stt_id_real = $statModel->getStatusByTpoTpa($dados['tpo_id'], $dados['tpa_id']);
+            
+                $lst_stat = $statModel->getStatus();
+                $opc_stat = array_column($lst_stat, 'stt_nome', 'stt_id');
+                $nomeStatus = $opc_stat[$stt_id_real] ?? '';
+            
+                $statu = new MyCampo('', 'stt_id');
+                $statu->valor    = $nomeStatus;
+                $statu->label    = 'Status';
+                $statu->leitura  = true;
+                $statu->largura  = 35;
+                $statu->size     = 50;
+                $statu->dispForm = '2col';
+            
+                $ret['stt_id'] = $statu->crInput();
+            }
+
+            // TELA
+            if (($dados['tpa_id']) == 4) {
+                $mod = new OcorreModOcorrenciaModel();
+
+                $lst_tel = $mod->getTelas();
+                $opc_tel = array_column($lst_tel, 'tel_nome', 'tel_id');
+            
+                $tel_id_real = $mod->getTelaByTpoTpa($dados['tpo_id'], $dados['tpa_id']);
+                $nomeTela = $opc_tel[$tel_id_real] ?? '';
+            
+                $tela = new MyCampo('', 'tel_id');
+                $tela->valor    = $nomeTela;
+                $tela->label    = 'Tela';
+                $tela->leitura  = true;
+                $tela->dispForm = '2col';
+                $tela->largura  = 35;
+                $tela->size     = 60;
+            
+                $ret['tel_id'] = $tela->crInput();
+            }  
 
 
         // DESCRIÇÃO
         $desc              = new MyCampo('oco_ocorrencia', 'oco_descricao');  
+        $desc->nome        = 'oco_descricao';
         $desc->valor       = (isset($dados['oco_descricao'])) ? $dados['oco_descricao'] : '';
         $desc->leitura     = true;
         $desc->linhas      = 3;
         $desc->colunas     = 56;
         $desc->dispForm    = '2col';
-
         $ret['oco_descricao'] = $desc->crTexto();
 
-        // LOTE
-        $buscaSapiens      = new BuscasSapiens();
-        $lotes             = $buscaSapiens->buscaLotes();
-        foreach ($lotes as $lot) {
-            $opcoesLote[$lot->codlot] = $lot->codlot;
-        }
 
-        $lote              = new MyCampo('oco_ocorrencia', 'lot_id'); 
-        $lote->valor       = (isset($dados['lot_id'])) ? $dados['lot_id'] : '';
-        $lote->opcoes      = $opcoesLote;
+        // LOTE
+        $lote              = new MyCampo('pro_sap_lote', 'lot_lote'); 
+        $lote->valor       = (isset($dados['lot_lote'])) ? $dados['lot_lote'] : '';
         $lote->label       = 'Lote';
         $lote->leitura     = true;
         $lote->size        = 54;
 
-        $ret['lot_id'] = $lote->crInput();
+        $ret['lot_lote'] = $lote->crInput();
+
 
         // PRODUTO 
-        $produto           = new MyCampo('oco_ocorrencia', 'lot_lote');
-        $produto->valor    = (isset($dados['lot_lote'])) ? $dados['lot_lote'] : '';
+        $produto           = new MyCampo('pro_sap_produto', 'pro_despro');
+        $produto->valor    = (isset($dados['pro_despro'])) ? $dados['pro_despro'] : '';
         $produto->objeto   = '';
         $produto->label    = 'Produto';
         $produto->dispForm = '2col';
         $produto->size     = 54;
         $produto->leitura  = true;
 
-        $ret['lot_lote'] = $produto->crInput();
+        $ret['pro_despro'] = $produto->crInput();
+
 
         // QUANTIDADE
         $qtd               = new MyCampo('oco_ocorrencia', 'oco_qtd'); 
@@ -283,6 +309,7 @@ class OcorreTrataOcorrenciaModel extends Model
 
         $ret['oco_qtd'] = $qtd->crInput();
         
+
         // DATA 
         $data              = new MyCampo('oco_ocorrencia', 'oco_data');
         $data->valor       = $dados['oco_data'] ?? date('Y-m-d\TH:i'); 

@@ -6,7 +6,7 @@ jQuery(document).ready(function () {
   conectaWs();
 
   function conectaWs() {
-    conn = new WebSocket("wss://dev.ceqnep.com.br:8443");
+    conn = new WebSocket("wss://dev.ceqnep.com.br:8080/ws");
 
     conn.onopen = function (e) {
       console.log("Conexão estabelecida com o servidor WS");
@@ -77,7 +77,7 @@ jQuery(document).ready(function () {
       //executa_php();
 
       // Reconnect após um pequeno delay
-      //setTimeout(() => conectaWs(), 3000);
+      setTimeout(() => conectaWs(), 3000);
     };
 
     conn.onerror = function (err) {

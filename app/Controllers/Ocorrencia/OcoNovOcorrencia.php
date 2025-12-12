@@ -81,7 +81,6 @@ class OcoNovOcorrencia extends BaseController
         $campos[0][] = $fields['tpo_id'];      
         $campos[0][] = $fields['moc_id'];    
         $campos[0][] = $fields['oco_descricao'];
-        $campos[0][] = $fields['lot_id'];
         $campos[0][] = $fields['lot_lote'];   
         $campos[0][] = $fields['pro_despro'];   
         $campos[0][] = $fields['oco_qtd'];
@@ -104,15 +103,14 @@ class OcoNovOcorrencia extends BaseController
         }
         $fields = $this->novocorrencia->defCampos($dados, true);
 
-        $secao[0] = 'Dados Gerais';
-    
-        $campos[0][0] = $fields['tpo_id'];      
-        $campos[0][1] = $fields['moc_id'];      
-        $campos[0][2] = $fields['oco_descricao'];
-        $campos[0][3] = $fields['lot_id'];
-        $campos[0][4] = $fields['lot_lote'];   
-        $campos[0][5] = $fields['oco_qtd'];
-        $campos[0][6] = $fields['oco_data'];
+       $secao[0]     = 'Dados Gerais';
+        $campos[0][] = $fields['tpo_id'];      
+        $campos[0][] = $fields['moc_id'];    
+        $campos[0][] = $fields['oco_descricao'];
+        $campos[0][] = $fields['lot_lote'];   
+        $campos[0][] = $fields['pro_despro'];   
+        $campos[0][] = $fields['oco_qtd'];
+        $campos[0][] = $fields['oco_data'];
     
         $this->data['secoes']  = $secao;
         $this->data['campos']  = $campos;
@@ -155,8 +153,11 @@ class OcoNovOcorrencia extends BaseController
         session()->set('dados_tela', $this->data);
     
         $dados = $this->request->getPost();
-    
         $ret = $this->ocorreNovOcorrenciaModel->salvarOcorrencia($dados);
+
+         if (!($ret['erro'] ?? true)) {
+        session()->setFlashdata('msg', $ret['msg'] ?? 'Ocorrência gravada com sucesso!');
+    }
     
         return $this->response->setJSON($ret);
     }
