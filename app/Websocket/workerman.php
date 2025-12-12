@@ -103,7 +103,7 @@ $context = [
     ]
 ];
 
-$ws = new Worker("websocket://0.0.0.0:8080", $context);
+$ws = new Worker("websocket://0.0.0.0:8443/ws", $context);
 $ws->transport = 'ssl';
 
 // -----------------------------------------------------------------------------
