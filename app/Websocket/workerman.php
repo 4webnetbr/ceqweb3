@@ -3,6 +3,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+use Config\Logger;
 use Workerman\Worker;
 use Workerman\Timer;
 
@@ -20,8 +21,12 @@ define('APPPATH', ROOTPATH . 'app' . DIRECTORY_SEPARATOR);
 define('WRITEPATH', ROOTPATH . 'writable' . DIRECTORY_SEPARATOR);
 define('SYSTEMPATH', ROOTPATH . 'vendor/codeigniter4/framework/system' . DIRECTORY_SEPARATOR);
 
-use Config\Services;
-Services::logger(); // ← Adicione aqui
+try {
+    $logger = new Logger();
+} catch (\Throwable $e) {
+    error_log("Erro ao iniciar logger: " . $e->getMessage());
+}
+
 // -----------------------------------------------------------------------------
 // 2. Classe do WebSocket
 // -----------------------------------------------------------------------------
