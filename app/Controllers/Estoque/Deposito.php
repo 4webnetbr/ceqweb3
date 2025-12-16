@@ -59,6 +59,7 @@ class Deposito extends BaseController
             
             $campos = montaColunasCampos($this->data, 'dep_codDep');
             $dados_tela = $this->depositos->getDeposito();
+            // debug($dados_tela, true);
             $this->data['exclusao'] = false;
             $depositos = [
                 'data' => montaListaColunas($this->data, 'dep_codDep', $dados_tela, $campos[1]),

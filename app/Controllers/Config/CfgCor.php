@@ -4,12 +4,15 @@ namespace App\Controllers\Config;
 
 use App\Controllers\BaseController;
 use App\Models\Config\ConfigCorModel;
+use App\Entities\Config\EntCfgCor;
 
 class CfgCor extends BaseController
 {
-    public $data = [];
     public $permissao = '';
     public $cores;
+
+    /** @var array<string, mixed> */
+    public array $data = [];
 
 
     /**
@@ -45,6 +48,7 @@ class CfgCor extends BaseController
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
     }
+
     /**
      * Listagem
      * lista
@@ -53,18 +57,18 @@ class CfgCor extends BaseController
      */
     public function lista()
     {
-        if (!$cores = cache('cores')) {
+        // if (!$cores = cache('cores')) {
             $campos = montaColunasCampos($this->data, 'cor_id');
             $dados_cores = $this->cores->getListaCores();
-            for ($cr = 0; $cr < count($dados_cores); $cr++) {
-                $dados_cores[$cr]['div_rgb'] = fmtEtiquetaCor($dados_cores[$cr]['cor_valorrgb']);
+            foreach ($dados_cores as $cor) {
+                $cor->div_rgb = fmtEtiquetaCor($cor->cor_valorrgb);
             }
             $this->data['exclusao'] = false;
             $cores = [
-                'data' => montaListaColunas($this->data, 'cor_id', $dados_cores, $campos[1]),
+                'data' => montaListaColunasEnt($this->data, 'cor_id', $dados_cores, $campos[1]),
             ];
             cache()->save('cores', $cores, 60000);
-        }
+        // }
 
         echo json_encode($cores);
     }
@@ -85,6 +89,7 @@ class CfgCor extends BaseController
             $this->cores->update($id, $dad_atin);
             $ret['erro'] = false;
             session()->setFlashdata('msg', 'Cor Alterada com Sucesso');
+            $ret['msg']  = 'Cor Alterada com Sucesso';
             cache()->clean();
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
             $ret['erro'] = true;
@@ -100,17 +105,17 @@ class CfgCor extends BaseController
      */
     public function add()
     {
-        $fields = $this->cores->defCampos();
+        $cor = new EntCfgCor();
         // debug($fields);
-        $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['cor_id'];
-        $campos[0][1] = $fields['cor_nome'];
-        $campos[0][2] = $fields['cor_valorrgb'];
-        $campos[0][3] = $fields['cor_ativo'];
 
-        $this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
+        $this->data['secoes']     = ['Dados Gerais'];
+        $this->data['campos']     = [[
+            $cor->campos['cor_id'],
+            $cor->campos['cor_nome'],
+            $cor->campos['cor_valorrgb']
+        ]];
         $this->data['destino']    = 'store';
+
         echo view('vw_edicao', $this->data);
     }
     /**
@@ -133,20 +138,26 @@ class CfgCor extends BaseController
      */
     public function edit($id, $show = false)
     {
-        $dados_cores = $this->cores->find($id);
-        $fields = $this->cores->defCampos($dados_cores);
+        $cor = $this->cores->getCores($id); // ✅ Entity
 
-        $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['cor_id'];
-        $campos[0][1] = $fields['cor_nome'];
-        $campos[0][2] = $fields['cor_valorrgb'];
+        if (!$cor) {
+            $this->data['erromsg'] = '<h2>Cor não encontrada</h2>';
+            echo view('vw_semacesso', $this->data);        
+        } else {
+            $cor->campos = $cor->defCampos($show);
 
-        $this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
-        $this->data['destino']    = 'store';
+            $this->data['secoes']  = ['Dados Gerais'];
+            $this->data['campos']  = [[
+                $cor->campos['cor_id'],
+                $cor->campos['cor_nome'],
+                $cor->campos['cor_valorrgb']
+            ]];
 
-        $this->data['log'] = buscaLog('cfg_cor', $id);
-        echo view('vw_edicao', $this->data);
+            $this->data['destino']    = 'store';
+
+            $this->data['log'] = buscaLog('cfg_cor', $id);
+            echo view('vw_edicao', $this->data);
+        }
     }
     /**
      * Exclusão
@@ -177,44 +188,71 @@ class CfgCor extends BaseController
      */
     public function store()
     {
-
-
         $ret = [];
         $ret['erro'] = false;
         $postado = $this->request->getPost();
-        $erros = [];
+
+        $cor = new EntCfgCor($postado); // cria a Entity
+
         $this->cores->transBegin();
 
         try {
-            // Gravação da etiqueta
-            if (!$this->cores->save($postado)) {
+            if (!$this->cores->save($cor)) {
                 throw new \Exception(implode(' ', $this->cores->errors()));
             }
-        } catch (\Exception $e) {
-            // Em caso de erro, reverte a transação
-            $this->cores->transRollback();
-            $ret['erro'] = true;
-            $ret['msg'] = $e->getMessage();
-        }
-        if ($ret['erro']) {
-            if (!is_numeric($ret['msg'])) {
-                if (count($erros) > 0 && is_numeric($erros[0])) {
-                    $ret['msg'] = $erros[0];
-                } else {
-                    $ret['msg']  = 'Não foi possível gravar Cor, Verifique!<br><br>';
-                    foreach ($erros as $erro) {
-                        $ret['msg'] .= $erro . '<br>';
-                    }
-                }
-            }
-        } else {
-            cache()->clean();
             $this->cores->transCommit();
-            $ret['msg']  = 'Cor gravada com Sucesso!!!';
-            session()->setFlashdata('msg', $ret['msg']);
-            $ret['url']  = site_url($this->data['controler']);
+            cache()->clean();
+            session()->setFlashdata('msg', 'Cor gravada com Sucesso!!!');
+
+            $ret = [
+                'erro' => false,
+                'msg'  => 'Cor gravada com Sucesso!!!',
+                'url'  => site_url($this->data['controler'])
+            ];
+        } catch (\Throwable $e) {
+            $this->cores->transRollback();
+            $ret = [
+                'erro' => true,
+                'msg'  => $e->getMessage() ?: 'Erro ao salvar cor.'
+            ];
         }
 
         echo json_encode($ret);
+
+
+        // $erros = [];
+        // $this->cores->transBegin();
+
+        // try {
+        //     // Gravação da etiqueta
+        //     if (!$this->cores->save($postado)) {
+        //         throw new \Exception(implode(' ', $this->cores->errors()));
+        //     }
+        // } catch (\Exception $e) {
+        //     // Em caso de erro, reverte a transação
+        //     $this->cores->transRollback();
+        //     $ret['erro'] = true;
+        //     $ret['msg'] = $e->getMessage();
+        // }
+        // if ($ret['erro']) {
+        //     if (!is_numeric($ret['msg'])) {
+        //         if (count($erros) > 0 && is_numeric($erros[0])) {
+        //             $ret['msg'] = $erros[0];
+        //         } else {
+        //             $ret['msg']  = 'Não foi possível gravar Cor, Verifique!<br><br>';
+        //             foreach ($erros as $erro) {
+        //                 $ret['msg'] .= $erro . '<br>';
+        //             }
+        //         }
+        //     }
+        // } else {
+        //     cache()->clean();
+        //     $this->cores->transCommit();
+        //     $ret['msg']  = 'Cor gravada com Sucesso!!!';
+        //     session()->setFlashdata('msg', $ret['msg']);
+        //     $ret['url']  = site_url($this->data['controler']);
+        // }
+
+        // echo json_encode($ret);
     }
 }

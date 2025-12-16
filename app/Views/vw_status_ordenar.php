@@ -28,6 +28,7 @@ $accordraiz = false;
   <div class="row justify-content-md-center">
     <div class="col-lg-6 col-8 position-absolute bg-white shadow" id="menu">
       <div class="pt-2 pb-3 ps-1 pe-1">
+        <ul class='tela' id='gru_<?= $cont_accord; ?>'>
         <?
         $cont_accord = 0;
         $tel_id = '';
@@ -37,10 +38,9 @@ $accordraiz = false;
             if ($tel_id != '') {
               echo "</ul>";
               echo "</div>";
-              echo "</ul>";
+              // echo "</ul>";
             }
         ?>
-            <ul class='tela' id='gru_<?= $cont_accord; ?>'>
               <? $cont_accord++; ?>
               <li id='<?= $opcao['tel_id']; ?>' class="p-1 btn btn-outline-light list-group-item ui-state-defaul text-start">
                 <input type='hidden' name='tel_<?= $opcao['tel_id']; ?>' value='<?= $opcao['tel_id']; ?>' />

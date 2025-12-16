@@ -2,9 +2,10 @@
 
 namespace App\Models\Config;
 
-use App\Libraries\MyCampo;
-use App\Models\LogMonModel;
 use CodeIgniter\Model;
+// use App\Libraries\MyCampo;
+use App\Models\LogMonModel;
+use App\Entities\Config\EntCfgCor;
 
 class ConfigCorModel extends Model
 {
@@ -14,7 +15,8 @@ class ConfigCorModel extends Model
     protected $primaryKey       = 'cor_id';
     protected $useAutoIncremodt = true;
 
-    protected $returnType       = 'array';
+    // protected $returnType       = 'array';
+    protected $returnType       = EntCfgCor::class;
     protected $useSoftDeletes   = true;
 
     protected $allowedFields    = [
@@ -94,18 +96,26 @@ class ConfigCorModel extends Model
             $this->builder()->where('cor_id', $cor_id);
         }
         $this->builder()->orderBy('cor_ativo, cor_nome');
-        return $this->builder()->get()->getResultArray();
+        return $this->builder()->get()->getResult();
     }
 
     public function getCores($cor_id = false)
     {
-        $this->builder()->select('*');
-        if ($cor_id) {
-            $this->builder()->where('cor_id', $cor_id);
-        }
-        $this->builder()->where('cor_ativo', 'A');
-        $this->builder()->orderBy('cor_ativo, cor_nome');
-        return $this->builder()->get()->getResultArray();
+        // $this->builder()->select('*');
+        // if ($cor_id) {
+        //     $this->builder()->where('cor_id', $cor_id);
+        // }
+        // $this->builder()->where('cor_ativo', 'A');
+        // $this->builder()->orderBy('cor_ativo, cor_nome');
+        // return $this->builder()->get()->getResult();
+
+        $ret = $this
+        ->where('cor_ativo', 'A')
+        ->when($cor_id !== null, fn($q) => $q->where('cor_id', $cor_id))
+        ->orderBy('cor_ativo, cor_nome')
+        ->first(); // 🔥 RETORNA EntCfgCor
+
+        return $ret;
     }
 
     public function getCoresSearch($termo)
@@ -115,40 +125,40 @@ class ConfigCorModel extends Model
         $this->builder()->where('cor_ativo', 'A');
         $this->builder()->like($array);
 
-        return $this->builder()->get()->getResultArray();
+        return $this->builder()->get()->getResult();
     }
 
-    public function defCampos($dados = false, $show = false)
-    {
-        $ret = [];
-        $mid            = new MyCampo('cfg_cor', 'cor_id');
-        $mid->valor     = (isset($dados['cor_id'])) ? $dados['cor_id'] : '';
-        $ret['cor_id']   = $mid->crOculto();
+    // public function defCampos($dados = false, $show = false)
+    // {
+    //     $ret = [];
+    //     $mid            = new MyCampo('cfg_cor', 'cor_id');
+    //     $mid->valor     = (isset($dados['cor_id'])) ? $dados['cor_id'] : '';
+    //     $ret['cor_id']   = $mid->crOculto();
 
-        $nome           =  new MyCampo('cfg_cor', 'cor_nome');
-        $nome->valor    = (isset($dados['cor_nome'])) ? $dados['cor_nome'] : '';
-        $nome->obrigatorio = true;
-        $nome->leitura  = $show;
-        $ret['cor_nome'] = $nome->crInput();
+    //     $nome           =  new MyCampo('cfg_cor', 'cor_nome');
+    //     $nome->valor    = (isset($dados['cor_nome'])) ? $dados['cor_nome'] : '';
+    //     $nome->obrigatorio = true;
+    //     $nome->leitura  = $show;
+    //     $ret['cor_nome'] = $nome->crInput();
 
-        $vrgb           =  new MyCampo('cfg_cor', 'cor_valorrgb');
-        $vrgb->tipo     = 'color';
-        $vrgb->obrigatorio = true;
-        $vrgb->valor    = (isset($dados['cor_valorrgb'])) ? $dados['cor_valorrgb'] : '';
-        $vrgb->leitura  = $show;
-        $ret['cor_valorrgb'] = $vrgb->crInput();
+    //     $vrgb           =  new MyCampo('cfg_cor', 'cor_valorrgb');
+    //     $vrgb->tipo     = 'color';
+    //     $vrgb->obrigatorio = true;
+    //     $vrgb->valor    = (isset($dados['cor_valorrgb'])) ? $dados['cor_valorrgb'] : '';
+    //     $vrgb->leitura  = $show;
+    //     $ret['cor_valorrgb'] = $vrgb->crInput();
 
-        $opcat['A'] = 'Ativo';
-        $opcat['I'] = 'Inativo';
+    //     $opcat['A'] = 'Ativo';
+    //     $opcat['I'] = 'Inativo';
 
-        $ativ           = new MyCampo('cfg_cor', 'cor_ativo');
-        $ativ->valor    = (isset($dados['cor_ativo'])) ? $dados['cor_ativo'] : 'A';
-        $ativ->selecionado    = $ativ->valor;
-        $ativ->opcoes   = $opcat;
-        $ativ->leitura  = $show;
-        $ret['cor_ativo'] = $ativ->cr2opcoes();
-        // debug($ret);
+    //     $ativ           = new MyCampo('cfg_cor', 'cor_ativo');
+    //     $ativ->valor    = (isset($dados['cor_ativo'])) ? $dados['cor_ativo'] : 'A';
+    //     $ativ->selecionado    = $ativ->valor;
+    //     $ativ->opcoes   = $opcat;
+    //     $ativ->leitura  = $show;
+    //     $ret['cor_ativo'] = $ativ->cr2opcoes();
+    //     // debug($ret);
 
-        return $ret;
-    }
+    //     return $ret;
+    // }
 }

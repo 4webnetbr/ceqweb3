@@ -418,6 +418,149 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
     return $result;
 }
 
+function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
+{
+    $telaLista = new ConfigTelaListaModel();
+
+    $lista = $telaLista->getListagem($data_lis['tel_id']);
+    $fields = array_column($lista, 'lis_campo');
+    $exclusao = $data_lis['exclusao'] ?? true;
+    $edicao = $data_lis['edicao'] ?? true;
+
+    array_unshift($fields, $chave);
+    array_push($fields, 'acao');
+
+    $result = [];
+
+    foreach ($dados as $ent) {
+        $temativo = false;
+        $ativo = 0;
+        $inativa = '';
+        $podeinativar = true;
+        $podeeditar = true;
+
+        if (!property_exists($ent, 'tabela') || $ent->tabela !== 'cfg_status') {
+            if (property_exists($ent, 'stt_exclusao') && trim($ent->stt_exclusao) === 'N') {
+                $podeinativar = false;
+            }
+            if (property_exists($ent, 'stt_edicao') && trim($ent->stt_edicao) === 'N') {
+                $podeeditar = false;
+            }
+        }
+
+        // Campo ativo/inativo
+        foreach ($ent as $key => $value) {
+            if (substr($key, -5) == 'ativo') {
+                $temativo = true;
+                if (trim($value) === 'A') {
+                    $ativo = 1;
+                }
+                break;
+            }
+        }
+
+        // Botões
+        $edit = '';
+        $exclui = '';
+
+        $id_valor = $ent->{$chave};
+        $nome_valor = $ent->{$nome};
+
+        if ((strlen($data_lis['permissao']) <= 3 && strpbrk($data_lis['permissao'], 'C')) ||
+            (strpbrk($data_lis['permissao'], 'C') && !$podeeditar)
+        ) {
+            $url_con = $data_lis['controler'] . '/show/' . $id_valor;
+            $bt_con = new MyCampo();
+            $bt_con->id = $bt_con->nome = 'bt_show';
+            $bt_con->classep = 'btn btn-outline-info btn-sm border-0 mx-0 fs-0';
+            $bt_con->i_cone = "<i class='far fa-eye'></i>";
+            $bt_con->place = "Consulta";
+            $bt_con->funcChan = "redireciona('{$url_con}',event)";
+            $edit = $bt_con->crBotao();
+        }
+
+        if (strpbrk($data_lis['permissao'], 'E') && $podeeditar && $edicao) {
+            $url_edi = $data_lis['controler'] . '/edit/' . $id_valor;
+            $bt_edt = new MyCampo();
+            $bt_edt->id = $bt_edt->nome = 'bt_edit';
+            $bt_edt->classep = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0';
+            $bt_edt->i_cone = "<i class='fas fa-edit'></i>";
+            $bt_edt->place = "Alterar";
+            $bt_edt->funcChan = "redireciona('{$url_edi}',event)";
+            $edit = $bt_edt->crBotao();
+        }
+
+        if ($temativo && $podeinativar && strpbrk($data_lis['permissao'], 'X')) {
+            $url_ati = $data_lis['controler'] . '/ativinativ/' . $id_valor . '/1';
+            $bt_ati = new MyCampo();
+            $bt_ati->id = $bt_ati->nome = 'bt_ativinat';
+            $bt_ati->i_cone = "<i class='fa-solid fa-toggle-off fa-rotate-270'></i>";
+            $bt_ati->place = "Ativar";
+            $bt_ati->classep = 'btn btn-outline-secondary btn-sm border-0 mx-0 fs-0';
+            $bt_ati->funcChan = "ativInativ('{$url_ati}','{$nome_valor}', false)";
+            if ($ativo) {
+                $url_ina = $data_lis['controler'] . '/ativinativ/' . $id_valor . '/0';
+                $bt_ati->i_cone = "<i class='fa-solid fa-toggle-on fa-rotate-270'></i>";
+                $bt_ati->place = "Inativar";
+                $bt_ati->classep = 'btn btn-outline-success btn-sm border-0 mx-0 fs-0';
+                $bt_ati->funcChan = "ativInativ('{$url_ina}','{$nome_valor}', true)";
+            }
+            $inativa = $bt_ati->crBotao();
+        }
+
+        if (strpbrk($data_lis['permissao'], 'X') && $podeinativar && $exclusao) {
+            $url_del = $data_lis['controler'] . '/delete/' . $id_valor;
+            $bt_del = new MyCampo();
+            $bt_del->id = $bt_del->nome = 'bt_delete';
+            $bt_del->classep = 'btn btn-outline-danger btn-sm border-0 mx-0 fs-0';
+            $bt_del->i_cone = "<i class='far fa-trash-alt'></i>";
+            $bt_del->place = "Excluir";
+            $bt_del->funcChan = "excluir('{$url_del}','{$nome_valor}')";
+            $exclui = $bt_del->crBotao();
+        }
+
+        $ent->acao = "<div class='col-12 float-start text-center'>" . rtrim("{$edit} {$exclui} {$inativa}") . "</div>";
+
+        if (property_exists($ent, 'acao_person') && is_array($ent->acao_person)) {
+            foreach ($ent->acao_person as $bt) {
+                $ent->acao .= $bt . ' ';
+            }
+            $ent->acao = rtrim($ent->acao) . "</div>";
+        }
+
+        // Montar linha de colunas
+        $linha = [];
+        foreach ($fields as $field) {
+            if (strlen($field) > 100) {
+                $field = strip_tags($field);
+            }
+
+            $valor = $ent->{$field} ?? '';
+
+            if ($field === 'stt_nome' && isset($ent->stt_cor)) {
+                $linha[] = fmtEtiquetaCorBst($ent->stt_cor, $valor);
+            } elseif (is_string($valor) && preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $valor)) {
+                $linha[] = "<div class='text-center'>" . data_br($valor) . "</div>";
+            } elseif (is_numeric($valor) && $field != $chave) {
+                $linha[] = "<div class='text-end'>" . (
+                    strlen(strrchr($valor, '.')) > 3
+                        ? floatToQuantia($valor)
+                        : floatToMoeda($valor)
+                ) . "</div>";
+            } elseif (str_contains($field, 'msg_cor')) {
+                $linha[] = fmtEtiquetaCorBst($valor);
+            } else {
+                $linha[] = $valor;
+            }
+        }
+
+        $result[] = $linha;
+    }
+
+    return $result;
+}
+
+
 function montaListaEditColunas($colunas, $data_lis, $chave, $dados, $nome, $detalhe = false)
 {
     $fields = $colunas;

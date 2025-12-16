@@ -186,7 +186,7 @@ class WsCeqweb extends ResourceController
     /**
      * integraDeposito
      */
-    public function integraDeposito()
+    public function integraDepositoAnt()
     {
         $r_deps = $this->busca_sap->buscaDepositos();
         // debug($r_deps, true);
@@ -198,15 +198,72 @@ class WsCeqweb extends ResourceController
             $deps['dep_codDep'] = $dep->codDep;
             $deps['dep_aceNeg'] = $dep->aceNeg;
             $deps['dep_codDescricao'] = $dep->codDescricao;
-            $tem = $this->mode_deposito->getDeposito($dep->codDep);
-            if ($tem) {
+            // $tem = $this->mode_deposito->getDeposito($dep->codDep);
+            // if ($tem) {
                 $this->mode_deposito->save($deps);
-            } else {
-                $this->mode_deposito->insert($deps);
-            }
+            // } else {
+                // $this->mode_deposito->insert($deps);
+            // }
         }
     }
 
+    public function integraDeposito()
+    {
+        // Obtém os depósitos do SAP
+        $depositosExternos = $this->busca_sap->buscaDepositos();
+        log_message('info', 'Depósitos retornados: ' . json_encode($depositosExternos));
+
+        // Verifica se há dados a processar
+        if (empty($depositosExternos)) {
+            log_message('info', 'Nenhum depósito retornado do SAP.');
+            return;
+        }
+
+        // Extrai os códigos dos depósitos
+        $codigosExternos = array_map(fn($dep) => $dep->codDep, $depositosExternos);
+
+        // Busca todos os depósitos já existentes com esses códigos
+        $depositosExistentes = $this->mode_deposito
+            ->whereIn('dep_codDep', $codigosExternos)
+            ->findAll();
+
+        // Mapeia os existentes por código
+        $mapaExistentes = [];
+        foreach ($depositosExistentes as $depExistente) {
+            $mapaExistentes[$depExistente['dep_codDep']] = $depExistente;
+        }
+
+        // Prepara os dados para atualização e inserção
+        $dadosParaUpdate = [];
+        $dadosParaInsert = [];
+
+        foreach ($depositosExternos as $dep) {
+            $dados = [
+                'dep_codDep'       => $dep->codDep,
+                'dep_desDep'       => $dep->desDep,
+                'dep_aceNeg'       => $dep->aceNeg,
+                'dep_codDescricao' => $dep->codDescricao,
+            ];
+
+            if (isset($mapaExistentes[$dep->codDep])) {
+                $dadosParaUpdate[] = $dados;
+            } else {
+                $dadosParaInsert[] = $dados;
+            }
+        }
+
+        // Atualiza os registros existentes com save (um por um)
+        foreach ($dadosParaUpdate as $update) {
+            $this->mode_deposito->save($update); // Como dep_codDep é a chave primária, o update é feito corretamente
+        }
+
+        // Insere os novos registros em lote
+        if (!empty($dadosParaInsert)) {
+            $this->mode_deposito->insertBatch($dadosParaInsert);
+        }
+
+        log_message('info', 'Sincronização de depósitos finalizada.');
+    }
     /**
      * integraProduto
      */

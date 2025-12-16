@@ -273,8 +273,8 @@ class SoapSapiens
             'password'        => 'soPR#JOV@omVs',
             'encryption'      => 0,
             'parameters'      => array(
-                'codEmp'   => 1,
-                'codFil'    => 1,
+                'codEmp'      => 1,
+                'codFil'      => 1,
             )
         );
         #Sobrescrevendo endpoint do serviço
