@@ -146,6 +146,21 @@ class OcorreTipoOcorrenciaModel extends Model
         return $builder->get()->getResultArray();
     }
 
+    public function getTipoMovimentacao($tmo_id = false, $prf_id = false)
+    {
+        $db = db_connect('dbEstoque');
+        $builder = $db->table('oco_tipo_ocorrencia');
+        $builder->select('*');
+        if ($tmo_id) {
+            $builder->where('tmo_id', $tmo_id);
+        }
+        if ($prf_id) {
+            $builder->where("FIND_IN_SET($prf_id, prf_id) >", 0);
+        }   
+        $builder->orderBy('tmo_ativo, tmo_nome');
+        return $builder->get()->getResultArray();
+    }
+    
     public function defCampos($dados = false, $show = false)
     {
         $ret = [];

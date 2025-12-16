@@ -91,7 +91,7 @@ class OcoModOcorrencia extends BaseController {
         
         $secao[2] = 'Ações'; 
         $displ[2] = 'tabela';
-        $fields2 = $this->modocorrencia->defCamposAcao();
+        $fields2 = $this->modocorrencia->defCamposAcao(false, 0, 2, 'add');
         $campos[2][0][] = $fields2['tpa_id'];  
         $campos[2][0][] = "<div id='divmovi[0]' class='d-none row col-6'>".$fields2['tmo_id']."</div>";  
         $campos[2][0][] = "<div id='divtela[0]' class='d-none row col-6'>".$fields2['mod_id'].$fields2['tel_id']."</div>";  
@@ -104,7 +104,6 @@ class OcoModOcorrencia extends BaseController {
         $this->data['displ']      = $displ;
 		$this->data['destino']    = 'store';
         $this->data['script'] = "<script>
-            
                 acerta_botoes_rep('telas_aplicaveis');
                 acerta_botoes_rep('acoes');
         </script>";
@@ -124,8 +123,9 @@ class OcoModOcorrencia extends BaseController {
         // debug($ttelas);
         for ($t=0; $t < sizeof($ttelas) ; $t++) { 
             // debug($ttelas, true);
-            $fields = $this->modocorrencia->defCamposTelasAplicaveis($ttelas[$t], $ind);
-        // debug($fields);
+            $total = sizeof($ttelas); // novo total
+            $fields = $this->modocorrencia->defCamposTelasAplicaveis($ttelas[$t], $ind, $total);
+            // debug($fields);
             $campo[$t][0] = $fields['mod_id'];  
             $campo[$t][1] = $fields['tel_id'];
             $campo[$t][2] = $fields['mof_campo'];
@@ -179,8 +179,9 @@ class OcoModOcorrencia extends BaseController {
         $fields = $this->modocorrencia->defCampos($dados_ModOcorrencia[0]);
                 
         $secao [0]   = 'Dados Gerais'; 
-        $campos[0][] = $fields['moc_id'];  
+        $campos[0][] = $fields['moc_id'];   
         $campos[0][] = $fields['moc_nome'];
+        $campos[0][] = $fields['tpo_id']; 
         // $campos[0][] = $fields['cla_id'];
         
         $secao[1] = 'Telas Aplicaveis'; 
@@ -215,8 +216,9 @@ class OcoModOcorrencia extends BaseController {
         $dados_Acao = $this->modocorrencia->getTOAcao($id);
         // debug($dados_Acao, true);
         if (count($dados_Acao) > 0) {
-            for ($c = 0; $c < count($dados_Acao); $c++) {
-                $fields = $this->modocorrencia->defCamposAcao($dados_Acao[$c], $c);
+            $total_acoes = count($dados_Acao);
+        for ($c = 0; $c < $total_acoes; $c++) {
+        $fields = $this->modocorrencia->defCamposAcao($dados_Acao[$c], $c, $total_acoes, 'edit');
                 $campos[2][$c][] = $fields['tpa_id'];
                 $dnone = 'd-none';
                 if($dados_Acao[$c]['tmo_id'] != 0){
@@ -237,7 +239,7 @@ class OcoModOcorrencia extends BaseController {
                 $campos[2][$c][] = $fields['bt_deltp'];
             }
         } else {
-            $fields = $this->modocorrencia->defCamposAcao(false, 0);
+            $fields = $this->modocorrencia->defCamposAcao(false, 0, 1);
             $campos[2][0][] = $fields['tpa_id'];
             $campos[2][0][] = "<div id='divmovi[0]' class='d-none row col-6'>".$fields['tmo_id']."</div>";  
             $campos[2][0][] = "<div id='divtela[0]' class='d-none row col-6'>".$fields['mod_id'].$fields['tel_id']."</div>";  
@@ -438,13 +440,13 @@ class OcoModOcorrencia extends BaseController {
             $db->transCommit();
 
             $ret['erro'] = false;
-            $ret['msg']  = 'Tipo de Ocorrência gravado com sucesso!';
+            $ret['msg']  = 'Modelo de Ocorrência gravado com sucesso!';
             session()->setFlashdata('msg', $ret['msg']);
             $ret['url']  = site_url($this->data['controler']);
         } catch (\Exception $e) {
             $db->transRollback();
             $ret['erro'] = true;
-            $ret['msg']  = 'Erro ao gravar o Tipo de Ocorrência:<br><br>' . $e->getMessage();
+            $ret['msg']  = 'Erro ao gravar o Modelo de Ocorrência :<br><br>' . $e->getMessage();
         }
 
         return $this->response->setJSON($ret);

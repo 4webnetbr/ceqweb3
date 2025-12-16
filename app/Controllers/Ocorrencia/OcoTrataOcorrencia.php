@@ -4,7 +4,7 @@ namespace App\Controllers\Ocorrencia;
 
 use App\Controllers\BaseController;
 use App\Models\Ocorre\OcorreTrataOcorrenciaModel;
-use App\Models\Ocorre\OcorreNovOcorrenciaModel;
+use App\Models\Ocorre\OcorreOcorrenciaModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
 use App\Models\Ocorre\OcorreModOcorrenciaModel;
@@ -33,7 +33,7 @@ class OcoTrataOcorrencia extends BaseController
         $this->modelMod                 = new OcorreModOcorrenciaModel();
         $this->buscaSapiens             = new BuscasSapiens();
         $this->produtLoteModel          = new ProdutLoteModel();
-        $this->ocorreNovOcorrenciaModel = new OcorreNovOcorrenciaModel();
+        $this->ocorreNovOcorrenciaModel = new OcorreOcorrenciaModel();
 
 
         $this->data = session()->get('dados_tela') ?? [];
@@ -53,25 +53,24 @@ class OcoTrataOcorrencia extends BaseController
     
     public function lista()
     {
-        $campos = montaColunasCampos($this->data, 'oco_id');
-        $dados = $this->trataocorrencia->getListaCompleta();
-        $oco_ids_assoc = array_column($dados, 'oco_id');
-        $log = buscaLogTabela('oco_ocorrencia', $oco_ids_assoc);  
+        $campos   = montaColunasCampos($this->data, 'oco_id');
+        $dados    = $this->trataocorrencia->getListaCompleta();
+        $oco_ids  = array_column($dados, 'oco_id');
+    
+        $logGeracao = buscaLogTabela('oco_ocorrencia', $oco_ids);
     
         foreach ($dados as &$nov) {
-            $nov['usu_nome'] = $log[$nov['oco_id']]['usua_alterou'] ?? '';
-
-            // $id = $nov['oco_id'];
-            // $numero = $nov['oco_numero'];
     
-            // $url_imp = base_url('/CriaPdf2025/PrintRequisicaoEstoq/' . $nov['oco_id']);
-            // $nov['acao_person'] = [
-            //     "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end' 
-            //         data-mdb-toggle='tooltip' data-mdb-placement='top' 
-            //         title='Imprimir' onclick='openPDFModal(\"$url_imp\",\"Imprimir\")'>
-            //         <i class='fa-solid fa-print'></i></button>", 
-            // ];
+            $nov['usu_nome'] = $logGeracao[$nov['oco_id']]['usua_alterou'] ?? '';
+    
+            if (trim($nov['stt_nome']) === 'Finalização automática') {
+                $nov['usu_fina'] = $nov['usu_nome'];
+            } else {
+                $nov['usu_fina'] = '';
+            }
+            
         }
+    
         return $this->response->setJSON([
             'data' => montaListaColunas($this->data, 'oco_id', $dados, $campos[1])
         ]);

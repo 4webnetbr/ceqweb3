@@ -54,8 +54,8 @@ class Deposito extends BaseController
     public function lista()
     {
         // if (!$depositos = cache('depositos')) {
-            $integ = new WsCeqweb();
-            $integ->integraDeposito();
+            // $integ = new WsCeqweb();
+            // $integ->integraDeposito();
             
             $campos = montaColunasCampos($this->data, 'dep_codDep');
             $dados_tela = $this->depositos->getDeposito();

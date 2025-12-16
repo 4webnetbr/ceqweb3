@@ -116,11 +116,11 @@ class EstoquTipoMovimentacaoModel extends Model
         }
         if ($prf_id) {
             $builder->where("FIND_IN_SET($prf_id, prf_id) >", 0);
-        }
+        }   
         $builder->orderBy('tmo_ativo, tmo_nome');
         return $builder->get()->getResultArray();
     }
-
+    
     public function getTipoMovimentacaoDepositos($dorig, $ddest)
     {
         $db = db_connect('dbEstoque');

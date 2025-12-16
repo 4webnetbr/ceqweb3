@@ -109,6 +109,7 @@ class OcorreTipoAcaoModel extends Model
 
         return $this->builder()->get()->getResultArray();
     }
+    
 
     public function defCampos($dados = false, $show = false)
     {
@@ -137,4 +138,6 @@ class OcorreTipoAcaoModel extends Model
 
         return $ret;
     }
+
+    
 }

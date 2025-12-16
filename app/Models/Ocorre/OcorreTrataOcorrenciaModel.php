@@ -4,12 +4,9 @@ namespace App\Models\Ocorre;
 
 use CodeIgniter\Model;
 use App\Models\LogMonModel;
-use App\Controllers\BuscasSapiens;
 use App\Libraries\MyCampo;
 use App\Models\Ocorre\OcorreModOcorrenciaModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
-use App\Models\Config\ConfigStatusModel;
-
 
 class OcorreTrataOcorrenciaModel extends Model
 {
@@ -139,6 +136,8 @@ public function getAcoesForTratativa($tpo_id)
 
 
     public function defCampos($dados = false)
+    
+    // DADOS GERAIS
     {
         $ret = [];
         $mid             = new MyCampo('oco_id_ocorrencia', 'tpo_id');
@@ -204,7 +203,7 @@ public function getAcoesForTratativa($tpo_id)
             }
    
             // MOVIMENTAÇÂO
-            if (($dados['tpa_id'] ?? null) == 3) {
+            if (($dados['tpa_id']) == 3) {
 
                 $tmoModel = new EstoquTipoMovimentacaoModel();
                 $lst_tmo  = $tmoModel->getTipoMovimentacao();
@@ -224,7 +223,7 @@ public function getAcoesForTratativa($tpo_id)
             }
 
             // STATUS
-            if (($dados['tpa_id'] ?? null) == 7) {
+            if (($dados['tpa_id']) == 7) {
 
                 $statModel = new OcorreModOcorrenciaModel();
                 $stt_id_real = $statModel->getStatusByTpoTpa($dados['tpo_id'], $dados['tpa_id']);

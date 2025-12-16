@@ -19,6 +19,7 @@ use App\Models\Config\ConfigImpressoraModel;
 use App\Models\Produt\ProdutIngredienteModel;
 use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
+use App\Models\Ocorre\OcorreModOcorrenciaModel;
 
 class Buscas extends BaseController
 {
@@ -497,24 +498,32 @@ class Buscas extends BaseController
         echo json_encode($ret);
     }
 
+
     public function buscaimpressoras()
     {
-        $ret    = [];
-        // debug($_REQUEST,false);
-        $termo            = $_REQUEST['busca'] ?? false;
-        $printeres         = new ConfigImpressoraModel();
-        $printers             = $printeres->getImpressoraId($termo);
-        if (sizeof($printers) <= 0) {
-            $ret[0]['id'] = '-1';
-            $ret[0]['text'] = 'Impressora não encontrada...';
+        $termo = $this->request->getGetPost('busca');
+        $model = new ConfigImpressoraModel();
+        $printers = $model->getImpressoraSearch($termo);
+    
+        $ret = [];
+    
+        if (empty($printers)) {
+            $ret[] = [
+                'id'   => -1,
+                'text' => 'Impressora não encontrada...'
+            ];
         } else {
-            for ($c = 0; $c < sizeof($printers); $c++) {
-                $ret[$c]['id'] = $printers[$c]['imp_id'];
-                $ret[$c]['text'] = $printers[$c]['imp_nome'];
+            foreach ($printers as $printer) {
+                $ret[] = [
+                    'id'   => $printer->imp_id,
+                    'text' => $printer->imp_nome,
+                ];
             }
         }
-        echo json_encode($ret);
+        return $this->response->setJSON($ret);
     }
+    
+
 
     public function busca_dep_destino()
     {
@@ -554,6 +563,48 @@ class Buscas extends BaseController
         $ret['sessao'] = $sessao->logged_in;
         echo json_encode($ret);
     }
+
+
+     public function buscaAcoesPorTipo()
+    {
+        $ret = [];
+    
+        if (!isset($_REQUEST['busca'])) {
+            echo json_encode($ret);
+            exit;
+        }
+    
+        $tpo_id = $_REQUEST['busca'];
+    
+        $db = \Config\Database::connect('dbOcorrencia');
+    
+        $acoes = $db->table('oco_tpo_acao a')
+            ->select('a.tpa_id, t.tpa_nome')
+            ->join('oco_tipo_acao t', 't.tpa_id = a.tpa_id')
+            ->where('a.tpo_id', $tpo_id)
+            ->where('t.tpa_ativo', 'A')
+            ->orderBy('t.tpa_nome')
+            ->get()
+            ->getResultArray();
+    
+        if (empty($acoes)) {
+            $ret[] = [
+                'id'   => -1,
+                'text' => 'Nenhuma ação encontrada'
+            ];
+        } else {
+            foreach ($acoes as $acao) {
+                $ret[] = [
+                    'id'   => $acao['tpa_id'],
+                    'text' => $acao['tpa_nome'],
+                ];
+            }
+        }
+    
+        echo json_encode($ret);
+        exit;
+    }
+
 
     public function verificaSessao()
     {

@@ -5,7 +5,6 @@ namespace App\Controllers\Config;
 use App\Models\CommonModel;
 use App\Controllers\BaseController;
 use App\Models\Config\ConfigImpressoraModel;
-use App\Entities\Config\EntCfgImpressora;
 
 Class CfgImpressora extends BaseController
 {
@@ -30,6 +29,17 @@ Class CfgImpressora extends BaseController
     }
 
     /**
+     * Tela de Abertura
+     * index
+     */
+    public function index()
+    {
+        $this->data['colunas'] = montaColunasLista($this->data, 'imp_id,');
+        $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
+        echo view('vw_lista', $this->data);
+    }
+
+    /**
      * Listagem
      * lista
      *
@@ -49,68 +59,50 @@ Class CfgImpressora extends BaseController
         echo json_encode($Impressora);
     }
 
-
-    /**
-     * Tela de Abertura
-     * index
-     */
-    public function index()
-    {
-        $this->data['colunas'] = montaColunasLista($this->data, 'imp_id,');
-        $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
-        echo view('vw_lista', $this->data);
-    }
-
-
     public function add($modal = false)
     {
-        $entity = new EntCfgImpressora();
-    
-        $fields = $entity->campos;
-    
+        $fields = $this->impressora->defCampos();
+
         $secao[0] = 'Dados Gerais';
-        $campos[0][] = $fields['imp_id'];
-        $campos[0][] = $fields['imp_nome'];
-        $campos[0][] = $fields['imp_ip'];
-        $campos[0][] = $fields['imp_porta'];
-    
-        $this->data['secoes']  = $secao;
-        $this->data['campos']  = $campos;
-        $this->data['destino'] = 'store';
-    
-        echo view($modal ? 'vw_edicao_modal' : 'vw_edicao', $this->data);
+        $campos[0][0] = $fields['imp_id'];
+        $campos[0][1] = $fields['imp_nome'];
+        $campos[0][2] = $fields['imp_ip'];
+        $campos[0][3] = $fields['imp_porta'];
+       
+		$this->data['secoes']     = $secao;
+        $this->data['campos']     = $campos;
+		$this->data['destino']    = 'store';
+
+        if(!$modal){
+            echo view('vw_edicao', $this->data);
+        } else {
+            // $this->data['destino']    = 'store/modal';
+            echo view('vw_edicao_modal', $this->data);
+        }
     }
-
-
     public function show($id){
         $this->edit($id, true);
     }
+    public function edit($id, $show= false){
+		$dados_Impressora = $this->impressora->find($id);
+        $fields = $this->impressora->defCampos($dados_Impressora, $show);
 
-
-    public function edit($id)
-    {
-        $entity = $this->impressora->find($id);
-    
-        if (!$entity) {
-            throw new \Exception('Impressora não encontrada');
-        }
-    
-        $fields = $entity->campos;
-    
         $secao[0] = 'Dados Gerais';
-        $campos[0][] = $fields['imp_id'];
-        $campos[0][] = $fields['imp_nome'];
-        $campos[0][] = $fields['imp_ip'];
-        $campos[0][] = $fields['imp_porta'];
-    
-        $this->data['secoes']  = $secao;
-        $this->data['campos']  = $campos;
-        $this->data['destino'] = 'store';
-        $this->data['log']     = buscaLog('cfg_impressora', $id);
-    
+        $campos[0][0] = $fields['imp_id'];
+        $campos[0][1] = $fields['imp_nome'];
+        $campos[0][2] = $fields['imp_ip'];
+        $campos[0][3] = $fields['imp_porta'];
+        // $campos[0][5] = $fields['imp_ativo'];
+
+		$this->data['secoes']     = $secao;
+        $this->data['campos']     = $campos;
+		$this->data['destino']    = 'store';
+
+        // BUSCAR DADOS DO LOG
+        $this->data['log'] = buscaLog('cfg_Impressora', $id);
+
         echo view('vw_edicao', $this->data);
     }
-
 
     public function delete($id)
     {
@@ -126,7 +118,6 @@ Class CfgImpressora extends BaseController
         }
         echo json_encode($ret);
     }
-
 
     public function ativinativ($id, $ip)
     {

@@ -196,17 +196,17 @@ class OcorreModOcorrenciaModel extends Model
             ->getResultArray();
     }
 
-    public function buscarPorTipo($tpo_id)
-    {
-        $db = db_connect('default');
-        $builder = $db->table('vw_oco_mod_ocorrencia_relac');
-        $builder->select('moc_id, moc_nome');
-    
-        if ($tpo_id) {
-            $builder->where("tpo_id", $tpo_id);
-        }
-        return $builder->get()->getResultArray();
-    }
+public function buscarPorTipo(int $tpo_id): array
+{
+    return $this->db
+        ->table('ocorrencia_db.vw_oco_mod_ocorrencia_relac')
+        ->select('moc_id, moc_nome')
+        ->where('tpo_id', $tpo_id)
+        ->where('moc_ativo', 'A')
+        ->orderBy('moc_nome')
+        ->get()
+        ->getResultArray();
+}
 
     public function getTelaByTpoTpa($tpo_id, $tpa_id)
     {
@@ -254,6 +254,7 @@ class OcorreModOcorrenciaModel extends Model
         $tpoid->selecionado    = $tpoid->valor;
         $tpoid->opcoes         = $opc_tipoocor;
         $tpoid->obrigatorio    = true;
+        $tpoid->leitura        = isset($dados['moc_id']);
         $tpoid->largura        = 40;
         $tpoid->dispForm       = 'col-4';
         $tpoid->funcChan       = 'carregaTelaAcaoTipo(this); carregaAcaoTipo(this);';
@@ -378,7 +379,7 @@ class OcorreModOcorrenciaModel extends Model
         return $ret;
     }
 
-    public function defCamposAcao($dados = false, $pos = 0, $show = false)
+    public function defCamposAcao($dados = false, $pos = 0, $total = 1, $modo = 'edit')
     {
         $ret = [];
 
@@ -412,16 +413,21 @@ class OcorreModOcorrenciaModel extends Model
         $add->funcChan  = "addCampo('" . base_url("OcoModOcorrencia/addCampoTp/") . "','acoes',this)";
         $ret['bt_addtp']   = $add->crBotao();
 
-        $del            = new MyCampo();
+        $del = new MyCampo();
         $del->attrdata  = $atrib;
         $del->dispForm  = '2col';
         $del->nome      = "bt_delta[$pos]";
         $del->id        = "bt_delta[$pos]";
         $del->i_cone    = "<i class='fas fa-trash'></i>";
         $del->classep   = "btn-outline-danger btn-sm bt-exclui";
+        
+        // if ($total == 1) {
+        //     $del->classep .= " d-none";
+        // }
+
         $del->funcChan  = "exclui_campo('acoes',this)";
         $del->place     = "Excluir Campo";
-        $ret['bt_deltp']   = $del->crBotao();
+        $ret['bt_deltp'] = $del->crBotao();
 
         $tpoacao = new EstoquTipoMovimentacaoModel;
         $lst_acao = $tpoacao->getTipoMovimentacao();
@@ -451,7 +457,7 @@ class OcorreModOcorrenciaModel extends Model
         $mod_id->opcoes         = $opc_modulos;
         $mod_id->ordem          = $pos;
         // $mod_id->obrigatorio    = true;
-        $mod_id->leitura      = true;
+        $mod_id->leitura        = true;
         $mod_id->largura        = 30;
         $mod_id->dispForm       = '2col';
         $ret['mod_id'] = $mod_id->crSelect();
