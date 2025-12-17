@@ -59,10 +59,10 @@ class ConfigStatusModel extends Model
         
         if ($stt_id) {
             $builder->where("stt_id", $stt_id);
-            return $builder->get()->getFirstRow(); // 👈 Retorna 1 Entity
+            return $builder->get()->getFirstRow(); 
         }
 
-        return $builder->get()->getResult(); // 👈 Retorna array de Entities
+        return $builder->get()->getResult(); 
     }
 
     public function getStatusTela(int $tel_id)

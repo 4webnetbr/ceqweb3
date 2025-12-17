@@ -209,33 +209,14 @@ class WsCeqweb extends ResourceController
 
     public function integraDeposito()
     {
-        // Obtém os depósitos do SAP
         $depositosExternos = $this->busca_sap->buscaDepositos();
+        // debug($depositosExternos);
         log_message('info', 'Depósitos retornados: ' . json_encode($depositosExternos));
 
-        // Verifica se há dados a processar
         if (empty($depositosExternos)) {
             log_message('info', 'Nenhum depósito retornado do SAP.');
             return;
         }
-
-        // Extrai os códigos dos depósitos
-        $codigosExternos = array_map(fn($dep) => $dep->codDep, $depositosExternos);
-
-        // Busca todos os depósitos já existentes com esses códigos
-        $depositosExistentes = $this->mode_deposito
-            ->whereIn('dep_codDep', $codigosExternos)
-            ->findAll();
-
-        // Mapeia os existentes por código
-        $mapaExistentes = [];
-        foreach ($depositosExistentes as $depExistente) {
-            $mapaExistentes[$depExistente['dep_codDep']] = $depExistente;
-        }
-
-        // Prepara os dados para atualização e inserção
-        $dadosParaUpdate = [];
-        $dadosParaInsert = [];
 
         foreach ($depositosExternos as $dep) {
             $dados = [
@@ -244,22 +225,9 @@ class WsCeqweb extends ResourceController
                 'dep_aceNeg'       => $dep->aceNeg,
                 'dep_codDescricao' => $dep->codDescricao,
             ];
-
-            if (isset($mapaExistentes[$dep->codDep])) {
-                $dadosParaUpdate[] = $dados;
-            } else {
-                $dadosParaInsert[] = $dados;
-            }
-        }
-
-        // Atualiza os registros existentes com save (um por um)
-        foreach ($dadosParaUpdate as $update) {
-            $this->mode_deposito->save($update); // Como dep_codDep é a chave primária, o update é feito corretamente
-        }
-
-        // Insere os novos registros em lote
-        if (!empty($dadosParaInsert)) {
-            $this->mode_deposito->insertBatch($dadosParaInsert);
+            // debug($dados);
+            // save() insere ou atualiza dependendo da existência da chave primária
+            $this->mode_deposito->save($dados);
         }
 
         log_message('info', 'Sincronização de depósitos finalizada.');
@@ -269,55 +237,6 @@ class WsCeqweb extends ResourceController
      */
     public function integraProduto($codEmp = '1', $codPro = '')
     {
-        // $r_pros = $this->busca_sap->buscaProduto($codEmp, $codPro);
-        // if ($r_pros) {
-        //     log_message('info', 'Produtos Retornados ' . json_encode($r_pros));
-        //     if ($codPro != '') {
-        //         $pro = $r_pros;
-        //         $pros['pro_codemp'] = $pro->codemp;
-        //         $pros['pro_codpro'] = $pro->codpro;
-        //         $pros['pro_despro'] = $pro->despro;
-        //         $pros['ori_codOri'] = $pro->codori;
-        //         $pros['fam_codFam'] = $pro->codfam;
-        //         $pros['pro_cplpro'] = $pro->cplpro;
-        //         $pros['pro_ctrlot'] = $pro->ctrlot;
-        //         $pros['pro_qtdemb'] = $pro->qtdemb;
-        //         $tem = $this->mode_produto->getProdutoCod($pro->codpro);
-        //         if ($tem) {
-        //             log_message('info', 'ja tem ' . json_encode($tem));
-        //             $id = $tem[0]['pro_id'];
-        //             $this->mode_produto->update($id, $pros);
-        //         } else {
-        //             log_message('info', 'não tem ' . json_encode($pros));
-        //             $this->mode_produto->insert($pros);
-        //         }
-        //         $this->integraProdutoFabricante($pro->codemp, $pro->codpro);
-        //     } else {
-        //         for ($p = 0; $p < count($r_pros); $p++) {
-        //             // $pro = $r_pros[$p];
-        //             $pro = $r_pros[$p];
-        //             // debug($pro, TRUE);
-        //             $pros['pro_codemp'] = $pro->codemp;
-        //             $pros['pro_codpro'] = $pro->codpro;
-        //             $pros['pro_despro'] = $pro->despro;
-        //             $pros['ori_codOri'] = $pro->codori;
-        //             $pros['fam_codFam'] = $pro->codfam;
-        //             $pros['pro_cplpro'] = $pro->cplpro;
-        //             $pros['pro_ctrlot'] = $pro->ctrlot;
-        //             $pros['pro_qtdemb'] = $pro->qtdemb;
-        //             $tem = $this->mode_produto->getProdutoCod($pro->codpro);
-        //             if ($tem) {
-        //                 log_message('info', 'ja tem ' . json_encode($tem));
-        //                 $id = $tem[0]['pro_id'];
-        //                 $this->mode_produto->update($id, $pros);
-        //             } else {
-        //                 log_message('info', 'não tem ' . json_encode($pros));
-        //                 $this->mode_produto->insert($pros);
-        //             }
-        //             $this->integraProdutoFabricante($pro->codemp, $pro->codpro);
-        //         }
-        //     }
-        // }
 
         $r_pros = $this->busca_sap->buscaProduto($codEmp, $codPro);
 

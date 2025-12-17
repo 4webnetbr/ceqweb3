@@ -2,23 +2,22 @@
 
 namespace App\Models\Config;
 
-use App\Libraries\MyCampo;
 use App\Models\LogMonModel;
 use CodeIgniter\Model;
+use App\Entities\Config\EntCfgMensagem;
 
 class ConfigMensagemModel extends Model
 {
     protected $DBGroup          = 'default';
     protected $table            = 'cfg_mensagem';
-    protected $view             = 'cfg_mensagem';
     protected $primaryKey       = 'msg_id';
-    protected $useAutoIncremodt = true;
+    protected $useAutoIncrement = true;
 
-    protected $returnType       = 'array';
+    protected $returnType       = EntCfgMensagem::class;
+    protected $deletedField     = 'msg_excluido';
     protected $useSoftDeletes   = true;
 
     protected $allowedFields    = [
-        'msg_id',
         'msg_titulo',
         'msg_tipo',
         'msg_cor',
@@ -27,12 +26,11 @@ class ConfigMensagemModel extends Model
         'msg_ativo',
     ];
 
-    protected $deletedField  = 'msg_excluido';
 
     protected $validationRules = [
-        'msg_titulo' => 'required|min_length[5]',
-        'msg_tipo'  => 'required',
-        'msg_cor'   => 'required',
+        'msg_titulo'   => 'required|min_length[5]',
+        'msg_tipo'     => 'required',
+        'msg_cor'      => 'required',
         'msg_mensagem' => 'required|min_length[5]'
     ];
 
@@ -71,9 +69,7 @@ class ConfigMensagemModel extends Model
      */
     protected function depoisInsert(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'];
-        $log = $logdb->insertLog($this->table, 'Incluído', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Incluído', $data['id'], $data['data']);
         return $data;
     }
 
@@ -84,9 +80,7 @@ class ConfigMensagemModel extends Model
      */
     protected function depoisUpdate(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'][0];
-        $log = $logdb->insertLog($this->table, 'Alteração', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Alteração', $data['id'][0], $data['data']);
         return $data;
     }
 
@@ -97,95 +91,46 @@ class ConfigMensagemModel extends Model
      */
     protected function depoisDelete(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'][0];
-        $log = $logdb->insertLog($this->table, 'Excluído', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Excluído', $data['id'][0], $data['data']);
         return $data;
     }
 
-    public function getMensagem($msg_id = false)
+
+    public function getMensagem(int $msg_id = null)
     {
-        $this->builder()->select('*');
+        $builder = $this->builder();
+        $builder->where('msg_excluido', null);
+
         if ($msg_id) {
-            $this->builder()->where('msg_id', $msg_id);
+            $builder->where('msg_id', $msg_id);
+            return $builder->get()->getFirstRow();
         }
-        $this->builder()->where('msg_excluido', null);
-        $this->builder()->orderBy('msg_ativo, msg_titulo');
-        return $this->builder()->get()->getResultArray();
+
+        $builder->orderBy('msg_ativo, msg_titulo');
+        return $builder->get()->getResult();
     }
 
-    public function getMensagemId($msg_id = false)
+    public function getMensagemId(int $msg_id = null)
     {
-        $this->builder()->select('*');
+        $builder = $this->builder();
+        $builder->where('msg_excluido', null);
+    
         if ($msg_id) {
-            $this->builder()->where('msg_id', $msg_id);
+            $builder->where('msg_id', $msg_id);
+            return $builder->get()->getFirstRow(); 
         }
-        $this->builder()->where('msg_excluido', null);
-        $this->builder()->orderBy('msg_id');
-        return $this->builder()->get()->getResultArray();
+    
+        $builder->orderBy('msg_id');
+        return $builder->get()->getResult(); 
     }
 
-    public function getMensagemSearch($termo)
+    public function getMensagemSearch(string $termo)
     {
-        $array = ['msg_titulo' => $termo . '%'];
-        $this->builder()->select(['msg_id', 'msg_titulo']);
-        $this->builder()->where('msg_excluido', null);
-        $this->builder()->like($array);
-
-        return $this->builder()->get()->getResultArray();
-    }
-
-    public function defCampos($dados = false)
-    {
-        $ret = [];
-        $mid            = new MyCampo('cfg_mensagem', 'msg_id');
-        $mid->valor     = (isset($dados['msg_id'])) ? $dados['msg_id'] : '';
-        $ret['msg_id']   = $mid->crOculto();
-
-        $titu           =  new MyCampo('cfg_mensagem', 'msg_titulo');
-        $titu->valor    = (isset($dados['msg_titulo'])) ? $dados['msg_titulo'] : '';
-        $titu->obrigatorio = true;
-        $ret['msg_titulo'] = $titu->crInput();
-
-        $opctipo['icone']['P'] = '<i class="fa-solid fa-circle-question fa-lg"></i> Pergunta';
-        $opctipo['texto']['P'] = 'Pergunta';
-        $opctipo['icone']['A'] = '<i class="fa-solid fa-circle-exclamation fa-lg"></i> Atenção';
-        $opctipo['texto']['A'] = 'Alerta';
-        $opctipo['icone']['E'] = '<i class="fa-solid fa-circle-xmark fa-lg"></i> Erro';
-        $opctipo['texto']['E'] = 'Erro';
-        $opctipo['icone']['I'] = '<i class="fa-solid fa-circle-info fa-lg"></i> Informação';
-        $opctipo['texto']['I'] = 'Informação';
-
-        $tipo           =  new MyCampo('cfg_mensagem', 'msg_tipo');
-        $tipo->tipo     = 'tipo';
-        $tipo->valor    = (isset($dados['msg_tipo'])) ? $dados['msg_tipo'] : '';
-        $tipo->largura  =  30;
-        $tipo->selecionado = $tipo->valor;
-        $tipo->opcoes   = $opctipo;
-        $tipo->obrigatorio = true;
-        $ret['msg_tipo'] = $tipo->crSelectIcone();
-
-        $cor           =  new MyCampo('cfg_mensagem', 'msg_cor');
-        $cor->valor    = (isset($dados['msg_cor'])) ? $dados['msg_cor'] : '';
-        $cor->selecionado    = $cor->valor;
-        $cor->largura  =  30;
-        $cor->obrigatorio = true;
-        $ret['msg_cor'] = $cor->crCorbst();
-
-        $mens           =  new MyCampo('cfg_mensagem', 'msg_mensagem');
-        $mens->valor    = (isset($dados['msg_mensagem'])) ? $dados['msg_mensagem'] : '';
-        $mens->obrigatorio = true;
-        $ret['msg_mensagem'] = $mens->crTexto();
-
-        $opcat['A'] = 'Ativo';
-        $opcat['I'] = 'Inativo';
-
-        $ativ           = new MyCampo('cfg_mensagem', 'msg_ativo');
-        $ativ->valor    = (isset($dados['msg_ativo'])) ? $dados['msg_ativo'] : 'A';
-        $ativ->selecionado    = $ativ->valor;
-        $ativ->opcoes   = $opcat;
-        $ret['msg_ativo'] = $ativ->cr2opcoes();
-
-        return $ret;
+        $builder = $this->builder();
+        $builder->select(['msg_id', 'msg_titulo']);
+        $builder->where('msg_excluido', null);
+        $builder->like('msg_titulo', $termo);
+    
+        return $builder->get()->getResult(); 
     }
 }

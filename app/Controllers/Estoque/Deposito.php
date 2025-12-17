@@ -43,6 +43,9 @@ class Deposito extends BaseController
      */
     public function index()
     {
+        $integ = new WsCeqweb();
+        $integ->integraDeposito();
+
         $this->data['colunas'] = montaColunasLista($this->data, 'dep_codDep,');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
@@ -54,9 +57,7 @@ class Deposito extends BaseController
     public function lista()
     {
         // if (!$depositos = cache('depositos')) {
-            // $integ = new WsCeqweb();
-            // $integ->integraDeposito();
-            
+             
             $campos = montaColunasCampos($this->data, 'dep_codDep');
             $dados_tela = $this->depositos->getDeposito();
             // debug($dados_tela, true);
@@ -70,8 +71,6 @@ class Deposito extends BaseController
     }
 
     public function show($id){
-        $integ = new WsCeqweb();
-        $integ->integraDeposito();
 
 		$dados_depositos = $this->depositos->getDeposito($id);
         $fields = $this->depositos->defCampos($dados_depositos[0], true);
@@ -102,9 +101,6 @@ class Deposito extends BaseController
      */
     public function edit($id, $show = false)
     {
-        $integ = new WsCeqweb();
-        $integ->integraDeposito();
-
 		$dados_depositos = $this->depositos->getDeposito($id);
         $fields = $this->depositos->defCampos($dados_depositos[0], true);
 

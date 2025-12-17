@@ -541,16 +541,18 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
                 $linha[] = fmtEtiquetaCorBst($ent->stt_cor, $valor);
             } elseif (is_string($valor) && preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $valor)) {
                 $linha[] = "<div class='text-center'>" . data_br($valor) . "</div>";
-            } elseif (is_numeric($valor) && $field != $chave) {
+            } elseif (is_numeric($valor) && $field != $chave && is_float($valor)) {
                 $linha[] = "<div class='text-end'>" . (
                     strlen(strrchr($valor, '.')) > 3
                         ? floatToQuantia($valor)
                         : floatToMoeda($valor)
                 ) . "</div>";
+            } elseif (is_numeric($valor) && $field != $chave && is_int($valor)) {
+                $linha[] = "<div class='text-end'>" . $valor . "</div>";
             } elseif (str_contains($field, 'msg_cor')) {
                 $linha[] = fmtEtiquetaCorBst($valor);
             } else {
-                $linha[] = $valor;
+                $linha[] = $valor; 
             }
         }
 

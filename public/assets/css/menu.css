@@ -78,7 +78,7 @@ div.dt-button-collection.dtb-collection-closeable {
 }
 
 .acc_base {
-    height: calc(100vh - 13rem);
+    height: calc(100vh - 16rem);
     overflow-y: hidden;
     overflow-x: hidden;
     display: inline-block;
@@ -222,20 +222,20 @@ a .men_nome,
 
 .accordion-button.menu:not(.collapsed),
 .accordion-button.submenu:not(.collapsed) {
-    /* border:1px groove grey; */
+    border:1px groove grey;
 }
 
 .accordion-button.submenu {
-    /* background-color: lightcyan; */
+    background-color: lightcyan;
     box-shadow: inset 0 calc(-1 * var(--bs-accordion-border-width)) 0 var(--bs-accordion-border-color);
 }
 
 .accordion-item {
-    /* border:1px groove grey; */
+    border:1px groove grey;
 }
 
 .accordion-item>accordion-item {
-    /* border:0.75px inset grey; */
+    border:0.75px inset grey;
 }
 
 
@@ -316,7 +316,8 @@ a .men_nome,
 .nav-dropdown-menu.active a,
 .nav-dropdown-menu-etapa.active,
 .nav-dropdown-menu-etapa.active a {
-    background-color: var(--bs-accordion-btn-focus-border-color);
+    /* background-color: var(--bs-accordion-btn-focus-border-color); */
+    background-color: white;
     border-radius: 1rem;
     color: black;
     /* #0458eb;*/
@@ -326,7 +327,8 @@ a .men_nome,
 
 .nav-dropdown-menu:hover,
 .nav-dropdown-menu-etapa:hover {
-    background-color: var(--bs-white);
+    /* background-color: var(--bs-white); */
+    background-color: white;
     color: black;
     /* #0458eb;*/
     border-radius: 1rem;

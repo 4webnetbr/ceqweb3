@@ -54,6 +54,9 @@ class Produto extends BaseController
      */
     public function index()
     {
+        // $integ = new WsCeqweb();
+        // $integ->integraProduto();
+
         $this->data['colunas'] = montaColunasLista($this->data, 'pro_id');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
@@ -66,8 +69,6 @@ class Produto extends BaseController
      */
     public function lista()
     {
-        // $integ = new WsCeqweb();
-        // $integ->integraProduto();
 
         //if (!$produto = cache('produto')) {
         $campos = montaColunasCampos($this->data, 'pro_id');

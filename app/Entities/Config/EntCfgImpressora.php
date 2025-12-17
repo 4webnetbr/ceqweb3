@@ -2,7 +2,7 @@
 
 namespace App\Entities\Config;
 
-use CodeIgniter\Entity\Entity;
+use CodeIgniter\Entity\Entity; 
 use App\Libraries\MyCampo;
 
 class EntCfgImpressora extends Entity

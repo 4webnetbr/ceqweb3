@@ -28,28 +28,7 @@ Class CfgImpressora extends BaseController
     function __erro(){
         echo view('vw_semacesso', $this->data);
     }
-
-    /**
-     * Listagem
-     * lista
-     *
-     * @return void
-     */
-    public function lista()
-    {
-        // if (!$Impressora = cache('Impressora')) {
-            $campos = montaColunasCampos($this->data, 'imp_id');
-            $dados_tela = $this->impressora->getImpressora();
-            // $this->data['exclusao'] = false; // quando não quer mostrar o botão de exclusão
-            $Impressora = [
-                'data' => montaListaColunas($this->data, 'imp_id', $dados_tela, $campos[1]),
-            ];
-            cache()->save('Impressora', $Impressora, 60000);
-        // }
-        echo json_encode($Impressora);
-    }
-
-
+    
     /**
      * Tela de Abertura
      * index
@@ -60,23 +39,41 @@ Class CfgImpressora extends BaseController
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
     }
+    /**
+     * Listagem
+     * lista
+     *
+     * @return void
+     */
+    public function lista()
+    {
+        // if (!$Impressora = cache('Impressora')) { 
+            $campos = montaColunasCampos($this->data, 'imp_id');
+            $dados_tela = $this->impressora->getImpressora();
+            // $this->data['exclusao'] = false; // quando não quer mostrar o botão de exclusão
+            $Impressora = [
+                'data' => montaListaColunasEnt($this->data, 'imp_id', $dados_tela, $campos[1]),
+            ];
+            cache()->save('Impressora', $Impressora, 60000);
+        // }
+        echo json_encode($Impressora);
+    }
+
+
 
 
     public function add($modal = false)
     {
-        $entity = new EntCfgImpressora();
+        $impr = new EntCfgImpressora();
     
-        $fields = $entity->campos;
-    
-        $secao[0] = 'Dados Gerais';
-        $campos[0][] = $fields['imp_id'];
-        $campos[0][] = $fields['imp_nome'];
-        $campos[0][] = $fields['imp_ip'];
-        $campos[0][] = $fields['imp_porta'];
-    
-        $this->data['secoes']  = $secao;
-        $this->data['campos']  = $campos;
-        $this->data['destino'] = 'store';
+        $this->data['secoes']     = ['Dados Gerais'];
+        $this->data['campos']     = [[
+            $impr->campos['imp_id'],
+            $impr->campos['imp_nome'],
+            $impr->campos['imp_ip'],
+            $impr->campos['imp_porta']
+        ]];
+        $this->data['destino']    = 'store';
     
         echo view($modal ? 'vw_edicao_modal' : 'vw_edicao', $this->data);
     }
@@ -87,25 +84,25 @@ Class CfgImpressora extends BaseController
     }
 
 
-    public function edit($id)
+    public function edit($id, $show = false)
     {
-        $entity = $this->impressora->find($id);
+        $impr = $this->impressora->find($id);
     
-        if (!$entity) {
+        if (!$impr) {
             throw new \Exception('Impressora não encontrada');
         }
     
-        $fields = $entity->campos;
-    
-        $secao[0] = 'Dados Gerais';
-        $campos[0][] = $fields['imp_id'];
-        $campos[0][] = $fields['imp_nome'];
-        $campos[0][] = $fields['imp_ip'];
-        $campos[0][] = $fields['imp_porta'];
-    
-        $this->data['secoes']  = $secao;
-        $this->data['campos']  = $campos;
-        $this->data['destino'] = 'store';
+        $impr->campos = $impr->defCampos($show);
+
+        $this->data['secoes']     = ['Dados Gerais'];
+        $this->data['campos']     = [[
+            $impr->campos['imp_id'],
+            $impr->campos['imp_nome'],
+            $impr->campos['imp_ip'],
+            $impr->campos['imp_porta']
+        ]];
+        $this->data['destino']    = 'store';
+
         $this->data['log']     = buscaLog('cfg_impressora', $id);
     
         echo view('vw_edicao', $this->data);
@@ -156,33 +153,37 @@ Class CfgImpressora extends BaseController
     {
         $ret = [];
         $postado = $this->request->getPost();
-        $erros = [];
+
+        $impr = new EntCfgImpressora($postado); // cria a Entity
+        
         $exists = $this->common->verificaUnico($this->impressora, 'imp_nome', $postado['imp_nome'], 'imp_id', $postado['imp_id']);
+
         if ($exists > 0) {
             $ret['erro'] = true;
             $ret['msg'] = 8;
-            $erros = [8];
         } else {
-            if ($this->impressora->save($postado)) {
-                $ret['erro'] = false;
-            } else {
-                $erros = $this->impressora->errors();
-                $ret['erro'] = true;
-            }
-        }
+            $this->impressora->transBegin();
 
-        if ($ret['erro']) { 
-            $ret['msg']  = 'Não foi possível gravar a Impressora, Verifique!<br><br>';
-            foreach ($erros as $erro) {
-                $ret['msg'] .= $erro . '<br>';
-                if (is_numeric($erro)) {
-                    $ret['msg'] = $erro;
+            try {
+                if (!$this->impressora->save($impr)) {
+                    throw new \Exception(implode(' ', $this->impressora->errors()));
                 }
+                $this->impressora->transCommit();
+                cache()->clean();
+                session()->setFlashdata('msg', 'Impressora gravada com Sucesso!!!');
+
+                $ret = [
+                    'erro' => false,
+                    'msg'  => 'Impressora gravada com Sucesso!!!',
+                    'url'  => site_url($this->data['controler'])
+                ];
+            } catch (\Throwable $e) {
+                $this->impressora->transRollback();
+                $ret = [
+                    'erro' => true,
+                    'msg'  => $e->getMessage() ?: 'Não foi possível gravar a Impressora, Verifique!<br><br>'
+                ];
             }
-        } else {
-            $ret['msg']  = 'Impressora gravada com Sucesso!!!';
-            session()->setFlashdata('msg', $ret['msg']);
-            $ret['url']  = site_url($this->data['controler']);
         }
         echo json_encode($ret);
     }

@@ -12,7 +12,7 @@ class ConfigEmpresaModel extends Model
     protected $table            = 'cfg_empresa';
     protected $view             = 'cfg_empresa';
     protected $primaryKey       = 'emp_codfil';
-    protected $useAutoIncremodt = false;
+    protected $useAutoIncrement = false;
 
     protected $returnType       = EntCfgEmpresa::class;
     protected $useSoftDeletes   = false;
@@ -24,7 +24,7 @@ class ConfigEmpresaModel extends Model
         'emp_sigfil',                                  
         'emp_numcgc',            
         'emp_insest'
-    
+
         ];
 
     // Callbacks
@@ -32,7 +32,6 @@ class ConfigEmpresaModel extends Model
     protected $afterInsert    = ['depoisInsert'];
     protected $afterUpdate    = ['depoisUpdate'];
     protected $afterDelete    = ['depoisDelete'];
-
     // protected $logdb;
 
     /**

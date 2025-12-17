@@ -12,7 +12,7 @@ class ConfigImpressoraModel extends Model
     protected $table            = 'cfg_impressora';
     protected $view             = 'cfg_impressora';
     protected $primaryKey       = 'imp_id';
-    protected $useAutoIncremodt = true;
+    protected $useAutoIncrement = true;
 
     protected $returnType       = EntCfgImpressora::class;
     protected $useSoftDeletes   = true;
@@ -66,7 +66,6 @@ class ConfigImpressoraModel extends Model
         return $data;
     }
 
-
     /**
      * This method saves the session "usu_id" value to "updated_by" array element before
      * the row is inserted into the database.
@@ -77,7 +76,6 @@ class ConfigImpressoraModel extends Model
         (new LogMonModel())->insertLog($this->table, 'Alteração', $data['id'][0], $data['data']);
         return $data;
     }
-
 
     /**
      * This method saves the session "usu_id" value to "deletede_by" array element before
@@ -91,37 +89,40 @@ class ConfigImpressoraModel extends Model
     }
 
 
-    public function getImpressora($imp_id = false)
+    public function getImpressora($imp_id = null)
     {
-        $this->builder()->select('*');
+        $builder = $this->builder();
+        $builder->where('imp_excluido', null);
+
         if ($imp_id) {
-            $this->builder()->where('imp_id', $imp_id);
+            $builder->where('imp_id', $imp_id);
+            return $builder->get()->getFirstRow(); 
         }
-        $this->builder()->where('imp_excluido', null);
-        $this->builder()->orderBy('imp_nome');
-        return $this->builder()->get()->getResult();
+
+        $builder->orderBy('imp_nome');
+        return $builder->get()->getResult(); 
     }
 
 
-    public function getImpressoraId($imp_id = false)
-    {
-        $this->builder()->select('*');
-        if ($imp_id) {
-            $this->builder()->where('imp_id', $imp_id);
-        }
-        $this->builder()->where('imp_excluido', null);
-        $this->builder()->orderBy('imp_id');
-        return $this->builder()->get()->getResult();
-    }
+    // public function getImpressoraId($imp_id = false)
+    // {
+    //     $this->builder()->select('*');
+    //     if ($imp_id) {
+    //         $this->builder()->where('imp_id', $imp_id);
+    //     }
+    //     $this->builder()->where('imp_excluido', null);
+    //     $this->builder()->orderBy('imp_id');
+    //     return $this->builder()->get()->getResult();
+    // }
 
 
     public function getImpressoraSearch($termo)
     {
-        $array = ['imp_nome' => $termo . '%'];
-        $this->builder()->select(['imp_id', 'imp_nome']);
-        $this->builder()->where('imp_excluido', null);
-        $this->builder()->like($array);
-
-        return $this->builder()->get()->getResult();
+        return $this->builder()
+            ->select(['imp_id', 'imp_nome'])
+            ->where('imp_excluido', null)
+            ->like('imp_nome', $termo)
+            ->get()
+            ->getResult();
     }
 }

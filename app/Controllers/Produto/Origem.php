@@ -43,6 +43,9 @@ class Origem extends BaseController
      */
     public function index()
     {
+        // $integ = new WsCeqweb();
+        // $integ->integraOrigem();
+
         $this->data['colunas'] = montaColunasLista($this->data, 'ori_codOri,');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
@@ -54,8 +57,6 @@ class Origem extends BaseController
     public function lista()
     {
         // if (!$origems = cache('origems')) {
-            // $integ = new WsCeqweb();
-            // $integ->integraOrigem();
     
             $campos = montaColunasCampos($this->data, 'ori_codOri');
             $dados_tela = $this->origems->getOrigem();
@@ -68,8 +69,6 @@ class Origem extends BaseController
     }
 
     public function show($id){
-        // $integ = new WsCeqweb();
-        // $integ->integraOrigem();
 
 		$dados_origems = $this->origems->getOrigem($id);
         $fields = $this->origems->defCampos($dados_origems[0], true);

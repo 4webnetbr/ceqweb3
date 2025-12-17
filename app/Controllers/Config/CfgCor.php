@@ -2,14 +2,16 @@
 
 namespace App\Controllers\Config;
 
+use App\Models\CommonModel;
+use App\Entities\Config\EntCfgCor;
 use App\Controllers\BaseController;
 use App\Models\Config\ConfigCorModel;
-use App\Entities\Config\EntCfgCor;
 
 class CfgCor extends BaseController
 {
     public $permissao = '';
     public $cores;
+    public $common;
 
     /** @var array<string, mixed> */
     public array $data = [];
@@ -24,6 +26,7 @@ class CfgCor extends BaseController
         $this->data      = session()->getFlashdata('dados_tela');
         $this->permissao = $this->data['permissao'];
         $this->cores = new ConfigCorModel();
+        $this->common       = new CommonModel();
 
 
         if ($this->data['erromsg'] != '') {
@@ -194,65 +197,35 @@ class CfgCor extends BaseController
 
         $cor = new EntCfgCor($postado); // cria a Entity
 
-        $this->cores->transBegin();
+        $exists = $this->common->verificaUnico($this->cores, 'cor_nome', $postado['cor_nome'], 'cor_id', $postado['cor_id']);
 
-        try {
-            if (!$this->cores->save($cor)) {
-                throw new \Exception(implode(' ', $this->cores->errors()));
+        if ($exists > 0) {
+            $ret['erro'] = true;
+            $ret['msg'] = 8;
+        } else {
+            $this->cores->transBegin();
+
+            try {
+                if (!$this->cores->save($cor)) {
+                    throw new \Exception(implode(' ', $this->cores->errors()));
+                }
+                $this->cores->transCommit();
+                cache()->clean();
+                session()->setFlashdata('msg', 'Cor gravada com Sucesso!!!');
+
+                $ret = [
+                    'erro' => false,
+                    'msg'  => 'Cor gravada com Sucesso!!!',
+                    'url'  => site_url($this->data['controler'])
+                ];
+            } catch (\Throwable $e) {
+                $this->cores->transRollback();
+                $ret = [
+                    'erro' => true,
+                    'msg'  => $e->getMessage() ?: 'Erro ao salvar cor.'
+                ];
             }
-            $this->cores->transCommit();
-            cache()->clean();
-            session()->setFlashdata('msg', 'Cor gravada com Sucesso!!!');
-
-            $ret = [
-                'erro' => false,
-                'msg'  => 'Cor gravada com Sucesso!!!',
-                'url'  => site_url($this->data['controler'])
-            ];
-        } catch (\Throwable $e) {
-            $this->cores->transRollback();
-            $ret = [
-                'erro' => true,
-                'msg'  => $e->getMessage() ?: 'Erro ao salvar cor.'
-            ];
         }
-
         echo json_encode($ret);
-
-
-        // $erros = [];
-        // $this->cores->transBegin();
-
-        // try {
-        //     // Gravação da etiqueta
-        //     if (!$this->cores->save($postado)) {
-        //         throw new \Exception(implode(' ', $this->cores->errors()));
-        //     }
-        // } catch (\Exception $e) {
-        //     // Em caso de erro, reverte a transação
-        //     $this->cores->transRollback();
-        //     $ret['erro'] = true;
-        //     $ret['msg'] = $e->getMessage();
-        // }
-        // if ($ret['erro']) {
-        //     if (!is_numeric($ret['msg'])) {
-        //         if (count($erros) > 0 && is_numeric($erros[0])) {
-        //             $ret['msg'] = $erros[0];
-        //         } else {
-        //             $ret['msg']  = 'Não foi possível gravar Cor, Verifique!<br><br>';
-        //             foreach ($erros as $erro) {
-        //                 $ret['msg'] .= $erro . '<br>';
-        //             }
-        //         }
-        //     }
-        // } else {
-        //     cache()->clean();
-        //     $this->cores->transCommit();
-        //     $ret['msg']  = 'Cor gravada com Sucesso!!!';
-        //     session()->setFlashdata('msg', $ret['msg']);
-        //     $ret['url']  = site_url($this->data['controler']);
-        // }
-
-        // echo json_encode($ret);
     }
 }

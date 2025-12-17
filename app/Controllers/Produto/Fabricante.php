@@ -43,7 +43,10 @@ class Fabricante extends BaseController
      */
     public function index()
     {
-        $this->data['colunas'] = montaColunasLista($this->data, 'fab_codFab,');
+            $integ = new WsCeqweb();
+            $integ->integraFabricante();
+
+            $this->data['colunas'] = montaColunasLista($this->data, 'fab_codFab,');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
     }
@@ -54,8 +57,6 @@ class Fabricante extends BaseController
     public function lista()
     {
         // if (!$fabricantes = cache('fabricantes')) {
-            $integ = new WsCeqweb();
-            $integ->integraFabricante();
     
             $campos = montaColunasCampos($this->data, 'fab_codFab');
             $dados_tela = $this->fabricantes->getFabricante();
@@ -68,8 +69,6 @@ class Fabricante extends BaseController
     }
 
     public function show($id){
-        // $integ = new WsCeqweb();
-        // $integ->integraFabricante();
 
 		$dados_fabricantes = $this->fabricantes->getFabricante($id);
         $fields = $this->fabricantes->defCampos($dados_fabricantes[0], true);
