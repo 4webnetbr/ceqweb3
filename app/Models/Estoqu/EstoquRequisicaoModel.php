@@ -170,6 +170,15 @@ class EstoquRequisicaoModel extends Model
         $id->valor    = (isset($dados['req_id'])) ? $dados['req_id'] : '';
         $id->leitura  = $show;
         $ret['req_id']    = $id->crOculto();
+        
+        $num                 =  new MyCampo('est_requisicao', 'req_id', true);
+        $num->valor          = (isset($dados['req_id'])) ? str_pad($dados['req_id'], 6, '0', STR_PAD_LEFT) : '';
+        $num->label          = 'Requisição Nº';
+        $num->leitura        = true;
+        $num->dispForm       = 'col-6';
+        $num->classep        = 'mb3';
+        $ret['req_numero']   = $num->crInput();
+
 
         $hoje = new DateTime();
         $data                 = new MyCampo('est_requisicao', 'req_data', false);

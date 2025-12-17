@@ -82,25 +82,28 @@ class Inspecao extends BaseController
     {
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
-        $dados_requis = $this->requisicao->getRequisicaoLista(false, [18,21]);
+        $dados_requis = $this->requisicao->getRequisicaoLista(false, [25]);
         $dados_requis = filtrarRequisicoesPorPerfil($dados_requis);
-        $req_ids_assoc = array_column($dados_requis, 'req_id');
-        $log = buscaLogTabela('est_requisicao', $req_ids_assoc);
+        // debug($dados_requis, true);
+        if($dados_requis){
+            $req_ids_assoc = array_column($dados_requis, 'req_id');
+            $log = buscaLogTabela('est_requisicao', $req_ids_assoc);
 
-        $base_url = base_url($this->data['controler']);
-        foreach ($dados_requis as &$req) {
-            // Verificar se o log já está disponível para esse ana_id
-            if ($req['req_id']) {
-                $req['usu_nome'] = $log[$req['req_id']]['usua_alterou'] ?? '';
-                // Concatenar o URL de forma mais eficiente
-                $url_con = $base_url .'/confere/' . $req['req_id'];
-                // Gerar a ação do botão
-                $req['acao_person'] = [
-                    "<button class='btn btn-outline-success btn-sm border-0 mx-0 fs-0' 
-            data-mdb-toggle='tooltip' data-mdb-placement='top' 
-            title='Conferência' onclick='redireciona(\"$url_con\")'>
-            <i class='fas fa-check'></i></button>",
-                ];
+            $base_url = base_url($this->data['controler']);
+            foreach ($dados_requis as &$req) {
+                // Verificar se o log já está disponível para esse ana_id
+                if ($req['req_id']) {
+                    $req['usu_nome'] = $log[$req['req_id']]['usua_alterou'] ?? '';
+                    // Concatenar o URL de forma mais eficiente
+                    $url_con = $base_url .'/inspeciona/' . $req['req_id'];
+                    // Gerar a ação do botão
+                    $req['acao_person'] = [
+                        "<button class='btn btn-outline-success btn-sm border-0 mx-0 fs-0' 
+                data-mdb-toggle='tooltip' data-mdb-placement='top' 
+                title='Conferência' onclick='redireciona(\"$url_con\")'>
+                <i class='fas fa-check'></i></button>",
+                    ];
+                }
             }
         }
         // debug($dados_requis, true);
@@ -113,63 +116,13 @@ class Inspecao extends BaseController
 
         echo json_encode($requis);
     }
-    /**
-     * Inclusão
-     * add
-     *
-     * @return void
-     */
-    // public function add()
-    // {
-    //     $fields = $this->requisicao->defCampos();
-    //     $secao[0] = 'Dados Gerais';
-    //     $campos[0][0] = $fields['req_id'];
-    //     $campos[0][count($campos[0])] = $fields['req_data'];
-    //     $campos[0][count($campos[0])] = $fields['req_dataentrega'];
-    //     $campos[0][count($campos[0])] = $fields['tmo_id'];
-    //     $campos[0][count($campos[0])] = $fields['req_repetedias'];
-    //     $campos[0][count($campos[0])] = $fields['req_deporigem'];
-    //     $campos[0][count($campos[0])] = $fields['req_depdestino'];
-    //     $campos[0][count($campos[0])] = $fields['req_consdiaanterior'];
-    //     $campos[0][count($campos[0])] = $fields['req_medconsumodias'];
-    //     $campos[0][count($campos[0])] = $fields['req_meddias'];
-    //     $campos[0][count($campos[0])] = $fields['req_percseguranca'];
-    //     $campos[0][count($campos[0])] = $fields['pro_id'];
-    //     $campos[0][count($campos[0])] = $fields['req_observacao'];
-    //     $campos[0][count($campos[0])] = $fields['bt_carregar'];
-
-    //     $secao[1] = 'Produtos';
-    //     $campos[1][0] = '';
-
-    //     $envr          = new MyCampo();
-    //     $envr->nome    = 'bt_envia';
-    //     $envr->id      = 'bt_envia';
-    //     $envr->i_cone  = '<div class="align-items-center py-1 text-start float-start font-weight-bold" style="">
-    //                         <i class="fa-regular fa-paper-plane" style="font-size: 2rem;" aria-hidden="true"></i></div>';
-    //     $envr->i_cone  .= '<div class="align-items-start txt-bt-manut">Enviar Requisição</div>';
-    //     $envr->place    = 'Enviar Requisição';
-    //     $envr->funcChan = 'enviarRequisicoes(1)';
-    //     $envr->classep  = 'btn-success bt-manut btn-sm mb-2 float-end';
-    //     $this->bt_envia = $envr->crBotao();
-
-    //     $this->data['botao'] = $this->bt_envia;
-    //     $this->data['title']     = 'Requisição';
-    //     $this->data['secoes']     = $secao;
-    //     $this->data['campos']     = $campos;
-    //     $this->data['destino']    = 'store';
-    //     $this->data['scripts']  = 'my_requisicao';
-
-    //     $this->data['script']   = "<script>mostraOcultaCampo('req_consdiaanterior', 'N', 'req_medconsumodias,req_meddias');mudaCheck2opcoes('req_consdiaanterior', 'req_medconsumodias');atualizarEstadoBotaoSalvar();</script>";
-
-    //     echo view('vw_edicao', $this->data);
-    // }
 
     public function show($id){
         return redirect()->to('/Requisicao/show/'.$id);
     }
 
     public function edit($id, $show = false){
-        $this->confere($id, $show = true);
+        $this->inspeciona($id, $show = true);
     }
     /**
      * Atenndimento
@@ -178,7 +131,7 @@ class Inspecao extends BaseController
      * @param mixed $id 
      * @return void
      */
-    public function confere($id, $show = true)
+    public function inspeciona($id, $show = true)
     {
         $requisicao = $this->requisicao->getRequisicao($id)[0];
         
@@ -191,12 +144,13 @@ class Inspecao extends BaseController
         $fields = $this->requisicao->defCampos($requisicao, $show, 'conf');
         // debug($fields, true);
         $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['req_id']; 
-        $campos[0][count($campos[0])] = $fields['req_data'];
-        $campos[0][count($campos[0])] = $fields['req_dataentrega'];
-        $campos[0][count($campos[0])] = $fields['tmo_id'];
-        $campos[0][count($campos[0])] = "<div class='col-6'>.</div>";
-        $campos[0][count($campos[0])] = $fields['lot_codbar'];
+        $campos[0][] = $fields['req_id']; 
+        $campos[0][] = $fields['req_numero']; 
+        $campos[0][] = $fields['req_data'];
+        $campos[0][] = $fields['req_dataentrega'];
+        $campos[0][] = $fields['tmo_id'];
+        $campos[0][] = "<div class='col-6'>.</div>";
+        // $campos[0][count($campos[0])] = $fields['lot_codbar'];
         
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
         // debug($produtos, true);
@@ -274,11 +228,11 @@ class Inspecao extends BaseController
             $resultado[$p]['saldo'] = intval($prod['rpa_atendida']) - intval($prod['rpa_conferida']);
         }
         // $secao[1] = 'Produtos';
-        $campos[0][count($campos[0])] = view('partials/pw_produtos_conferencia',['produtos' => $resultado]); // mesma estrutura do add()
+        $campos[0][] = view('partials/pw_produtos_inspecao',['produtos' => $resultado]); // mesma estrutura do add()
 
 
         $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
-        $this->data['desc_metodo']     = ' Conferência de ';
+        $this->data['desc_metodo']     = ' Inspeção de ';
         $this->data['secoes']    = $secao;
         $this->data['campos']    = $campos;
         $this->data['destino']   = 'store'; // ou 'update' se você for criar

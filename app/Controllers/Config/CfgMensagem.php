@@ -2,21 +2,24 @@
 
 namespace App\Controllers\Config;
 
+use App\Models\CommonModel;
 use App\Controllers\BaseController;
-use App\Libraries\MyCampo;
 use App\Models\Config\ConfigMensagemModel;
+use App\Entities\Config\EntCfgMensagem;
 
 Class CfgMensagem extends BaseController
 {
-    public $data = [];
+    public $data      = [];
     public $permissao = '';
     public $mensagem;
+    public $common;
 
     public function __construct()
     {
-		$this->data         = session()->getFlashdata('dados_tela');
-        $this->permissao    = $this->data['permissao'];
-		$this->mensagem 		= new ConfigMensagemModel();
+		$this->data       = session()->getFlashdata('dados_tela');
+        $this->permissao  = $this->data['permissao'];
+        $this->common     = new CommonModel();
+		$this->mensagem   = new ConfigMensagemModel();
         if ($this->data['erromsg'] != '') {
             $this->__erro();
         }
@@ -32,7 +35,7 @@ Class CfgMensagem extends BaseController
      */
     public function index()
     {
-        $this->data['colunas'] = montaColunasLista($this->data, 'msg_id,');
+        $this->data['colunas']   = montaColunasLista($this->data, 'msg_id,');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
     }
@@ -45,63 +48,59 @@ Class CfgMensagem extends BaseController
      */
     public function lista()
     {
-        // if (!$mensagem = cache('mensagem')) {
             $campos = montaColunasCampos($this->data, 'msg_id');
             $dados_tela = $this->mensagem->getMensagem();
-            $this->data['exclusao'] = false; // quando não quer mostrar o botão de exclusão
             $mensagem = [
-                'data' => montaListaColunas($this->data, 'msg_id', $dados_tela, $campos[1]),
+                'data' => montaListaColunasEnt($this->data, 'msg_id', $dados_tela, $campos[1]),
             ];
             cache()->save('mensagem', $mensagem, 60000);
-        // }
         echo json_encode($mensagem);
     }
 
     public function add($modal = false)
     {
-        $fields = $this->mensagem->defCampos();
-
-        $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['msg_id'];
-        $campos[0][1] = $fields['msg_titulo'];
-        $campos[0][2] = $fields['msg_tipo'];
-        $campos[0][3] = $fields['msg_cor'];
-        $campos[0][4] = $fields['msg_mensagem'];
-        // $campos[0][5] = $fields['msg_ativo'];
-       
-		$this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
-		$this->data['destino']    = 'store';
-
-        if(!$modal){
-            echo view('vw_edicao', $this->data);
-        } else {
-            // $this->data['destino']    = 'store/modal';
-            echo view('vw_edicao_modal', $this->data);
-        }
+        $men = new EntCfgMensagem();
+    
+        $this->data['secoes']     = ['Dados Gerais'];
+        $this->data['campos']     = [[
+            $men->campos['msg_id'],
+            $men->campos['msg_titulo'],
+            $men->campos['msg_tipo'],
+            $men->campos['msg_cor'],
+            $men->campos['msg_mensagem']
+            ]];
+        $this->data['destino']    = 'store';
+    
+        echo view($modal ? 'vw_edicao_modal' : 'vw_edicao', $this->data);
     }
+
+
     public function show($id){
         $this->edit($id, true);
     }
-    public function edit($id, $show= false){
-		$dados_mensagem = $this->mensagem->find($id);
-        $fields = $this->mensagem->defCampos($dados_mensagem, $show);
 
-        $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['msg_id'];
-        $campos[0][1] = $fields['msg_titulo'];
-        $campos[0][2] = $fields['msg_tipo'];
-        $campos[0][3] = $fields['msg_cor'];
-        $campos[0][4] = $fields['msg_mensagem'];
-        // $campos[0][5] = $fields['msg_ativo'];
 
-		$this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
-		$this->data['destino']    = 'store';
+    public function edit($id, $show = false)
+    {
+        $men = $this->mensagem->find($id);
+    
+        if (!$men) {
+            throw new \Exception('Impressora não encontrada');
+        }
+    
+        $men->campos = $men->defCampos($show);
 
-        // BUSCAR DADOS DO LOG
-        $this->data['log'] = buscaLog('cfg_mensagem', $id);
-
+        $this->data['secoes'] = ['Dados Gerais'];
+        $this->data['campos'] = [[
+            $men->campos['msg_id'],
+            $men->campos['msg_titulo'],
+            $men->campos['msg_tipo'],
+            $men->campos['msg_cor'],
+            $men->campos['msg_mensagem']
+            ]];
+        $this->data['destino']    = 'store';
+        $this->data['log']     = buscaLog('cfg_impressora', $id);
+    
         echo view('vw_edicao', $this->data);
     }
 
@@ -146,25 +145,38 @@ Class CfgMensagem extends BaseController
 
     public function store()
     {
-        $ret = [];
+        $ret     = [];
         $postado = $this->request->getPost();
-        $erros = [];
-        if ($this->mensagem->save($postado)) {
-            $ret['erro'] = false;
-        } else {
-            $erros = $this->mensagem->errors();
-            $ret['erro'] = true;
-        }
+        $men    = new EntCfgMensagem($postado);
 
-        if ($ret['erro']) { 
-            $ret['msg']  = 'Não foi possível gravar a Mensagem, Verifique!<br><br>';
-            foreach ($erros as $erro) {
-                $ret['msg'] .= $erro . '<br>';
-            }
+        $exists = $this->common->verificaUnico($this->mensagem, 'msg_titulo', $postado['msg_titulo'], 'msg_id', $postado['msg_id']);
+
+        if ($exists > 0) {
+            $ret['erro'] = true;
+            $ret['msg']  = 8;
         } else {
-            $ret['msg']  = 'Mensagem gravada com Sucesso!!!';
-            session()->setFlashdata('msg', $ret['msg']);
-            $ret['url']  = site_url($this->data['controler']);
+            $this->mensagem->transBegin();
+
+            try {
+                if (!$this->mensagem->save($men)) {
+                    throw new \Exception(implode(' ', $this->mensagem->errors()));
+                }
+                $this->mensagem->transCommit();
+                cache()->clean();
+                session()->setFlashdata('msg', 'Mensagem gravada com Sucesso!!!');
+
+                $ret = [
+                    'erro' => false,
+                    'msg'  => 'Mensagem gravada com Sucesso!!!',
+                    'url'  => site_url($this->data['controler'])
+                ];
+            } catch (\Throwable $e) {
+                $this->mensagem->transRollback();
+                $ret = [
+                    'erro' => true,
+                    'msg'  => $e->getMessage() ?: 'Não foi possível gravar a Mensagem, Verifique!<br><br>'
+                ];
+            }
         }
         echo json_encode($ret);
     } 

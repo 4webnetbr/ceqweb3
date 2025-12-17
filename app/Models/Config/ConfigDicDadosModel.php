@@ -31,7 +31,7 @@ class ConfigDicDadosModel extends Model
      * @param mixed $grupo
      * @return array
      */
-    public function getTabelas($nome_tabela = false, $grupo = 'default')
+    public function getTabelas($nome_tabela = false)
     {
         $this->DBGroup          = 'dbEstoque';
 

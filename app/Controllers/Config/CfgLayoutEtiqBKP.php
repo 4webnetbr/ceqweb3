@@ -2,18 +2,17 @@
 
 namespace App\Controllers\Config;
 
-use App\Models\CommonModel;
-use App\Entities\Config\EntCfgLayout;
 use App\Controllers\BaseController;
 use App\Models\Config\ConfigEtiquetaModel;
 use App\Models\Config\ConfigLayoutEtiqModel;
+
+use function PHPUnit\Framework\isNan;
 
 class CfgLayoutEtiq extends BaseController
 {
     public $data = [];
     public $permissao = '';
     public $layetiqueta;
-    public $common;
 
     /**
      * Construtor da Classe
@@ -24,7 +23,6 @@ class CfgLayoutEtiq extends BaseController
         $this->data      = session()->getFlashdata('dados_tela');
         $this->permissao = $this->data['permissao'];
         $this->layetiqueta = new ConfigLayoutEtiqModel();
-        $this->common      = new CommonModel();
 
         if ($this->data['erromsg'] != '') {
             $this->__erro();
@@ -61,15 +59,13 @@ class CfgLayoutEtiq extends BaseController
         $dados_layetiq = $this->layetiqueta->getListaLayouts();
         $this->data['exclusao'] = false;
         $layetiq = [
-            'data' => montaListaColunasEnt($this->data, 'let_id', $dados_layetiq, $campos[1]),
+            'data' => montaListaColunas($this->data, 'let_id', $dados_layetiq, $campos[1]),
         ];
         cache()->save('layetiq', $layetiq, 60000);
         // }
 
         echo json_encode($layetiq);
     }
-
-
     /**
      * Inclusão
      * add
@@ -78,27 +74,27 @@ class CfgLayoutEtiq extends BaseController
      */
     public function add()
     {
-        $lay = new EntCfgLayout();
-    
-        $this->data['secoes'] = ['Dados Gerais'];
-    
-        $this->data['campos'] = [[
-            $lay->campos['let_id'],
-            $lay->campos['let_nome'],
-            $lay->campos['let_altura'],
-            $lay->campos['let_largura'],
-            $lay->campos['let_colunas'],
-            $lay->campos['let_linhas'],
-            $lay->campos['let_marg_esquerda'],
-            $lay->campos['let_marg_direita'],
-            $lay->campos['let_distancia_h'],
-            $lay->campos['let_marg_superior'],
-            $lay->campos['let_marg_inferior'],
-            $lay->campos['let_distancia_v'],
-        ]];
-        
-        $this->data['destino'] = 'store';
-        
+        $fields = $this->layetiqueta->defCampos();
+
+        $secao[0] = 'Dados Gerais';
+        $campos[0] = [];
+        $campos[0][count($campos[0])] = $fields['let_id'];
+        $campos[0][count($campos[0])] = $fields['let_nome'];
+        $campos[0][count($campos[0])] = $fields['let_altura'];
+        $campos[0][count($campos[0])] = $fields['let_largura'];
+        $campos[0][count($campos[0])] = $fields['let_colunas'];
+        $campos[0][count($campos[0])] = $fields['let_linhas'];
+        $campos[0][count($campos[0])] = $fields['let_marg_esquerda'];
+        $campos[0][count($campos[0])] = $fields['let_marg_direita'];
+        $campos[0][count($campos[0])] = $fields['let_distancia_h'];
+        $campos[0][count($campos[0])] = $fields['let_marg_superior'];
+        $campos[0][count($campos[0])] = $fields['let_marg_inferior'];
+        $campos[0][count($campos[0])] = $fields['let_distancia_v'];
+
+        $this->data['secoes']     = $secao;
+        $this->data['campos']     = $campos;
+        $this->data['destino']    = 'store';
+
         echo view('vw_edicao', $this->data);
     }
     /**
@@ -108,40 +104,31 @@ class CfgLayoutEtiq extends BaseController
      * @param mixed $id 
      * @return void
      */
-    public function edit($id, $show = false)
+    public function edit($id)
     {
-        $lay = $this->layetiqueta->find($id);
-    
-        if (!$lay) {
-            throw new \Exception('Layout não encontrado');
-        }
-    
-        $lay->campos = $lay->defCampos($lay->toArray(), $show);
-    
-        $this->data['secoes'] = ['Dados Gerais'];
-    
-        $this->data['campos'] = [[
-            $lay->campos['let_id'],
-            $lay->campos['let_nome'],
-            $lay->campos['let_altura'],
-            $lay->campos['let_largura'],
-            $lay->campos['let_colunas'],
-            $lay->campos['let_linhas'],
-            $lay->campos['let_marg_esquerda'],
-            $lay->campos['let_marg_direita'],
-            $lay->campos['let_distancia_h'],
-            $lay->campos['let_marg_superior'],
-            $lay->campos['let_marg_inferior'],
-            $lay->campos['let_distancia_v'],
-        ]];
-    
-        $this->data['destino'] = 'store';
-        $this->data['log']     = buscaLog('cfg_layout_etiqueta', $id);
-    
+        $dados_etiqueta = $this->layetiqueta->find($id);
+        $fields = $this->layetiqueta->defCampos($dados_etiqueta);
+
+        $secao[0] = 'Dados Gerais';
+        $campos[0][0] = $fields['let_id'];
+        $campos[0][1] = $fields['let_nome'];
+        $campos[0][2] = $fields['let_altura'];
+        $campos[0][3] = $fields['let_largura'];
+        $campos[0][4] = $fields['let_colunas'];
+        $campos[0][5] = $fields['let_linhas'];
+        $campos[0][6] = $fields['let_marg_esquerda'];
+        $campos[0][7] = $fields['let_marg_direita'];
+        $campos[0][8] = $fields['let_distancia_h'];
+        $campos[0][9] = $fields['let_marg_superior'];
+        $campos[0][10] = $fields['let_marg_inferior'];
+        $campos[0][11] = $fields['let_distancia_v'];
+
+        $this->data['secoes']     = $secao;
+        $this->data['campos']     = $campos;
+        $this->data['destino']    = 'store';
+
         echo view('vw_edicao', $this->data);
     }
-
-
     public function ativinativ($id, $tipo)
     {
         if ($tipo == 1) {
@@ -171,8 +158,6 @@ class CfgLayoutEtiq extends BaseController
         }
         echo json_encode($ret);
     }
-
-
     /**
      * Exclusão
      * delete
@@ -206,10 +191,11 @@ class CfgLayoutEtiq extends BaseController
         $postado = $this->request->getPost();
         $erros = [];
 
+        // Inicia a transação
         $this->layetiqueta->transBegin();
 
         if (empty($postado['let_id'])) {
-            $exists = $this->common->verificaUnico($this->layetiqueta, 'let_nome', $postado['let_nome'], 'let_id', $postado['let_id']);
+            $exists = $this->common->verificaUnico($this->etiqueta, 'let_nome', $postado['let_nome'], 'let_id', $postado['let_id']);
             if ($exists > 0) {
                 $ret['erro'] = true;
                 $ret['msg'] = 8;
@@ -222,6 +208,7 @@ class CfgLayoutEtiq extends BaseController
                     throw new \Exception('Erro ao salvar os dados.');
                 }
 
+                // Commit se tudo der certo
                 $this->layetiqueta->transCommit();
                 cache()->clean();
 
@@ -230,6 +217,7 @@ class CfgLayoutEtiq extends BaseController
                 session()->setFlashdata('msg', $ret['msg']);
                 $ret['url']  = site_url($this->data['controler']);
             } catch (\Exception $e) {
+                // Se houver erro, faz rollback
                 $this->layetiqueta->transRollback();
 
                 $ret['erro'] = true;
@@ -243,8 +231,11 @@ class CfgLayoutEtiq extends BaseController
                             $ret['msg'] = $erro;
                         }
                     }
+                    // foreach ($erros as $erro) {
+                    //     $ret['msg'] .= (ctype_digit($erro)) ? $erro : $erro . '<br>';
+                    // }
                 } else {
-                    $ret['msg'] .= $e->getMessage(); 
+                    $ret['msg'] .= $e->getMessage(); // Mensagem genérica do erro
                 }
             }
         }

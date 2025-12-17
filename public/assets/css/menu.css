@@ -230,14 +230,19 @@ a .men_nome,
     box-shadow: inset 0 calc(-1 * var(--bs-accordion-border-width)) 0 var(--bs-accordion-border-color);
 }
 
+/* Remove borda de todos os accordion-item por padrão */
 .accordion-item {
-    border:1px groove grey;
+    border: none;
 }
 
-.accordion-item>accordion-item {
-    border:0.75px inset grey;
+/* Aplica borda somente aos accordion-item dentro de .acc_base */
+.acc_base .accordion-item {
+    border: 1px groove grey;
 }
 
+.accordion-collapse .accordion-item:has(.accordion-collapse.show) {
+    margin-bottom: 10px;
+}
 
 #show_user.active:after {
     content: "";

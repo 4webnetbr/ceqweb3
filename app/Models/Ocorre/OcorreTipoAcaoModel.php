@@ -3,10 +3,8 @@
 namespace App\Models\Ocorre;
 
 use CodeIgniter\Model;
-use App\Libraries\MyCampo;
 use App\Models\LogMonModel;
-use App\Models\Config\ConfigTelaModel;
-use App\Models\Config\ConfigModuloModel;
+use App\Entities\Ocorrencia\EntOcoTipoAcao;
 
 class OcorreTipoAcaoModel extends Model
 {
@@ -16,7 +14,7 @@ class OcorreTipoAcaoModel extends Model
     protected $primaryKey       = 'tpa_id';
     protected $useAutoIncremodt = true;
 
-    protected $returnType       = 'array';
+    protected $returnType       = EntOcoTipoAcao::class;
     protected $useSoftDeletes   = false;
 
     protected $allowedFields    = [
@@ -50,44 +48,26 @@ class OcorreTipoAcaoModel extends Model
 
     protected $logdb;
 
-    /**
-     * This method saves the session "usu_id" value to "created_by" and "updated_by" array
-     * elements before the row is inserted into the database.
-     *
-     */
+    
     protected function depoisInsert(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'];
-        $log = $logdb->insertLog($this->table, 'Incluído', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Incluído', $data['id'], $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "updated_by" array element before
-     * the row is inserted into the database.
-     *
-     */
     protected function depoisUpdate(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'][0];
-        $log = $logdb->insertLog($this->table, 'Alteração', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Alteração', $data['id'][0], $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "deletede_by" array element before
-     * the row is inserted into the database.
-     *
-     */
     protected function depoisDelete(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'][0];
-        $log = $logdb->insertLog($this->table, 'Excluído', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Excluído', $data['id'][0], $data['data']);
         return $data;
     }
+
+
 
     public function getTipoAcao($tpa_id = false)
     {
@@ -109,35 +89,4 @@ class OcorreTipoAcaoModel extends Model
 
         return $this->builder()->get()->getResultArray();
     }
-    
-
-    public function defCampos($dados = false, $show = false)
-    {
-        $ret = [];
-        $mid            = new MyCampo('oco_tipo_acao', 'tpa_id');
-        $mid->valor     = (isset($dados['tpa_id'])) ? $dados['tpa_id'] : '';
-        $ret['tpa_id']   = $mid->crOculto();
-
-        $nome           =  new MyCampo('oco_tipo_acao', 'tpa_nome');
-        $nome->valor    = (isset($dados['tpa_nome'])) ? $dados['tpa_nome'] : '';
-        $nome->obrigatorio = true;
-        $nome->leitura  = $show;
-        $ret['tpa_nome'] = $nome->crInput();
-
-        $opcex['1'] = 'Justificar';
-        $opcex['2'] = 'Listar Telas';
-        $opcex['3'] = 'Listar Movimentações';
-        $opcex['4'] = 'Listar Status';
-        $tipo           =  new MyCampo('oco_tipo_acao', 'tpa_tipo');
-        $tipo->valor    = (isset($dados['tpa_tipo'])) ? $dados['tpa_tipo'] : '';
-        $tipo->selecionado    = $tipo->valor;
-        $tipo->opcoes   = $opcex;
-        $tipo->dispForm     = 'col-2';
-        $tipo->classep     = 'mb-2';
-        $ret['tpa_tipo'] = $tipo->crRadio();
-
-        return $ret;
-    }
-
-    
 }

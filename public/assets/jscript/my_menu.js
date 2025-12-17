@@ -13,118 +13,6 @@ jQuery(document).ready(function () {
   atualizaMenu();
 });
 
-// function atualizaMenu() {
-//   acertamenuaberto();
-//   jQuery(".nav-dropdown-menu-etapa").each(function (index) {
-//     if (jQuery(this)[0].id == jQuery("#id_ref").val()) {
-//       jQuery(this).addClass("active");
-//     }
-//   });
-//   jQuery(".nav-dropdown-menu").each(function (index) {
-//     if (
-//       jQuery(this)[0].id.toLowerCase() ==
-//       jQuery("#controler").val().toLowerCase()
-//     ) {
-//       submenu = jQuery(this)[0].getAttribute("data-submenu");
-//       if (submenu) {
-//         collapsesub = jQuery(this)[0].getAttribute("data-collapse");
-//         botaosub = jQuery("#" + collapsesub)
-//           .parent()
-//           .children()
-//           .children("button")[0];
-
-//         if (jQuery("#" + submenu).length) {
-//           menu = jQuery("#" + submenu)[0].getAttribute("data-menu");
-//           collapse = jQuery("#" + submenu)[0].getAttribute("data-collapse");
-//           botao = jQuery("#" + collapse)
-//             .parent()
-//             .children()
-//             .children("button")[0];
-//         } else {
-//           collapse = jQuery(this)[0].getAttribute("data-collapse");
-//           botao = jQuery("#" + collapse)
-//             .parent()
-//             .children()
-//             .children("button")[0];
-//         }
-
-//         jQuery(botaosub).removeClass("collapsed");
-//         jQuery("#" + collapsesub).addClass("show");
-//       } else {
-//         collapse = jQuery(this)[0].getAttribute("data-collapse");
-//         botao = jQuery("#" + collapse)
-//           .parent()
-//           .children()
-//           .children("button")[0];
-//       }
-//       jQuery(botao).removeClass("collapsed");
-//       jQuery("#" + collapse).addClass("show");
-//       jQuery(this).addClass("active");
-//     } else {
-//       jQuery(botao).addClass("collapsed");
-//       jQuery("#" + collapse).removeClass("show");
-//       jQuery(this).removeClass("active");
-//     }
-//   });
-
-//   jQuery("#bt_user").on("click", function () {
-//     jQuery("#show_user").toggleClass("active");
-//   });
-//   jQuery(".content, .titulo").on("click", function () {
-//     if (jQuery("#show_user").hasClass("active")) {
-//       jQuery("#show_user").toggleClass("active");
-//       if (!menuaberto) {
-//         jQuery(".sidebar").toggleClass("active");
-//       }
-//     }
-//     if (jQuery("#show_ajuda").hasClass("show")) {
-//       jQuery("#bt_ajuda").trigger("click");
-//     }
-//     if (jQuery("#show_notifica").hasClass("show")) {
-//       jQuery("#bt_notifica").trigger("click");
-//     }
-//   });
-//   jQuery(".sidebar").hover(
-//     function () {
-//       if (!menuaberto) {
-//         if (!jQuery(".sidebar").hasClass("active")) {
-//           jQuery(".sidebar").toggleClass("active");
-//         }
-//       }
-//     },
-//     function () {
-//       if (!menuaberto) {
-//         if (!jQuery("#show_user").hasClass("active")) {
-//           jQuery(".sidebar").toggleClass("active");
-//         }
-//       }
-//     }
-//   );
-//   jQuery(".bt-manut.add").hover(
-//     function () {
-//       jQuery(this).find(".txt-bt-manut").removeClass("d-none");
-//     },
-//     function () {
-//       jQuery(this).find(".txt-bt-manut").addClass("d-none");
-//     }
-//   );
-
-//   jQuery(".manutencao").hover(
-//     function () {
-//       jQuery(".manut").toggleClass("active");
-//       if (jQuery("#show_user").hasClass("active")) {
-//         jQuery("#show_user").toggleClass("active");
-//       }
-//     },
-//     function () {
-//       jQuery(".manut").toggleClass("active");
-//     }
-//   );
-
-//   jQuery("#menuaberto").prop("checked", menuaberto);
-//   verificaNotificacao();
-// }
-
 function atualizaMenu() {
   acertamenuaberto();
 
@@ -143,7 +31,7 @@ function atualizaMenu() {
 
   // Fecha todos os menus antes
   // Fecha todos os colapsáveis: submenus, accordions, etc.
-  jQuery(".collapse.show").each(function () {
+  jQuery("#accordionMenu .collapse.show").each(function () {
     const $collapseEl = jQuery(this);
     const collapseId = $collapseEl.attr("id");
 

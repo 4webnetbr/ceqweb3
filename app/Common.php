@@ -519,14 +519,15 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
             $exclui = $bt_del->crBotao();
         }
 
-        $ent->acao = "<div class='col-12 float-start text-center'>" . rtrim("{$edit} {$exclui} {$inativa}") . "</div>";
+        $ent->acao = "<div class='col-12 float-start text-center'>" . rtrim("{$edit} {$exclui} {$inativa}");
 
         if (property_exists($ent, 'acao_person') && is_array($ent->acao_person)) {
             foreach ($ent->acao_person as $bt) {
                 $ent->acao .= $bt . ' ';
             }
-            $ent->acao = rtrim($ent->acao) . "</div>";
+            // $ent->acao = rtrim($ent->acao);
         }
+        $ent->acao .= "</div>";
 
         // Montar linha de colunas
         $linha = [];

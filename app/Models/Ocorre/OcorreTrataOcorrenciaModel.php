@@ -73,7 +73,6 @@ class OcorreTrataOcorrenciaModel extends Model
         return $data;
     }
     
-    
     public function getStatusIdByNome(string $nome, ?int $telId = null): ?int
     {
         $builder = $this->db->table('config_ceqweb_db.cfg_status')
@@ -112,28 +111,27 @@ class OcorreTrataOcorrenciaModel extends Model
     
 
 
-public function getView($id)
-{
-    return $this->db->table($this->view)
-        ->where('oco_id', $id)
-        ->get()
-        ->getResultArray();
-}
-
-public function getAcoesForTratativa($tpo_id)
-{
-    return $this->db->table('oco_tpo_acao a')
-        ->select('a.*, ta.tpa_nome, tm.tmo_nome, te.tel_nome, s.stt_nome')
-        ->join('oco_tipo_acao ta', 'ta.tpa_id = a.tpa_id', 'left')
-        ->join('estoqu_tipo_movimentacao tm', 'tm.tmo_id = a.tmo_id', 'left')
-        ->join('config_tela te', 'te.tel_id = a.tel_id', 'left')
-        ->join('cfg_status s', 's.stt_id = a.stt_id', 'left')
-        ->where('a.tpo_id', $tpo_id)
-        ->get()
-        ->getResultArray();
-}
-
-
+    public function getView($id)
+    {
+        return $this->db->table($this->view)
+            ->where('oco_id', $id)
+            ->get()
+            ->getResultArray();
+    }
+    
+    public function getAcoesForTratativa($tpo_id)
+    {
+        return $this->db->table('oco_tpo_acao a')
+            ->select('a.*, ta.tpa_nome, tm.tmo_nome, te.tel_nome, s.stt_nome')
+            ->join('oco_tipo_acao ta', 'ta.tpa_id = a.tpa_id', 'left')
+            ->join('estoqu_tipo_movimentacao tm', 'tm.tmo_id = a.tmo_id', 'left')
+            ->join('config_tela te', 'te.tel_id = a.tel_id', 'left')
+            ->join('cfg_status s', 's.stt_id = a.stt_id', 'left')
+            ->where('a.tpo_id', $tpo_id)
+            ->get()
+            ->getResultArray();
+    }
+    
 
     public function defCampos($dados = false)
     
@@ -209,13 +207,13 @@ public function getAcoesForTratativa($tpo_id)
                 $lst_tmo  = $tmoModel->getTipoMovimentacao();
                 $opc_tmo  = array_column($lst_tmo, 'tmo_nome', 'tmo_id');
             
-                $idMov = $dados['tmo_id'] ?? '';
+                $idMov   = $dados['tmo_id'] ?? '';
                 $tmoNome = $opc_tmo[$idMov] ?? '';
             
                 $movNome = new MyCampo('oco_tpo_acao', 'tmo_nome');
-                $movNome->valor   = $tmoNome;
-                $movNome->label   = 'Movimentação';
-                $movNome->leitura = true;
+                $movNome->valor    = $tmoNome;
+                $movNome->label    = 'Movimentação';
+                $movNome->leitura  = true;
                 $movNome->dispForm = '2col';
                 $movNome->size     = 50;
             

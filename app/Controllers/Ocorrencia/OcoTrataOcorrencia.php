@@ -131,7 +131,6 @@ class OcoTrataOcorrencia extends BaseController
         $dados = $this->request->getPost();
     
         try {
-    
             $this->trataocorrencia->update($id, [
                 'oco_justi' => $dados['oco_justi'] ?? ''
             ]);
@@ -194,7 +193,6 @@ class OcoTrataOcorrencia extends BaseController
              $campos[0][] = $fields['pro_despro'];
              $campos[0][] = $fields['oco_qtd'];
              $campos[0][] = $fields['tpa_id'];
-     
              if (isset($fields['oco_justi'])) {
                  $campos[0][] = $fields['oco_justi'];
              }
@@ -209,8 +207,8 @@ class OcoTrataOcorrencia extends BaseController
              }
          }
      
-         $this->data['secoes'] = $secao;
-         $this->data['campos'] = $campos;
+         $this->data['secoes']  = $secao;
+         $this->data['campos']  = $campos;
          $this->data['destino'] = '';
          $this->data['visualizacao'] = true;
      

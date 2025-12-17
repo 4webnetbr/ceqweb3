@@ -102,19 +102,7 @@ class ConfigImpressoraModel extends Model
         $builder->orderBy('imp_nome');
         return $builder->get()->getResult(); 
     }
-
-
-    // public function getImpressoraId($imp_id = false)
-    // {
-    //     $this->builder()->select('*');
-    //     if ($imp_id) {
-    //         $this->builder()->where('imp_id', $imp_id);
-    //     }
-    //     $this->builder()->where('imp_excluido', null);
-    //     $this->builder()->orderBy('imp_id');
-    //     return $this->builder()->get()->getResult();
-    // }
-
+    
 
     public function getImpressoraSearch($termo)
     {

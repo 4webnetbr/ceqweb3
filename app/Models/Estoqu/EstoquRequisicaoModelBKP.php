@@ -172,6 +172,14 @@ class EstoquRequisicaoModel extends Model
             $ret['req_id']      = $id->crOculto();
         }
 
+        $num                 =  new MyCampo('est_requisicao', 'req_id', true);
+        $num->valor          = (isset($dados['req_id'])) ? str_pad($dados['req_id'], 6, '0', STR_PAD_LEFT) : '';
+        $num->label          = 'Requisição Nº';
+        $num->leitura        = true;
+        $num->dispForm       = 'col-6';
+        $num->classep        = 'mb3';
+        $ret['req_numero']   = $num->crInput();
+
         $hoje = new DateTime();
         $data                 = new MyCampo('est_requisicao', 'req_data', false);
         $data->valor          = (isset($dados['req_data'])) ? $dados['req_data'] : $hoje->format('Y-m-d');
@@ -331,6 +339,7 @@ class EstoquRequisicaoModel extends Model
         $btca->funcChan       = "carregarProdutos('" . base_url("Requisicao/produtos") . "','produtos',this,event)";
         $ret['bt_carregar']   = $btca->crBotao();
 
+        debug($ret, true);
         return $ret;
     }
 

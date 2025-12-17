@@ -16,10 +16,10 @@ Class CfgImpressora extends BaseController
 
     public function __construct()
     {
-		$this->data         = session()->getFlashdata('dados_tela');
-        $this->permissao    = $this->data['permissao'];
-		$this->impressora 		= new ConfigImpressoraModel();
-        $this->common       = new CommonModel();
+		$this->data        = session()->getFlashdata('dados_tela');
+        $this->permissao   = $this->data['permissao'];
+		$this->impressora  = new ConfigImpressoraModel();
+        $this->common      = new CommonModel();
         if ($this->data['erromsg'] != '') {
             $this->__erro();
         }
@@ -39,6 +39,7 @@ Class CfgImpressora extends BaseController
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
     }
+
     /**
      * Listagem
      * lista
@@ -58,8 +59,6 @@ Class CfgImpressora extends BaseController
         // }
         echo json_encode($Impressora);
     }
-
-
 
 
     public function add($modal = false)
@@ -101,8 +100,7 @@ Class CfgImpressora extends BaseController
             $impr->campos['imp_ip'],
             $impr->campos['imp_porta']
         ]];
-        $this->data['destino']    = 'store';
-
+        $this->data['destino'] = 'store';
         $this->data['log']     = buscaLog('cfg_impressora', $id);
     
         echo view('vw_edicao', $this->data);
@@ -154,13 +152,13 @@ Class CfgImpressora extends BaseController
         $ret = [];
         $postado = $this->request->getPost();
 
-        $impr = new EntCfgImpressora($postado); // cria a Entity
+        $impr = new EntCfgImpressora($postado); 
         
         $exists = $this->common->verificaUnico($this->impressora, 'imp_nome', $postado['imp_nome'], 'imp_id', $postado['imp_id']);
 
         if ($exists > 0) {
             $ret['erro'] = true;
-            $ret['msg'] = 8;
+            $ret['msg']  = 8;
         } else {
             $this->impressora->transBegin();
 

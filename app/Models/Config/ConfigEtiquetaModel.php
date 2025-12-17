@@ -2,13 +2,9 @@
 
 namespace App\Models\Config;
 
-use App\Libraries\MyCampo;
-use App\Models\CommonModel;
-use App\Models\Config\ConfigLayoutEtiqModel;
-use App\Models\Config\ConfigModuloModel;
-use App\Models\Config\ConfigTelaModel;
 use App\Models\LogMonModel;
 use CodeIgniter\Model;
+use App\Entities\Config\EntCfgEtiqueta;
 
 class ConfigEtiquetaModel extends Model
 {
@@ -18,7 +14,7 @@ class ConfigEtiquetaModel extends Model
     protected $primaryKey       = 'etq_id';
     protected $useAutoIncremodt = true;
 
-    protected $returnType       = 'array';
+    protected $returnType       = EntCfgEtiqueta::class;
     protected $useSoftDeletes   = false;
 
     protected $allowedFields    = [
@@ -75,9 +71,7 @@ class ConfigEtiquetaModel extends Model
      */
     protected function depoisInsert(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'];
-        $log = $logdb->insertLog($this->table, 'Incluído', $registro, $data['data']);
+       (new LogMonModel())->insertLog($this->table, 'Incluído', $data['id'], $data['data']);
         return $data;
     }
 
@@ -88,9 +82,7 @@ class ConfigEtiquetaModel extends Model
      */
     protected function depoisUpdate(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'][0];
-        $log = $logdb->insertLog($this->table, 'Alteração', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Alteração', $data['id'][0], $data['data']);
         return $data;
     }
 
@@ -101,154 +93,66 @@ class ConfigEtiquetaModel extends Model
      */
     protected function depoisDelete(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'][0];
-        $log = $logdb->insertLog($this->table, 'Excluído', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Excluído', $data['id'][0], $data['data']);
         return $data;
     }
 
+
+
+
     public function getEtiqueta($etq_id = false)
     {
-        $db = db_connect('default');
-        $builder = $db->table($this->view);
+        $builder = $this->builder($this->view);
         $builder->select('*');
+    
         if ($etq_id) {
             $builder->where('etq_id', $etq_id);
         }
-        // $builder->where('etq_ativo', 'A');
+    
         $builder->orderBy('etq_ativo, etq_nome');
-        // $sql = $builder->getCompiledSelect();
-        // debug($sql, true);
-        $ret = $builder->get()->getResultArray();
-
-        return $ret;
+    
+        return $builder->get()->getResult();
     }
 
     public function getEtiquetaTela($tel_id = false)
     {
-        if(!$tel_id){
-            return;
+        if (!$tel_id) {
+            return [];
         }
-        $db = db_connect('default');
-        $builder = $db->table($this->view);
+    
+        $builder = $this->builder($this->view);
         $builder->select('*');
         $builder->where('tel_id', $tel_id);
         $builder->where('etq_ativo', 'A');
         $builder->orderBy('etq_ativo, etq_nome');
-        // $sql = $builder->getCompiledSelect();
-        // debug($sql, true);
-        $ret = $builder->get()->getResultArray();
-
-        return $ret;
+    
+        return $builder->get()->getResult();
     }
+
 
     public function getEtiquetaLayout($lay_id = false)
     {
-        $db = db_connect('default');
-        $builder = $db->table($this->view);
+        $builder = $this->builder($this->view);
         $builder->select('*');
+    
         if ($lay_id) {
             $builder->where('let_id', $lay_id);
         }
+    
         $builder->where('etq_ativo', 'A');
         $builder->orderBy('etq_ativo, etq_nome');
-        // $sql = $builder->getCompiledSelect();
-        // debug($sql, true);
-        $ret = $builder->get()->getResultArray();
-
-        return $ret;
+    
+        return $builder->get()->getResult();
     }
+
 
     public function getEtiquetaSearch($termo)
     {
-        $array = ['etq_nome' => $termo . '%'];
-        $db = db_connect('default');
-        $builder = $db->table($this->view);
-        $builder->select(['*']);
+        $builder = $this->builder($this->view);
+        $builder->select('*');
         $builder->where('etq_ativo', 'A');
-        $builder->like($array);
-
-        return $builder->get()->getResultArray();
-    }
-
-    public function defCampos($dados = false, $show = false, $view = '')
-    {
-        $opcoes         = new CommonModel();
-        $simnao['S']    = 'Sim';
-        $simnao['N']    = 'Não';
-
-        $ret = [];
-        $etq_id                 = new MyCampo('cfg_etiqueta', 'etq_id');
-        $etq_id->valor          = (isset($dados['etq_id'])) ? $dados['etq_id'] : '';
-        $ret['etq_id']          = $etq_id->crOculto();
-
-        $nome                   =  new MyCampo('cfg_etiqueta', 'etq_nome');
-        $nome->valor            = (isset($dados['etq_nome'])) ? $dados['etq_nome'] : '';
-        $nome->obrigatorio      = true;
-        $nome->leitura          = $show;
-        $nome->dispForm         = "col-12";
-        $nome->largura          = 50;
-        $ret['etq_nome']        = $nome->crInput();
-
-        $opcat['A'] = 'Ativo';
-        $opcat['I'] = 'Inativo';
-
-        $ativ                   = new MyCampo('cfg_etiqueta', 'etq_ativo');
-        $ativ->valor            = (isset($dados['etq_ativo'])) ? $dados['etq_ativo'] : 'A';
-        $ativ->selecionado      = $ativ->valor;
-        $ativ->opcoes           = $opcat;
-        $ativ->leitura          = $show;
-        $ativ->dispForm         = "col-12";
-        $ativ->largura          = 50;
-        $ret['etq_ativo']       = $ativ->cr2opcoes();
-
-        $chave = false;
-        if (isset($dados['let_id'])) {
-            $chave = 'let_id = ' . $dados['let_id'];
-        }
-        $opc_let      = $opcoes->getListaOpcoes('default', 'cfg_layout_etiqueta', ['let_nome', 'let_id'], $chave);
-
-        $let_id                 = new MyCampo('cfg_etiqueta', 'let_id', false);
-        $let_id->valor          = (isset($dados['let_id'])) ? $dados['let_id'] : '';
-        $let_id->selecionado    = $let_id->valor;
-        $let_id->opcoes         = $opc_let;
-        $let_id->leitura        = $show;
-        $let_id->largura        = 50;
-        $let_id->dispForm       = "col-12";
-        $ret['let_id'] = $let_id->crSelect();
-
-
-        $chave = false;
-        if (isset($dados['mod_id'])) {
-            $chave = 'mod_id = ' . $dados['mod_id'];
-        }
-        // $opc_mod      = $opcoes->getListaOpcoes('default', 'cfg_modulo', ['mod_nome', 'mod_id'], $chave);
-        $opc_mod      = $opcoes->getListaOpcoes('default', 'cfg_modulo', ['mod_nome', 'mod_id']);
-
-        $mod_id                 = new MyCampo('cfg_etiqueta', 'mod_id', false);
-        $mod_id->valor          = (isset($dados['mod_id'])) ? $dados['mod_id'] : '';
-        $mod_id->selecionado    = $mod_id->valor;
-        $mod_id->opcoes         = $opc_mod;
-        $mod_id->leitura        = $show;
-        $mod_id->dispForm       = "col-5";
-        $mod_id->largura        = 50;
-        $ret['mod_id']          = $mod_id->crSelect();
-
-        $chave = false;
-        if (isset($dados['tel_id'])) {
-            $chave = 'tel_id = ' . $dados['tel_id'];
-        }
-        $opc_tel      = $opcoes->getListaOpcoes('default', 'cfg_tela', ['tel_nome', 'tel_id'], $chave);
-
-        $tel_id                 = new MyCampo('cfg_etiqueta', 'tel_id');
-        $tel_id->valor          = (isset($dados['tel_id'])) ? $dados['tel_id'] : "";
-        $tel_id->selecionado    = $tel_id->valor;
-        $tel_id->urlbusca       = base_url('buscas/busca_tela_modulo');
-        $tel_id->pai            = 'mod_id';
-        $tel_id->opcoes         = $opc_tel;
-        $tel_id->dispForm       = "col-5";
-        $tel_id->largura        = 50;
-        $ret['tel_id']          = $tel_id->crDepende();
-        return $ret;
+        $builder->like('etq_nome', $termo, 'after');
+      
+        return $builder->get()->getResult();
     }
 }
