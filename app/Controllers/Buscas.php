@@ -485,9 +485,11 @@ class Buscas extends BaseController
                     $ret[0]['id'] = '-1';
                     $ret[0]['text'] = 'Etiqueta não encontrada...';
                 } else {
-                    for ($c = 0; $c < sizeof($tetquetas); $c++) {
-                        $ret[$c]['id'] = $tetquetas[$c]['etq_id'];
-                        $ret[$c]['text'] = $tetquetas[$c]['etq_nome'];
+                    $c = 0;
+                    foreach ($tetquetas as $etq) {
+                        $ret[$c]['id'] = $etq->etq_id;
+                        $ret[$c]['text'] = $etq->etq_nome;
+                        $c++;
                     }
                 }
             } else {

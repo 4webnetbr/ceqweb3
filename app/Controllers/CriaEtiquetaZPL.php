@@ -582,16 +582,27 @@ class CriaEtiquetaZPL extends BaseController
         if (!$etiq) return;
 
         $etq = $etiq[0];
-        $this->largura    = (float) $etq['let_largura'];
-        $this->altura     = (float) $etq['let_altura'];
-        $this->esquerda   = (float) $etq['let_marg_esquerda'];
-        $this->direita    = (float) $etq['let_marg_direita'];
-        $this->topo       = (float) $etq['let_marg_superior'];
-        $this->rodape     = (float) $etq['let_marg_inferior'];
-        $this->horizontal = (float) $etq['let_distancia_h'];
-        $this->vertical   = (float) $etq['let_distancia_v'];
-        $this->colunas    = (int)   $etq['let_colunas'];
-        $this->linhas     = (int)   $etq['let_linhas'];
+        $this->largura    = (float) $etq->let_largura;
+        $this->altura     = (float) $etq->let_altura;
+        $this->esquerda   = (float) $etq->let_marg_esquerda;
+        $this->direita    = (float) $etq->let_marg_direita;
+        $this->topo       = (float) $etq->let_marg_superior;
+        $this->rodape     = (float) $etq->let_marg_inferior;
+        $this->horizontal = (float) $etq->let_distancia_h;
+        $this->vertical   = (float) $etq->let_distancia_v;
+        $this->colunas    = (int)   $etq->let_colunas;
+        $this->linhas     = (int)   $etq->let_linhas;
+
+        // $this->largura    = (float) $etq['let_largura'];
+        // $this->altura     = (float) $etq['let_altura'];
+        // $this->esquerda   = (float) $etq['let_marg_esquerda'];
+        // $this->direita    = (float) $etq['let_marg_direita'];
+        // $this->topo       = (float) $etq['let_marg_superior'];
+        // $this->rodape     = (float) $etq['let_marg_inferior'];
+        // $this->horizontal = (float) $etq['let_distancia_h'];
+        // $this->vertical   = (float) $etq['let_distancia_v'];
+        // $this->colunas    = (int)   $etq['let_colunas'];
+        // $this->linhas     = (int)   $etq['let_linhas'];
 
         // Busca 1 linha de dados (até N colunas) — mesma fonte que você já usa
         $modelo = false;

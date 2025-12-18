@@ -590,7 +590,7 @@ class ProdutProdutoModel extends Model
         $qtem->valor        = (isset($dados['prc_qtdemb_ceq'])) ? $dados['prc_qtdemb_ceq'] : 0;
         $qtem->obrigatorio  = false;
         $qtem->leitura      = $show;
-        $qtem->largura      = 50;
+        // $qtem->largura      = 50;
         $qtem->minimo       = 0;
         $qtem->maximo       = 9999;
         $qtem->size         = 4;
@@ -778,7 +778,7 @@ class ProdutProdutoModel extends Model
         $pmax->minimo       = 0;
         $pmax->maximo       = 999;
         $pmax->maxLength    = 3;
-        $pmax->largura      = 40;
+        // $pmax->largura      = 40;
         $pmax->dispForm     = 'col-4';
         $ret['pre_porcmaximo']  = $pmax->crInput();
 
@@ -790,7 +790,7 @@ class ProdutProdutoModel extends Model
         $maxi->minimo       = 0;
         $maxi->maximo       = 9999;
         $maxi->maxLength    = 4;
-        $maxi->largura      = 40;
+        // $maxi->largura      = 40;
         $maxi->dispForm     = 'col-4';
         $ret['pre_maximo']  = $maxi->crInput();
 
@@ -801,7 +801,7 @@ class ProdutProdutoModel extends Model
         $suge->leitura      = $show;
         $suge->minimo       = 0;
         $suge->maximo       = 9999;
-        $suge->largura      = 40;
+        // $suge->largura      = 40;
         $suge->maxLength    = 4;
         $suge->dispForm     = 'col-3';
         $ret['pre_sugerida']  = $suge->crInput();

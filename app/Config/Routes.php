@@ -116,7 +116,7 @@ $routes->group('CfgModulo', static function ($routes) {
 $estoqueControllers = [
     'SaldoEstoque', 'Movimento', 'Deposito', 'Transacao',
     'TipoMovimentacao', 'Requisicao', 'CfgEtiqueta',
-    'AteRequisicao', 'ConfRequisicao','Inspecao'
+    'AteRequisicao', 'ConfRequisicao','Inspecao','EtqProduto','EtqProdutoReq'
 ];
 
 foreach ($estoqueControllers as $ctrl) {

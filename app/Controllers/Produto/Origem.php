@@ -60,6 +60,9 @@ class Origem extends BaseController
     
             $campos = montaColunasCampos($this->data, 'ori_codOri');
             $dados_tela = $this->origems->getOrigem();
+
+            $this->data['edicao'] = false;
+            $this->data['exclusao'] = false;
             $origems = [
                 'data' => montaListaColunas($this->data, 'ori_codOri', $dados_tela, $campos[1]),
             ];

@@ -91,7 +91,8 @@ class ConfigImpressoraModel extends Model
 
     public function getImpressora($imp_id = null)
     {
-        $builder = $this->builder();
+        $db = db_connect('default');
+        $builder = $db->table($this->view);
         $builder->where('imp_excluido', null);
 
         if ($imp_id) {
@@ -106,10 +107,13 @@ class ConfigImpressoraModel extends Model
 
     public function getImpressoraSearch($termo)
     {
-        return $this->builder()
-            ->select(['imp_id', 'imp_nome'])
+        $alike = ['imp_nome' => $termo . '%'];
+
+        $db = db_connect('default');
+        $builder = $db->table($this->view);
+        return $builder->select(['imp_id', 'imp_nome'])
             ->where('imp_excluido', null)
-            ->like('imp_nome', $termo)
+            ->like($alike)
             ->get()
             ->getResult();
     }

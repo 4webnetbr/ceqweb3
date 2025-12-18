@@ -2824,15 +2824,15 @@
       }
 
       this.$menu.css({
-        height: maxHeight + "px",
-        "max-height": maxHeight + "px",
+        // height: maxHeight + "px",
+        // "max-height": maxHeight + "px",
         overflow: "hidden",
         "min-height": minHeight + "px",
       });
 
       this.$menuInner.css({
-        height: menuInnerHeight + "px",
-        "max-height": menuInnerHeight + "px",
+        // height: menuInnerHeight + "px",
+        // "max-height": menuInnerHeight + "px",
         overflow: "hidden auto",
         "min-height": menuInnerMinHeight + "px",
       });
