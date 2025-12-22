@@ -409,43 +409,46 @@ class Buscas extends BaseController
     }
 
     public function buscaTipoMovimentacao()
-    {
-        $ret    = [];
-        // debug($_REQUEST,false);
-        if ($_REQUEST['busca']) {
-            $termo            = $_REQUEST['busca'];
-            $tmovs            = new EstoquTipoMovimentacaoModel();
-            $tmovimen         = $tmovs->getTipoMovimentacao($termo);
-            if (sizeof($tmovimen) <= 0) {
-                $ret['id'] = '-1';
-                $ret['text'] = 'Tipo de Movimentação não encontrado...';
-            } else {
-                $ret['id']     = $tmovimen[0]['tmo_id'];
-                $ret['depori'] = $tmovimen[0]['dep_codorigem'];
-                $ret['depdes'] = $tmovimen[0]['dep_coddestino'];
-                $ret['deppad'] = $tmovimen[0]['dep_codpadrao'];
-            }
+{
+    $ret = [];
+
+    if (!empty($_REQUEST['busca'])) {
+        $termo    = $_REQUEST['busca'];
+        $tmovs    = new EstoquTipoMovimentacaoModel();
+        $tmovimen = $tmovs->getTipoMovimentacao($termo);
+
+        if (empty($tmovimen)) {
+            $ret['id']   = '-1';
+            $ret['text'] = 'Tipo de Movimentação não encontrado...';
+        } else {
+            $ret['id']     = $tmovimen[0]->tmo_id;
+            $ret['depori'] = $tmovimen[0]->dep_codorigem;
+            $ret['depdes'] = $tmovimen[0]->dep_coddestino;
+            $ret['deppad'] = $tmovimen[0]->dep_codpadrao;
         }
-        echo json_encode($ret);
     }
+
+    return $this->response->setJSON($ret);
+}
 
     public function buscaTipoAcao()
     {
-        $ret    = [];
-        // debug($_REQUEST,false);
-        if ($_REQUEST['busca']) {
-            $termo            = $_REQUEST['busca'];
-            $tacao            = new OcorreTipoAcaoModel();
-            $tacaos           = $tacao->getTipoAcao($termo);
-            if (sizeof($tacaos) <= 0) {
-                $ret['id'] = '-1';
+        $ret = [];
+    
+        if (!empty($_REQUEST['busca'])) {
+            $termo  = $_REQUEST['busca'];
+            $tacao  = new OcorreTipoAcaoModel();
+            $tacaos = $tacao->getTipoAcao($termo);
+    
+            if (empty($tacaos)) {
+                $ret['id']   = '-1';
                 $ret['text'] = 'Tipo de Movimentação não encontrado...';
             } else {
-                $ret['id']     = $tacaos[0]['tpa_id'];
-                $ret['acao']   = $tacaos[0]['tpa_tipo'];
+                $ret['id']   = $tacaos[0]->tpa_id;
+                $ret['acao'] = $tacaos[0]->tpa_tipo;
             }
         }
-        echo json_encode($ret);
+        return $this->response->setJSON($ret);
     }
 
     public function buscatelasaplicaveis()

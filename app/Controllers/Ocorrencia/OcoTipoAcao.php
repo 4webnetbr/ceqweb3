@@ -3,6 +3,7 @@ namespace App\Controllers\Ocorrencia;
 use App\Models\CommonModel;
 use App\Controllers\BaseController;
 use App\Models\Ocorre\OcorreTipoAcaoModel;
+use App\Entities\Ocorrencia\EntOcoTipoAcao;
 
 class OcoTipoAcao extends BaseController {
     public $data = [];
@@ -39,7 +40,7 @@ class OcoTipoAcao extends BaseController {
     */
     public function index()
     {
-        $this->data['colunas'] = montaColunasLista($this->data, 'tpa_id');
+        $this->data['colunas']   = montaColunasLista($this->data, 'tpa_id');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
     }
@@ -51,14 +52,12 @@ class OcoTipoAcao extends BaseController {
     */
     public function lista()
     {
-        //if (!$tipoac = cache('tipoac')) {
             $campos = montaColunasCampos($this->data, 'tpa_id');
             $dados_tipoac = $this->tipoacao->getTipoAcao();
             $tipoac = [
-                'data' => montaListaColunas($this->data, 'tpa_id', $dados_tipoac, $campos[1]),
+                'data' => montaListaColunasEnt($this->data, 'tpa_id', $dados_tipoac, $campos[1]),
             ];
             cache()->save('tipoac', $tipoac, 60000);
-        //}
     
         echo json_encode($tipoac);
     }
@@ -70,16 +69,18 @@ class OcoTipoAcao extends BaseController {
     */
     public function add()
     {
-        $fields = $this->tipoacao->defCampos();
-        $secao[0] = 'Dados Gerais'; 
-        $campos[0][0] = $fields['tpa_id'];  
-        $campos[0][1] = $fields['tpa_nome'];
-        $campos[0][2] = $fields['tpa_tipo'];
-
-        $this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
-		$this->data['destino']    = 'store';
-
+        $acao = new EntOcoTipoAcao();
+    
+        $this->data['secoes'] = ['Dados Gerais'];
+    
+        $this->data['campos'] = [[
+            $acao->campos['tpa_id'],
+            $acao->campos['tpa_nome'],
+            $acao->campos['tpa_tipo'],
+        ]];
+        
+        $this->data['destino'] = 'store';
+        
         echo view('vw_edicao', $this->data);
     }
     /**
@@ -89,19 +90,25 @@ class OcoTipoAcao extends BaseController {
     * @param mixed $id 
     * @return void
     */
-    public function edit($id)
+    public function edit($id, $show = false)
     {
-        $dados_tipoacao = $this->tipoacao->find($id);
-        $fields = $this->tipoacao->defCampos($dados_tipoacao);
+        $acao = $this->tipoacao->find($id);
+    
+        if (!$acao) {
+            throw new \Exception('Ação não encontrada');
+        }
+    
+        $acao->campos = $acao->defCampos($acao->toArray(), $show);
 
-        $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['tpa_id'];  
-        $campos[0][1] = $fields['tpa_nome'];
-        $campos[0][2] = $fields['tpa_tipo'];
+        $this->data['secoes'] = ['Dados Gerais'];
+        $this->data['campos'] = [[
+            $acao->campos['tpa_id'],
+            $acao->campos['tpa_nome'],
+            $acao->campos['tpa_tipo'],
+        ]];
 
-        $this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
 		$this->data['destino']    = 'store';
+        $this->data['log']     = buscaLog('oco_tipo_acao', $id);
 
         echo view('vw_edicao', $this->data);
     }
@@ -164,15 +171,12 @@ class OcoTipoAcao extends BaseController {
         $erros = [];
 
         $this->tipoacao->transBegin();
-
-        // if (!empty($postado['tpa_id'])) {
             $exists = $this->common->verificaUnico($this->tipoacao, 'tpa_nome', $postado['tpa_nome'], 'tpa_id', $postado['tpa_id']);
             if ($exists > 0) {
                 $ret['erro'] = true;
                 $ret['msg'] = 8;
                 $erros = [8];
             }
-        // }
         if(count($erros) == 0){
             try {
                 if (!$this->tipoacao->save($postado)) {
@@ -203,7 +207,7 @@ class OcoTipoAcao extends BaseController {
                         }
                     }
                 } else {
-                    $ret['msg'] .= $e->getMessage(); // Mensagem genérica do erro
+                    $ret['msg'] .= $e->getMessage();
                 }
             }
         }

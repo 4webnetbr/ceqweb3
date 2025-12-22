@@ -2,11 +2,17 @@
 
 namespace App\Controllers\Micro;
 
-use App\Entities\Microb\EntMicrobAnaRequisicao;
 use App\Controllers\BaseController;
+use App\Controllers\BuscasSapiens;
+use App\Libraries\MyCampo;
+use App\Libraries\SoapSapiens;
+use App\Models\ArquivoMonModel;
 use App\Models\CommonModel;
+use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 use App\Models\Microb\MicrobAnaRequisicaoModel;
 use App\Models\Microb\MicrobAnaliseModel;
+use App\Models\Produt\ProdutLoteModel;
+use App\Models\Produt\ProdutProdutoModel;
 use Config\Database;
 use DateTime;
 
@@ -27,11 +33,11 @@ class AnaRequisicao extends BaseController
      */
     public function __construct()
     {
-        $this->data          = session()->getFlashdata('dados_tela');
-        $this->permissao     = $this->data['permissao'];
-        $this->analise       = new MicrobAnaliseModel();
+        $this->data         = session()->getFlashdata('dados_tela');
+        $this->permissao    = $this->data['permissao'];
+        $this->analise      = new MicrobAnaliseModel();
         $this->anarequisicao = new MicrobAnaRequisicaoModel();
-        $this->common        = new CommonModel();
+        $this->common       = new CommonModel();
 
         if ($this->data['erromsg'] != '') {
             $this->__erro();
@@ -63,30 +69,26 @@ class AnaRequisicao extends BaseController
      */
     public function lista()
     {
+        // if (!$anarequis = cache('anarequis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
         $dados_tela = $this->anarequisicao->getListaRequisicao();
-    
-        foreach ($dados_tela as $req) {
-    
-            $url_ati = base_url('/CriaPdf2025/PrintAnaRequisicao/' . $req->req_id);
-    
-            $req->acao_person = [
-                "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end'
-                    data-mdb-toggle='tooltip'
-                    data-mdb-placement='top'
-                    title='Imprimir Requisição'
-                    onclick='openPDFModal(\"{$url_ati}\",\"Imprimir Requisição\")'>
-                    <i class='fa-solid fa-print'></i>
-                </button>"
+        foreach ($dados_tela as &$req) {
+            $url_ati = base_url('/CriaPdf2025/PrintAnaRequisicao/' . $req['req_id']);
+            $req['acao_person'] = [
+                "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0 float-end' 
+                data-mdb-toggle='tooltip' data-mdb-placement='top' 
+                title='Imprimir Requisição' onclick='openPDFModal(\"$url_ati\",\"Imprimir Requisição\")'>
+                <i class='fa-solid fa-print'></i></button>"
             ];
         }
-    
         $this->data['edicao'] = false;
-    
-        $anarequis = ['data' => montaListaColunasEnt($this->data,'req_id',$dados_tela,$campos[1]),];
+        // $this->data['exclusao'] = false;
+        $anarequis = [
+            'data' => montaListaColunas($this->data, 'req_id', $dados_tela, $campos[1]),
+        ];
         cache()->save('anarequis', $anarequis, 60000);
-    
-        return $this->response->setJSON($anarequis);
+        // }
+        echo json_encode($anarequis);
     }
 
     /**
@@ -99,51 +101,44 @@ class AnaRequisicao extends BaseController
     public function show($id)
     {
         $requis = $this->anarequisicao->getListaRequisicao($id);
-    
-        if (!$requis) {
-            return $this->index();
-        }
-    
-        /** @var object $req */
-        $req = $requis[0];
-    
-        $entity = new EntMicrobAnaRequisicao((array) $req,true);
-    
-        $fields = $entity->campos;
-    
-        $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['req_id'];
-    
-        if (!empty($req->req_lotemb)) {
-            $campos[0][1] = $fields['req_lotemb'];
-            $prox = 2;
+        // debug($requis);
+        if ($requis) {
+            $req = $requis[0];
+            $fields = $this->anarequisicao->defCampos($requis[0], true);
+            $secao[0] = 'Dados Gerais';
+            $campos[0][0] = $fields['req_id'];
+            if ($req['req_lotemb'] != '') {
+                $campos[0][1] = $fields['req_lotemb'];
+                $prox = 2;
+            } else {
+                $campos[0][1] = $fields['req_lotemb'];
+                $campos[0][2] = $fields['ana_descmetodo'];
+                $prox = 3;
+            }
+
+            $texto = "<div class='col-12 float-start d-block mt-5'>";
+            $texto .= "<div class='col-4 float-start fw-bold'>Produto</div>";
+            $texto .= "<div class='col-4 float-start fw-bold'>Fabricante</div>";
+            $texto .= "<div class='col-2 float-start fw-bold'>Lote</div>";
+            $texto .= "<div class='col-2 float-start fw-bold'>Validade</div>";
+            for ($p = 0; $p < count($requis); $p++) {
+                $prod = $requis[$p];
+                $texto .= "<div class='col-4 float-start'>" . $prod['pro_despro'] . "</div>";
+                $texto .= "<div class='col-4 float-start'>" . $prod['fab_apeFab'] . "</div>";
+                $texto .= "<div class='col-2 float-start'>" . $prod['lot_lote'] . "</div>";
+                $texto .= "<div class='col-2 float-start'>" . data_br($prod['lot_validade']) . "</div>";
+            }
+            $texto .= "</div>";
+            $campos[0][$prox] = $texto;
+
+            $this->data['secoes']     = $secao;
+            $this->data['campos']     = $campos;
+            $this->data['destino']    = 'store';
+
+            echo view('vw_edicao', $this->data);
         } else {
-            $campos[0][1] = $fields['req_lotemb'];
-            $campos[0][2] = $fields['ana_descmetodo'];
-            $prox = 3;
+            $this->index();
         }
-    
-        $texto = "<div class='col-12 float-start d-block mt-5'>";
-        $texto .= "<div class='col-4 float-start fw-bold'>Produto</div>";
-        $texto .= "<div class='col-4 float-start fw-bold'>Fabricante</div>";
-        $texto .= "<div class='col-2 float-start fw-bold'>Lote</div>";
-        $texto .= "<div class='col-2 float-start fw-bold'>Validade</div>";
-    
-        foreach ($requis as $prod) {
-            $texto .= "<div class='col-4 float-start'>{$prod->pro_despro}</div>";
-            $texto .= "<div class='col-4 float-start'>{$prod->fab_apeFab}</div>";
-            $texto .= "<div class='col-2 float-start'>{$prod->lot_lote}</div>";
-            $texto .= "<div class='col-2 float-start'>" . data_br($prod->lot_validade) . "</div>";
-        }
-    
-        $texto .= "</div>";
-        $campos[0][$prox] = $texto;
-    
-        $this->data['secoes']  = $secao;
-        $this->data['campos']  = $campos;
-        $this->data['destino'] = 'store';
-    
-        echo view('vw_edicao', $this->data);
     }
 
     /**
@@ -156,25 +151,21 @@ class AnaRequisicao extends BaseController
     public function edit($id, $show = false)
     {
         $dados_analise = $this->analise->getListaAnaliseSemReq($id);
-    
-        if (!$dados_analise || count($dados_analise) === 0) {
-            return $this->index();
+        if (count($dados_analise) === 0) {
+            $this->index();
+            return;
+            // return redirect()->to('/AnaRequisicao/');
         }
-    
-        /** @var object $analise */
-        $analise = $dados_analise[0];
-    
-        $lotemb = $analise['ana_lotemb'];
-    
+        $dados_analise = $dados_analise[0];
+        $lotemb = $dados_analise['ana_lotemb'];
+        // debug($lotemb);
         $dados_requisi = $this->analise->getAnaliseLotemb($lotemb);
-    
-        $entity = new EntMicrobAnaRequisicao((array) $analise,false);
-        $fields = $entity->campos;
-    
+        // debug($dados_requisi, true);
+
+        $fields = $this->anarequisicao->defCampos($dados_analise, false);
         $secao[0] = 'Dados Gerais';
         $campos[0][0] = $fields['req_id'];
-    
-        if (!empty($analise['ana_lotemb'])) {
+        if ($dados_analise['ana_lotemb'] != '') {
             $campos[0][1] = $fields['req_lotemb'];
             $prox = 2;
         } else {
@@ -182,33 +173,31 @@ class AnaRequisicao extends BaseController
             $campos[0][2] = $fields['ana_descmetodo'];
             $prox = 3;
         }
-    
-            // LISTA DE PRODUTOS
-            $texto = "<div class='col-12 float-start d-block mt-5'>";
-            $texto .= "<div class='row border border-2'>";
-            $texto .= "<div class='col-4 fw-bold'>Produto</div>";
-            $texto .= "<div class='col-4 fw-bold'>Fabricante</div>";
-            $texto .= "<div class='col-2 fw-bold'>Lote</div>";
-            $texto .= "<div class='col-2 fw-bold'>Validade</div>";
-            $texto .= "</div>";
-    
-        foreach ($dados_requisi as $prod) {
+
+        $texto = "<div class='col-12 float-start d-block mt-5'>";
+        $texto .= "<div class='row row border border-2'>";
+        $texto .= "<div class='col-4 float-start fw-bold'>Produto</div>";
+        $texto .= "<div class='col-4 float-start fw-bold'>Fabricante</div>";
+        $texto .= "<div class='col-2 float-start fw-bold'>Lote</div>";
+        $texto .= "<div class='col-2 float-start fw-bold'>Validade</div>";
+        $texto .= "</div>";
+        for ($p = 0; $p < count($dados_requisi); $p++) {
+            $prod = $dados_requisi[$p];
             $texto .= "<div class='row border border-1'>";
-            $texto .= "<div class='col-4'>" . $prod['pro_despro'] . "</div>";
-            $texto .= "<div class='col-4'>" . $prod['fab_apeFab'] . "</div>";
-            $texto .= "<div class='col-2'>" . $prod['lot_lote'] . "</div>";
-            $texto .= "<div class='col-2'>" . data_br($prod['lot_validade']) . "</div>";
+            $texto .= "<div class='col-4 float-start'>" . $prod['pro_despro'] . "</div>";
+            $texto .= "<div class='col-4 float-start'>" . $prod['fab_apeFab'] . "</div>";
+            $texto .= "<div class='col-2 float-start'>" . $prod['lot_lote'] . "</div>";
+            $texto .= "<div class='col-2 float-start'>" . data_br($prod['lot_validade']) . "</div>";
             $texto .= "</div>";
         }
-    
         $texto .= "</div>";
         $campos[0][$prox] = $texto;
-    
-        $this->data['secoes']  = $secao;
-        $this->data['campos']  = $campos;
-        $this->data['destino'] = 'store';
+
+        $this->data['secoes']     = $secao;
+        $this->data['campos']     = $campos;
+        $this->data['destino']    = 'store';
         $this->data['script'] = "<script>jQuery('#form1').attr('data-alter', true);</script>";
-    
+
         echo view('vw_edicao', $this->data);
     }
 

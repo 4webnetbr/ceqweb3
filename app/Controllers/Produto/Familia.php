@@ -56,6 +56,10 @@ class Familia extends BaseController
         // if (!$familias = cache('familias')) {
             $campos = montaColunasCampos($this->data, 'fam_codFam');
             $dados_tela = $this->familias->getFamilia();
+
+            $this->data['edicao'] = false;
+            $this->data['exclusao'] = false;
+
             $familias = [
                 'data' => montaListaColunas($this->data, 'fam_codFam', $dados_tela, $campos[1]),
             ];

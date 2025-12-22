@@ -171,7 +171,11 @@
 <!-- <script src="<?= base_url('assets/jscript/my_consulta.js'); ?>"></script> -->
 <script>
     // carregamentos_iniciais();
-    jQuery("#form1").attr('data-alter', false);
+    <?php if (!isset($forca_submit)): ?>
+        jQuery("#form1").attr('data-alter', false);
+    <?php else: ?>
+        jQuery("#form1").attr('data-alter', true);
+    <?php endif; ?>
     jQuery('.dependente').selectpicker('toggle'); // Abre o select
     setTimeout(function() {
         jQuery('.dependente').selectpicker('toggle'); // Fecha depois do tempo definido
@@ -183,3 +187,5 @@ if (isset($script)) {
 }
 ?>
 <?= $this->endSection(); ?>
+
+

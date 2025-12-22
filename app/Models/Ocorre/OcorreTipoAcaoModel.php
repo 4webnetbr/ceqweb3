@@ -48,7 +48,7 @@ class OcorreTipoAcaoModel extends Model
 
     protected $logdb;
 
-    
+
     protected function depoisInsert(array $data)
     {
         (new LogMonModel())->insertLog($this->table, 'Incluído', $data['id'], $data['data']);
@@ -68,25 +68,28 @@ class OcorreTipoAcaoModel extends Model
     }
 
 
-
     public function getTipoAcao($tpa_id = false)
     {
-        $this->builder()->select('*');
+        $builder = $this->builder();
+        $builder->select('*');
+    
         if ($tpa_id) {
-            $this->builder()->where('tpa_id', $tpa_id);
+            $builder->where('tpa_id', $tpa_id);
         }
-        $this->builder()->where('tpa_excluido', null);
-        $this->orderBy('tpa_ativo, tpa_nome');
-        return $this->builder()->get()->getResultArray();
+    
+        $builder->where('tpa_excluido', null);
+        $builder->orderBy('tpa_ativo, tpa_nome');
+    
+        return $builder->get()->getResult();
     }
-
+    
     public function getTipoAcaoSearch($termo)
     {
-        $array = ['tpa_nome' => $termo . '%'];
-        $this->builder()->select(['tpa_id', 'tpa_nome']);
-        $this->builder()->where('tpa_excluido', null);
-        $this->builder()->like($array);
-
-        return $this->builder()->get()->getResultArray();
+        $builder = $this->builder();
+        $builder->select(['tpa_id', 'tpa_nome']);
+        $builder->where('tpa_excluido', null);
+        $builder->like('tpa_nome', $termo . '%');
+    
+        return $builder->get()->getResult();
     }
 }

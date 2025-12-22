@@ -109,6 +109,7 @@ class ConfigMensagemModel extends Model
         $builder->orderBy('msg_ativo, msg_titulo');
         return $builder->get()->getResult();
     }
+    
 
     public function getMensagemId(int $msg_id = null)
     {

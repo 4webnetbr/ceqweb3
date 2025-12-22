@@ -106,19 +106,16 @@ class EstoquTipoMovimentacaoModel extends Model
         return $data;
     }
 
-    public function getTipoMovimentacao($tmo_id = false, $prf_id = false)
+    public function getMovimentacaoByTpoTpa(int $tpo_id, int $tpa_id): ?int
     {
-        $db = db_connect('dbEstoque');
-        $builder = $db->table('vw_est_tipo_movimentacao_relac_lista');
-        $builder->select('*');
-        if ($tmo_id) {
-            $builder->where('tmo_id', $tmo_id);
-        }
-        if ($prf_id) {
-            $builder->where("FIND_IN_SET($prf_id, prf_id) >", 0);
-        }   
-        $builder->orderBy('tmo_ativo, tmo_nome');
-        return $builder->get()->getResultArray();
+        $row = $this->db->table('oco_tpo_acao')
+            ->select('tmo_id')
+            ->where('tpo_id', $tpo_id)
+            ->where('tpa_id', $tpa_id)
+            ->get()
+            ->getRowArray();
+    
+        return $row['tmo_id'] ?? null;
     }
     
     public function getTipoMovimentacaoDepositos($dorig, $ddest)
@@ -177,6 +174,21 @@ class EstoquTipoMovimentacaoModel extends Model
         $builder->where('prf_id', $prf_id);
         return $builder->get()->getResultArray();
     }
+
+    public function getTipoMovimentacao($tmo_id = false)
+    {
+        $db = db_connect('dbEstoque');
+        $builder = $db->table('vw_est_tipo_movimentacao_relac_lista');
+        $builder->select('*');
+    
+        if ($tmo_id) {
+            $builder->where('tmo_id', $tmo_id);
+        }
+        $builder->orderBy('tmo_ativo, tmo_nome');
+    
+        return $builder->get()->getResultArray();
+    }
+
 
     public function defCampos($dados = false, $show = false)
     {

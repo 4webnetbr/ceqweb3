@@ -513,7 +513,7 @@ class ProdutProdutoModel extends Model
         $ctrl->largura    = 10;
         $ctrl->dispForm   = 'col-6';
         $ctrl->opcoes     = $simnao;
-        $ret['pro_ctrlot'] = $ctrl->cr2opcoes();
+        $ret['pro_ctrlot'] = $ctrl->crRadio();
 
         $qtem               =  new MyCampo('pro_sap_produto', 'pro_qtdemb');
         $qtem->tipo         = 'sonumero';
@@ -605,7 +605,7 @@ class ProdutProdutoModel extends Model
         $creq->dispForm     = '3col';
         $creq->opcoes         = $simnao;
         $creq->selecionado    = $creq->valor;
-        $ret['prc_conf_req']  = $creq->cr2opcoes();
+        $ret['prc_conf_req']  = $creq->crRadio();
 
         $pcai               =  new MyCampo('pro_ceq_produto', 'prc_pedido_caixa');
         $pcai->valor        = (isset($dados['prc_pedido_caixa'])) ? $dados['prc_pedido_caixa'] : 'N';
@@ -614,7 +614,7 @@ class ProdutProdutoModel extends Model
         $pcai->dispForm     = '3col';
         $pcai->opcoes         = $simnao;
         $pcai->selecionado    = $pcai->valor;
-        $ret['prc_pedido_caixa']  = $pcai->cr2opcoes();
+        $ret['prc_pedido_caixa']  = $pcai->crRadio();
 
         $emis               =  new MyCampo('pro_ceq_produto', 'prc_etiq_misturador');
         $emis->valor        = (isset($dados['prc_etiq_misturador'])) ? $dados['prc_etiq_misturador'] : 'N';
@@ -624,7 +624,7 @@ class ProdutProdutoModel extends Model
         $emis->opcoes         = $simnao;
         $emis->selecionado    = $emis->valor;
         $emis->funcChan         = "mostraOcultaCampo(this,'S','prc_cor_etiqueta_mist,prc_codbar')";
-        $ret['prc_etiq_misturador']  = $emis->cr2opcoes();
+        $ret['prc_etiq_misturador']  = $emis->crRadio();
 
         $cemi               =  new MyCampo('pro_ceq_produto', 'prc_cor_etiqueta_mist');
         $cemi->valor        = (isset($dados['prc_cor_etiqueta_mist'])) ? $dados['prc_cor_etiqueta_mist'] : '';
@@ -654,7 +654,7 @@ class ProdutProdutoModel extends Model
         $epro->opcoes         = $simnao;
         $epro->selecionado    = $epro->valor;
         $epro->funcChan         = "mostraOcultaCampo(this,'S','prc_cor_etiqueta_prod')";
-        $ret['prc_etiq_produto']  = $epro->cr2opcoes();
+        $ret['prc_etiq_produto']  = $epro->crRadio();
 
         $cemp               =  new MyCampo('pro_ceq_produto', 'prc_cor_etiqueta_prod');
         $cemp->valor        = (isset($dados['prc_cor_etiqueta_prod']) && $dados['prc_cor_etiqueta_prod'] != '') ? $dados['prc_cor_etiqueta_prod'] : '1';

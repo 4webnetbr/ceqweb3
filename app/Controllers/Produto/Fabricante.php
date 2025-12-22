@@ -60,6 +60,8 @@ class Fabricante extends BaseController
     
             $campos = montaColunasCampos($this->data, 'fab_codFab');
             $dados_tela = $this->fabricantes->getFabricante();
+            $this->data['edicao']   = false;
+            $this->data['exclusao'] = false;
             $fabricantes = [
                 'data' => montaListaColunas($this->data, 'fab_codFab', $dados_tela, $campos[1]),
             ];

@@ -9,6 +9,8 @@ use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
 use App\Models\Ocorre\OcorreModOcorrenciaModel;
 use App\Controllers\BuscasSapiens;
 use App\Models\Produt\ProdutLoteModel;
+use App\Entities\Ocorrencia\EntOcoOcorrencia;
+use App\Models\CommonModel;
 
 class OcoOcorrencia extends BaseController
 {
@@ -18,20 +20,22 @@ class OcoOcorrencia extends BaseController
     public $modelTipo;
     public $modelMod;
     public $buscaSapiens;
-    public $ocorreOcorrenciaModel;
+    public $ocorrencia ;
     public $produtLoteModel;
+    public $common;
 
     public function __construct()
     {
         $this->novocorrencia = new OcorreOcorrenciaModel();
         $this->data = session()->get('dados_tela') ?? [];
 
-        $this->novaOcorrencia           = new EstoquRequisicaoModel();
-        $this->modelTipo                = new OcorreTipoOcorrenciaModel();
-        $this->modelMod                 = new OcorreModOcorrenciaModel();
-        $this->buscaSapiens             = new BuscasSapiens();
-        $this->produtLoteModel          = new ProdutLoteModel();
-        $this->ocorreOcorrenciaModel    = new OcorreOcorrenciaModel();
+        $this->novaOcorrencia  = new EstoquRequisicaoModel();
+        $this->modelTipo       = new OcorreTipoOcorrenciaModel();
+        $this->modelMod        = new OcorreModOcorrenciaModel();
+        $this->buscaSapiens    = new BuscasSapiens();
+        $this->produtLoteModel = new ProdutLoteModel();
+        $this->ocorrencia      = new OcorreOcorrenciaModel();
+        $this->common          = new CommonModel();
 
 
         $this->data = session()->get('dados_tela') ?? [];
@@ -52,67 +56,64 @@ class OcoOcorrencia extends BaseController
     public function lista()
     {
         $campos = montaColunasCampos($this->data, 'oco_id');
+    
         $dados = $this->novocorrencia->getListaCompleta();
-        $oco_ids_assoc = array_column($dados, 'oco_id');
-        $log = buscaLogTabela('oco_ocorrencia', $oco_ids_assoc);  
-
-        foreach ($dados as &$nov) {
-            $nov['usu_nome'] = $log[$nov['oco_id']]['usua_alterou'] ?? '';
-            // $url_imp = base_url('/CriaPdf2025/PrintRequisicaoEstoq/' . $nov['oco_id']);
-            // $nov['acao_person'] = [
-            //     "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end' 
-            //         data-mdb-toggle='tooltip' data-mdb-placement='top' 
-            //         title='Imprimir' onclick='openPDFModal(\"$url_imp\",\"Imprimir\")'>
-            //         <i class='fa-solid fa-print'></i></button>", 
-            // ];
+        $oco_ids_assoc = array_map(fn($o) => $o->oco_id, $dados);
+    
+        $log = buscaLogTabela('oco_ocorrencia', $oco_ids_assoc);
+    
+        foreach ($dados as $nov) {
+            $nov->usu_nome = $log[$nov->oco_id]['usua_alterou'] ?? '';
         }
+    
         return $this->response->setJSON([
-            'data' => montaListaColunas($this->data, 'oco_id', $dados, $campos[1])
+            'data' => montaListaColunasEnt($this->data, 'oco_id', $dados, $campos[1])
         ]);
     }
     
 
-    public function add()
+    public function add($modal = false)
     {
-        $fields = $this->novocorrencia->defCampos();
-
-        $secao[0]     = 'Dados Gerais';
-        $campos[0][] = $fields['tpo_id'];      
-        $campos[0][] = $fields['tpa_id'];    
-        $campos[0][] = $fields['oco_descricao'];
-        $campos[0][] = $fields['lot_lote'];   
-        $campos[0][] = $fields['pro_despro'];   
-        $campos[0][] = $fields['oco_qtd'];
-        $campos[0][] = $fields['oco_data'];
-
-        $this->data['secoes']  = $secao;
-        $this->data['campos']  = $campos;
+        $oco = new EntOcoOcorrencia();
+    
+        $this->data['secoes']  = ['Dados Gerais'];
+        $this->data['campos']  = [[
+            $oco->campos['tpo_id'],
+            $oco->campos['tpa_id'],
+            $oco->campos['oco_descricao'],
+            $oco->campos['lot_lote'],
+            $oco->campos['pro_despro'],
+            $oco->campos['oco_qtd'],
+            $oco->campos['oco_data'],
+        ]];
         $this->data['destino'] = 'store';
-
-        echo view('vw_edicao', $this->data);
+    
+        echo view($modal ? 'vw_edicao_modal' : 'vw_edicao', $this->data);
     }
 
 
     public function edit($id)
     {
         $dados = $this->novocorrencia->getById($id);
-
-        if (!$dados) {
-            throw new \Exception("Ocorrência não encontrada");
-        }
-        $fields = $this->novocorrencia->defCampos($dados, true);
-
-       $secao[0]     = 'Dados Gerais';
-        $campos[0][] = $fields['tpo_id'];      
-        $campos[0][] = $fields['tpa_id'];    
-        $campos[0][] = $fields['oco_descricao'];
-        $campos[0][] = $fields['lot_lote'];   
-        $campos[0][] = $fields['pro_despro'];   
-        $campos[0][] = $fields['oco_qtd'];
-        $campos[0][] = $fields['oco_data'];
     
-        $this->data['secoes']  = $secao;
-        $this->data['campos']  = $campos;
+        if (!$dados) {
+            throw new \Exception('Ocorrência não encontrada');
+        }
+        
+        $oco    = new EntOcoOcorrencia((array) $dados, true);
+        $fields = $oco->campos;
+    
+        $this->data['secoes'] = ['Dados Gerais'];
+        $this->data['campos'] = [[
+            $fields['tpo_id'],
+            $fields['tpa_id'],
+            $fields['oco_descricao'],
+            $fields['lot_lote'],
+            $fields['pro_despro'],
+            $fields['oco_qtd'],
+            $fields['oco_data'],
+        ]];
+    
         $this->data['destino'] = "update/$id";
         $this->data['edicao']  = true;
     
@@ -122,13 +123,11 @@ class OcoOcorrencia extends BaseController
 
     public function update($id)
     {
-        $dados = $this->request->getPost();
-    
-        $ret   = $this->ocorreOcorrenciaModel->atualizarOcorrencia($id, $dados);
-    
+        $entity = new EntOcoOcorrencia($this->request->getPost());
+        $ret    = $this->ocorrencia->atualizarOcorrencia($id, $entity);
         return $this->response->setJSON($ret);
     }
-
+    
 
     public function delete($id)
     {
@@ -137,7 +136,7 @@ class OcoOcorrencia extends BaseController
             $this->novocorrencia->delete($id);
             $ret['erro'] = false;
             session()->setFlashdata('msg', 'Ocorrência Excluída com Sucesso');
-            $ret['msg'] = 'Ocorrência Excluída com Sucesso';
+            $ret['msg']  = 'Ocorrência Excluída com Sucesso';
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException) {
             $ret['erro'] = true;
             $ret['msg']  = 'Não foi possível Excluir o Tipo de Selecionada, Verifique!<br><br>';
@@ -148,15 +147,10 @@ class OcoOcorrencia extends BaseController
 
     public function store()
     {
-        $this->data['tabela'] = 'oco_ocorrencia';
-        session()->set('dados_tela', $this->data);
+        $postado = $this->request->getPost();
+        $entity  = new EntOcoOcorrencia($postado);
     
-        $dados = $this->request->getPost();
-        $ret = $this->ocorreOcorrenciaModel->salvarOcorrencia($dados);
-
-         if (!($ret['erro'] ?? true)) {
-        session()->setFlashdata('msg', $ret['msg'] ?? 'Ocorrência gravada com sucesso!');
-    }
+        $ret = $this->ocorrencia->salvarOcorrencia($entity);
     
         return $this->response->setJSON($ret);
     }
@@ -165,20 +159,23 @@ class OcoOcorrencia extends BaseController
     public function getProdutoLote()
     {
         $codLote = $this->request->getPost('codLote');
-
         if (!$codLote) {
-            return $this->response->setJSON(['erro' => 'Lote não informado']);
+            return $this->response->setJSON([
+                'erro' => 'Lote não informado'
+            ]);
         }
-
+    
         $dados = $this->produtLoteModel->getLoteSearch($codLote);
-
+    
         if (!$dados || empty($dados)) {
-            return $this->response->setJSON(['erro' => 'Lote não encontrado']);
+            return $this->response->setJSON([
+                'erro' => 'Lote não encontrado'
+            ]);
         }
-
-        $lote = $dados[0];
+        $lote = $dados[0]; 
+    
         return $this->response->setJSON([
-            'descpro' => $lote['pro_despro'] ?? '',
+            'descpro' => $lote->pro_despro ?? '',
         ]);
     }
 }

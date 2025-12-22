@@ -49,6 +49,11 @@ $routes->post(
     'Ocorrencia\OcoOcorrencia::buscaOcorrenciasPorTipo'
 );
 
+$routes->post(
+    'ocorrencia/finalizar/(:num)',
+    'Ocorrencia\OcoTrataOcorrencia::finalizar/$1'
+);
+
 
 $routes->match(['get', 'post'], 'buscas/(:any)/(:any)', 'Buscas::$1/$2', ['as' => 'buscas_two_params']);
 $routes->match(['get', 'post'], 'buscas/(:any)', 'Buscas::$1', ['as' => 'buscas_one_params']);
