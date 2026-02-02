@@ -1,4 +1,3 @@
-
 jQuery(document).ajaxError(function (event, xhr, settings) {
   if (xhr.status === 303) {
     urllogin = window.location.origin + "/";
@@ -10,7 +9,6 @@ jQuery(document).ready(function () {
 });
 
 function carregamentos_iniciais() {
-  
   var temNumero = /[0-9]/;
   var temMaiusc = /[A-Z]/;
   var temMinusc = /[a-z]/;
@@ -171,7 +169,7 @@ function carregamentos_iniciais() {
   jQuery(function () {
     jQuery(document).on(
       "mouseenter mouseleave",
-      
+
       ".show_password",
       function (e) {
         e.preventDefault();
@@ -183,7 +181,7 @@ function carregamentos_iniciais() {
 
         const isMouseEnter = e.type === "mouseenter";
         $input.attr("type", isMouseEnter ? "text" : "password");
-      }
+      },
     );
   });
 
@@ -244,6 +242,8 @@ function carregamentos_iniciais() {
     if (opcao.substr(0, 3) != "pit") {
       return;
     }
+    this.setAttribute("data-alter", true);
+    jQuery("#form1").attr("data-alter", true);
     var checked = jQuery(this).prop("checked");
     mod = id.match(/[0-9]+/g)[0];
     cla = id.match(/[0-9]+/g)[1];
@@ -252,23 +252,23 @@ function carregamentos_iniciais() {
       if (opcao == "pit_all") {
         jQuery("input[id^='pit_consulta[" + mod + "]']").prop(
           "checked",
-          checked
+          checked,
         );
         jQuery("input[id^='pit_adicao[" + mod + "]']").prop("checked", checked);
         jQuery("input[id^='pit_edicao[" + mod + "]']").prop("checked", checked);
         jQuery("input[id^='pit_exclusao[" + mod + "]']").prop(
           "checked",
-          checked
+          checked,
         );
         jQuery("input[id^='pit_notifica[" + mod + "]']").prop(
           "checked",
-          checked
+          checked,
         );
         jQuery("input[id^='pit_all[" + mod + "]']").prop("checked", checked);
       } else {
         jQuery("input[id^='" + opcao + "[" + mod + "]']").prop(
           "checked",
-          checked
+          checked,
         );
         if (
           opcao == "pit_consulta" &&
@@ -277,26 +277,26 @@ function carregamentos_iniciais() {
         ) {
           jQuery("input[id^='pit_adicao[" + mod + "]']").prop(
             "checked",
-            checked
+            checked,
           );
           jQuery("input[id^='pit_edicao[" + mod + "]']").prop(
             "checked",
-            checked
+            checked,
           );
           jQuery("input[id^='pit_exclusao[" + mod + "]']").prop(
             "checked",
-            checked
+            checked,
           );
           jQuery("input[id^='pit_notifica[" + mod + "]']").prop(
             "checked",
-            checked
+            checked,
           );
           jQuery("input[id^='pit_all[" + mod + "]']").prop("checked", checked);
         } else {
           if (checked == true) {
             jQuery("input[id^='pit_consulta[" + mod + "]']").prop(
               "checked",
-              checked
+              checked,
             );
           }
         }
@@ -306,85 +306,85 @@ function carregamentos_iniciais() {
       if (opcao == "pit_all") {
         jQuery("input[id^='pit_consulta[" + mod + "][" + cla + "]']").prop(
           "checked",
-          checked
+          checked,
         );
         jQuery("input[id^='pit_adicao[" + mod + "][" + cla + "]']").prop(
           "checked",
-          checked
+          checked,
         );
         jQuery("input[id^='pit_edicao[" + mod + "][" + cla + "]']").prop(
           "checked",
-          checked
+          checked,
         );
         jQuery("input[id^='pit_exclusao[" + mod + "][" + cla + "]']").prop(
           "checked",
-          checked
+          checked,
         );
         jQuery("input[id^='pit_notifica[" + mod + "][" + cla + "]']").prop(
           "checked",
-          checked
+          checked,
         );
       } else {
         jQuery("input[id^='pit_all[" + mod + "][" + cla + "]']").prop(
           "checked",
-          checked
+          checked,
         );
         if (opcao == "pit_consulta" && checked == false) {
           jQuery("input[id^='pit_adicao[" + mod + "][" + cla + "]']").prop(
             "checked",
-            checked
+            checked,
           );
           jQuery("input[id^='pit_edicao[" + mod + "][" + cla + "]']").prop(
             "checked",
-            checked
+            checked,
           );
           jQuery("input[id^='pit_exclusao[" + mod + "][" + cla + "]']").prop(
             "checked",
-            checked
+            checked,
           );
           jQuery("input[id^='pit_notifica[" + mod + "][" + cla + "]']").prop(
             "checked",
-            checked
+            checked,
           );
           jQuery("input[id^='pit_all[" + mod + "][" + cla + "]']").prop(
             "checked",
-            checked
+            checked,
           );
         } else {
           if (checked == true) {
             jQuery("input[id^='pit_consulta[" + mod + "][" + cla + "]']").prop(
               "checked",
-              checked
+              checked,
             );
           }
         }
         if (
           jQuery("input[id^='pit_adicao[" + mod + "][" + cla + "]']").prop(
-            "checked"
+            "checked",
           ) == false ||
           jQuery("input[id^='pit_edicao[" + mod + "][" + cla + "]']").prop(
-            "checked"
+            "checked",
           ) == false ||
           jQuery("input[id^='pit_exclusao[" + mod + "][" + cla + "]']").prop(
-            "checked"
+            "checked",
           ) == false ||
           jQuery("input[id^='pit_notifica[" + mod + "][" + cla + "]']").prop(
-            "checked"
+            "checked",
           ) == false ||
           jQuery("input[id^='pit_consulta[" + mod + "][" + cla + "]']").prop(
-            "checked" == false
+            "checked" == false,
           )
         ) {
           jQuery("input[id^='pit_all[" + mod + "][" + cla + "]']").prop(
             "checked",
-            false
+            false,
           );
         }
       }
       if (checked == false) {
         jQuery("input[id^='" + opcao + "[" + mod + "][0]']").prop(
           "checked",
-          checked
+          checked,
         );
       }
     }
@@ -514,7 +514,7 @@ function carregamentos_iniciais() {
                     jQuery("<option>", {
                       value: item.id,
                       text: item.text,
-                    })
+                    }),
                   );
                 });
                 const options = retornoAjax.map((item) => ({
@@ -527,42 +527,6 @@ function carregamentos_iniciais() {
           },
         },
       });
-    }
-  });
-
-  /**
-   * Campo Select Dependente
-   * Se existir um campo dependente, adiciona o onchange no elemento pai
-   * Document Ready my_fields
-   */
-  jQuery(".dependente").each(function () {
-    elemen = jQuery(this)[0];
-    if (elemen.tagName == "SELECT") {
-      busca = elemen.getAttribute("data-busca");
-      valor = elemen.getAttribute("data-valor");
-      funcao_busca =
-        "busca_dependente(this,'" +
-        elemen.name +
-        "','" +
-        busca +
-        "','" +
-        valor +
-        "')";
-      pai = elemen.getAttribute("data-pai");
-      _chan_ant = jQuery('[name="' + pai + '"]').attr("onchange");
-      if (
-        _chan_ant != "" &&
-        _chan_ant != undefined &&
-        _chan_ant.substr(0, 16) != "busca_dependente"
-      ) {
-        jQuery('[name="' + pai + '"]').attr(
-          "onchange",
-          _chan_ant + ";" + funcao_busca
-        );
-      } else {
-        jQuery('[name="' + pai + '"]').attr("onchange", funcao_busca);
-      }
-      jQuery('[name="' + pai + '"]').trigger("change");
     }
   });
 
@@ -594,6 +558,8 @@ function carregamentos_iniciais() {
   //     // aqui você pode tratar o valor lido
   //   }
   // });
+  // Aplica a todos os selects múltiplos com selectpicker
+
   jQuery("input, textarea").on("keyup", function (e) {
     var id = jQuery(this)[0].id;
     id = id.replace("[", "\\[");
@@ -651,14 +617,75 @@ function carregamentos_iniciais() {
     }
   });
 
+  acertaDependente();
   jQuery("select").selectpicker();
-
 }
 
 function oculta_passinfo() {
   jQuery("#pass-info").hide();
 }
 
+function acertaDependente() {
+  /**
+   * Campo Select Dependente
+   * Se existir um campo dependente, adiciona o onchange no elemento pai
+   * Document Ready my_fields
+   */
+  jQuery(".dependente").each(function () {
+    const $element = jQuery(this);
+    const elemen = $element[0];
+
+    if (elemen.tagName === "SELECT") {
+      const busca = $element.data("busca");
+      const valor = $element.data("valor");
+      const pai = $element.data("pai");
+
+      const $pai = jQuery('[name="' + pai + '"]');
+
+      // Evita múltiplos bindings: remove antigo handler (opcional, só se necessário)
+      $pai.off("change.busca_dependente");
+
+      // Adiciona o novo handler usando namespace
+      $pai.on("change.busca_dependente", function () {
+        busca_dependente(this, elemen.name, busca, valor);
+      });
+
+      // Dispara a mudança sem manter o select aberto
+      // Em vez de trigger("change"), altere o valor diretamente (se necessário)
+      if ($pai.val()) {
+        $pai.triggerHandler("change"); // Dispara sem abrir UI de dropdown
+      }
+    }
+  });
+
+  jQuery("select.selectpicker[multiple]").each(function () {
+    atualizarTextoSelectpicker(this); // Aplica no carregamento
+
+    // Continua reagindo a mudanças
+    jQuery(this).on("changed.bs.select", function () {
+      atualizarTextoSelectpicker(this);
+    });
+  });
+
+  function atualizarTextoSelectpicker(select) {
+    var selectedOptions = jQuery(select).find("option:selected");
+    var $button = jQuery(select).parent().find(".filter-option-inner-inner");
+
+    if (selectedOptions.length > 1) {
+      var list = selectedOptions
+        .map(function () {
+          return (
+            "<div><i class='fas fa-check'></i> " +
+            jQuery(this).text() +
+            "</div>"
+          );
+        })
+        .get()
+        .join("");
+      $button.html(list);
+    }
+  }
+}
 /**
  * mostraOcultaCampo
  * Mostra ou Oculta os Campos conforme a regra
@@ -758,68 +785,67 @@ function mostraOcultaCampo(obj, regra, fields) {
  */
 function mostraOcultaCampoTodos(nomecampo, regra, fields) {
   campos = fields.split(",");
-  jQuery("input[name^='" + nomecampo + "']:checked").each(function (
-    index,
-    elem
-  ) {
-    var valor = jQuery(elem).val();
-    // jQuery("input[name^='" + nomecampo + "']").each(function (indexInArray, valueOfElement) {
-    //     var valor = jQuery('input[name="' + nomecampo+ '"]:checked').val();
-    //     if (this.checked) {
-    //         valor = this.value;
-    final = this.name.substr(this.name.indexOf("["));
-    if (valor == regra) {
-      jQuery.each(campos, function (key, value) {
-        // MOSTRA
-        campox = value + final;
-        value = escIdColchetes(campox);
-        // value = campox.replaceAll('[', '\\[');
-        // value = value.replaceAll(']', '\\]');
-        div = "#ig_" + value;
-        camp = "#" + value;
-        jQuery(div).removeClass("opacity-0");
-        jQuery(div).addClass("opacity-1");
-        jQuery(div).css("height", "");
-        obriga = jQuery("[name='" + value + "']").attr("data-obrig");
-        if (obriga == "required") {
-          jQuery(camp).attr("required", "required");
-        }
-        if (jQuery("[name='" + value + "']").is("select")) {
-          if (
-            jQuery("[name='" + value + "']").attr("data-default") != undefined
-          ) {
-            valor = jQuery("[name='" + value + "']").attr("data-default");
+  jQuery("input[name^='" + nomecampo + "']:checked").each(
+    function (index, elem) {
+      var valor = jQuery(elem).val();
+      // jQuery("input[name^='" + nomecampo + "']").each(function (indexInArray, valueOfElement) {
+      //     var valor = jQuery('input[name="' + nomecampo+ '"]:checked').val();
+      //     if (this.checked) {
+      //         valor = this.value;
+      final = this.name.substr(this.name.indexOf("["));
+      if (valor == regra) {
+        jQuery.each(campos, function (key, value) {
+          // MOSTRA
+          campox = value + final;
+          value = escIdColchetes(campox);
+          // value = campox.replaceAll('[', '\\[');
+          // value = value.replaceAll(']', '\\]');
+          div = "#ig_" + value;
+          camp = "#" + value;
+          jQuery(div).removeClass("opacity-0");
+          jQuery(div).addClass("opacity-1");
+          jQuery(div).css("height", "");
+          obriga = jQuery("[name='" + value + "']").attr("data-obrig");
+          if (obriga == "required") {
+            jQuery(camp).attr("required", "required");
+          }
+          if (jQuery("[name='" + value + "']").is("select")) {
+            if (
+              jQuery("[name='" + value + "']").attr("data-default") != undefined
+            ) {
+              valor = jQuery("[name='" + value + "']").attr("data-default");
+              jQuery(camp).selectpicker("val", valor);
+            }
+          }
+        });
+      } else {
+        jQuery.each(campos, function (key, value) {
+          // OCULTA
+          campox = value + final;
+          value = escIdColchetes(campox);
+          // value = campox.replaceAll('[', '\\[');
+          // value = value.replaceAll(']', '\\]');
+          div = "#ig_" + value;
+          camp = "#" + value;
+          jQuery(camp).val("");
+          if (jQuery("[name='" + value + "']").is("select")) {
+            valor = "";
+            if (
+              jQuery("[name='" + value + "']").attr("data-default") != undefined
+            ) {
+              valor = jQuery("[name='" + value + "']").attr("data-default");
+            }
             jQuery(camp).selectpicker("val", valor);
           }
-        }
-      });
-    } else {
-      jQuery.each(campos, function (key, value) {
-        // OCULTA
-        campox = value + final;
-        value = escIdColchetes(campox);
-        // value = campox.replaceAll('[', '\\[');
-        // value = value.replaceAll(']', '\\]');
-        div = "#ig_" + value;
-        camp = "#" + value;
-        jQuery(camp).val("");
-        if (jQuery("[name='" + value + "']").is("select")) {
-          valor = "";
-          if (
-            jQuery("[name='" + value + "']").attr("data-default") != undefined
-          ) {
-            valor = jQuery("[name='" + value + "']").attr("data-default");
-          }
-          jQuery(camp).selectpicker("val", valor);
-        }
-        jQuery(camp).removeAttr("required");
-        jQuery(div).removeClass("opacity-1");
-        jQuery(div).addClass("opacity-0");
-        jQuery(div).css("height", "0px");
-      });
-    }
-    // }
-  });
+          jQuery(camp).removeAttr("required");
+          jQuery(div).removeClass("opacity-1");
+          jQuery(div).addClass("opacity-0");
+          jQuery(div).css("height", "0px");
+        });
+      }
+      // }
+    },
+  );
 }
 
 /**
@@ -869,32 +895,31 @@ function mostraOcultaDiv(obj, regra, divs) {
  */
 function mostraOcultaDivTodos(nomecampo, regra, divs) {
   divs = divs.split(",");
-  jQuery("input[name^='" + nomecampo + "']").each(function (
-    indexInArray,
-    valueOfElement
-  ) {
-    if (this.checked) {
-      valor = this.value;
-      final = this.name.substr(this.name.indexOf("["));
-      if (valor == regra) {
-        jQuery.each(divs, function (key, value) {
-          campox = value + final;
-          value = campox.replaceAll("[", "\\[");
-          value = value.replaceAll("]", "\\]");
-          div = "#" + value;
-          jQuery(div).removeClass("d-none");
-        });
-      } else {
-        jQuery.each(divs, function (key, value) {
-          campox = value + final;
-          value = campox.replaceAll("[", "\\[");
-          value = value.replaceAll("]", "\\]");
-          div = "#" + value;
-          jQuery(div).addClass("d-none");
-        });
+  jQuery("input[name^='" + nomecampo + "']").each(
+    function (indexInArray, valueOfElement) {
+      if (this.checked) {
+        valor = this.value;
+        final = this.name.substr(this.name.indexOf("["));
+        if (valor == regra) {
+          jQuery.each(divs, function (key, value) {
+            campox = value + final;
+            value = campox.replaceAll("[", "\\[");
+            value = value.replaceAll("]", "\\]");
+            div = "#" + value;
+            jQuery(div).removeClass("d-none");
+          });
+        } else {
+          jQuery.each(divs, function (key, value) {
+            campox = value + final;
+            value = campox.replaceAll("[", "\\[");
+            value = value.replaceAll("]", "\\]");
+            div = "#" + value;
+            jQuery(div).addClass("d-none");
+          });
+        }
       }
-    }
-  });
+    },
+  );
 }
 
 /**
@@ -909,7 +934,7 @@ function buscar(url, obj, lista) {
   if (busca.length >= 3) {
     jQuery("#dd_" + lista).empty();
     jQuery("#dd_" + lista).append(
-      "<li><h6 class='dropdown-header disabled'>Buscando...</h6></li>"
+      "<li><h6 class='dropdown-header disabled'>Buscando...</h6></li>",
     );
     jQuery("#dd_" + lista).css({
       position: "absolute",
@@ -933,7 +958,7 @@ function buscar(url, obj, lista) {
             lista +
             "\")'>" +
             item.text +
-            "</a></li>"
+            "</a></li>",
         );
       });
     }
@@ -1082,7 +1107,7 @@ function addCampo(url, objdest, obj) {
         ) {
           jQuery('[name="' + pai + '"]').attr(
             "onchange",
-            _chan_ant + ";" + funcao_busca
+            _chan_ant + ";" + funcao_busca,
           );
         } else {
           jQuery('[name="' + pai + '"]').attr("onchange", funcao_busca);
@@ -1098,43 +1123,41 @@ function addCampo(url, objdest, obj) {
     }
   }
 
-
-
-//   jQuery.ajax({
-//       type: 'POST',
-//       async: true,
-//       dataType: 'json',
-//       url: url + '/' + proximo,
-//       success: function (retorno) {
-//           text = "<div class='row tableDiv table2 table-" + objdest + "' width='100 % ' data-index=" + proximo + " >";
-//           text += "<div class='col-11'>";
-//           // text = '<table class="table2 table-sm" data-index="' + proximo + '"><tbody><tr>';
-//           indice = 0;
-//           for (const ind in retorno) {
-//               if (ind < retorno.length - 2) {
-//                   quebra = retorno[ind].indexOf("quebralinha");
-//                   oculto = retorno[ind].indexOf("hidden");
-//                   text += retorno[ind];
-//               }
-//           }
-//           text += "</div>";
-//           text += "<div class='col-1 d-initial h-auto p-0'>";
-//           text += "<div class='col-9 d-block float-start text-center p-0'>";
-//           text += retorno[retorno.length - 2];
-//           text += retorno[retorno.length - 1];
-//           text += '</div>';
-//           text += "<div class='col-3 d-block float-end text-end'>";
-//           text += "<button name='bt_up["   + proximo + "]' type='button' id='bt_up["   + proximo + "]' class='btn btn-outline-info btn-sm bt-up mt-0 float-end' onclick='sobe_desce_item(this,\"sobe\",\"" + objdest + "\")' title='Acima' data-index='" + proximo + "'><i class='fa fa-arrow-up' aria-hidden='true'></i></button>";
-//           text += "<button name='bt_down[" + proximo + "]' type='button' id='bt_down[" + proximo + "]' class='btn btn-outline-info btn-sm bt-down mt-0 float-end' onclick='sobe_desce_item(this,\"desce\",\"" + objdest + "\")' title='Abaixo' data-index='" + proximo + "'><i class='fa fa-arrow-down' aria-hidden='true'></i></button>";
-//           text += '</div>';
-//           text += '</div>';
-//           text += '</div>';
-//           jQuery('#rep_' + objdest).append(text);
-//           jQuery('select').selectpicker();
-//           carregamentos_iniciais();
-//           acerta_botoes_rep(objdest);
-//       }
-//   });
+  //   jQuery.ajax({
+  //       type: 'POST',
+  //       async: true,
+  //       dataType: 'json',
+  //       url: url + '/' + proximo,
+  //       success: function (retorno) {
+  //           text = "<div class='row tableDiv table2 table-" + objdest + "' width='100 % ' data-index=" + proximo + " >";
+  //           text += "<div class='col-11'>";
+  //           // text = '<table class="table2 table-sm" data-index="' + proximo + '"><tbody><tr>';
+  //           indice = 0;
+  //           for (const ind in retorno) {
+  //               if (ind < retorno.length - 2) {
+  //                   quebra = retorno[ind].indexOf("quebralinha");
+  //                   oculto = retorno[ind].indexOf("hidden");
+  //                   text += retorno[ind];
+  //               }
+  //           }
+  //           text += "</div>";
+  //           text += "<div class='col-1 d-initial h-auto p-0'>";
+  //           text += "<div class='col-9 d-block float-start text-center p-0'>";
+  //           text += retorno[retorno.length - 2];
+  //           text += retorno[retorno.length - 1];
+  //           text += '</div>';
+  //           text += "<div class='col-3 d-block float-end text-end'>";
+  //           text += "<button name='bt_up["   + proximo + "]' type='button' id='bt_up["   + proximo + "]' class='btn btn-outline-info btn-sm bt-up mt-0 float-end' onclick='sobe_desce_item(this,\"sobe\",\"" + objdest + "\")' title='Acima' data-index='" + proximo + "'><i class='fa fa-arrow-up' aria-hidden='true'></i></button>";
+  //           text += "<button name='bt_down[" + proximo + "]' type='button' id='bt_down[" + proximo + "]' class='btn btn-outline-info btn-sm bt-down mt-0 float-end' onclick='sobe_desce_item(this,\"desce\",\"" + objdest + "\")' title='Abaixo' data-index='" + proximo + "'><i class='fa fa-arrow-down' aria-hidden='true'></i></button>";
+  //           text += '</div>';
+  //           text += '</div>';
+  //           text += '</div>';
+  //           jQuery('#rep_' + objdest).append(text);
+  //           jQuery('select').selectpicker();
+  //           carregamentos_iniciais();
+  //           acerta_botoes_rep(objdest);
+  //       }
+  //   });
 }
 
 /**
@@ -1164,140 +1187,139 @@ function repete_campo(objdest, obj) {
     .appendTo($pai);
 
   jQuery("*[data-" + objdest + '-index="' + proximo + '"]').removeClass(
-    "d-none"
+    "d-none",
   );
   // Update the name attributes
-  jQuery("*[data-" + objdest + '-index="' + proximo + '"]').each(function (
-    i,
-    t
-  ) {
-    var primeiro = true;
-    jQuery(this)
-      .find('[id*="[' + atual + ']"]')
-      .each(function () {
-        if (!jQuery(this).hasClass("form-check-input")) {
-          jQuery(this).val("");
-        }
+  jQuery("*[data-" + objdest + '-index="' + proximo + '"]').each(
+    function (i, t) {
+      var primeiro = true;
+      jQuery(this)
+        .find('[id*="[' + atual + ']"]')
+        .each(function () {
+          if (!jQuery(this).hasClass("form-check-input")) {
+            jQuery(this).val("");
+          }
 
-        $nome = jQuery(this)[0].name;
-        if ($nome == undefined || $nome == "") {
-          $nome = jQuery(this).attr("id");
-        }
-        if ($nome != undefined) {
-          pos = $nome.indexOf("__");
-          ini = $nome.substr(0, $nome.indexOf("__"));
-          fim = $nome.substr(pos + 3);
-          jQuery(this).attr("name", ini + "__" + proximo + fim);
-          jQuery(this).attr("id", ini + "__" + proximo + fim);
-        }
-        var tipo = jQuery(this)[0].type;
-        if (primeiro && tipo != "hidden" && tipo != undefined) {
-          jQuery("#" + ini + "__" + proximo + fim).focus();
-          jQuery("#" + ini + "__" + proximo + fim).trigger("click");
-          primeiro = false;
-        }
+          $nome = jQuery(this)[0].name;
+          if ($nome == undefined || $nome == "") {
+            $nome = jQuery(this).attr("id");
+          }
+          if ($nome != undefined) {
+            pos = $nome.indexOf("__");
+            ini = $nome.substr(0, $nome.indexOf("__"));
+            fim = $nome.substr(pos + 3);
+            jQuery(this).attr("name", ini + "__" + proximo + fim);
+            jQuery(this).attr("id", ini + "__" + proximo + fim);
+          }
+          var tipo = jQuery(this)[0].type;
+          if (primeiro && tipo != "hidden" && tipo != undefined) {
+            jQuery("#" + ini + "__" + proximo + fim).focus();
+            jQuery("#" + ini + "__" + proximo + fim).trigger("click");
+            primeiro = false;
+          }
 
-        // Atualiza o evento onchange
-        // Ocorre quando o campo é alterado
-        var texto = jQuery(this).attr("onchange");
-        if (texto != undefined) {
-          var ocor = (texto.match(/__0/g) || []).length;
-          if (ocor > 0) {
-            var novotexto = texto.replace(/__0/g, "__" + proximo);
-            jQuery(this).attr("onchange", novotexto);
+          // Atualiza o evento onchange
+          // Ocorre quando o campo é alterado
+          var texto = jQuery(this).attr("onchange");
+          if (texto != undefined) {
+            var ocor = (texto.match(/__0/g) || []).length;
+            if (ocor > 0) {
+              var novotexto = texto.replace(/__0/g, "__" + proximo);
+              jQuery(this).attr("onchange", novotexto);
+            }
           }
-        }
-        // Atualiza a tag for (refere a label)
-        var texto = jQuery(this).attr("for");
-        if (texto != undefined) {
-          var ocor = (texto.match(/__0/g) || []).length;
-          if (ocor > 0) {
-            var novotexto = texto.replace(/__0/g, "__" + proximo);
-            jQuery(this).attr("for", novotexto);
+          // Atualiza a tag for (refere a label)
+          var texto = jQuery(this).attr("for");
+          if (texto != undefined) {
+            var ocor = (texto.match(/__0/g) || []).length;
+            if (ocor > 0) {
+              var novotexto = texto.replace(/__0/g, "__" + proximo);
+              jQuery(this).attr("for", novotexto);
+            }
           }
-        }
-        // Atualiza o evento onfocus
-        // Ocorre quando o campo recebe o foco
-        var texto = jQuery(this).attr("onfocus");
-        if (texto != undefined) {
-          var ocor = (texto.match(/__0/g) || []).length;
-          if (ocor > 0) {
-            var novotexto = texto.replace(/__0/g, "__" + proximo);
-            jQuery(this).attr("onfocus", novotexto);
+          // Atualiza o evento onfocus
+          // Ocorre quando o campo recebe o foco
+          var texto = jQuery(this).attr("onfocus");
+          if (texto != undefined) {
+            var ocor = (texto.match(/__0/g) || []).length;
+            if (ocor > 0) {
+              var novotexto = texto.replace(/__0/g, "__" + proximo);
+              jQuery(this).attr("onfocus", novotexto);
+            }
           }
-        }
-        // Atualiza o evento onkeyup
-        // Ocorre quando a Tecla pressionada foi solta
-        // Ultimo evento disparado no pressionamento de uma tecla
-        var texto = jQuery(this).attr("onkeyup");
-        if (texto != undefined) {
-          var ocor = (texto.match(/__0/g) || []).length;
-          if (ocor > 0) {
-            var novotexto = texto.replace(/__0/g, "__" + index);
-            jQuery(this).attr("onkeyup", novotexto);
+          // Atualiza o evento onkeyup
+          // Ocorre quando a Tecla pressionada foi solta
+          // Ultimo evento disparado no pressionamento de uma tecla
+          var texto = jQuery(this).attr("onkeyup");
+          if (texto != undefined) {
+            var ocor = (texto.match(/__0/g) || []).length;
+            if (ocor > 0) {
+              var novotexto = texto.replace(/__0/g, "__" + index);
+              jQuery(this).attr("onkeyup", novotexto);
+            }
           }
-        }
-        // Atualiza o evento onkeydown
-        // Ocorre no momento que uma Tecla é pressionada
-        // Primeiro evento disparado no pressionamento de uma tecla
-        var texto = jQuery(this).attr("onkeydown");
-        if (texto != undefined) {
-          var ocor = (texto.match(/__0/g) || []).length;
-          if (ocor > 0) {
-            var novotexto = texto.replace(/__0/g, "__" + proximo);
-            jQuery(this).attr("onkeydown", novotexto);
+          // Atualiza o evento onkeydown
+          // Ocorre no momento que uma Tecla é pressionada
+          // Primeiro evento disparado no pressionamento de uma tecla
+          var texto = jQuery(this).attr("onkeydown");
+          if (texto != undefined) {
+            var ocor = (texto.match(/__0/g) || []).length;
+            if (ocor > 0) {
+              var novotexto = texto.replace(/__0/g, "__" + proximo);
+              jQuery(this).attr("onkeydown", novotexto);
+            }
           }
-        }
-        // Atualiza o evento onkeypress
-        // Ocorre depos do Pressionamento de uma Tecla
-        // Segundo evento disparado no pressionamento de uma tecla
-        var texto = jQuery(this).attr("onkeypress");
-        if (texto != undefined) {
-          var ocor = (texto.match(/__0/g) || []).length;
-          if (ocor > 0) {
-            var novotexto = texto.replace(/__0/g, "__" + proximo);
-            jQuery(this).attr("onkeypress", novotexto);
+          // Atualiza o evento onkeypress
+          // Ocorre depos do Pressionamento de uma Tecla
+          // Segundo evento disparado no pressionamento de uma tecla
+          var texto = jQuery(this).attr("onkeypress");
+          if (texto != undefined) {
+            var ocor = (texto.match(/__0/g) || []).length;
+            if (ocor > 0) {
+              var novotexto = texto.replace(/__0/g, "__" + proximo);
+              jQuery(this).attr("onkeypress", novotexto);
+            }
           }
-        }
-        // Atualiza o evento onblur
-        // Ocorre quando o campo perde o foco
-        var texto = jQuery(this).attr("onblur");
-        if (texto != undefined) {
-          var ocor = (texto.match(/__0/g) || []).length;
-          if (ocor > 0) {
-            var novotexto = texto.replace(/__0/g, "__" + proximo);
-            jQuery(this).attr("onblur", novotexto);
+          // Atualiza o evento onblur
+          // Ocorre quando o campo perde o foco
+          var texto = jQuery(this).attr("onblur");
+          if (texto != undefined) {
+            var ocor = (texto.match(/__0/g) || []).length;
+            if (ocor > 0) {
+              var novotexto = texto.replace(/__0/g, "__" + proximo);
+              jQuery(this).attr("onblur", novotexto);
+            }
           }
-        }
-        // Atualiza o atributo data-retorno
-        var texto = jQuery(this).attr("data-retorno");
-        if (texto != undefined) {
-          var ocor = (texto.match(/__0/g) || []).length;
-          if (ocor > 0) {
-            var novotexto = texto.replace(/__0/g, "__" + proximo);
-            jQuery(this).attr("data-retorno", novotexto);
+          // Atualiza o atributo data-retorno
+          var texto = jQuery(this).attr("data-retorno");
+          if (texto != undefined) {
+            var ocor = (texto.match(/__0/g) || []).length;
+            if (ocor > 0) {
+              var novotexto = texto.replace(/__0/g, "__" + proximo);
+              jQuery(this).attr("data-retorno", novotexto);
+            }
           }
-        }
-        // Atualiza o atributo data-refer
-        var texto = jQuery(this).attr("data-refer");
-        if (texto != undefined) {
-          var ocor = (texto.match(/__0/g) || []).length;
-          if (ocor > 0) {
-            var novotexto = texto.replace(/__0/g, "__" + proximo);
-            jQuery(this).attr("data-refer", novotexto);
+          // Atualiza o atributo data-refer
+          var texto = jQuery(this).attr("data-refer");
+          if (texto != undefined) {
+            var ocor = (texto.match(/__0/g) || []).length;
+            if (ocor > 0) {
+              var novotexto = texto.replace(/__0/g, "__" + proximo);
+              jQuery(this).attr("data-refer", novotexto);
+            }
           }
-        }
-        // Atualiza o atributo data-index
-        var texto = jQuery(this).attr("data-index");
-        if (texto != undefined) {
-          var ocor = (texto.match(/__0/g) || []).length;
-          if (ocor > -1) {
-            var novotexto = texto.replace(/__0/g, "__" + proximo);
-            jQuery(this).attr("data-index", novotexto);
+          // Atualiza o atributo data-index
+          var texto = jQuery(this).attr("data-index");
+          if (texto != undefined) {
+            var ocor = (texto.match(/__0/g) || []).length;
+            if (ocor > -1) {
+              var novotexto = texto.replace(/__0/g, "__" + proximo);
+              jQuery(this).attr("data-index", novotexto);
+            }
           }
-        }
-      });
-  });
+        });
+    },
+  );
   acerta_botoes_rep();
   return;
 }
@@ -1533,7 +1555,7 @@ function acerta_botoes_rep(repete, pos = -1) {
   }
   // o botão de Adicionar só aparece no último
   jQuery(jQuery("#rep_" + repetepos + " .bt-repete")[ultimo]).removeClass(
-    "d-none"
+    "d-none",
   );
   jQuery(jQuery("#rep_" + repetepos + " .bt-up")[0]).addClass("d-none");
   jQuery(jQuery("#rep_" + repetepos + " .bt-down")[ultimo]).addClass("d-none");
@@ -1561,107 +1583,177 @@ function testa_dep(id_dep) {
  * @param {url} url_busca - URL de busca de dependentes
  * @param {integer} selec - Dependente pré-selecionado
  */
+// function busca_dependente(obj, id_dep, url_busca, selec) {
+//   id_dep = id_dep.replace(/[\[\]]/g, (match) => "\\" + match);
+//   // id_dep = id_dep.replace("[", "\\[");
+//   // id_dep = id_dep.replace("]", "\\]");
+//   if (selec == "") {
+//     if (jQuery("#" + id_dep).data("valor")) {
+//       selec = jQuery("#" + id_dep).getAttribute("data-valor");
+//     } else {
+//       selec = jQuery("#" + id_dep).val();
+//     }
+//   }
+//   if (parseInt(jQuery(obj).val()) != -1) {
+//     var nodes = document.getElementById(id_dep);
+//     var jqObj = jQuery(nodes);
+
+//     var datarr = new Array();
+//     datarr[0] = {};
+//     datarr[0].id_dep = jQuery(obj).val();
+
+//     dados = { busca: jQuery(obj).val() };
+//     retornoAjax = false;
+//     executaAjax(url_busca, "json", dados);
+//     if (retornoAjax) {
+//       console.log(retornoAjax);
+//       arr_ret = [];
+//       jQuery.each(retornoAjax, function (key, value) {
+//         arr_ret[key] = value;
+//       });
+//       arr_ret.sort(function (a, b) {
+//         return a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0;
+//       });
+//       console.log(arr_ret);
+
+//       jQuery('[name="' + id_dep + '"]')
+//         .children("option")
+//         .remove();
+//       jQuery.each(retornoAjax, function (key, value) {
+//         if (Array.isArray(selec)) {
+//           if (jQuery.inArray(value.id, selec) !== -1) {
+//             jQuery('[name="' + id_dep + '"]').append(
+//               jQuery("<option selected></option>")
+//                 .attr("value", value.id)
+//                 .text(value.text)
+//             );
+//           } else if (jQuery.inArray(value.id, selec) === -10) {
+//             // DIVISOR
+//             jQuery('[name="' + id_dep + '"]').append(
+//               jQuery("<option class='divider' data-divider='true'></option>")
+//                 .attr("value", value.id)
+//                 .text("")
+//             );
+//           } else {
+//             jQuery('[name="' + id_dep + '"]').append(
+//               jQuery("<option></option>")
+//                 .attr("value", value.id)
+//                 .text(value.text)
+//             );
+//           }
+//         } else {
+//           if (value.id == selec) {
+//             jQuery('[name="' + id_dep + '"]').append(
+//               jQuery("<option selected></option>")
+//                 .attr("value", value.id)
+//                 .text(value.text)
+//             );
+//           } else if (value.id === -10) {
+//             // DIVISOR
+//             jQuery('[name="' + id_dep + '"]').append(
+//               jQuery("<option class='divider' data-divider='true'></option>")
+//                 .attr("value", value.id)
+//                 .text("")
+//             );
+//           } else {
+//             jQuery('[name="' + id_dep + '"]').append(
+//               jQuery("<option></option>")
+//                 .attr("value", value.id)
+//                 .text(value.text)
+//             );
+//           }
+//         }
+//       });
+//       jQuery('[name="' + id_dep + '"]').selectpicker("destroy");
+//       jQuery('[name="' + id_dep + '"]').selectpicker("deselectAll");
+//       // jQuery.each(retorno, function (key, value) {
+//       //     if (value.id == selec || selec.indexOf(value.id) >= 0) {
+//       aSelec = selec;
+//       if (typeof selec === "string" && selec.indexOf(",") > 0) {
+//         aSelec = selec.split(",");
+//       }
+//       jQuery('[id="' + id_dep + '"]').selectpicker("val", aSelec);
+//       jQuery('[id="' + id_dep + '"]').selectpicker("refresh");
+//     }
+//   } else {
+//     var nodes = document.getElementById(id_dep);
+//     var jqObj = jQuery(nodes);
+//     jQuery(jqObj).children("option").remove();
+//     jQuery(jqObj).append(
+//       jQuery("<option></option>")
+//         .attr("value", -1)
+//         .text(nodes.getAttribute("placeholder"))
+//     );
+//   }
+// }
+
 function busca_dependente(obj, id_dep, url_busca, selec) {
-  id_dep = id_dep.replace(/[\[\]]/g, (match) => "\\" + match);
-  // id_dep = id_dep.replace("[", "\\[");
-  // id_dep = id_dep.replace("]", "\\]");
-  if (selec == "") {
-    if (jQuery("#" + id_dep).data("valor")) {
-      selec = jQuery("#" + id_dep).getAttribute("data-valor");
-    } else {
-      selec = jQuery("#" + id_dep).val();
-    }
+  const escapedIdDep = id_dep.replace(/[\[\]]/g, "\\$&");
+  const $select = jQuery("#" + escapedIdDep);
+  const $selectRaw = jQuery("#" + escapedIdDep)[0];
+
+  // Detecta valor de seleção padrão
+  if (!selec) {
+    selec = jQuery($selectRaw).data("valor") || $select.val();
   }
-  if (parseInt(jQuery(obj).val()) != -1) {
-    var nodes = document.getElementById(id_dep);
-    var jqObj = jQuery(nodes);
 
-    var datarr = new Array();
-    datarr[0] = {};
-    datarr[0].id_dep = jQuery(obj).val();
+  const parentValue = jQuery(obj).val();
 
-    dados = { busca: jQuery(obj).val() };
-    retornoAjax = false;
-    executaAjax(url_busca, "json", dados);
-    if (retornoAjax) {
-      console.log(retornoAjax);
-      arr_ret = [];
-      jQuery.each(retornoAjax, function (key, value) {
-        arr_ret[key] = value;
-      });
-      arr_ret.sort(function (a, b) {
-        return a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0;
-      });
-      console.log(arr_ret);
-
-      jQuery('[name="' + id_dep + '"]')
-        .children("option")
-        .remove();
-      jQuery.each(retornoAjax, function (key, value) {
-        if (Array.isArray(selec)) {
-          if (jQuery.inArray(value.id, selec) !== -1) {
-            jQuery('[name="' + id_dep + '"]').append(
-              jQuery("<option selected></option>")
-                .attr("value", value.id)
-                .text(value.text)
-            );
-          } else if (jQuery.inArray(value.id, selec) === -10) {
-            // DIVISOR
-            jQuery('[name="' + id_dep + '"]').append(
-              jQuery("<option class='divider' data-divider='true'></option>")
-                .attr("value", value.id)
-                .text("")
-            );
-          } else {
-            jQuery('[name="' + id_dep + '"]').append(
-              jQuery("<option></option>")
-                .attr("value", value.id)
-                .text(value.text)
-            );
-          }
-        } else {
-          if (value.id == selec) {
-            jQuery('[name="' + id_dep + '"]').append(
-              jQuery("<option selected></option>")
-                .attr("value", value.id)
-                .text(value.text)
-            );
-          } else if (value.id === -10) {
-            // DIVISOR
-            jQuery('[name="' + id_dep + '"]').append(
-              jQuery("<option class='divider' data-divider='true'></option>")
-                .attr("value", value.id)
-                .text("")
-            );
-          } else {
-            jQuery('[name="' + id_dep + '"]').append(
-              jQuery("<option></option>")
-                .attr("value", value.id)
-                .text(value.text)
-            );
-          }
-        }
-      });
-      jQuery('[name="' + id_dep + '"]').selectpicker("destroy");
-      jQuery('[name="' + id_dep + '"]').selectpicker("deselectAll");
-      // jQuery.each(retorno, function (key, value) {
-      //     if (value.id == selec || selec.indexOf(value.id) >= 0) {
-      aSelec = selec;
-      if (selec.indexOf(",") > 0) {
-        aSelec = selec.split(",");
-      }
-      jQuery('[id="' + id_dep + '"]').selectpicker("val", aSelec);
-    }
-  } else {
-    var nodes = document.getElementById(id_dep);
-    var jqObj = jQuery(nodes);
-    jQuery(jqObj).children("option").remove();
-    jQuery(jqObj).append(
+  // Se valor do pai for -1, reseta o select dependente
+  if (parseInt(parentValue) === -1) {
+    $select.empty().append(
       jQuery("<option></option>")
         .attr("value", -1)
-        .text(nodes.getAttribute("placeholder"))
+        .text($selectRaw.getAttribute("placeholder") || "Selecione"),
     );
+    $select.selectpicker("refresh");
+    return;
   }
+
+  // Monta dados e executa AJAX (síncrono, como no seu original)
+  const dados = { busca: parentValue };
+  retornoAjax = false;
+  executaAjax(url_busca, "json", dados);
+
+  if (!retornoAjax) return;
+
+  // Prepara array de seleção como strings
+  let aSelec = [];
+  if (Array.isArray(selec)) {
+    aSelec = selec.map(String);
+  } else if (typeof selec === "string" && selec.includes(",")) {
+    aSelec = selec.split(",").map((s) => s.trim());
+  } else if (selec != null) {
+    aSelec = [String(selec)];
+  }
+
+  // Ordena retorno
+  retornoAjax.sort((a, b) => a.text.localeCompare(b.text));
+
+  // Limpa e popula opções
+  $select.selectpicker("destroy"); // limpa UI customizada
+  $select.empty();
+  retornoAjax.forEach((item) => {
+    const valueStr = String(item.id);
+    const isDivider = item.id === -10;
+
+    const $option = jQuery("<option></option>")
+      .attr("value", valueStr)
+      .text(isDivider ? "" : item.text);
+
+    if (isDivider) {
+      $option.addClass("divider").attr("data-divider", "true");
+    }
+
+    $select.append($option);
+  });
+
+  $select.addClass("selectpicker");
+  // Define seleção e atualiza visual do selectpicker
+  $select.selectpicker("val", aSelec);
+
+  // Fecha o dropdown programaticamente
+  $select.parent().find(".dropdown-toggle").dropdown("toggle"); // se aberto, fecha
 }
 
 /**
@@ -1756,14 +1848,14 @@ function validarArquivoPorAccept(el) {
     if (!extensaoValida && !tipoValido) {
       boxAlert(
         `Apenas arquivos dos tipos permitidos (${acceptedList.join(
-          ", "
+          ", ",
         )}) são aceitos.`,
         true,
         "",
         true,
         1,
         false,
-        "Atenção"
+        "Atenção",
       );
       el.value = "";
     }
@@ -2068,24 +2160,24 @@ function formata_campo(objtipo, campo_alvo) {
       jQuery("[id='" + campo_alvo + "']").prop("type", "tel");
       jQuery("[id='" + campo_alvo + "']").prop(
         "pattern",
-        /^\(\d{2}\) \d{4,5}\-\d{4}$/
+        /^\(\d{2}\) \d{4,5}\-\d{4}$/,
       );
       jQuery("[id='" + campo_alvo + "']").prop("style", "text-align: left");
       jQuery("[id='" + campo_alvo + "']").prop(
         "placeholder",
-        "Informe Celular"
+        "Informe Celular",
       );
       jQuery("[id='" + campo_alvo + "']").prop(
         "aria-describedby",
-        "ad_" + campo_alvo
+        "ad_" + campo_alvo,
       );
       jQuery("[id='" + campo_alvo + "']").prop(
         "data-original-title",
-        "Informe um Celular válido! (99) 99999-9999"
+        "Informe um Celular válido! (99) 99999-9999",
       );
       jQuery("[id='" + campo_alvo + "']").prop(
         "title",
-        "Informe um Celular válido! (99) 99999-9999"
+        "Informe um Celular válido! (99) 99999-9999",
       );
       jQuery("[id='" + campo_alvo + "']").keyup(function () {
         mascara(this, "mcel2");
@@ -2094,65 +2186,65 @@ function formata_campo(objtipo, campo_alvo) {
       jQuery("[id='" + campo_alvo + "']").prop("type", "tel");
       jQuery("[id='" + campo_alvo + "']").prop(
         "pattern",
-        /^\(\d{2}\) \d{4}\-\d{4}$/
+        /^\(\d{2}\) \d{4}\-\d{4}$/,
       );
       jQuery("[id='" + campo_alvo + "']").prop("style", "text-align: left");
       jQuery("[id='" + campo_alvo + "']").prop("placeholder", "Informe Fone");
       jQuery("[id='" + campo_alvo + "']").prop(
         "aria-describedby",
-        "ad_" + campo_alvo
+        "ad_" + campo_alvo,
       );
       jQuery("[id='" + campo_alvo + "']").prop(
         "data-original-title",
-        "Informe um Fone válido! (99) 9999-9999"
+        "Informe um Fone válido! (99) 9999-9999",
       );
       jQuery("[id='" + campo_alvo + "']").prop(
         "title",
-        "Informe um Fone válido! (99) 9999-9999"
+        "Informe um Fone válido! (99) 9999-9999",
       );
       jQuery("[id='" + campo_alvo + "']").attr(
         "onkeyup",
-        mascara(this, "mtel")
+        mascara(this, "mtel"),
       );
     } else if (retornoAjax[0].text == "email") {
       jQuery("[id='" + campo_alvo + "']").prop("type", "email");
       jQuery("[id='" + campo_alvo + "']").prop(
         "pattern",
-        /^[\w\.=-]+@[\w\.-]+\.[\w]{2,3}$/
+        /^[\w\.=-]+@[\w\.-]+\.[\w]{2,3}$/,
       );
       jQuery("[id='" + campo_alvo + "']").prop("style", "text-align: left");
       jQuery("[id='" + campo_alvo + "']").prop(
         "aria-describedby",
-        "ad_" + campo_alvo
+        "ad_" + campo_alvo,
       );
       jQuery("[id='" + campo_alvo + "']").prop("placeholder", "Informe E-mail");
       jQuery("[id='" + campo_alvo + "']").prop(
         "data-original-title",
-        "Informe um E-mail válido!"
+        "Informe um E-mail válido!",
       );
       jQuery("[id='" + campo_alvo + "']").prop(
         "title",
-        "Informe um E-mail válido!"
+        "Informe um E-mail válido!",
       );
     } else if (retornoAjax[0].text == "url" || retornoAjax[0].text == "site") {
       jQuery("[id='" + campo_alvo + "']").prop("type", "url");
       jQuery("[id='" + campo_alvo + "']").prop(
         "pattern",
-        /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/
+        /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
       );
       jQuery("[id='" + campo_alvo + "']").prop("style", "text-align: left");
       jQuery("[id='" + campo_alvo + "']").prop(
         "aria-describedby",
-        "ad_" + campo_alvo
+        "ad_" + campo_alvo,
       );
       jQuery("[id='" + campo_alvo + "']").prop("placeholder", "Informe url");
       jQuery("[id='" + campo_alvo + "']").prop(
         "data-original-title",
-        "Informe uma url válida!"
+        "Informe uma url válida!",
       );
       jQuery("[id='" + campo_alvo + "']").prop(
         "title",
-        "Informe uma url válida!"
+        "Informe uma url válida!",
       );
     }
     jQuery("[id='" + campo_alvo + "']").focus();
@@ -2268,6 +2360,21 @@ function mudaCheck2opcoes(obj, campo) {
       .removeClass("d-none");
   }
 }
+function validarRegra(valor, regra) {
+  // Se for apenas um valor literal (ex: 'S', 'N', 'ativo'), comparar diretamente
+  const operadores = [">", ">=", "<", "<=", "==", "===", "!=", "!=="];
+
+  const temOperador = operadores.some((op) => regra.includes(op));
+
+  if (temOperador) {
+    // Monta e executa a expressão com Function
+    const fn = new Function("valor", `return valor ${regra};`);
+    return fn(valor);
+  } else {
+    // Compara diretamente como string (ou valor literal)
+    return valor == regra;
+  }
+}
 
 function mudaObrigatorio(obj, regra, fields) {
   if (typeof obj === "object" && obj !== null) {
@@ -2275,11 +2382,16 @@ function mudaObrigatorio(obj, regra, fields) {
   } else {
     nomecampo = obj;
   }
-  nomecampo = nomecampo.replaceAll("[", "\\[");
-  nomecampo = nomecampo.replaceAll("]", "\\]");
-  valor = jQuery('input[name="' + nomecampo + '"]:checked').val();
+  nomecampo = escIdColchetes(nomecampo);
+  // nomecampo = nomecampo.replaceAll("[", "\\[");
+  // nomecampo = nomecampo.replaceAll("]", "\\]");
+  if (obj.tagName == "SELECT") {
+    valor = jQuery('select[name="' + nomecampo + '"]').val();
+  } else {
+    valor = jQuery('input[name="' + nomecampo + '"]:checked').val();
+  }
   campos = fields.split(",");
-  if (valor == regra) {
+  if (validarRegra(valor, regra)) {
     if (jQuery.type(campos) == "array") {
       for (v = 0; v < campos.length; v++) {
         campos[v] = escIdColchetes(campos[v]);
@@ -2360,5 +2472,3 @@ function verificaTipoAcao(obj) {
     }
   }
 }
-
-

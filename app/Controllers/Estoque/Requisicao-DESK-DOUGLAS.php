@@ -95,6 +95,7 @@ class Requisicao extends BaseController
             $dados_requis
         );
 
+        $perfilId = session()->get('usu_perfil_id');
         // Busca logs
         $log = buscaLogTabela('est_requisicao', $req_ids_assoc);
 
@@ -115,9 +116,8 @@ class Requisicao extends BaseController
                 $url_cop = $base_url . '/copy/' . $req->req_id;
                 $url_imp = base_url('/CriaPdf2025/PrintRequisicaoEstoq/' . $req->req_id);
 
-                // Se não pode editar
-                if (trim($req->stt_edicao) === 'N') {
-
+                // Se não pode editar e se o usuário tem acesso a esse tipo de movimentação
+                if (trim($req->stt_edicao) === 'N' && str_contains($req->prf_id_tmo, $perfilId)) { 
                     // Botão copiar (somente se dentro do prazo)
                     if ($dataBanco > $dataLimite) {
                         $bt_cop = new MyCampo();
@@ -126,10 +126,15 @@ class Requisicao extends BaseController
                         $bt_cop->i_cone   = "<i class='fas fa-copy'></i>";
                         $bt_cop->label    = '';
                         $bt_cop->place    = 'Copiar Requisição';
-                        $bt_cop->funcChan = "copiar_requisicao('{$url_cop}')";
+                        $bt_cop->funcChan = "redireciona('{$url_cop}',event)";
                         $btcop = $bt_cop->crBotao();
                         $req->acao_person[] = $btcop;
                     }
+                }
+
+                // se o usuário não tem acesso a esse tipo de movimentação não pode editar
+                if(!str_contains($req->prf_id_tmo, $perfilId)){
+                    $req->stt_edicao = 'N';
                 }
                 // Botão imprimir
                 if (trim($req->stt_impressao) === 'S') {

@@ -9,15 +9,15 @@ use App\Libraries\MyCampo;
 class EntOcoModOcorrencia extends Entity
 {
     protected $attributes = [
-        'sut_id'       => null,
-        'sut_nome'     => null,
+        'moc_id'       => null,
+        'moc_nome'     => null,
         'moc_ativo'    => 'A',
         'moc_excluido' => null,
         'tpo_id'       => null,
     ];
 
     protected $casts = [
-        'sut_id' => 'integer',
+        'moc_id' => 'integer',
         'tpo_id' => 'integer',
     ];
 
@@ -39,23 +39,23 @@ class EntOcoModOcorrencia extends Entity
         }
         $ret = [];
 
-        $mid            = new MyCampo('oco_subt_ocorrencia', 'sut_id');
-        $mid->valor     = (isset($dados->sut_id)) ? $dados->sut_id : '';
-        $ret['sut_id']   = $mid->crOculto();
+        $mid            = new MyCampo('oco_mod_ocorrencia', 'moc_id');
+        $mid->valor     = (isset($dados->moc_id)) ? $dados->moc_id : '';
+        $ret['moc_id']   = $mid->crOculto();
 
-        $nome            =  new MyCampo('oco_subt_ocorrencia', 'sut_nome');
-        $nome->valor     = (isset($dados->sut_nome)) ? $dados->sut_nome : '';
+        $nome            =  new MyCampo('oco_mod_ocorrencia', 'moc_nome');
+        $nome->valor     = (isset($dados->moc_nome)) ? $dados->moc_nome : '';
         $nome->obrigatorio = true;
         $nome->leitura   = false;
         $nome->largura   = 80;
-        $ret['sut_nome'] = $nome->crInput();
+        $ret['moc_nome'] = $nome->crInput();
 
 
         // TIPO DE OCORRÊNCIA
         $config = [];
         $config['DispForm'] = 'col-6';
         $config['Largura']  = 50;
-        $config['Leitura']  = isset($dados->sut_id);
+        $config['Leitura']  = isset($dados->moc_id);
         $config['FunChan']  =  'carregaTelaAcaoTipo(this); carregaAcaoTipo(this);';
 
         $ret['tpo_id'] = criaSelectRelativo(
@@ -64,7 +64,7 @@ class EntOcoModOcorrencia extends Entity
             'tpo_nome',
             $dados->tpo_id ?? '',
             1,
-            'oco_subt_ocorrencia',
+            'oco_mod_ocorrencia',
             [],
             $config
         );
@@ -72,7 +72,7 @@ class EntOcoModOcorrencia extends Entity
         $simnao['A'] = 'Ativo';
         $simnao['I'] = 'Inativo';
 
-        $teste          = new MyCampo('oco_subt_ocorrencia', 'moc_ativo');
+        $teste          = new MyCampo('oco_mod_ocorrencia', 'moc_ativo');
         $teste->valor   = (isset($dados->moc_ativo)) ? $dados->moc_ativo : 'A';
         $teste->leitura = $show;
         $teste->opcoes  = $simnao;
@@ -98,7 +98,7 @@ class EntOcoModOcorrencia extends Entity
             'mod_nome',
             $dados['mod_id'] ?? '',
             1,
-            'oco_tipo_ocorrencia_tela',
+            'oco_tpo_tela',
             [],
             $config
         );
@@ -114,15 +114,13 @@ class EntOcoModOcorrencia extends Entity
             'tel_nome',
             $dados['tel_id'] ?? '',
             2,
-            'oco_tipo_ocorrencia_tela',
+            'oco_tpo_tela',
             [],
             $config
         );
 
-        // CAMPOS 
         $config['Pai']         = "tel_id[$pos]";
         $config['Urlbusca']    = base_url('buscas/busca_campo_tela');
-        $config['DispForm']    = 'col-4';
 
         // debug($dados['tof_campo'], true);
         $ret['tof_campo'] = criaSelectRelativo(
@@ -131,7 +129,7 @@ class EntOcoModOcorrencia extends Entity
             '',
             $dados['tof_campo'] ?? '',
             4,
-            'oco_tipo_ocorrencia_campos',
+            'oco_tpo_campos',
             ['tel_id' => $dados['tel_id'] ?? ''],
             $config,
             'tof_campo'
@@ -175,12 +173,11 @@ class EntOcoModOcorrencia extends Entity
 
         // tipo de ação
         $config = [];
-        $config['Label']    = 'Tipo de Ação';
         $config['Leitura']  = true;
         $config['DispForm'] = 'col-6';
         $config['Largura']  = 50;
         $config['Ordem']    = $pos;
-        $config['FunChan']  = 'verificaTipoAcao(this)';
+        $config['FunChan']     = 'verificaTipoAcao(this)';
 
         $ret['tpa_id'] = criaSelectRelativo(
             'oco_tipo_acao',
@@ -188,14 +185,12 @@ class EntOcoModOcorrencia extends Entity
             'tpa_nome',
             $dados['tpa_id'] ?? '',
             1,
-            'oco_tipo_acao',
+            'oco_tpo_acao',
             [],
             $config
         );
 
-        // tipo de movimentação
-        $config['Label']    = 'Tipo de Movimentação';
-        $config['FunChan']  = '';
+        $config['FunChan']     = '';
         $config['DispForm'] = 'col-12';
         $ret['tmo_id'] = criaSelectRelativo(
             'est_tipo_movimentacao',
@@ -203,14 +198,11 @@ class EntOcoModOcorrencia extends Entity
             'tmo_nome',
             $dados['tmo_id'] ?? '',
             1,
-            'oco_tipo_acao',
+            'oco_tpo_acao',
             [],
-            $config,
-            'tmo_id_tpa'
+            $config
         );
 
-        // modulo
-        $config['Label']    = 'Módulo';        
         $config['DispForm'] = 'col-6';
         $config['Largura']  = 30;
         $ret['mod_id'] = criaSelectRelativo(
@@ -219,15 +211,12 @@ class EntOcoModOcorrencia extends Entity
             'mod_nome',
             $dados['mod_id'] ?? '',
             1,
-            'oco_tipo_acao',
+            'oco_tpo_acao',
             [],
-            $config,
-            'mod_id_tpa'
+            $config
         );
 
-        // tela
-        $config['Label']    = 'Tela'; 
-        $config['Pai']      = 'mod_id';
+        $config['Pai'] = 'mod_id';
         $config['Urlbusca'] = base_url('buscas/busca_tela_modulo');
 
         $ret['tel_id'] = criaSelectRelativo(
@@ -236,13 +225,11 @@ class EntOcoModOcorrencia extends Entity
             'tel_nome',
             $dados['tel_id'] ?? '',
             2,
-            'oco_tipo_acao',
+            'oco_tpo_acao',
             [],
-            $config,
-            'tel_id_tpa'
+            $config
         );
 
-        $config['Label']    = 'Status';         
         $config['DispForm'] = 'col-12';
         $config['Largura']  = 50;
         $ret['stt_id'] = criaSelectRelativo(
@@ -251,10 +238,9 @@ class EntOcoModOcorrencia extends Entity
             'stt_nome',
             $dados['stt_id'] ?? '',
             1,
-            'oco_tipo_acao',
+            'oco_tpo_acao',
             [],
-            $config,
-            'stt_id_tpa'
+            $config
         );
 
         $atrib['data-index'] = $pos;

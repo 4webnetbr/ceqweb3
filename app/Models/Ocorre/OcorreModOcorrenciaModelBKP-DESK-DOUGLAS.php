@@ -146,13 +146,13 @@ class OcorreModOcorrenciaModel extends Model
     public function getTOAcao($moc_id = false)
     {
         $db = db_connect('dbOcorrencia');
-        $builder = $db->table('oco_moc_acao');
+        $builder = $db->table('oco_subt_ocorrencia_acao');
 
         $builder->select('*');
         if ($moc_id) {
-            $builder->where('moc_id', $moc_id);
+            $builder->where('sut_id', $moc_id);
         }
-        $builder->orderBy('moc_id');
+        $builder->orderBy('sut_id');
         return $builder->get()->getResultArray();
     }
 

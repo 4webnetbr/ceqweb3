@@ -266,7 +266,7 @@ class EntTipoMovimentacao extends Entity
             'cfg_perfil',
             'prf_id',
             'prf_nome',
-            (isset($dados->prf_id) && is_array($dados->prf_id) && count($dados->prf_id) ? $dados->prf_id[0] : ''), // <- string aqui
+             $dados->prf_id ?? [],
             3,
             'est_tipo_movimentacao_permissao',
             [],

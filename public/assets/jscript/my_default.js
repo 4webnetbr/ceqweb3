@@ -22,7 +22,7 @@ jQuery(document).ready(function () {
     // grava na seção local data
     sessionStorage.setItem(
       "tabId",
-      Date.now() + "-" + Math.random().toString(36).substr(2, 9)
+      Date.now() + "-" + Math.random().toString(36).substr(2, 9),
     );
   }
 
@@ -97,9 +97,10 @@ jQuery(document).ready(function () {
   });
 
   jQuery("#bt_salvar").on("click", async function (event) {
-    bloqueiaTela();
+    await bloqueiaTela();
     event.preventDefault();
     event.stopPropagation();
+
     const controller = jQuery("#controler").val();
 
     let submeter = false;
@@ -170,7 +171,7 @@ jQuery(document).ready(function () {
                 event.stopPropagation();
                 boxAlert(20, false, "submit", true, 1, true, "");
               }
-            }
+            },
           );
           jQuery("#form1").submit();
           // form.submit();
@@ -245,7 +246,7 @@ jQuery(document).ready(function () {
                 retornoAjax.url,
                 false,
                 1,
-                false
+                false,
               );
             }
           } else {
@@ -458,7 +459,8 @@ async function bloqueiaTela() {
       opacity: 1,
       visibility: "visible",
     });
-    await sleep(500);
+    // Força o navegador a fazer repaint antes de seguir
+    // await new Promise(requestAnimationFrame);
   }
 }
 
@@ -475,7 +477,10 @@ function isTelaBloqueada() {
  * desBloqueiaTela
  * Desbloqueia a Tela
  */
-function desBloqueiaTela() {
+async function desBloqueiaTela() {
+  await new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve)),
+  );
   if (!executandoAjax) {
     jQuery("#bloqueiaTela").stop(true, true).css({
       display: "none",
@@ -814,7 +819,7 @@ async function boxAlert(
   tipo = 1,
   confirma = false,
   titulo = "",
-  opcoes = false
+  opcoes = false,
 ) {
   // --- normalização de título/tipo/cor a partir do msg ou do tipo informado
   let cor = "bg-warning";
@@ -1017,7 +1022,7 @@ async function boxAlert(
             if (retornoAjax.erro) {
               // exibe erro e depois resolve(false)
               boxAlert(retornoAjax.msg, true, "", false, 1, false).then(() =>
-                resolve(false)
+                resolve(false),
               );
             } else {
               // volta para o controller atual
@@ -1266,7 +1271,10 @@ function mostranoToast(texto, alerta = false) {
   showNotification(texto);
 }
 
-let processandoTimeout = null;
+(function () {
+  // código isolado aqui
+  let processandoTimeout = null;
+})();
 
 function mostranorodape(texto) {
   jQuery("#msgprocessando").html(" Processando...<br>" + texto);
@@ -1408,12 +1416,12 @@ function validador(form) {
             nome +
             ", aceita no máximo " +
             el.maxLength +
-            " caracteres"
+            " caracteres",
         );
       }
       if (el.validity.tooShort) {
         mensagens.push(
-          "Digite pelo menos " + el.minLength + " caracteres para " + nome
+          "Digite pelo menos " + el.minLength + " caracteres para " + nome,
         );
       }
       if (el.validity.typeMismatch) {
@@ -1631,7 +1639,7 @@ async function gerarEtiquetaZPL(url, etiq = false, chave = false) {
           9,
           false,
           "Selecione a Etiqueta",
-          retornoAjax
+          retornoAjax,
         );
       }
     }
@@ -1726,7 +1734,7 @@ async function imprimirEtiqueta(url = false) {
         9,
         false,
         "Selecione a Impressora",
-        retornoAjax
+        retornoAjax,
       );
     }
   }
@@ -1775,7 +1783,7 @@ async function fecharTodosModais({
       waiters.push(
         new Promise((res) => {
           el.addEventListener("hidden.bs.modal", res, { once: true });
-        })
+        }),
       );
     }
     inst.hide();
@@ -1784,7 +1792,7 @@ async function fecharTodosModais({
   // 3) Offcanvas (opcional)
   if (offcanvasToo) {
     const canvases = Array.from(
-      document.querySelectorAll(".offcanvas.show")
+      document.querySelectorAll(".offcanvas.show"),
     ).reverse();
     for (const el of canvases) {
       const inst =
@@ -1793,7 +1801,7 @@ async function fecharTodosModais({
         waiters.push(
           new Promise((res) => {
             el.addEventListener("hidden.bs.offcanvas", res, { once: true });
-          })
+          }),
         );
       }
       inst.hide();

@@ -129,3 +129,14 @@ class LoginFilter implements FilterInterface
         // Não utilizado
     }
 }
+Administrador do Sistema";
+        }
+
+        return '';
+    }
+
+    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
+    {
+        // Não utilizado
+    }
+}

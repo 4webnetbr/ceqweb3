@@ -333,7 +333,7 @@ class TipoMovimentacao extends BaseController
                 'tmo_semestoque'            => $postado['tmo_semestoque'],
                 'tmo_transacao_erp'         => $postado['tmo_transacao_erp'],
                 'tmo_atendeautomatico'      => $postado['tmo_atendeautomatico'],
-                'tmo_transacao_erp_entrada' => $postado['tmo_transacao_erp_entrada'],
+                'tmo_transacao_erp_entrada' => $postado['tmo_transacao_erp_entrada'] ?? null,
                 'tmo_transacao_erp_saida'   => $postado['tmo_transacao_erp_saida'],
                 'tmo_entrefiliais'          => $postado['tmo_entrefiliais'],
                 'tmo_estoquepadrao'         => $postado['tmo_estoquepadrao'],

@@ -5,7 +5,7 @@ namespace App\Controllers\Ocorrencia;
 use App\Models\CommonModel;
 use App\Controllers\BuscasSapiens;
 use App\Controllers\BaseController;
-use App\Controllers\Ocorrencia\EntOcoTratativa;
+use App\Entities\Ocorrencia\EntOcoTratativa;
 use App\Traits\ForeignKeyUsageChecker;
 use App\Models\Config\ConfigTelaModel;
 use App\Models\Produt\ProdutLoteModel;
@@ -70,6 +70,19 @@ class OcoOcorrencia extends BaseController
 
         foreach ($dados as $nov) {
             $nov->usu_nome = $log[$nov->oco_id]['usua_alterou'] ?? '';
+            // Botão imprimir
+            $url_imp = base_url('/CriaPdf2025/PrintOcorrencia/' . $nov->oco_id);
+            
+            $nov->acao_person[] = "
+                <button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0'
+                    data-mdb-toggle='tooltip'
+                    data-mdb-placement='top'
+                    title='Imprimir Ocorrência'
+                    onclick='openPDFModal(\"{$url_imp}\",\"Imprimir Ocorrência\")'>
+                    <i class='fa-solid fa-print'></i>
+                </button>
+            ";
+            
             // Botão de finalizar se estiver pendente
             if (trim($nov->stt_nome ?? '') === 'Pendente') {
                 $url_finalizar = $base_url . '/finalizar/' . $nov->oco_id;
@@ -166,9 +179,9 @@ class OcoOcorrencia extends BaseController
         $config['Pai'] = "tpo_id";
         $config['Urlbusca'] = base_url('Buscas/buscaSubtipoPorTipo');
         $mod_oc = criaSelectRelativo(
-            'vw_oco_mod_ocorrencia_relac',
-            'moc_id',
-            'moc_nome',
+            'vw_oco_subt_ocorrencia_relac',
+            'sut_id',
+            'sut_nome',
             null,
             2,
             'oco_ocorrencia',
@@ -355,9 +368,9 @@ class OcoOcorrencia extends BaseController
 
             $db = $this->ocorrencia->db;
             $possuiModalidadeNenhuma = $db
-                ->table('oco_mod_ocorrencia')
+                ->table('oco_subt_ocorrencia')
                 ->where('tpo_id', $postado['tpo_id'])
-                ->where('moc_nome', 'Nenhuma')
+                ->where('sut_nome', 'Nenhuma')
                 ->countAllResults() > 0;
 
             if ($possuiModalidadeNenhuma) {

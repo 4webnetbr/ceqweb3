@@ -111,7 +111,7 @@ class OcorreTipoOcorrenciaModel extends Model
     public function getTOAcao($tpo_id = false)
     {
         $db = db_connect('dbOcorrencia');
-        $builder = $db->table('oco_tipo_ocorrencia_acao');
+        $builder = $db->table('oco_tpo_acao');
         $builder->select('*');
 
         // Filtra pelo tipo de ocorrência
@@ -137,15 +137,6 @@ class OcorreTipoOcorrenciaModel extends Model
         return $builder->get()->getResult();
     }
 
-    public function SubVinculado(int $tpo_id): bool
-    {
-        $db = db_connect('dbOcorrencia');
-    
-        return $db->table('oco_subt_ocorrencia')
-            ->where('tpo_id', $tpo_id)
-            ->countAllResults() > 0;
-    }
-    
     public function getTipoMovimentacao($tmo_id = false, $prf_id = false)
     {
         $db = db_connect('dbEstoque');

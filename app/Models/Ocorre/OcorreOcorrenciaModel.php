@@ -124,15 +124,6 @@ class OcorreOcorrenciaModel extends Model
             ->getResult();
     }
 
-    public function getListaOcorrenciaPdf($oco_id)
-    {
-        return $this->db
-            ->table('vw_oco_ocorrencia_relac')
-            ->where('oco_id', $oco_id)
-            ->get()
-            ->getResult();
-    }
-
 
     public function salvarOcorrencia(EntOcoOcorrencia $ocorrencia)
     {

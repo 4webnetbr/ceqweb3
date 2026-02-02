@@ -46,7 +46,7 @@ function gerarCampoNumeroPadrao(
   valor = 0,
   min = 0,
   step = 1,
-  index = ""
+  index = "",
 ) {
   return `
         <div class="input-group input-group-sm d-inline-flex align-items-center" style="max-width: 20ch;min-width: 15ch;font-size:10px">
@@ -77,7 +77,7 @@ function criarLinhaProduto(
   index,
   dadosDep,
   codigosRepetidos,
-  codigosRenderizados
+  codigosRenderizados,
 ) {
   const estoquePad = prod.lotepad?.pro_estpadrao ?? 0;
   const estoqueOri = prod.loteori?.pro_estorigem ?? 0;
@@ -104,10 +104,14 @@ function criarLinhaProduto(
       : "";
   const iconeDuplic =
     temDuplicatas && isDuplicado
-      ? `<i class="fa-solid fa-arrow-turn-up text-secondary" 
-    id="${toggleId}" style="padding-left: 12px;transform: rotate(90deg);" ></i> `
+      ? //   ? `<i class="fa-solid fa-arrow-turn-up text-secondary"
+        // id="${toggleId}" style="padding-left: 12px;transform: rotate(90deg);" ></i> `
+        `<div class="subline" 
+    id="${toggleId}" >&nbsp;</div> `
       : "";
 
+  // <td class="text-end"><span class="float-start">${iconeToggle}${iconeDuplic}</span>${codpro}</td>
+  // <td class="text-start p-0"><div class="float-end">${codpro}</div><div class="float-start">${iconeToggle}${iconeDuplic}</div></td>
   return `
         <tr class="linha-produto ${isDuplicado ? "d-none" : ""}" 
             data-classe="${dadosDep.classe}" 
@@ -120,12 +124,12 @@ function criarLinhaProduto(
             data-saldo-disponivel="${estoqueDisp}"
             data-sugestao-base="${prod.pro_sugestao}">
 
-            <td class="text-end"><span class="float-start">${iconeToggle}${iconeDuplic}</span>${codpro}</td>
+            <td class="text-end p-0"><div class="float-start">${iconeToggle}${iconeDuplic}</div>${codpro}</td>
             <td title="${
               prod.pro_inform ?? ""
             }" data-bs-toggle="tooltip" style="font-size: 10px;">${
-    prod.pro_despro
-  }</td>
+              prod.pro_despro
+            }</td>
             <td style="font-size: 10px;">${prod.fab_apeFab}</td>
             <td>${prod.lot_lote}</td>
             <td>${prod.lot_validade}</td>
@@ -144,7 +148,7 @@ function criarLinhaProduto(
               prod.pro_multiplica,
               1,
               1,
-              index
+              index,
             )}</td>
             <td class="text-end">
                 ${gerarCampoNumeroPadrao(
@@ -153,22 +157,22 @@ function criarLinhaProduto(
                   prod.pro_pctseguranca,
                   0,
                   1,
-                  index
+                  index,
                 )}
                 <span class="text-end d-none" id="seg_${index}">${
-    prod.pro_seguranca
-  }</span>
+                  prod.pro_seguranca
+                }</span>
             </td>
             <td class="text-end sugestao" id="sug_${index}">${
-    prod.pro_sugestao
-  }</td>
+              prod.pro_sugestao
+            }</td>
             <td class="text-end">${gerarCampoNumeroPadrao(
               `requisicao_${index}`,
               "requisicao",
               prod.pro_requisicao,
               0,
               1,
-              index
+              index,
             )}</td>
         </tr>
     `;
@@ -191,26 +195,26 @@ function montarTabelaProdutos(classe, rt, dadosDep) {
   text.push(`<div class="accordion-item" data-cla_id="${classe.id}">`);
   text.push(`<h2 class="accordion-header">`);
   text.push(
-    `<button class="accordion-button bg-gray-padrao collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsecl${rt}" aria-expanded="${isFirst}" aria-controls="collapsecl${rt}">${classe.nome}</button>`
+    `<button class="accordion-button bg-gray-padrao collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsecl${rt}" aria-expanded="${isFirst}" aria-controls="collapsecl${rt}">${classe.nome}</button>`,
   );
   text.push(`</h2>`);
   text.push(
-    `<div id="collapsecl${rt}" class="accordion-collapse collapse" data-bs-parent="#accClas">`
+    `<div id="collapsecl${rt}" class="accordion-collapse collapse" data-bs-parent="#accClas">`,
   );
   text.push(`<div class="accordion-body p-1 bg-body-tertiary">`);
 
   text.push(`<div class="d-flex justify-content-end mb-2">`);
   text.push(`<div class="form-check">`);
   text.push(
-    `<input class="form-check-input aceita-sugestao" type="checkbox" data-classe="${rt}" id="checkSug${rt}">`
+    `<input class="form-check-input aceita-sugestao" type="checkbox" data-classe="${rt}" id="checkSug${rt}">`,
   );
   text.push(
-    `<label class="form-check-label" for="checkSug${rt}">Aceitar sugestões</label>`
+    `<label class="form-check-label" for="checkSug${rt}">Aceitar sugestões</label>`,
   );
   text.push(`</div></div>`);
 
   text.push(
-    `<table class="table table-bordered table-striped w-100" style="font-size: 10px;"><thead><tr class="text-center">`
+    `<table class="table table-bordered table-striped w-100" style="font-size: 10px;"><thead><tr class="text-center">`,
   );
   text.push(`<th>Cód ERP</th>`);
   text.push(`<th>Descrição</th>`);
@@ -219,22 +223,22 @@ function montarTabelaProdutos(classe, rt, dadosDep) {
   text.push(`<th>Validade</th>`);
   text.push(`<th class="vertical-th">Qtd Caixa</th>`);
   text.push(
-    `<th class="vertical-th">Saldo Origem<br>${dadosDep.deporigem}</th>`
+    `<th class="vertical-th">Saldo Origem<br>${dadosDep.deporigem}</th>`,
   );
   if (dadosDep.deppadrao !== "") {
     text.push(
-      `<th class="vertical-th">Saldo Padrão<br>${dadosDep.deppadrao}</th>`
+      `<th class="vertical-th">Saldo Padrão<br>${dadosDep.deppadrao}</th>`,
     );
   }
   text.push(
-    `<th class="vertical-th">Saldo Destino<br>${dadosDep.depdestino}</th>`
+    `<th class="vertical-th">Saldo Destino<br>${dadosDep.depdestino}</th>`,
   );
   text.push(
     `<th class="vertical-th">${
       dadosDep.diaanterior === "S"
         ? "Consumo<br>" + dadosDep.dataOntem
         : "Média<br>" + dadosDep.meddias + " dias"
-    }</th>`
+    }</th>`,
   );
   text.push(`<th>Multiplica</th>`);
   text.push(`<th class="vertical-th">% Segurança</th>`);
@@ -251,8 +255,8 @@ function montarTabelaProdutos(classe, rt, dadosDep) {
         index,
         dadosDep,
         codigosRepetidos,
-        codigosRenderizados
-      )
+        codigosRenderizados,
+      ),
     );
   });
 
@@ -280,7 +284,7 @@ async function carregarProdutos(url, aba, obj) {
       true,
       3,
       false,
-      "Atenção"
+      "Atenção",
     );
     return;
   }
@@ -331,7 +335,7 @@ async function carregarProdutos(url, aba, obj) {
       seguranca,
       max,
       saldoDestino,
-      saldoDisponivel
+      saldoDisponivel,
     ) {
       let sug = base * multiplicador;
       vsegura = Math.ceil(sug * (seguranca / 100));
@@ -409,7 +413,7 @@ async function carregarProdutos(url, aba, obj) {
         seguranca,
         max,
         saldoDestino,
-        saldoDisponivel
+        saldoDisponivel,
       );
 
       atualizarSugestao(index, novaSug);
@@ -460,7 +464,7 @@ async function carregarProdutos(url, aba, obj) {
         seguranca,
         max,
         saldoDestino,
-        saldoDisponivel
+        saldoDisponivel,
       );
 
       // const novaSug = calcularSugestao(consumo, multiplicador, min, max, saldoDestino, saldoDisponivel);
@@ -707,11 +711,22 @@ async function enviarRequisicoes(tipo = 0, event) {
         // if (["multiplica", "seguranca", "requisicao"].includes(nomeColuna))
         //   return;
 
+        // const texto = jQuery(this)
+        //   .clone()
+        //   .children()
+        //   .remove()
+        //   .end()
+        //   .text()
+        //   .trim();
         const texto = jQuery(this)
           .clone()
           .children()
           .remove()
           .end()
+          .contents()
+          .filter(function () {
+            return this.nodeType === 3; // Text node
+          })
           .text()
           .trim();
         if (nomeColuna) {
@@ -740,8 +755,8 @@ async function enviarRequisicoes(tipo = 0, event) {
   jqForm.find('input[name="json_requisicoes"]').remove();
   jqForm.append(
     `<input type="hidden" name="json_requisicoes" value='${JSON.stringify(
-      requisicoes
-    )}'>`
+      requisicoes,
+    )}'>`,
   );
 
   if (tipo > 0) {
@@ -783,5 +798,30 @@ async function enviarAteRequisicoes(event) {
     }
   }
 
-  return true; 
+  return true;
+}
+
+async function gerarOcorrencia(tela, indice) {
+  url = window.location.origin + "/OcoOcorrencia/addOutraTela";
+  telid = tela;
+  regid = jQuery("#req_id").val();
+  proid = jQuery("#proid_" + indice).val();
+  lotlote = jQuery("#lotlote_" + indice).val();
+  titulo = "Gerar Ocorrência";
+  dados = JSON.stringify({
+    pro_id: proid,
+    lot_lote: lotlote,
+    req_id: regid,
+    tel_id: telid,
+  });
+  const retornoAjax = await executaAjaxWait(url, "html", dados);
+  if (retornoAjax) {
+    if (titulo) {
+      jQuery(".modal-title").html(titulo);
+    }
+    jQuery(".modal-body").html(retornoAjax);
+    var myModal = new bootstrap.Modal(document.getElementById("myModal"), {});
+    // document.onreadystatechange = function () {
+    myModal.show();
+  }
 }

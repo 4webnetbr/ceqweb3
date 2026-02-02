@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Libraries\MyPdf2025;
 use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Microb\MicrobAnaRequisicaoModel;
+use App\Models\Ocorre\OcorreOcorrenciaModel;
 use DateTime;
 
 class CriaPdf2025 extends BaseController
@@ -14,6 +15,7 @@ class CriaPdf2025 extends BaseController
     public $anarequisicao;
     public $requisicao;
     public $pdf;
+    public $ocorrencia;
     /**
      * Construtor da Classe
      * construct
@@ -23,6 +25,7 @@ class CriaPdf2025 extends BaseController
         $this->data             = session()->getFlashdata('dados_classe');
         $this->anarequisicao    = new MicrobAnaRequisicaoModel();
         $this->requisicao       = new EstoquRequisicaoModel();
+        $this->ocorrencia       = new OcorreOcorrenciaModel();
     }
 
     public function PrintAnaRequisicao($req_id)
@@ -225,5 +228,90 @@ class CriaPdf2025 extends BaseController
         $this->pdf->SetY($linha);
         $this->pdf->SetX(10);
         $this->pdf->MultiCellSafe(95, 5, $texto, 0, 'J');
+    }
+
+    public function PrintOcorrencia($oco_id)
+    {
+        // Busca dados da ocorrência (ajuste o model se o nome for outro)
+        $ocorrencias = $this->ocorrencia->getListaOcorrenciaPdf($oco_id);
+    
+        if (!$ocorrencias) {
+            echo json_encode(['erro' => 'Ocorrência não encontrada']);
+            return;
+        }
+    
+        $oco = $ocorrencias[0];
+    
+        $this->pdf = new MyPdf2025(false, false);
+    
+        $this->pdf->SetTitle(formata_texto('Ocorrência Nº: ' . $oco->oco_id));
+        $this->pdf->Add_Page('P', 'A4', 0);
+        $this->pdf->SetFont('Arial', '', 14);
+    
+        // Cabeçalho
+        $this->pdf->Rect(10, 10, 190, 12);
+        $this->pdf->Image('assets/images/logo-back.png', 11, 10, 15);
+        $this->pdf->EtiqTexto('', 'OCORRÊNCIA', 'Arial', 11, 6, 0, 0, 1, 'R');
+        $this->pdf->EtiqTexto('', 'N° ' . $oco->oco_id, 'Arial', 10, 5, 0, 0, 1, 'R');
+        
+        // Bloco de informações
+        $this->pdf->Rect(10, 22, 190, 25);
+        $this->pdf->SetY(24);
+        $this->pdf->SetX(15);
+    
+        // Informações principais
+        $this->pdf->EtiqTexto('Tipo: ', $oco->tpo_nome ?? '', 'Arial', 10, 6, 15, 0, 1, 'L');
+        $this->pdf->SetX(15);
+        $this->pdf->EtiqTexto('Subtipo: ', $oco->sut_nome ?? '', 'Arial', 10, 6, 15, 0, 1, 'L');
+        $this->pdf->SetX(15);
+        $this->pdf->EtiqTexto('Produto: ', $oco->pro_despro ?? '', 'Arial', 10, 6, 15, 0, 1, 'L');
+        $this->pdf->SetX(15);
+        $this->pdf->EtiqTexto('Lote: ', $oco->lot_lote ?? '', 'Arial', 10, 6, 15, 0, 1, 'L');
+    
+        $this->pdf->SetX(90);
+        $this->pdf->EtiqTexto(
+            'Data: ',
+            substr(data_br($oco->oco_data), 0, 16),
+            'Arial',
+            10,
+            6,
+            16,
+            0,
+            1,
+            'L'
+        );
+    
+        // Descrição
+        $posy = 47;
+        $this->pdf->Rect(10, $posy, 190, 40);
+        $this->pdf->SetY($posy + 2);
+        
+        // Label em negrito
+        $this->pdf->SetFont('Arial', 'B', 10);
+        $this->pdf->MultiCell(
+            190,
+            5,
+            utf8_decode("Descrição:"),
+            0,
+            'L'
+        );
+        
+        // Texto normal
+        $this->pdf->SetFont('Arial', '', 10);
+        $this->pdf->MultiCell(
+            190,
+            5,
+            utf8_decode($oco->oco_descricao ?? ''),
+            0,
+            'L'
+        );
+    
+        $this->pdf->AliasNbPages();
+    
+        // Retorno em base64 (IGUAL ao outro método)
+        $output = $this->pdf->Output('S');
+        $output = base64_encode($output);
+    
+        echo json_encode(['pdf' => $output]);
     }
 }

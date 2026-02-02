@@ -2,88 +2,95 @@
 
 namespace App\Entities\Ocorrencia;
 
-use App\Libraries\MyCampo;
 use CodeIgniter\Entity\Entity;
+use App\Libraries\MyCampo;
 
-class EntOcoTipoOcorre extends Entity
+
+class EntOcoModOcorrencia extends Entity
 {
     protected $attributes = [
-        'tpo_id'    => null,
-        'tpo_nome'  => null,
-        'tpo_ativo' => 'A',
-        'cla_id'    => null,
-        'tmo_id'    => null,
+        'sut_id'       => null,
+        'sut_nome'     => null,
+        'moc_ativo'    => 'A',
+        'moc_excluido' => null,
+        'tpo_id'       => null,
     ];
 
     protected $casts = [
+        'sut_id' => 'integer',
         'tpo_id' => 'integer',
     ];
 
     public array $campos = [];
 
-    public function __construct(?array $data = null, bool $show = false)
+    public function __construct(object|array|null $data = null)
     {
-        parent::__construct($data);
-        $this->campos = $this->defCampos($data, $show);
+        if (is_array($data)) {
+            $data = (object) $data;
+        }
+        parent::__construct((array) ($data ?? []));
+        $this->campos = $this->defCampos($data ?? new \stdClass());
     }
 
-    public function defCampos($dados = false, $show = false)
+    public function defCampos($dados = false, $pos = 0, $show = true)
     {
-        $dados = (array) $dados;
+        if (!$dados || !is_object($dados)) {
+            $dados = (object) [];
+        }
         $ret = [];
 
-        // ID do Tipo de Ocorrência (oculto)
-        $mid            = new MyCampo('oco_tipo_ocorrencia', 'tpo_id');
-        $mid->valor     = (isset($dados['tpo_id'])) ? $dados['tpo_id'] : '';
-        $ret['tpo_id']   = $mid->crOculto();
+        $mid            = new MyCampo('oco_subt_ocorrencia', 'sut_id');
+        $mid->valor     = (isset($dados->sut_id)) ? $dados->sut_id : '';
+        $ret['sut_id']   = $mid->crOculto();
 
-        // Nome do Tipo de Ocorrência
-        $nome            =  new MyCampo('oco_tipo_ocorrencia', 'tpo_nome');
-        $nome->valor     = (isset($dados['tpo_nome'])) ? $dados['tpo_nome'] : '';
+        $nome            =  new MyCampo('oco_subt_ocorrencia', 'sut_nome');
+        $nome->valor     = (isset($dados->sut_nome)) ? $dados->sut_nome : '';
         $nome->obrigatorio = true;
-        $nome->leitura   = $show;
+        $nome->leitura   = false;
         $nome->largura   = 80;
-        $ret['tpo_nome'] = $nome->crInput();
+        $ret['sut_nome'] = $nome->crInput();
 
-        // Status Ativo / Inativo
-        $simnao['A'] = 'Ativo';
-        $simnao['I'] = 'Inativo';
 
-        // Classes vinculadas ao Tipo de Ocorrência
-        $teste          = new MyCampo('oco_tipo_ocorrencia', 'tpo_ativo');
-        $teste->valor   = (isset($dados['tpo_ativo'])) ? $dados['tpo_ativo'] : 'A';
-        $teste->leitura = $show;
-        $teste->opcoes  = $simnao;
-        $ret['tpo_ativo'] = $teste->cr2opcoes();
-
+        // TIPO DE OCORRÊNCIA
         $config = [];
-        $ret['cla_id'] = criaSelectRelativo(
-            'pro_classe',
-            'cla_id',
-            'cla_nome',
-            $dados['cla_id'] ?? '',
-            3,
-            'oco_tpo_classe',
+        $config['DispForm'] = 'col-6';
+        $config['Largura']  = 50;
+        $config['Leitura']  = isset($dados->sut_id);
+        $config['FunChan']  =  'carregaTelaAcaoTipo(this); carregaAcaoTipo(this);';
+
+        $ret['tpo_id'] = criaSelectRelativo(
+            'oco_tipo_ocorrencia',
+            'tpo_id',
+            'tpo_nome',
+            $dados->tpo_id ?? '',
+            1,
+            'oco_subt_ocorrencia',
             [],
             $config
         );
 
-        // Retorna os campos principais
+        $simnao['A'] = 'Ativo';
+        $simnao['I'] = 'Inativo';
+
+        $teste          = new MyCampo('oco_subt_ocorrencia', 'moc_ativo');
+        $teste->valor   = (isset($dados->moc_ativo)) ? $dados->moc_ativo : 'A';
+        $teste->leitura = $show;
+        $teste->opcoes  = $simnao;
+        $ret['moc_ativo'] = $teste->cr2opcoes();
+
         return $ret;
     }
 
-    public function defCamposTelasAplicaveis($dados = false, $pos = 0, $show = false)
+    public function defCamposTelasAplicaveis($dados = false, $pos = 0,  $total = 1)
     {
         $dados = (array) $dados;
 
         // modulo
         $config = [];
-        $config['Label']       = 'Modulo';
+        $config['Leitura']     = true;
         $config['Largura']     = 40;
         $config['DispForm']    = 'col-4';
         $config['Ordem']       = $pos;
-        $config['Obrigatorio'] = false;
-        $config['FunChan']    = "mudaObrigatorio(this,'>-1','tel_id[$pos]')";
 
         $ret['mod_id'] = criaSelectRelativo(
             'cfg_modulo',
@@ -96,11 +103,10 @@ class EntOcoTipoOcorre extends Entity
             $config
         );
 
+
         // telas
-        $config['Label']       = 'Tela';
-        $config['Pai']         = "mod_id_tela[$pos]";
+        $config['Pai']         = "mod_id[$pos]";
         $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
-        $config['FunChan']    = "mudaObrigatorio(this,'>-1','tof_campo[$pos][]')";
 
         $ret['tel_id'] = criaSelectRelativo(
             'cfg_tela',
@@ -113,12 +119,12 @@ class EntOcoTipoOcorre extends Entity
             $config
         );
 
-        // campo
+        // CAMPOS 
         $config['Pai']         = "tel_id[$pos]";
-        $config['Label']       = 'Campo';
         $config['Urlbusca']    = base_url('buscas/busca_campo_tela');
-        $config['Obrigatorio'] = $show;
+        $config['DispForm']    = 'col-4';
 
+        // debug($dados['tof_campo'], true);
         $ret['tof_campo'] = criaSelectRelativo(
             '',
             '',
@@ -140,7 +146,7 @@ class EntOcoTipoOcorre extends Entity
         $add->i_cone    = "<i class='fas fa-plus'></i>";
         $add->place     = "Adicionar Campo";
         $add->classep   = "btn-outline-success btn-sm bt-repete";
-        $add->funcChan  = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTa/") . "','telas_aplicaveis',this)";
+        $add->funcChan  = "addCampo('" . base_url("OcoModOcorrencia/addCampoTa/") . "','telas_aplicaveis',this)";
         $ret['bt_addta']   = $add->crBotao();
 
         $del            = new MyCampo();
@@ -152,19 +158,25 @@ class EntOcoTipoOcorre extends Entity
         $del->classep   = "btn-outline-danger btn-sm bt-exclui";
         $del->funcChan  = "exclui_campo('telas_aplicaveis',this)";
         $del->place     = "Excluir Campo";
+        // if ($total == 1) {
+        //     $del->classep .= " d-none";
+        // }
         $ret['bt_delta']   = $del->crBotao();
 
         return $ret;
     }
 
-    public function defCamposAcao($dados = false, $pos = 0)
+    public function defCamposAcao($dados = false, $pos = 0, $total = 1, $modo = 'edit')
     {
         $dados = (array) $dados;
         // $tpa = $dados['tpa_id'] ?? null;
         $ret = [];
 
+
         // tipo de ação
         $config = [];
+        $config['Label']    = 'Tipo de Ação';
+        $config['Leitura']  = true;
         $config['DispForm'] = 'col-6';
         $config['Largura']  = 50;
         $config['Ordem']    = $pos;
@@ -176,46 +188,47 @@ class EntOcoTipoOcorre extends Entity
             'tpa_nome',
             $dados['tpa_id'] ?? '',
             1,
-            'oco_tpo_acao',
+            'oco_tipo_acao',
             [],
             $config
         );
 
         // tipo de movimentação
-        $config['FunChan']     = '';
-        $config['DispForm']    = 'col-12';
-        $config['Obrigatorio'] = !empty($dados['tmo_id']);
-
+        $config['Label']    = 'Tipo de Movimentação';
+        $config['FunChan']  = '';
+        $config['DispForm'] = 'col-12';
         $ret['tmo_id'] = criaSelectRelativo(
             'est_tipo_movimentacao',
             'tmo_id',
             'tmo_nome',
             $dados['tmo_id'] ?? '',
             1,
-            'oco_tpo_acao',
+            'oco_tipo_acao',
             [],
-            $config
+            $config,
+            'tmo_id_tpa'
         );
 
         // modulo
+        $config['Label']    = 'Módulo';        
         $config['DispForm'] = 'col-6';
         $config['Largura']  = 30;
-        $config['Obrigatorio'] = !empty($dados['mod_id']);
-
         $ret['mod_id'] = criaSelectRelativo(
             'cfg_modulo',
             'mod_id',
             'mod_nome',
             $dados['mod_id'] ?? '',
             1,
-            'oco_tpo_acao',
+            'oco_tipo_acao',
             [],
-            $config
+            $config,
+            'mod_id_tpa'
         );
 
         // tela
-        $config['Pai']         = 'mod_id';
-        $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
+        $config['Label']    = 'Tela'; 
+        $config['Pai']      = 'mod_id';
+        $config['Urlbusca'] = base_url('buscas/busca_tela_modulo');
 
         $ret['tel_id'] = criaSelectRelativo(
             'cfg_tela',
@@ -223,25 +236,25 @@ class EntOcoTipoOcorre extends Entity
             'tel_nome',
             $dados['tel_id'] ?? '',
             2,
-            'oco_tpo_acao',
+            'oco_tipo_acao',
             [],
-            $config
+            $config,
+            'tel_id_tpa'
         );
 
-        // status
+        $config['Label']    = 'Status';         
         $config['DispForm'] = 'col-12';
         $config['Largura']  = 50;
-        $config['Obrigatorio'] = !empty($dados['stt_id']);
-
         $ret['stt_id'] = criaSelectRelativo(
             'cfg_status',
             'stt_id',
             'stt_nome',
             $dados['stt_id'] ?? '',
             1,
-            'oco_tpo_acao',
+            'oco_tipo_acao',
             [],
-            $config
+            $config,
+            'stt_id_tpa'
         );
 
         $atrib['data-index'] = $pos;
@@ -253,7 +266,7 @@ class EntOcoTipoOcorre extends Entity
         $add->i_cone    = "<i class='fas fa-plus'></i>";
         $add->place     = "Adicionar Campo";
         $add->classep   = "btn-outline-success btn-sm bt-repete";
-        $add->funcChan  = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTp/") . "','acoes',this)";
+        $add->funcChan  = "addCampo('" . base_url("OcoModOcorrencia/addCampoTp/") . "','acoes',this)";
         $ret['bt_addtp']   = $add->crBotao();
 
         $del            = new MyCampo();
@@ -265,88 +278,88 @@ class EntOcoTipoOcorre extends Entity
         $del->classep   = "btn-outline-danger btn-sm bt-exclui";
         $del->funcChan  = "exclui_campo('acoes',this)";
         $del->place     = "Excluir Campo";
+        // if ($total == 1) {
+        //     $del->classep .= " d-none";
+        // }
         $ret['bt_deltp']   = $del->crBotao();
 
         return $ret;
     }
 
-    public function defCamposParaMostrar($dados = false)
+
+    public function defCamposParaMostrar($dados = false, $show = false)
     {
-        $dados = (array) $dados;
+        if (!$dados || !is_object($dados)) {
+            $dados = (object) [];
+        }
         $ret = [];
 
-
-        // tela
+        // TELA
         $config = [];
-        $config['Label']       = 'Tela';
-        $config['DispForm']    = '2col';
-        $config['Largura']     = 30;
-        $config['Obrigatorio'] = false;
+        $config['DispForm']     = '2col';
+        $config['Largura']      = 50;
+        $config['Obrigatorio']  = true;
 
         $ret['tel_id'] = criaSelectRelativo(
             'cfg_tela',
             'tel_id',
             'tel_nome',
-            $dados['tel_id'] ?? '',
+            $dados->tel_id ?? '',
             1,
-            'oco_tpo_campos',
+            'oco_moc_campos',
             [],
             $config
         );
 
+        // CAMPO
+        $config['Leitura']  = true;
+        $config['Pai']      = 'tel_id';
+        $config['UrlBusca'] = base_url('buscas/busca_tela_modulo');
 
-        // Campo da Tela
-        $config['DispForm']    = '2col';
-        $config['Largura']     = 50;
-        $config['Pai']         = 'tel_id';
-        $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
-
-        $ret['tof_id'] = criaSelectRelativo(
-            'cfg_tela',
-            'tof_id',
-            'tof_campo',
-            $dados['tof_id'] ?? '',
+        $ret['mof_campo'] = criaSelectRelativo(
+            'oco_moc_campos',
+            'mof_campo',
+            'mof_nome',
+            $dados->mof_campo ?? '',
             2,
-            'oco_tpo_campos',
+            'oco_moc_campos',
             [],
             $config
         );
 
 
-        // Rótulo do campo
-        $toc_rotulo                 =  new MyCampo('oco_tpo_campos', 'toc_rotulo');
-        $toc_rotulo->valor          = (isset($dados['toc_rotulo'])) ? $dados['toc_rotulo'] : '';
+        $toc_rotulo                 =  new MyCampo('oco_moc_campos', 'toc_rotulo');
+        $toc_rotulo->valor          = (isset($dados->toc_rotulo)) ? $dados->toc_rotulo : '';
         $toc_rotulo->obrigatorio    =  true;
-        $toc_rotulo->leitura        = false;
+        $toc_rotulo->leitura        = $show;
         $toc_rotulo->largura        = 50;
         $toc_rotulo->dispForm       = '2col';
         $ret['toc_rotulo']          = $toc_rotulo->crInput();
         return $ret;
     }
 
-    public function defPermissoes($dados = false, $show = false)
+    public function defPermissoes($dados = false, $pos = 0, $show = false)
     {
-        $dados = (array) $dados;
+        if (!$dados || !is_object($dados)) {
+            $dados = (object) [];
+        }
         $ret = [];
 
-        // Perfis com permissão
+        // PERMISSÕES
         $config = [];
-        $config['Label']    = 'Perfis com Permissão';
-        $config['Obrigatorio'] = true;
-        $config['Largura']     = 50;
-        $config['Leitura']     = $show;
+        $config['Largura']  = 50;
+        $config['Leitura']  = true;
 
         $ret['prf_id'] = criaSelectRelativo(
-            'cfg_perfil',
+            'oco_moc_permissao',
             'prf_id',
             'prf_nome',
-            $dados['prf_id'] ?? '',
+            $dados->prf_id ?? '',
             3,
-            'oco_tpo_permissao',
+            'oco_moc_permissao',
             [],
             $config
         );
-
         return $ret;
     }
 }

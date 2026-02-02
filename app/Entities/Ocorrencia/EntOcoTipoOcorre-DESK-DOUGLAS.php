@@ -57,13 +57,15 @@ class EntOcoTipoOcorre extends Entity
         $ret['tpo_ativo'] = $teste->cr2opcoes();
 
         $config = [];
+        $config['Obrigatorio'] = false;
+        
         $ret['cla_id'] = criaSelectRelativo(
             'pro_classe',
             'cla_id',
             'cla_nome',
             $dados['cla_id'] ?? '',
             3,
-            'oco_tpo_classe',
+            'oco_tipo_ocorrencia_classe',
             [],
             $config
         );
@@ -98,7 +100,7 @@ class EntOcoTipoOcorre extends Entity
 
         // telas
         $config['Label']       = 'Tela';
-        $config['Pai']         = "mod_id_tela[$pos]";
+        $config['Pai']         = "mod_id[$pos]";
         $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
         $config['FunChan']    = "mudaObrigatorio(this,'>-1','tof_campo[$pos][]')";
 
@@ -117,7 +119,7 @@ class EntOcoTipoOcorre extends Entity
         $config['Pai']         = "tel_id[$pos]";
         $config['Label']       = 'Campo';
         $config['Urlbusca']    = base_url('buscas/busca_campo_tela');
-        $config['Obrigatorio'] = $show;
+        $config['Obrigatorio'] = false;
 
         $ret['tof_campo'] = criaSelectRelativo(
             '',
@@ -160,11 +162,11 @@ class EntOcoTipoOcorre extends Entity
     public function defCamposAcao($dados = false, $pos = 0)
     {
         $dados = (array) $dados;
-        // $tpa = $dados['tpa_id'] ?? null;
         $ret = [];
 
         // tipo de ação
         $config = [];
+        $config['Label']    = 'Tipo de Ação';
         $config['DispForm'] = 'col-6';
         $config['Largura']  = 50;
         $config['Ordem']    = $pos;
@@ -176,15 +178,16 @@ class EntOcoTipoOcorre extends Entity
             'tpa_nome',
             $dados['tpa_id'] ?? '',
             1,
-            'oco_tpo_acao',
+            'oco_tipo_acao',
             [],
             $config
         );
 
         // tipo de movimentação
         $config['FunChan']     = '';
+        $config['Label']       = 'Tipo de Movimentação';
         $config['DispForm']    = 'col-12';
-        $config['Obrigatorio'] = !empty($dados['tmo_id']);
+        $config['Obrigatorio'] = false;
 
         $ret['tmo_id'] = criaSelectRelativo(
             'est_tipo_movimentacao',
@@ -192,15 +195,17 @@ class EntOcoTipoOcorre extends Entity
             'tmo_nome',
             $dados['tmo_id'] ?? '',
             1,
-            'oco_tpo_acao',
+            'oco_tipo_acao',
             [],
-            $config
+            $config,
+            "tmo_id_acao[$pos]"
         );
 
         // modulo
+        $config['Label']    = 'Módulo';
         $config['DispForm'] = 'col-6';
         $config['Largura']  = 30;
-        $config['Obrigatorio'] = !empty($dados['mod_id']);
+        $config['Obrigatorio'] = false;
 
         $ret['mod_id'] = criaSelectRelativo(
             'cfg_modulo',
@@ -208,40 +213,46 @@ class EntOcoTipoOcorre extends Entity
             'mod_nome',
             $dados['mod_id'] ?? '',
             1,
-            'oco_tpo_acao',
+            'oco_tipo_acao',
             [],
-            $config
+            $config,
+            "mod_id_acao[$pos]"  
         );
 
         // tela
-        $config['Pai']         = 'mod_id';
+        $config['Label']       = 'Tela';
+        $config['Pai']         = "mod_id_acao[$pos]";
+        $config['Obrigatorio'] = false;
         $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
 
         $ret['tel_id'] = criaSelectRelativo(
-            'cfg_tela',
-            'tel_id',
-            'tel_nome',
+            '',
+            '',
+            '',
             $dados['tel_id'] ?? '',
             2,
-            'oco_tpo_acao',
-            [],
-            $config
+            'oco_tipo_acao',
+            ['mod_id' => $dados['mod_id'] ?? ''],
+            $config,
+            "tel_id_acao[$pos]"
         );
 
         // status
         $config['DispForm'] = 'col-12';
+        $config['Label']    = 'Status';
         $config['Largura']  = 50;
-        $config['Obrigatorio'] = !empty($dados['stt_id']);
+        $config['Obrigatorio'] = false;
 
         $ret['stt_id'] = criaSelectRelativo(
-            'cfg_status',
+            'vw_cfg_status_relac',
             'stt_id',
-            'stt_nome',
+            'stt_tela_status',
             $dados['stt_id'] ?? '',
             1,
-            'oco_tpo_acao',
+            'oco_tipo_acao',
             [],
-            $config
+            $config,
+            "stt_id_acao[$pos]"
         );
 
         $atrib['data-index'] = $pos;
@@ -253,7 +264,8 @@ class EntOcoTipoOcorre extends Entity
         $add->i_cone    = "<i class='fas fa-plus'></i>";
         $add->place     = "Adicionar Campo";
         $add->classep   = "btn-outline-success btn-sm bt-repete";
-        $add->funcChan  = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTp/") . "','acoes',this)";
+        $add->funcChan = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTp/") . "','acoes',this); setTimeout(corrigeObrigatorio, 50)";
+
         $ret['bt_addtp']   = $add->crBotao();
 
         $del            = new MyCampo();
@@ -289,7 +301,7 @@ class EntOcoTipoOcorre extends Entity
             'tel_nome',
             $dados['tel_id'] ?? '',
             1,
-            'oco_tpo_campos',
+            'oco_tipo_ocorrencia_campos',
             [],
             $config
         );
@@ -307,14 +319,14 @@ class EntOcoTipoOcorre extends Entity
             'tof_campo',
             $dados['tof_id'] ?? '',
             2,
-            'oco_tpo_campos',
+            'oco_tipo_ocorrencia_campos',
             [],
             $config
         );
 
 
         // Rótulo do campo
-        $toc_rotulo                 =  new MyCampo('oco_tpo_campos', 'toc_rotulo');
+        $toc_rotulo                 =  new MyCampo('oco_tipo_ocorrencia_campos', 'toc_rotulo');
         $toc_rotulo->valor          = (isset($dados['toc_rotulo'])) ? $dados['toc_rotulo'] : '';
         $toc_rotulo->obrigatorio    =  true;
         $toc_rotulo->leitura        = false;
@@ -342,7 +354,7 @@ class EntOcoTipoOcorre extends Entity
             'prf_nome',
             $dados['prf_id'] ?? '',
             3,
-            'oco_tpo_permissao',
+            'oco_tipo_ocorrencia_permissao',
             [],
             $config
         );

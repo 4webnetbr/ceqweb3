@@ -59,17 +59,17 @@ function pesquisacep(obj, valor) {
           // jQuery("#busca_end_id_cidade__"+pos_seq).val(dadosRetorno.localidade);
           // jQuery('#busca_end_id_cidade__'+pos_seq).trigger('onkeyup');
           jQuery("input[id='end_rua[" + pos + "]']").val(
-            dadosRetorno.logradouro
+            dadosRetorno.logradouro,
           );
           jQuery("input[id='end_bairro[" + pos + "]']").val(
-            dadosRetorno.bairro
+            dadosRetorno.bairro,
           );
           jQuery(
             "select[id='end_id_estado[" +
               pos +
               "]'] option[value='" +
               uf[dadosRetorno.uf] +
-              "']"
+              "']",
           ).attr("selected", "selected");
           jQuery("[name='end_id_estado[" + pos + "]']").selectpicker("refresh");
           jQuery("[name='end_id_estado[" + pos + "]']").selectpicker("render");
@@ -79,7 +79,7 @@ function pesquisacep(obj, valor) {
               pos +
               "]'] option:contains(" +
               dadosRetorno.localidade +
-              ")"
+              ")",
           ).attr("selected", "selected");
           jQuery("[name='end_id_cidade[" + pos + "]']").selectpicker("refresh");
           jQuery("[name='end_id_estado[" + pos + "]']").selectpicker("render");
@@ -236,14 +236,14 @@ function busca_dados_material(orig, obj, url, base) {
   if (retornoAjax) {
     jQuery("#" + pref + "_unidade\\[" + pos + "\\]").selectpicker(
       "val",
-      retornoAjax.mat_unidade
+      retornoAjax.mat_unidade,
     );
     jQuery("#" + pref + "_unitario\\[" + pos + "\\]").val(
-      converteFloatMoeda(retornoAjax.mat_compra / retornoAjax.mat_quantia)
+      converteFloatMoeda(retornoAjax.mat_compra / retornoAjax.mat_quantia),
     );
     if (retornoAjax.mpc_unitario != null) {
       jQuery("#" + pref + "_unitario\\[" + pos + "\\]").val(
-        converteFloatMoeda(retornoAjax.mpc_unitario / 1)
+        converteFloatMoeda(retornoAjax.mpc_unitario / 1),
       );
     }
   }
@@ -705,7 +705,7 @@ function acertaSaldoConf(obj) {
   // Extrai o ID base (assumindo que o codbar está na mesma linha do stt_169)
   var idBase = linha.id;
 
-  var aten = parseInt(jQuery("#at_" + idBase).html());
+  var aten = parseInt(jQuery("#rpa_atendida_" + idBase).val());
   var conf = parseInt(jQuery("#rpa_conferida_" + idBase).val());
 
   saldo = aten - conf;
@@ -737,7 +737,7 @@ function carregaTelaAcaoTipo(obj) {
   objdest = "telas_aplicaveis";
   url = window.location.origin + "/OcoModOcorrencia/addCampoTa/" + tipo + "/0";
   retornoAjax = false;
-  executaAjax(url, "json", dados);
+  executaAjax(url, "json");
   if (retornoAjax) {
     text = "";
     for (tt = 0; tt < retornoAjax.length; tt++) {
@@ -776,7 +776,7 @@ function carregaAcaoTipo(obj) {
     window.location.origin + "/OcoModOcorrencia/addCampoTp/" + tipo + "/0";
 
   retornoAjax = false;
-  executaAjax(url, "json", dados);
+  executaAjax(url, "json");
 
   if (retornoAjax) {
     let text = "";
@@ -808,24 +808,29 @@ function carregaAcaoTipo(obj) {
     }
 
     jQuery("#rep_" + objdest).html(text);
+
+    acertaDependente();
     jQuery("select").selectpicker();
 
     jQuery(".tableDiv.table-" + objdest + " select[id^='tpa']").each(
       function () {
         verificaTipoAcao(this);
-      }
+      },
     );
   }
 }
 
-function buscaLoteProduto(obj, url) {
+async function buscaLoteProduto(obj, url) {
   lote = obj.value;
   dados = { busca: lote };
-  retornoAjax = false;
-  executaAjax(url, "json", dados);
+  const retornoAjax = await executaAjaxWait(url, "json", dados);
+
+  // retornoAjax = false;
+  // executaAjaxWait(url, "json", dados);
 
   if (retornoAjax) {
     if (retornoAjax.lotid > 0) {
+      jQuery("#pro_id").val(retornoAjax.proid);
       jQuery("#lot_id").val(retornoAjax.lotid);
       jQuery("#pro_despro").val(retornoAjax.despro);
     } else {
@@ -875,33 +880,3 @@ function buscaLoteProduto(obj, url) {
 // document.addEventListener("DOMContentLoaded", function () {
 //   vinculaProdutoAoLote();
 // });
-
-// function testa_dep(paiId) {
-//   let pai = document.getElementById(paiId);
-//   let filho = document.querySelector('[data-pai="' + paiId + '"]');
-
-//   if (!pai || !filho) return;
-
-//   let url = filho.dataset.busca;
-//   let valorPai = pai.value;
-
-//   if (!valorPai) return;
-
-//   fetch(url, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/x-www-form-urlencoded",
-//     },
-//     body: `valor=${valorPai}`,
-//   })
-//     .then((response) => response.json())
-//     .then((data) => {
-//       filho.innerHTML = "";
-//       for (let key in data) {
-//         let option = document.createElement("option");
-//         option.value = key;
-//         option.textContent = data[key];
-//         filho.appendChild(option);
-//       }
-//     });
-// }
