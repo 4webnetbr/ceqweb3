@@ -39,18 +39,40 @@ class EntCfgEtiquetaCampo extends Entity
         $ret   = [];
         $simnao = ['S' => 'Sim', 'N' => 'Não'];
 
+        // $base_url = base_url('/CriaEtiquetaZPL/previewEtiquetaViaAjax');
+
+        // // Campo
+        // $campo = new MyCampo('cfg_etiqueta_campo', 'etc_campo');
+        // $campo->valor       = $dados['etc_campo'] ?? '';
+        // $campo->selecionado = $campo->valor;
+        // $campo->obrigatorio = true;
+        // $campo->leitura     = $show;
+        // $campo->ordem       = $pos;
+        // $campo->dispForm    = 'col-5';
+        // $campo->funcChan    = "prevEtiqueta('{$base_url}')";
+        // $ret['etc_campo']   = $campo->crDepende();
+
         $base_url = base_url('/CriaEtiquetaZPL/previewEtiquetaViaAjax');
 
         // Campo
-        $campo = new MyCampo('cfg_etiqueta_campo', 'etc_campo');
-        $campo->valor       = $dados['etc_campo'] ?? '';
-        $campo->selecionado = $campo->valor;
-        $campo->obrigatorio = true;
-        $campo->leitura     = $show;
-        $campo->ordem       = $pos;
-        $campo->dispForm    = 'col-5';
-        $campo->funcChan    = "prevEtiqueta('{$base_url}')";
-        $ret['etc_campo']   = $campo->crDepende();
+        $config = [];
+        $config['DispForm']    = 'col-5';
+        $config['Obrigatorio'] = true;
+        $config['Leitura']     = $show;
+        $config['Ordem']       = $pos;
+        $config['FuncChan']    = "prevEtiqueta('{$base_url}')";
+        
+        $ret['etc_campo'] = criaSelectRelativo(
+            'cfg_etiqueta_campo',    
+            'etc_campo',               
+            'etc_campo',              
+            $dados['etc_campo'] ?? '',
+            2,                       
+            'cfg_etiqueta_campo',      
+            [],                        
+            $config,
+            'etc_campo'
+        );
 
         // Código de barras
         $cod = new MyCampo('cfg_etiqueta_campo', 'etc_codbar');
@@ -65,6 +87,7 @@ class EntCfgEtiquetaCampo extends Entity
         // Rótulo
         $rot = new MyCampo('cfg_etiqueta_campo', 'etc_rotulo');
         $rot->valor       = $dados['etc_rotulo'] ?? 'Sem Rótulo';
+        $rot->label       = 'Rótulo';
         $rot->obrigatorio = true;
         $rot->leitura     = $show;
         $rot->ordem       = $pos;

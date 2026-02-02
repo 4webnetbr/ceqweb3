@@ -1,9 +1,12 @@
 <?php
 
+use Config\Database;
+use App\Libraries\MyCampo;
 use App\Models\LogMonModel;
 use App\Models\Config\ConfigMenuModel;
 use App\Models\Config\ConfigTelaModel;
 use App\Models\Config\ConfigPerfilItemModel;
+use App\Models\Config\ConfigDicDadosModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 
 /**
@@ -735,7 +738,7 @@ function fmtEtiquetaCor($cor, $label = '')
         $label = $cor;
     }
     $cortexto = getContrastYIQ(substr($cor, 1, strlen($cor)));
-    $ret = "<span style='background-color:$cor;color:$cortexto;border:1px solid $cortexto;width: 40ch' class='px-3 py-1 d-inline-block rounded rounded-4 text-center text-nowrap '>$label</span>";
+    $ret = "<span style='background-color:$cor;color:$cortexto;border:1px solid $cortexto;min-width:20ch' class='px-3 py-1 d-inline-block rounded rounded-4 text-center text-nowrap '>$label</span>";
     return $ret;
 }
 function getContrast50($hexcolor)
@@ -786,7 +789,8 @@ function buscaTipoArquivo($dados)
 }
 
 
-function extrairCodBarFab($str) {
+function extrairCodBarFab($str)
+{
     $pos = strpos($str, '789');
     if ($pos === false) {
         return null;
@@ -794,7 +798,8 @@ function extrairCodBarFab($str) {
     return substr($str, $pos, 13);
 }
 
-function isValidDate($date, $format = 'Y-m-d') {
+function isValidDate($date, $format = 'Y-m-d')
+{
     // Primeiro: checa se contém "-" (traço)
     if (strpos($date, '-') === false) {
         return false;
@@ -810,9 +815,7 @@ function isValidDate($date, $format = 'Y-m-d') {
  * @param string $nomeTela
  * @return array
  */
-function funcExemplo(string $nomeTela){
-
-};;
+function funcExemplo(string $nomeTela) {};;
 
 /**
  * Filtra array de requisições com base nas autorizações por perfil.
@@ -824,40 +827,223 @@ function funcExemplo(string $nomeTela){
 function filtrarRequisicoesPorPerfil(array $dados_requis, ?int $perfilId = null): array
 {
     $tipomov = (new EstoquTipoMovimentacaoModel())->getTipoMovimentacao();
-    $autorizacoes = array_column($tipomov,'prf_id','tmo_id');
+    $autorizacoes = array_column($tipomov, 'prf_id', 'tmo_id');
 
-    if (is_null($perfilId)) {
+    if ($perfilId === null) {
         $perfilId = session()->get('usu_perfil_id');
     }
-    // debug('Perfil '.$perfilId);
-    
+
     foreach ($dados_requis as $key => $req) {
-        if (!isset($req['tmo_id'])) {
+
+        // ⚠️ agora é OBJETO
+        if (!isset($req->tmo_id)) {
             unset($dados_requis[$key]);
             continue;
         }
-        
-        $tmo_id = $req['tmo_id'];
-        // debug($tmo_id);
-        
+
+        $tmo_id = $req->tmo_id;
+
         if (!isset($autorizacoes[$tmo_id])) {
-            // debug('Tipo não encontrado nas autorizações');
             unset($dados_requis[$key]);
             continue;
         }
-        
+
         $prf_autorizados = explode(',', $autorizacoes[$tmo_id]);
-        
+
         if (!in_array($perfilId, $prf_autorizados)) {
-            // debug('Tipo não autorizado');
             unset($dados_requis[$key]);
             continue;
         }
     }
 
-    usort($dados_requis, function($a, $b) {
-        return intval($a['stt_ordem']) - intval($b['stt_ordem']);
+    // reindexa para evitar buraco de índice
+    $dados_requis = array_values($dados_requis);
+
+    usort($dados_requis, function ($a, $b) {
+        return intval($a->stt_ordem ?? 0) <=> intval($b->stt_ordem ?? 0);
     });
-    // sort($dados_requis);
+
     return $dados_requis;
 };;
+
+
+function criaSelectRelativo(
+    string $nomeTabela,
+    string $campoChave = 'id',
+    string $campoNome = 'nome',
+    mixed $valor = null,
+    mixed $tipo = 1, // 1 select | 2 depende |3 multiple
+    string $entidade = '',
+    array $filtros = [],
+    array $configCampo = [],
+    string $nomeCampo = '' // Configurações adicionais para o MyCampo
+): string {
+    $opcoes = [];
+    if ($nomeTabela != '') {
+        // Detecta o DBGroup e o schema com base no nome da tabela
+        $dicDados = new ConfigDicDadosModel();
+        $dbGrSche = $dicDados->getDbGroupAndSchema($nomeTabela);
+        $dbGroup = $dbGrSche['dbGroup'];
+        $schema = $dbGrSche['schema'];
+
+        // Conecta ao banco correto
+        $db = Database::connect($dbGroup);
+        $builder = $db->table("{$schema}.{$nomeTabela}");
+        // Verifica se a coluna 'prf_id' existe na tabela
+        $fields = $db->getFieldNames("{$schema}.{$nomeTabela}");
+
+        if (in_array('prf_id', $fields, true) && $nomeTabela != 'cfg_perfil') {
+            $perfilId = session()->get('usu_perfil_id');
+            // Se existe, aplica filtro WHERE
+            $builder->like('prf_id', $perfilId);
+        }
+
+        // Continua com os campos desejados
+        $builder->select([$campoChave, $campoNome]);
+
+        if (!empty($filtros) && array_is_list($filtros)) {
+            // só aplica where se a chave existir na tabela
+            $campoFiltro = array_key_first($filtros);
+            if ($db->fieldExists($campoFiltro, "$schema.$nomeTabela")) {
+                $builder->where($filtros);
+            }
+        }
+
+        $builder->orderBy($campoNome);
+        // Busca os dados (chave e nome)
+        $dados = $builder->get()->getResultArray();
+        // debug($db->getLastQuery());
+
+        // $dados = filtrarPorPerfil($dados);
+        $opcoes = array_column($dados, $campoNome, $campoChave);
+        // $opcoes = [-1 => 'Todos os Produtos'] + $opcoes;
+        if ($nomeCampo == '') {
+            $nomeCampo = $campoChave;
+        }
+    }
+    // Cria o campo
+    $campo = new MyCampo($entidade, $nomeCampo);
+    if ($tipo != 2 && $tipo != 4) {
+        $opcoes = [-1 => $campo->place] + $opcoes;
+    }
+
+    // debug($opcoes);
+    // Define opções obrigatórias
+    $campo->setOpcoes($opcoes);
+
+    // Define valor e selecionado
+    // Garante que $valor seja tratado corretamente
+    if (is_array($valor)) {
+        // debug($valor, true);
+        $valorStr = implode(',', $valor);
+        $valorArr = $valor;
+    } elseif (is_string($valor) && str_contains($valor, ',')) {
+        $valorStr = $valor;
+        $valorArr = explode(',', $valor);
+    } else {
+        $valorStr = $valor ?? '-1';
+        $valorArr = [$valor ?? '-1'];
+    }
+
+    $campo->setValor($valorStr);
+    $campo->setSelecionado($valorArr);
+
+
+    // Se valor for passado, define leitura automática (caso config não sobrescreva)
+    if ($valor !== null && !isset($configCampo['Leitura'])) {
+        $campo->setLeitura(true);
+    }
+    $configCampo['DispForm']    = $configCampo['DispForm'] ?? ('col-6');
+    $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
+    $configCampo['Obrigatorio'] = $configCampo['Obrigatorio'] ?? true;
+    $configCampo['Largura']     = $configCampo['Largura'] ?? 40;
+
+
+    // Aplica outras configurações dinamicamente
+    foreach ($configCampo as $metodo => $parametro) {
+        $metodo = 'set' . ucfirst($metodo);
+        if (method_exists($campo, $metodo)) {
+            $campo->$metodo($parametro);
+        }
+    }
+
+    // debug($campo, true);
+    //  INFOTEXTO (compatível com MyCampo) 
+    if (!empty($configCampo['Infotexto'])) {
+        $campo->infotexto = $configCampo['Infotexto'];
+    }
+
+    if ($tipo === 3 && !str_ends_with($campo->nome, '[]')) {
+        $campo->nome .= '[]';
+    }
+
+    // AJUSTE PARA MULTIPLE
+    if ($tipo == 3 || $tipo == 4) {
+        // debug($valor);
+        // valor SEMPRE string (CSV)
+        if (is_array($valor)) {
+            // debug($valor, true);
+            $valorStr = implode(',', $valor);
+            $valorArr = $valor;
+        } elseif (is_string($valor) && str_contains($valor, ',')) {
+            $valorStr = $valor;
+            $valorArr = explode(',', $valor);
+            // debug($valorArr);
+        } else {
+            $valorStr = $valor ?? '-1';
+            $valorArr = [$valor ?? '-1'];
+        }
+        // if (is_array($valor)) {
+        //     $campo->valor = implode(',', $valor);
+        //     $campo->selecionado = $valor;
+        // } elseif (is_string($valor) && $valor !== '') {
+        //     $campo->valor = $valor;
+        //     $campo->selecionado = explode(',', $valor);
+        // } else {
+        //     $campo->valor = '';
+        //     $campo->selecionado = [];
+        // }
+    } else {
+        // select normal
+        $campo->valor = (string) $valor;
+    }
+
+    $campo->setValor($valorStr);
+    $campo->setSelecionado($valorArr);
+
+    // debug($campo);
+
+    // Gera o campo conforme o tipo
+    return match ($tipo) {
+        4 => $campo->crDependeMultiplo(),
+        3 => $campo->crMultiple(),
+        2 => $campo->crDepende(),
+        1 => ($nomeTabela === 'cfg_cor') ? $campo->crSelectCor() : $campo->crSelect(),
+    };
+}
+
+
+function filtrarPorPerfil(array $dados, ?int $perfilId = null): array
+{
+    // Obtém o perfil do usuário da sessão, se não foi passado
+    if ($perfilId === null) {
+        $perfilId = session()->get('usu_perfil_id');
+    }
+
+    // Filtra os dados
+    $dados_filtrados = array_filter($dados, function ($item) use ($perfilId) {
+        // Suporta tanto objetos quanto arrays
+        $prf_id = is_object($item) ? ($item->prf_id ?? null) : ($item['prf_id'] ?? null);
+
+        // Pode conter múltiplos IDs separados por vírgula
+        if ($prf_id !== null) {
+            $ids = explode(',', (string) $prf_id);
+            return in_array($perfilId, array_map('intval', $ids));
+        }
+
+        return false;
+    });
+
+    // Reindexa os dados
+    return array_values($dados_filtrados);
+}

@@ -19,10 +19,14 @@ class CfgEmpresa extends BaseController
      */
     public function __construct()
     {
+        // Recupera dados da tela salvos em flashdata
         $this->data      = session()->getFlashdata('dados_tela');
+        // Define a permissão do usuário
         $this->permissao = $this->data['permissao'];
+        // Instancia o model de empresa
         $this->empresa   = new ConfigEmpresaModel();
 
+        // Caso exista mensagem de erro, exibe tela de acesso negado
         if ($this->data['erromsg'] != '') {
             $this->__erro();
         }
@@ -62,6 +66,8 @@ class CfgEmpresa extends BaseController
         
             $campos     = montaColunasCampos($this->data, 'emp_codfil');
             $dados_tela = $this->empresa->getEmpresa();
+            $this->data['edicao'] = false;
+            $this->data['exclusao'] = false;
             $empresas   = [
                 'data'  => montaListaColunasEnt($this->data, 'emp_codfil', $dados_tela, $campos[1]),
             ];
@@ -71,35 +77,12 @@ class CfgEmpresa extends BaseController
 
     }
 
-    // public function show($id)
-    // {
-    //     /** @var EntCfgEmpresa */
-    //     $empresa = $this->empresa->find($id);
-    
-    //     $fields = $empresa->campos; 
-    
-    //     $secao[0] = 'Dados Gerais';
-    //     $campos[0][] = $fields['emp_nomfil'];
-    //     $campos[0][] = $fields['emp_sigfil'];
-    //     $campos[0][] = $fields['emp_numcgc'];
-    //     $campos[0][] = $fields['emp_insest'];
-    //     $campos[0][] = $fields['emp_codemp'];
-    //     $campos[0][] = $fields['emp_codfil'];
-    
-    //     $this->data['secoes']  = $secao;
-    //     $this->data['campos']  = $campos;
-    //     $this->data['destino'] = 'store';
-    //     $this->data['log']     = buscaLog('cfg_empresa', $id);
-    
-    //     echo view('vw_edicao', $this->data);
-    // }
-
-
     public function integra()
     {
         $busca   = new BuscasSapiens();
         $r_emps  = $busca->buscaEmpresas();
         $empss   = [];
+        // Percorre todas as empresas retornadas
         for ($e  = 0; $e < count($r_emps); $e++) {
             $emp = $r_emps[$e];
             $empss['emp_codemp'] = $emp->codEmp;

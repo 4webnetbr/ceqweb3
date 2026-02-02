@@ -34,33 +34,18 @@ class ConfigEmpresaModel extends Model
     protected $afterDelete    = ['depoisDelete'];
     // protected $logdb;
 
-    /**
-     * This method saves the session "usu_id" value to "created_by" and "updated_by" array
-     * elements before the row is inserted into the database.
-     *
-     */
     protected function depoisInsert(array $data)
     {
         (new LogMonModel())->insertLog($this->table, 'Incluído', $data['id'], $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "updated_by" array element before
-     * the row is inserted into the database.
-     *
-     */
     protected function depoisUpdate(array $data)
     {
         (new LogMonModel())->insertLog($this->table, 'Alteração', $data['id'][0], $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "deletede_by" array element before
-     * the row is inserted into the database.
-     *
-     */
     protected function depoisDelete(array $data)
     {
         (new LogMonModel())->insertLog($this->table, 'Excluído', $data['id'][0], $data['data']);
@@ -70,28 +55,33 @@ class ConfigEmpresaModel extends Model
 
     public function getEmpresa($emp_codfil = false)
     {
+        // Conecta ao banco definido no DBGroup do model
         $db      = db_connect($this->DBGroup);
         $builder = $db->table($this->view);
         $builder->select('*');
 
+        // Se informado o código da filial, retorna apenas uma empresa
         if ($emp_codfil) {
             $builder->where('emp_codfil', $emp_codfil);
             return $builder->get()->getFirstRow(EntCfgEmpresa::class); 
         }
-
+        // Caso contrário, retorna todas as empresas
         return $builder->get()->getResult(EntCfgEmpresa::class); 
     }
 
 
     public function getEmpresasSearch(string $termo)
     {
+        // Conecta ao banco definido no DBGroup do model
         $db      = db_connect($this->DBGroup);
         $builder = $db->table($this->view);
 
+        // Seleciona apenas os campos necessários para a busca
         $builder->select(['emp_codfil', 'emp_nomfil', 'emp_sigfil']);
         $builder->like('emp_nomfil', $termo, 'after');
         $builder->orderBy('emp_nomfil');
 
+        // Retorna os resultados encontrados como Entity
         return $builder->get()->getResult(EntCfgEmpresa::class);
     }  
 

@@ -29,18 +29,18 @@ $accordraiz = false;
     <div class="col-lg-6 col-8 position-absolute bg-white shadow" id="menu">
       <div class="pt-2 pb-3 ps-1 pe-1">
         <ul class='tela' id='gru_<?= $cont_accord; ?>'>
-        <?
-        $cont_accord = 0;
-        $tel_id = '';
-        for ($st = 0; $st < count($lst_status); $st++) {
-          $opcao = $lst_status[$st];
-          if ($tel_id != $opcao['tel_id']) {
-            if ($tel_id != '') {
-              echo "</ul>";
-              echo "</div>";
-              // echo "</ul>";
-            }
-        ?>
+          <?
+          $cont_accord = 0;
+          $tel_id = '';
+          for ($st = 0; $st < count($lst_status); $st++) {
+            $opcao = $lst_status[$st];
+            if ($tel_id != $opcao['tel_id']) {
+              if ($tel_id != '') {
+                echo "</ul>";
+                echo "</div>";
+                // echo "</ul>";
+              }
+          ?>
               <? $cont_accord++; ?>
               <li id='<?= $opcao['tel_id']; ?>' class="p-1 btn btn-outline-light list-group-item ui-state-defaul text-start">
                 <input type='hidden' name='tel_<?= $opcao['tel_id']; ?>' value='<?= $opcao['tel_id']; ?>' />
@@ -59,7 +59,7 @@ $accordraiz = false;
                   <li id='<?= $opcao['stt_id']; ?>' class="p-1 btn btn-outline-light list-group-item ui-state-defaul text-start">
                     <input type='hidden' name='stt_<?= $opcao['stt_id']; ?>' value='<?= $opcao['stt_id']; ?>' />
                     <h3 class='my-1'>
-                      <?= fmtEtiquetaCorBst($opcao['stt_cor'], $opcao['stt_nome']);; ?>
+                      <?= fmtEtiquetaCor($opcao['cor_valorrgb'], $opcao['stt_nome']);; ?>
                     </h3>
                   </li>
                 <?

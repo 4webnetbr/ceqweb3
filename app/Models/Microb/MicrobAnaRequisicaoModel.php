@@ -55,17 +55,17 @@ class MicrobAnaRequisicaoModel extends Model
 
     public function getListaRequisicao($req_id = false)
     {
+        // Conecta ao banco de dados de Produto
         $db = db_connect('dbProduto');
         $builder = $db->table('vw_pro_mic_requisicao_relac');
     
         $builder->select('*');
-    
         if ($req_id) {
             $builder->where('req_id', $req_id);
         }
-    
         $builder->orderBy('pro_despro');
     
+        // Executa a consulta e retorna o resultado
         return $builder->get()->getResult();
     }
 }

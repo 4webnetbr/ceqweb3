@@ -100,6 +100,17 @@ class OcorreTipoAcaoModel extends Model
         return $this->builder()->get()->getResultArray();
     }
 
+    public function getTipoAcaoporTipo($tpo_id = false)
+    {
+        $this->builder()->select('*');
+        if ($tpo_id) {
+            $this->builder()->where('tpo_id', $tpo_id);
+        }
+        $this->builder()->where('tpa_excluido', null);
+        $this->orderBy('tpa_ativo, tpa_nome');
+        return $this->builder()->get()->getResultArray();
+    }
+
     public function getTipoAcaoSearch($termo)
     {
         $array = ['tpa_nome' => $termo . '%'];
@@ -109,7 +120,7 @@ class OcorreTipoAcaoModel extends Model
 
         return $this->builder()->get()->getResultArray();
     }
-    
+
 
     public function defCampos($dados = false, $show = false)
     {
@@ -138,6 +149,4 @@ class OcorreTipoAcaoModel extends Model
 
         return $ret;
     }
-
-    
 }

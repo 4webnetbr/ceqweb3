@@ -30,13 +30,13 @@ class OcorreTrataOcorrenciaModel extends Model
     ];
 
     protected $validationRules = [
-        'oco_descricao'  => 'required|max_length[100]|min_length[3]',
+        'oco_descricao'  => 'required|max_length[50]|min_length[3]',
     ];
 
     protected $validationMessages = [
         'oco_descricao'  => [
             'required'   => 'O campo Nome do Tipo da Ocorrência é Obrigatório',
-            'max_length' => 'O Campo deve Conter no Máximo 100 Caracteres',
+            'max_length' => 'O Campo deve Conter no Máximo 50 Caracteres',
             'min_length' => 'O Campo Devente Conter no Minimo 3 Caracteres',
         ],
     ];
@@ -71,22 +71,25 @@ class OcorreTrataOcorrenciaModel extends Model
 
     public function getStatusIdByNome(string $nome, ?int $telId = null)
     {
+        // Inicializa a consulta na tabela de status
         $builder = $this->db->table('config_ceqweb_db.cfg_status')
             ->select('stt_id')
             ->where('stt_nome', $nome);
     
+        // Filtra pela tela, se informada    
         if ($telId !== null) {
             $builder->where('tel_id', $telId);
         }
-    
         return $builder
             ->orderBy('stt_id', 'DESC')
             ->get()
             ->getResult();
     }
 
+
     public function getById($id)
     {
+        // Busca ocorrência na tabela principal
         return $this->db->table('oco_ocorrencia')
             ->where('oco_id', $id)
             ->get()
@@ -95,6 +98,7 @@ class OcorreTrataOcorrenciaModel extends Model
     
     public function getListaCompleta()
     {
+        // Retorna todos os registros da VIEW
         return $this->db->table($this->view)
             ->get()
             ->getResult();
@@ -102,6 +106,7 @@ class OcorreTrataOcorrenciaModel extends Model
 
     public function getView($id)
     {
+        // Busca ocorrência específica na VIEW
         return $this->db->table($this->view)
             ->where('oco_id', $id)
             ->get()
@@ -110,6 +115,7 @@ class OcorreTrataOcorrenciaModel extends Model
     
     public function getAcoesForTratativa($tpo_id)
     {
+        // Busca ações vinculadas ao tipo de ocorrência com joins auxiliares
         return $this->db->table('oco_tpo_acao a')
             ->select('
                 a.*,

@@ -5,6 +5,7 @@ namespace App\Controllers\Estoque;
 use App\Controllers\BaseController;
 use App\Controllers\Ws\WsCeqweb;
 use App\Models\Estoqu\EstoquDepositoModel;
+use App\Entities\Estoque\EntDeposito;
 
 class Deposito extends BaseController
 {
@@ -14,9 +15,9 @@ class Deposito extends BaseController
     public $depositos;
 
     /**
-     * Construtor da Tela
-     * construct
-     */
+    * Construtor da Tela
+    * construct
+    */
     public function __construct()
     {
         $this->data      = session()->getFlashdata('dados_tela');
@@ -29,18 +30,18 @@ class Deposito extends BaseController
     }
 
     /**
-     * Erro de Acesso
-     * erro
-     */
+    * Erro de Acesso
+    * erro
+    */
     public function __erro()
     {
         echo view('vw_semacesso', $this->data);
     }
 
     /**
-     * Tela de Abertura
-     * index
-     */
+    * Tela de Abertura
+    * index
+    */
     public function index()
     {
         $integ = new WsCeqweb();
@@ -51,108 +52,136 @@ class Deposito extends BaseController
         echo view('vw_lista', $this->data);
     }
     /**
-     * Listagem
-     * lista
-     */
+    * Listagem
+    * lista
+    */
     public function lista()
-    {
-        // if (!$depositos = cache('depositos')) {
-             
+    {  
             $campos = montaColunasCampos($this->data, 'dep_codDep');
             $dados_tela = $this->depositos->getDeposito();
             // debug($dados_tela, true);
             $this->data['exclusao'] = false;
             $depositos = [
-                'data' => montaListaColunas($this->data, 'dep_codDep', $dados_tela, $campos[1]),
+                'data' => montaListaColunasEnt($this->data, 'dep_codDep', $dados_tela, $campos[1]),
             ];
             cache()->save('depositos', $depositos, 60000);
-        // }
         echo json_encode($depositos);
     }
 
-    public function show($id){
-
-		$dados_depositos = $this->depositos->getDeposito($id);
-        $fields = $this->depositos->defCampos($dados_depositos[0], true);
-
+    public function show($id)
+    {
+        // Busca os dados do depósito pelo ID
+        $dados_depositos = $this->depositos->getDeposito($id);
+    
+         // Cria a Entity EntDeposito a partir dos dados retornados
+        /** @var EntDeposito $entity */
+        $entity = new EntDeposito((array) $dados_depositos[0], true);
+    
+        $fields = $entity->defCampos((array) $dados_depositos[0], true);
+    
+        // Define a seção da tela
         $secao[0] = 'Dados Gerais'; 
-        $campos[0][0] = $fields['dep_codDep']; 
-        $campos[0][1] = $fields['dep_desDep'];
-        $campos[0][2] = $fields['dep_aceNeg'];
-        $campos[0][3] = $fields['dep_codDescricao'];
-        $campos[0][4] = $fields['dep_padrao'];
-        $campos[0][5] = $fields['dep_reserva'];
-        
-		$this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
-        $this->data['destino']    = '';
-        // BUSCAR DADOS DO LOG
-        $this->data['log'] = buscaLog('est_sap_deposito', $id);
-
+        $campos[0][0] = $fields->dep_codDep; 
+        $campos[0][1] = $fields->dep_desDep;
+        $campos[0][2] = $fields->dep_aceNeg;
+        $campos[0][3] = $fields->dep_codDescricao;
+        $campos[0][4] = $fields->dep_padrao;
+        $campos[0][5] = $fields->dep_reserva;
+            
+        $this->data['secoes']  = $secao;
+        $this->data['campos']  = $campos;
+        $this->data['destino'] = '';
+        $this->data['log']     = buscaLog('est_sap_deposito', $id);
+    
+        // Renderiza a view de edição
         echo view('vw_edicao', $this->data);
     }
 
     /**
-     * Edição
-     * edit
-     *
-     * @param mixed $id 
-     * @return void
-     */
+    * Edição
+    * edit
+    *
+    * @param mixed $id 
+    * @return void
+    */
     public function edit($id, $show = false)
     {
-		$dados_depositos = $this->depositos->getDeposito($id);
-        $fields = $this->depositos->defCampos($dados_depositos[0], true);
-
+        // Busca os dados do depósito pelo ID
+        $dados_depositos = $this->depositos->getDeposito($id);
+    
+        // Cria a Entity EntDeposito em modo edição
+        /** @var EntDeposito $entity */
+        $entity = new EntDeposito((array) $dados_depositos[0], true);
+    
+        // Gera os campos da tela via Entity
+        $fields = $entity->defCampos((array) $dados_depositos[0], true);
+    
+        // Define a seção da tela
         $secao[0] = 'Dados Gerais'; 
-        $campos[0][0] = $fields['dep_codDep']; 
-        $campos[0][1] = $fields['dep_desDep'];
-        $campos[0][2] = $fields['dep_aceNeg'];
-        $campos[0][3] = $fields['dep_codDescricao'];
-        $campos[0][4] = $fields['dep_padrao'];
-        $campos[0][5] = $fields['dep_reserva'];
-        
-		$this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
-        $this->data['destino']    = 'store';
-        // BUSCAR DADOS DO LOG
-        $this->data['log'] = buscaLog('est_sap_deposito', $id);
-
+        $campos[0][0] = $fields->dep_codDep; 
+        $campos[0][1] = $fields->dep_desDep;
+        $campos[0][2] = $fields->dep_aceNeg;
+        $campos[0][3] = $fields->dep_codDescricao;
+        $campos[0][4] = $fields->dep_padrao;
+        $campos[0][5] = $fields->dep_reserva;
+            
+        $this->data['secoes']  = $secao;
+        $this->data['campos']  = $campos;
+        $this->data['destino'] = 'store';
+        $this->data['log']     = buscaLog('est_sap_deposito', $id);
+    
         echo view('vw_edicao', $this->data);
     }
 
     /**
-     * Gravação
-     * store
-     *
-     * @return void
-     */
+    * Gravação
+    * store
+    *
+    * @return void
+    */
     public function store()
     {
+        // Inicializa retorno padrão
         $ret = [];
         $ret['erro'] = false;
-        $postado = $this->request->getPost();
-
+    
+        // Recupera dados enviados via POST e converte para objeto
+        /** @var object $postado */
+        $postado = (object) $this->request->getPost();
+    
+        // Inicia transação no banco
         $this->depositos->transBegin();
         $erros = [];
-        if (isset($postado['dep_padrao']) && $postado['dep_padrao'] === 'S') {
-           // Atualiza todos os registros para dep_padrao = 'N'
-            $this->depositos->where('dep_padrao', 'S')->set(['dep_padrao' => 'N'])->update();
+    
+        // Se o depósito for definido como padrão,
+        if (isset($postado->dep_padrao) && $postado->dep_padrao === 'S') {
+            // Atualiza todos os registros para dep_padrao 'N'
+            $this->depositos
+                ->where('dep_padrao', 'S')
+                ->set(['dep_padrao' => 'N'])
+                ->update();
         }
-        
-        $sql_tmo = [
-            'dep_codDep' => $postado['dep_codDep'],
-            'dep_padrao' => $postado['dep_padrao'],
-            'dep_reserva' => $postado['dep_reserva'],
-        ];
-        if ($this->depositos->save($sql_tmo)) {
+    
+        // Cria a Entity EntDeposito com os dados que serão gravados
+        /** @var EntDeposito $entity */
+        $entity = new EntDeposito([
+            'dep_codDep'  => $postado->dep_codDep,
+            'dep_padrao'  => $postado->dep_padrao,
+            'dep_reserva' => $postado->dep_reserva,
+        ]);
+    
+        // Salva os dados utilizando o Model 
+        if ($this->depositos->save($entity)) {
             $this->depositos->transCommit();
-            $ret['msg']  = 'Depósito atualizado com Sucesso!!!';
+            $ret['msg'] = 'Depósito atualizado com Sucesso!!!';
             session()->setFlashdata('msg', $ret['msg']);
-            $ret['url']  = site_url($this->data['controler']);
+            $ret['url'] = site_url($this->data['controler']);
         } else {
+            // senão desfaz a transação em caso de erro
             $this->depositos->transRollback();
             $ret['msg'] = 'Não foi possível atualizar o Depósito, Verifique!<br><br>';
+    
+            // Concatena possíveis erros
             foreach ($erros as $erro) {
                 $ret['msg'] .= $erro . '<br>';
                 if (is_numeric($erro)) {
@@ -162,5 +191,4 @@ class Deposito extends BaseController
         }
         echo json_encode($ret);
     }
-
 }

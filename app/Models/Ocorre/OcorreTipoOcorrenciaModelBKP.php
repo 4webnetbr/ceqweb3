@@ -15,7 +15,7 @@ use App\Models\LogMonModel;
 use App\Models\Produt\ProdutClasseModel;
 use CodeIgniter\Model;
 
-class OcorreTipoOcorrenciaModel extends Model
+class OcorreTipoOcorrenciaModelBKP extends Model
 {
     protected $DBGroup          = 'dbOcorrencia';
     protected $table            = 'oco_tipo_ocorrencia';
@@ -156,11 +156,11 @@ class OcorreTipoOcorrenciaModel extends Model
         }
         if ($prf_id) {
             $builder->where("FIND_IN_SET($prf_id, prf_id) >", 0);
-        }   
+        }
         $builder->orderBy('tmo_ativo, tmo_nome');
         return $builder->get()->getResultArray();
     }
-    
+
     public function defCampos($dados = false, $show = false)
     {
         $ret = [];
@@ -177,7 +177,7 @@ class OcorreTipoOcorrenciaModel extends Model
 
         $simnao['A'] = 'Ativo';
         $simnao['I'] = 'Inativo';
-        $teste          = new MyCampo('oco_tipo_ocorrencia','tpo_ativo');
+        $teste          = new MyCampo('oco_tipo_ocorrencia', 'tpo_ativo');
         $teste->valor   = (isset($dados['tpo_ativo'])) ? $dados['tpo_ativo'] : 'A';
         $teste->leitura = $show;
         $teste->opcoes  = $simnao;
@@ -188,13 +188,13 @@ class OcorreTipoOcorrenciaModel extends Model
         $opc_classes = array_column($lst_classes, 'cla_nome', 'cla_id');
 
         $cla_id                 = new MyCampo('oco_tpo_classe', 'cla_id', false);
-        $cla_id->valor          = (isset($dados['cla_id'])) ? $dados['cla_id']: '';
-        $cla_id->selecionado    = (isset($dados['cla_id'])) ? explode(',',$dados['cla_id']) : [];
+        $cla_id->valor          = (isset($dados['cla_id'])) ? $dados['cla_id'] : '';
+        $cla_id->selecionado    = (isset($dados['cla_id'])) ? explode(',', $dados['cla_id']) : [];
         $cla_id->opcoes         = $opc_classes;
         $cla_id->largura        = 50;
         $ret['cla_id']          = $cla_id->crMultiple();
 
-        
+
         return $ret;
     }
 
@@ -236,7 +236,7 @@ class OcorreTipoOcorrenciaModel extends Model
 
         $tof_campo               = new MyCampo('oco_tpo_campos', 'tof_campo');
         $tof_campo->valor        = (isset($dados['tof_campo'])) ? $dados['tof_campo'] : '';
-        $tof_campo->selecionado  = explode(',',$tof_campo->valor);
+        $tof_campo->selecionado  = explode(',', $tof_campo->valor);
         $tof_campo->opcoes       = $opc_campo;
         $tof_campo->urlbusca     = base_url('buscas/busca_campo_tela');
         $tof_campo->obrigatorio  = true;
@@ -431,7 +431,7 @@ class OcorreTipoOcorrenciaModel extends Model
 
         $top_id                = new MyCampo('oco_tpo_permissao', 'prf_id', false);
         $top_id->valor         = (isset($dados['prf_id'])) ? $dados['prf_id'][0] : '';
-        $top_id->selecionado   = (isset($dados['prf_id'])) ?[$dados['prf_id']] : [];
+        $top_id->selecionado   = (isset($dados['prf_id'])) ? [$dados['prf_id']] : [];
         $top_id->opcoes        = $opc_prf;
         $top_id->leitura       = $show;
         $top_id->largura       = 50;

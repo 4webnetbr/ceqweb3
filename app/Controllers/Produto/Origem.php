@@ -3,7 +3,6 @@
 namespace App\Controllers\Produto;
 
 use App\Controllers\BaseController;
-use App\Controllers\Ws\WsCeqweb;
 use App\Models\Produt\ProdutOrigemModel;
 
 class Origem extends BaseController
@@ -56,38 +55,45 @@ class Origem extends BaseController
      */
     public function lista()
     {
-        // if (!$origems = cache('origems')) {
-    
             $campos = montaColunasCampos($this->data, 'ori_codOri');
             $dados_tela = $this->origems->getOrigem();
 
-            $this->data['edicao'] = false;
+            $this->data['edicao']   = false;
             $this->data['exclusao'] = false;
-            $origems = [
-                'data' => montaListaColunas($this->data, 'ori_codOri', $dados_tela, $campos[1]),
-            ];
+            $origems = ['data' => montaListaColunasEnt($this->data, 'ori_codOri', $dados_tela, $campos[1])];
             cache()->save('origems', $origems, 60000);
-        // }
         echo json_encode($origems);
     }
 
-    public function show($id){
-
-		$dados_origems = $this->origems->getOrigem($id);
-        $fields = $this->origems->defCampos($dados_origems[0], true);
-
-        $secao[0] = 'Dados Gerais'; 
-        $campos[0][0] = $fields['ori_codOri']; 
-        $campos[0][1] = $fields['ori_desOri'];
-        $campos[0][2] = $fields['ori_codDescricao'];
-        
-		$this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
-        $this->data['destino']    = 'store';
-        // BUSCAR DADOS DO LOG
-        $this->data['log'] = buscaLog('pro_sap_origem', $id);
-
-        echo view('vw_edicao', $this->data);
+    public function show($id)
+    {
+        $dados_origems = $this->origems->getOrigem($id);
+    
+        if (!$dados_origems || !isset($dados_origems[0])) {
+            return redirect()->back();
+        }
+    
+        /** @var object $origem */
+        $origem = $dados_origems[0];
+        // defCampos trabalhando com OBJ
+        $fields = $this->origems->defCampos((array) $origem, true);
+    
+        // SEÇÕES
+        $secao = [];
+        $secao[0] = 'Dados Gerais';
+    
+        // CAMPOS
+        $campos = [];
+        $campos[0][0] = $fields->ori_codOri       ?? $fields['ori_codOri'];
+        $campos[0][1] = $fields->ori_desOri       ?? $fields['ori_desOri'];
+        $campos[0][2] = $fields->ori_codDescricao ?? $fields['ori_codDescricao'];
+    
+        // DADOS DA TELA
+        $this->data->secoes  = $secao;
+        $this->data->campos  = $campos;
+        $this->data->destino = 'store';
+        $this->data->log = buscaLog('pro_sap_origem', $id);
+    
+        echo view('vw_edicao', (array) $this->data);
     }
-
 }

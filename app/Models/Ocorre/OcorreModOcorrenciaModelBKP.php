@@ -28,11 +28,11 @@ class OcorreModOcorrenciaModel extends Model
     protected $useSoftDeletes   = false;
 
     protected $allowedFields    = [
-                'moc_id',
-                'moc_nome',
-                'moc_ativo',
-                'moc_excluido',
-                'tpo_id',
+        'moc_id',
+        'moc_nome',
+        'moc_ativo',
+        'moc_excluido',
+        'tpo_id',
     ];
 
     protected $validationRules = [
@@ -96,7 +96,7 @@ class OcorreModOcorrenciaModel extends Model
         return $data;
     }
 
-    public function getModOcorrencia($moc_id = false)
+    public function getModOcorrencia($moc_id = false, $tel_id = false)
     {
         $db = db_connect('dbOcorrencia');
         $builder = $db->table('vw_oco_mod_ocorrencia_relac');
@@ -104,6 +104,9 @@ class OcorreModOcorrenciaModel extends Model
         $builder->select('*');
         if ($moc_id) {
             $builder->where('moc_id', $moc_id);
+        }
+        if ($tel_id) {
+            $builder->where('tel_id', $tel_id);
         }
         $builder->orderBy('moc_ativo, moc_nome');
         return $builder->get()->getResultArray();
@@ -113,15 +116,15 @@ class OcorreModOcorrenciaModel extends Model
     {
         $db = db_connect('dbOcorrencia');
         $builder = $db->table('vw_oco_mod_ocorrencia_relac');
-    
+
         $builder->select('*');
-    
+
         if ($tpo_id !== null) {
             $builder->where('tpo_id', $tpo_id);
         }
-    
+
         $builder->orderBy('moc_ativo, moc_nome');
-        
+
         return $builder->get()->getResultArray();
     }
 
@@ -138,25 +141,25 @@ class OcorreModOcorrenciaModel extends Model
         $builder->orderBy('moc_id');
         return $builder->get()->getResultArray();
     }
-    
+
 
     public function getTOAcao($moc_id = false)
     {
         $db = db_connect('dbOcorrencia');
-        $builder = $db->table('oco_moc_acao');
+        $builder = $db->table('oco_subt_ocorrencia_acao');
 
         $builder->select('*');
         if ($moc_id) {
-            $builder->where('moc_id', $moc_id);
+            $builder->where('sut_id', $moc_id);
         }
-        $builder->orderBy('moc_id');
+        $builder->orderBy('sut_id');
         return $builder->get()->getResultArray();
     }
 
     public function getMocIdByTpa(int $tpa_id): ?int
     {
         $db = db_connect('dbOcorrencia');
-    
+
         return $db->table('oco_moc_acao')
             ->select('moc_id')
             ->where('tpa_id', $tpa_id)
@@ -177,14 +180,16 @@ class OcorreModOcorrenciaModel extends Model
         return $builder->get()->getResultArray();
     }
 
-    public function getAcoesByTipoOcorrencia($tpo_id)
+    public function getAcoesByTipoOcorrencia(int $tpo_id)
     {
-        return $this->db->table('oco_tpo_acao o')
-            ->select('o.tpa_id, a.tpa_nome')
-            ->join('oco_tipo_acao a', 'a.tpa_id = o.tpa_id')
-            ->where('o.tpo_id', $tpo_id)
+        return $this->db
+            ->table('oco_tpo_acao ta')
+            ->select('ta.tpa_id, ta.tpa_nome')
+            ->where('ta.tpo_id', $tpo_id)
+            ->where('ta.tpa_ativo', 'A')
+            ->orderBy('ta.tpa_nome')
             ->get()
-            ->getResultArray();
+            ->getResult();
     }
 
     public function getStatusByTpoTpa($tpo_id, $tpa_id)
@@ -197,7 +202,7 @@ class OcorreModOcorrenciaModel extends Model
             ->getRowArray();
         return $row['stt_id'];
     }
-    
+
     public function getStatus()
     {
         return $this->db->table('config_ceqweb_db.cfg_status')
@@ -207,17 +212,17 @@ class OcorreModOcorrenciaModel extends Model
             ->getResultArray();
     }
 
-public function buscarPorTipo(int $tpo_id): array
-{
-    return $this->db
-        ->table('ocorrencia_db.vw_oco_mod_ocorrencia_relac')
-        ->select('moc_id, moc_nome')
-        ->where('tpo_id', $tpo_id)
-        ->where('moc_ativo', 'A')
-        ->orderBy('moc_nome')
-        ->get()
-        ->getResultArray();
-}
+    public function buscarPorTipo(int $tpo_id): array
+    {
+        return $this->db
+            ->table('ocorrencia_db.vw_oco_mod_ocorrencia_relac')
+            ->select('moc_id, moc_nome')
+            ->where('tpo_id', $tpo_id)
+            ->where('moc_ativo', 'A')
+            ->orderBy('moc_nome')
+            ->get()
+            ->getResultArray();
+    }
 
     public function getTelaByTpoTpa($tpo_id, $tpa_id)
     {
@@ -227,7 +232,7 @@ public function buscarPorTipo(int $tpo_id): array
             ->where('tpa_id', $tpa_id)
             ->get()
             ->getRowArray();
-    
+
         return $row['tel_id'];
     }
 
@@ -241,16 +246,16 @@ public function buscarPorTipo(int $tpo_id): array
     }
 
     public function getMovimentacaoByTpoTpa(int $tpo_id, int $tpa_id): ?int
-{
-    $row = $this->db->table('oco_tpo_acao')
-        ->select('tmo_id')
-        ->where('tpo_id', $tpo_id)
-        ->where('tpa_id', $tpa_id)
-        ->get()
-        ->getRowArray();
+    {
+        $row = $this->db->table('oco_tpo_acao')
+            ->select('tmo_id')
+            ->where('tpo_id', $tpo_id)
+            ->where('tpa_id', $tpa_id)
+            ->get()
+            ->getRowArray();
 
-    return $row['tmo_id'] ?? null;
-}
+        return $row['tmo_id'] ?? null;
+    }
 
 
     public function defCampos($dados = false, $show = false)
@@ -285,7 +290,7 @@ public function buscarPorTipo(int $tpo_id): array
 
         $simnao['A'] = 'Ativo';
         $simnao['I'] = 'Inativo';
-        $teste          = new MyCampo('oco_mod_ocorrencia','moc_ativo');
+        $teste          = new MyCampo('oco_mod_ocorrencia', 'moc_ativo');
         $teste->valor   = (isset($dados['moc_ativo'])) ? $dados['moc_ativo'] : 'A';
         $teste->leitura = $show;
         $teste->opcoes  = $simnao;
@@ -293,7 +298,7 @@ public function buscarPorTipo(int $tpo_id): array
 
         return $ret;
     }
-    
+
 
     public function defCamposTelasAplicaveis($dados = false, $pos = 0,  $total = 1)
     {
@@ -328,7 +333,7 @@ public function buscarPorTipo(int $tpo_id): array
         $ret['tel_id']      = $tela->crDepende();
 
         //  debug($dados, true);
-        if(!isset($dados['tof_campo']) || $dados['tof_campo'] == ''){
+        if (!isset($dados['tof_campo']) || $dados['tof_campo'] == '') {
             $tipoCampo  = new ConfigTelaModel();
             $lst_campo = $tipoCampo->getTelaId();
             $opc_campo = array_column($lst_campo, 'tel_nome', 'tel_id');
@@ -361,7 +366,7 @@ public function buscarPorTipo(int $tpo_id): array
             // debug($dados['tof_campo'], true);
             $mof_campo               = new MyCampo('oco_moc_campos', 'mof_campo');
             $mof_campo->valor        = (isset($dados['tof_campo'])) ? $dados['tof_campo'] : '';
-            $mof_campo->selecionado  = explode(',',$dados['tof_campo']);
+            $mof_campo->selecionado  = explode(',', $dados['tof_campo']);
             $mof_campo->opcoes       = $opc_campo;
             // $mof_campo->urlbusca     = base_url('buscas/busca_campo_tela');
             $mof_campo->leitura      = true;
@@ -393,7 +398,7 @@ public function buscarPorTipo(int $tpo_id): array
         $del->i_cone    = "<i class='fas fa-trash'></i>";
         $del->classep   = "btn-outline-danger btn-sm bt-exclui";
         if ($total == 1) {
-          $del->classep .= " d-none";  
+            $del->classep .= " d-none";
         }
         $del->funcChan  = "exclui_campo('telas_aplicaveis',this)";
         $del->place     = "Excluir Campo";
@@ -430,7 +435,7 @@ public function buscarPorTipo(int $tpo_id): array
         $add->nome      = "bt_addta[$pos]";
         $add->id        = "bt_addta[$pos]";
         $add->i_cone    = "<i class='fas fa-plus'></i>";
-        
+
         $add->place     = "Adicionar Campo";
         $add->classep   = "btn-outline-success btn-sm bt-repete esconder";
         $add->funcChan  = "addCampo('" . base_url("OcoModOcorrencia/addCampoTp/") . "','acoes',this)";
@@ -443,7 +448,7 @@ public function buscarPorTipo(int $tpo_id): array
         $del->id        = "bt_delta[$pos]";
         $del->i_cone    = "<i class='fas fa-trash'></i>";
         $del->classep   = "btn-outline-danger btn-sm bt-exclui";
-        
+
         // if ($total == 1) {
         //     $del->classep .= " d-none";
         // }
@@ -454,14 +459,14 @@ public function buscarPorTipo(int $tpo_id): array
 
         $tmo_id = new MyCampo('oco_moc_acao', 'tmo_id');
 
-        $tmo_id->opcoes       = []; 
+        $tmo_id->opcoes       = [];
         $tmo_id->valor        = $dados['tmo_id'] ?? '';
         $tmo_id->selecionado  = $tmo_id->valor;
         $tmo_id->leitura      = true;
         $tmo_id->dispForm     = '2col';
         $tmo_id->largura      = 30;
         $tmo_id->ordem        = $pos;
-        
+
         $ret['tmo_id'] = $tmo_id->crSelect();
 
         $modulos = new ConfigModuloModel();
@@ -519,7 +524,7 @@ public function buscarPorTipo(int $tpo_id): array
         return $ret;
     }
 
-    
+
     public function defCamposParaMostrar($dados = false, $show = false)
     {
         $ret = [];
@@ -573,7 +578,7 @@ public function buscarPorTipo(int $tpo_id): array
 
         $top_id                = new MyCampo('oco_moc_permissao', 'prf_id', false);
         $top_id->valor         = (isset($dados['prf_id'])) ? $dados['prf_id'][0] : '';
-        $top_id->selecionado   = (isset($dados['prf_id'])) ?[$dados['prf_id']] : [];
+        $top_id->selecionado   = (isset($dados['prf_id'])) ? [$dados['prf_id']] : [];
         $top_id->opcoes        = $opc_prf;
         $top_id->leitura       = $show;
         $top_id->largura       = 50;

@@ -4,6 +4,7 @@ namespace App\Models\Config;
 
 use App\Models\LogMonModel;
 use CodeIgniter\Model;
+use App\Entities\Config\EntCfgUsuario;
 
 class ConfigUsuarioModel extends Model
 {
@@ -14,7 +15,7 @@ class ConfigUsuarioModel extends Model
     protected $primaryKey       = 'usu_id';
     protected $useAutoIncrement = true;
 
-    protected $returnType       = 'array';
+    protected $returnType       = EntCfgUsuario::class;
     protected $useSoftDeletes   = true;
 
     protected $allowedFields    = [
@@ -30,52 +31,31 @@ class ConfigUsuarioModel extends Model
 
     protected $deletedField  = 'usu_excluido';
 
-    protected $skipValidation     = true;
+    protected $skipValidation = true;
 
     // Callbacks
     protected $allowCallbacks = true;
-    protected $afterInsert   = ['depoisInsert'];
-    protected $afterUpdate   = ['depoisUpdate'];
-    protected $afterDelete   = ['depoisDelete'];
+    protected $afterInsert    = ['depoisInsert'];
+    protected $afterUpdate    = ['depoisUpdate'];
+    protected $afterDelete    = ['depoisDelete'];
 
     protected $logdb;
 
-/**
-     * This method saves the session "usu_id" value to "created_by" and "updated_by" array
-     * elements before the row is inserted into the database.
-     *
-     */
     protected function depoisInsert(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'];
-        $logdb->insertLog($this->table, 'Incluído', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Incluído', $data['id'], $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "updated_by" array element before
-     * the row is inserted into the database.
-     *
-     */
     protected function depoisUpdate(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'][0];
-        $logdb->insertLog($this->table, 'Alteração', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Alteração', $data['id'][0], $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "deletede_by" array element before
-     * the row is inserted into the database.
-     *
-     */
     protected function depoisDelete(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'][0];
-        $logdb->insertLog($this->table, 'Excluído', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Excluído', $data['id'][0], $data['data']);
         return $data;
     }
 
@@ -92,7 +72,7 @@ class ConfigUsuarioModel extends Model
         $builder = $db->table('vw_cfg_usuario_relac');
         $builder->select('*');
         $builder->where($data);
-        $ret = $builder->get()->getResultArray();
+        $ret = $builder->get()->getResult();
         // debug($this->db->getLastQuery());
 
         return $ret;
@@ -114,7 +94,7 @@ class ConfigUsuarioModel extends Model
         if ($id) {
             $builder->where('usu_id', $id);
         }
-        $ret = $builder->get()->getResultArray();
+        $ret = $builder->get()->getResult();
         // debug($this->db->getLastQuery(), false);
         return $ret;
     }
@@ -135,7 +115,7 @@ class ConfigUsuarioModel extends Model
         $builder = $db->table('vw_cfg_usuario_relac');
         $builder->select('*');
         $builder->like($array);
-        $ret = $builder->get()->getResultArray();
+        $ret = $builder->get()->getResult();
         // debug($this->db->getLastQuery(), false);
         return $ret;
     }

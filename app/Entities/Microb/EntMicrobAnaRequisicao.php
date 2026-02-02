@@ -31,13 +31,15 @@ class EntMicrobAnaRequisicao extends Entity
     
      public function defCampos($dados = false, $show = false)
     {
-        $opcoes         = new CommonModel();
+        $opcoes = new CommonModel();
         $ret = [];
 
+        // ID da Requisição (campo oculto)
         $id           =  new MyCampo('pro_mic_requisicao', 'req_id', false);
         $id->valor    = isset($dados['req_id']) ? $dados['req_id'] : '';
         $ret['req_id']    = $id->crOculto();
 
+        // Definição do lote de embarque
         if (isset($dados['req_lotemb'])) {
             $lote = $dados['req_lotemb'];
         } else if (isset($dados['ana_lotemb'])) {
@@ -47,6 +49,7 @@ class EntMicrobAnaRequisicao extends Entity
         }
         // debug($dados['ana_descmetodo'], true);
 
+        // Lote de Embarque
         $lmb            =  new MyCampo('pro_mic_requisicao', 'req_lotemb', false);
         $lmb->valor     = $lote;
         $lmb->tipo      = 'sonumero';
@@ -60,6 +63,7 @@ class EntMicrobAnaRequisicao extends Entity
             $ret['req_lotemb']    = $lmb->crOculto();
         }
 
+        // Descrição do Método de Análise
         $met            =  new MyCampo('pro_mic_analise', 'ana_descmetodo', false);
         $met->valor     = isset($dados['ana_descmetodo']) ? $dados['ana_descmetodo'] : '';
         $met->maxLength = 40;

@@ -3,11 +3,15 @@
 namespace App\Controllers\Estoque;
 
 use App\Controllers\BaseController;
+use App\Traits\ForeignKeyUsageChecker;
 use App\Models\CommonModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
+use App\Entities\Estoque\EntTipoMovimentacao;
 
 class TipoMovimentacao extends BaseController
 {
+    use ForeignKeyUsageChecker;
+
     public $data = [];
     public $permissao = '';
     public $tpmov;
@@ -57,9 +61,8 @@ class TipoMovimentacao extends BaseController
     {
         $campos = montaColunasCampos($this->data, 'tmo_id');
         $dados_tpmovimentacao = $this->tpmov->getTipoMovimentacao();
-        // debug($dados_tpmovimentacao, true);
         $tpmovim = [
-            'data' => montaListaColunas($this->data, 'tmo_id', $dados_tpmovimentacao, $campos[1]),
+            'data' => montaListaColunasEnt($this->data, 'tmo_id', $dados_tpmovimentacao, $campos[1]),
         ];
 
         echo json_encode($tpmovim);
@@ -73,44 +76,54 @@ class TipoMovimentacao extends BaseController
      */
     public function add()
     {
-        $fields = $this->tpmov->defCampos();
+        // ENTITY é quem monta os campos
+        $entity = new EntTipoMovimentacao();
+        $fields = $entity->campos;
+
         $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['tmo_id'];
-        $campos[0][count($campos[0])] = $fields['tmo_nome'];
-        $campos[0][count($campos[0])] = $fields['tmo_acumulador'];
-        $campos[0][count($campos[0])] = $fields['tmo_conferencia'];
-        $campos[0][count($campos[0])] = $fields['tmo_transacao_erp'];
-        $campos[0][count($campos[0])] = $fields['tmo_semestoque'];
-        $campos[0][count($campos[0])] = $fields['tmo_transacao_erp_entrada'];
-        $campos[0][count($campos[0])] = $fields['tmo_atendeautomatico'];
-        $campos[0][count($campos[0])] = $fields['tmo_transacao_erp_saida'];
-        $campos[0][count($campos[0])] = $fields['tmo_entrefiliais'];
-        $campos[0][count($campos[0])] = 'vazio2';
-        $campos[0][count($campos[0])] = $fields['tmo_estoquepadrao'];
+        $campos[0][0] = $fields->tmo_id;
+        $campos[0][]  = $fields->tmo_nome;
+        $campos[0][]  = $fields->tmo_acumulador;
+        $campos[0][]  = $fields->tmo_conferencia;
+        $campos[0][]  = $fields->tmo_transacao_erp;
+        $campos[0][]  = $fields->tmo_semestoque;
+        $campos[0][]  = $fields->tmo_transacao_erp_entrada;
+        $campos[0][]  = $fields->tmo_atendeautomatico;
+        $campos[0][]  = $fields->tmo_transacao_erp_saida;
+        $campos[0][]  = $fields->tmo_entrefiliais;
+        $campos[0][]  = 'vazio2';
+        $campos[0][]  = $fields->tmo_estoquepadrao;
 
         $secao[1] = 'Movimentações';
         $displ[1] = 'tabela';
-        $fields = $this->tpmov->defCamposMov();
+
+        $mov = new EntTipoMovimentacao(null, false);
+        $fieldsMov = $mov->defCamposMov(null, 0, false);
+
         $campos[1][0] = [];
-        $campos[1][0][count($campos[1][0])] = $fields['tmm_id'];
-        $campos[1][0][count($campos[1][0])] = $fields['tmm_deposito_origem'];
-        $campos[1][0][count($campos[1][0])] = $fields['tmm_deposito_destino'];
-        $campos[1][0][count($campos[1][0])] = $fields['bt_add'];
-        $campos[1][0][count($campos[1][0])] = $fields['bt_del'];
+        $campos[1][0][] = $fieldsMov->tmm_id;
+        $campos[1][0][] = $fieldsMov->tmm_deposito_origem;
+        $campos[1][0][] = $fieldsMov->tmm_deposito_destino;
+        $campos[1][0][] = $fieldsMov->bt_add;
+        $campos[1][0][] = $fieldsMov->bt_del;
 
         $secao[2] = 'Permissões';
-        $fields = $this->tpmov->defCamposPrf();
-        $campos[2][0] = $fields['prf_id'];
+        $fieldsPrf = $mov->defCamposPrf(null, false);
+        $campos[2][0] = $fieldsPrf->prf_id;
 
-        $this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
-        $this->data['displ']      = $displ;
-        $this->data['destino']    = 'store';
-
-        $this->data['script'] = "<script>acerta_botoes_rep('movimentacoes')</script>";
+        $this->data['secoes']  = $secao;
+        $this->data['campos']  = $campos;
+        $this->data['displ']   = $displ;
+        $this->data['destino'] = 'store';
+        $this->data['script'] =
+            "<script>
+    acerta_botoes_rep('movimentacoes');
+    acertaObrigatorioTransacoesERP();
+</script>";
 
         echo view('vw_edicao', $this->data);
     }
+
 
     /**
      * Summary of addCampo
@@ -119,12 +132,14 @@ class TipoMovimentacao extends BaseController
      */
     public function addCampo($ind)
     {
-        $fields = $this->tpmov->defCamposMov(false, $ind);
-        $campo[0] = $fields['tmm_id'];
-        $campo[1] = $fields['tmm_deposito_origem'];
-        $campo[2] = $fields['tmm_deposito_destino'];
-        $campo[3] = $fields['bt_add'];
-        $campo[4] = $fields['bt_del'];
+        $entity = new EntTipoMovimentacao(null, false);
+        $fields = $entity->defCamposMov(null, $ind, false);  // retorna OBJETO
+
+        $campo[0] = $fields->tmm_id;
+        $campo[1] = $fields->tmm_deposito_origem;
+        $campo[2] = $fields->tmm_deposito_destino;
+        $campo[3] = $fields->bt_add;
+        $campo[4] = $fields->bt_del;
 
         echo json_encode($campo);
         exit;
@@ -139,50 +154,64 @@ class TipoMovimentacao extends BaseController
      */
     public function edit($id, $show = false)
     {
-        $dados_tmov = $this->tpmov->find($id);
-        $fields = $this->tpmov->defCampos($dados_tmov);
+        $dados_tmov = $this->tpmov->getTipoMovimentacao($id)[0];
+
+
+        if (!$dados_tmov) {
+            return view('errors/vw_semregistro', [
+                'mensagem' => 'Tipo de Movimentação não encontrado'
+            ]);
+        }
+
+        $entity = new EntTipoMovimentacao((array) $dados_tmov);
+
+        // se precisar respeitar $show:
+        $fields = $entity->defCampos($show);
 
         $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['tmo_id'];
-        $campos[0][count($campos[0])] = $fields['tmo_nome'];
-        $campos[0][count($campos[0])] = $fields['tmo_acumulador'];
-        $campos[0][count($campos[0])] = $fields['tmo_conferencia'];
-        $campos[0][count($campos[0])] = $fields['tmo_transacao_erp'];
-        $campos[0][count($campos[0])] = $fields['tmo_semestoque'];
-        // $campos[0][count($campos[0])] = 'vazio2';
-        $campos[0][count($campos[0])] = $fields['tmo_transacao_erp_entrada'];
-        $campos[0][count($campos[0])] = $fields['tmo_atendeautomatico'];
-        $campos[0][count($campos[0])] = $fields['tmo_transacao_erp_saida'];
-        // $campos[0][count($campos[0])] = 'vazio2';
-        $campos[0][count($campos[0])] = $fields['tmo_entrefiliais'];
+        $campos[0][0] = $fields->tmo_id;
+        $campos[0][count($campos[0])] = $fields->tmo_nome;
+        $campos[0][count($campos[0])] = $fields->tmo_acumulador;
+        $campos[0][count($campos[0])] = $fields->tmo_conferencia;
+        $campos[0][count($campos[0])] = $fields->tmo_transacao_erp;
+        $campos[0][count($campos[0])] = $fields->tmo_semestoque;
+        $campos[0][count($campos[0])] = $fields->tmo_transacao_erp_entrada;
+        $campos[0][count($campos[0])] = $fields->tmo_atendeautomatico;
+        $campos[0][count($campos[0])] = $fields->tmo_transacao_erp_saida;
+        $campos[0][count($campos[0])] = $fields->tmo_entrefiliais;
         $campos[0][count($campos[0])] = 'vazio2';
-        $campos[0][count($campos[0])] = $fields['tmo_estoquepadrao'];
+        $campos[0][count($campos[0])] = $fields->tmo_estoquepadrao;
 
         $secao[1] = 'Movimentações';
         $displ[1] = 'tabela';
         $dados_tmmm = $this->tpmov->getTipoMovimentacaoMovimentos($id);
+
         if (count($dados_tmmm) > 0) {
             for ($c = 0; $c < count($dados_tmmm); $c++) {
-                $fields = $this->tpmov->defCamposMov($dados_tmmm[$c], $c, $show);
-                $campos[1][$c][0] = $fields['tmm_id'];
-                $campos[1][$c][count($campos[1][$c])] = $fields['tmm_deposito_origem'];
-                $campos[1][$c][count($campos[1][$c])] = $fields['tmm_deposito_destino'];
+                $fields = $entity->defCamposMov((object) $dados_tmmm[$c], $c, $show);
+
+                $campos[1][$c][0] = $fields->tmm_id;
+                $campos[1][$c][count($campos[1][$c])] = $fields->tmm_deposito_origem;
+                $campos[1][$c][count($campos[1][$c])] = $fields->tmm_deposito_destino;
+
                 if (!$show) {
-                    $campos[1][$c][count($campos[1][$c])] = $fields['bt_add'];
-                    $campos[1][$c][count($campos[1][$c])] = $fields['bt_del'];
+                    $campos[1][$c][count($campos[1][$c])] = $fields->bt_add;
+                    $campos[1][$c][count($campos[1][$c])] = $fields->bt_del;
                 } else {
                     $campos[1][$c][count($campos[1][$c])] = '';
                     $campos[1][$c][count($campos[1][$c])] = '';
                 }
             }
         } else {
-            $fields = $this->tpmov->defCamposMov(false, 0, $show);
-            $campos[1][0][0] = $fields['tmm_id'];
-            $campos[1][0][count($campos[1][0])] = $fields['tmm_deposito_origem'];
-            $campos[1][0][count($campos[1][0])] = $fields['tmm_deposito_destino'];
+            $fields = $entity->defCamposMov(null, 0, $show);
+
+            $campos[1][0][0] = $fields->tmm_id;
+            $campos[1][0][count($campos[1][0])] = $fields->tmm_deposito_origem;
+            $campos[1][0][count($campos[1][0])] = $fields->tmm_deposito_destino;
+
             if (!$show) {
-                $campos[1][0][count($campos[1][0])] = $fields['bt_add'];
-                $campos[1][0][count($campos[1][0])] = $fields['bt_del'];
+                $campos[1][0][count($campos[1][0])] = $fields->bt_add;
+                $campos[1][0][count($campos[1][0])] = $fields->bt_del;
             } else {
                 $campos[1][0][count($campos[1][0])] = '';
                 $campos[1][0][count($campos[1][0])] = '';
@@ -192,23 +221,30 @@ class TipoMovimentacao extends BaseController
         $secao[2] = 'Permissões';
         $dados_per = $this->tpmov->getTipoMovimentacaoPermissao($id);
         $permiss['prf_id'] = [];
+
         if (count($dados_per) > 0) {
             for ($p = 0; $p < count($dados_per); $p++) {
-                array_push($permiss['prf_id'], $dados_per[$p]['prf_id']);
+                array_push($permiss['prf_id'], $dados_per[$p]->prf_id);
             }
         }
-        $fields = $this->tpmov->defCamposPrf($permiss, $show);
-        $campos[2][0] = $fields['prf_id'];
+
+        $fields = $entity->defCamposPrf((object) $permiss, $show);
+        $campos[2][0] = $fields->prf_id;
 
         $this->data['secoes'] = $secao;
         $this->data['campos'] = $campos;
         $this->data['displ']  = $displ;
         $this->data['destino'] = 'store';
 
-        $this->data['script'] = "<script>acerta_botoes_rep('movimentacoes');acertaObrigatorio('tmo_acumulador')</script>";
-        $this->data['desc_edicao'] = $dados_tmov['tmo_nome'];
-        // BUSCAR DADOS DO LOG
+        $this->data['script'] =
+            "<script>
+    acerta_botoes_rep('movimentacoes');
+    acertaObrigatorioTransacoesERP();
+</script>";
+
+        $this->data['desc_edicao'] = $dados_tmov->tmo_nome;
         $this->data['log'] = buscaLog('est_tipo_movimentacao', $id);
+
         echo view('vw_edicao', $this->data);
     }
 
@@ -222,39 +258,54 @@ class TipoMovimentacao extends BaseController
     public function delete($id)
     {
         $ret = [];
+
         try {
+            // Checa uso do status em outros bancos
+            $this->verificarUsoEmRelacionamentos('est_tipo_movimentacao', 'tmo_id', (int) $id);
+
+            // Soft delete
             $this->tpmov->delete($id);
             $ret['erro'] = false;
             session()->setFlashdata('msg', 'Tipo de Movimentação Excluída com Sucesso');
-        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+            $ret['msg'] = 'Tipo de Movimentação Excluída com Sucesso';
+        } catch (\Exception $e) {
             $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível Excluir o Tipo de Movimentação Selecionada, Verifique!<br><br>';
+            $ret['msg']  = 3;
         }
+
         echo json_encode($ret);
     }
 
     public function ativinativ($id, $tipo)
     {
-        if ($tipo == 1) {
-            $dad_atin = [
-                'tmo_ativo' => 'A'
-            ];
-        } else {
-            $dad_atin = [
-                'tmo_ativo' => 'I'
-            ];
-        }
         $ret = [];
         try {
+            if ($tipo == 1) {
+                $dad_atin = [
+                    'tmo_ativo' => 'A'
+                ];
+            } else {
+                $dad_atin = [
+                    'tmo_ativo' => 'I'
+                ];
+                $this->verificarUsoEmRelacionamentos('est_tipo_movimentacao', 'tmo_id', (int) $id);
+            }
             $this->tpmov->update($id, $dad_atin);
             $ret['erro'] = false;
-            session()->setFlashdata('msg', 'Movimentação Alterada com Sucesso');
+            session()->setFlashdata('msg', 'Tipo de Movimentação Excluída com Sucesso');
+            $ret['msg']  = 'Tipo de Movimentação Excluída com Sucesso';
+            cache()->clean();
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
             $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível Alterar a Movimentação, Verifique!<br><br>';
+            // $ret['msg']  = 'Não foi possível Alterar o Status, Verifique!<br><br>';
+            $ret['msg']  = 14;
+        } catch (\Exception $e) {
+            $ret['erro'] = true;
+            $ret['msg']  = 14; // ou código personalizado, se preferir
         }
         echo json_encode($ret);
     }
+
     /**
      * Gravação
      * store
@@ -275,17 +326,18 @@ class TipoMovimentacao extends BaseController
             $this->tpmov->transBegin();
             $erros = [];
             $sql_tmo = [
-                'tmo_id' => $postado['tmo_id'],
-                'tmo_nome' => $postado['tmo_nome'],
-                'tmo_acumulador' => $postado['tmo_acumulador'],
-                'tmo_conferencia' => $postado['tmo_conferencia'],
-                'tmo_semestoque' => $postado['tmo_semestoque'],
-                'tmo_transacao_erp' => $postado['tmo_transacao_erp'],
-                'tmo_atendeautomatico' => $postado['tmo_atendeautomatico'],
-                'tmo_transacao_erp_entrada' => $postado['tmo_transacao_erp_entrada'],
-                'tmo_transacao_erp_saida' => $postado['tmo_transacao_erp_saida'],
-                'tmo_entrefiliais' => $postado['tmo_entrefiliais'],
-                'tmo_estoquepadrao' => $postado['tmo_estoquepadrao'],
+                'tmo_id'                    => $postado['tmo_id'],
+                'tmo_nome'                  => $postado['tmo_nome'],
+                'tmo_acumulador'            => $postado['tmo_acumulador'],
+                'tmo_conferencia'           => $postado['tmo_conferencia'],
+                'tmo_semestoque'            => $postado['tmo_semestoque'],
+                'tmo_transacao_erp'         => $postado['tmo_transacao_erp'],
+                'tmo_atendeautomatico'      => $postado['tmo_atendeautomatico'],
+                'tmo_transacao_erp_entrada' => $postado['tmo_transacao_erp_entrada'] ?? null,
+                'tmo_transacao_erp_saida'   => $postado['tmo_transacao_erp_saida'],
+                'tmo_entrefiliais'          => $postado['tmo_entrefiliais'],
+                'tmo_estoquepadrao'         => $postado['tmo_estoquepadrao'],
+                'tmo_ativo'                 => empty($postado['tmo_id']) ? 'A' : ($postado['tmo_ativo'] ?? 'A'),
             ];
             if ($this->tpmov->save($sql_tmo)) {
                 $tmo_id = $this->tpmov->getInsertID();
@@ -298,11 +350,11 @@ class TipoMovimentacao extends BaseController
                 foreach ($postado['tmm_id'] as $key => $value) {
                     if ($postado['tmm_deposito_origem'][$key] != '') {
                         $sql_tmm = [
-                            'tmm_id' => $postado['tmm_id'][$key],
-                            'tmo_id' => $tmo_id,
-                            'tmm_deposito_origem' => $postado['tmm_deposito_origem'][$key],
+                            'tmm_id'               => $postado['tmm_id'][$key],
+                            'tmo_id'               => $tmo_id,
+                            'tmm_deposito_origem'  => $postado['tmm_deposito_origem'][$key],
                             'tmm_deposito_destino' => isset($postado['tmm_deposito_destino'][$key]) ? $postado['tmm_deposito_destino'][$key] : null,
-                            'tmm_atualizado' => $data_atu,
+                            'tmm_atualizado'       => $data_atu,
                         ];
                         if ($postado['tmm_id'][$key] == '') {
                             $tmm_id = $this->common->insertReg('dbEstoque', 'est_tipo_movimentacao_movimento', $sql_tmm);

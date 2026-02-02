@@ -18,13 +18,22 @@ class ConfigStatusModel extends Model
     protected $deletedField     = 'stt_excluido';
 
     protected $allowedFields = [
-        'stt_nome','stt_cor','mod_id','tel_id',
-        'stt_exclusao','stt_edicao','stt_disponivel',
-        'stt_ativo','stt_ordem'
+        'stt_id',
+        'stt_nome',
+        'mod_id',
+        'tel_id',
+        'cor_id',
+        'stt_exclusao',
+        'stt_edicao',
+        'stt_impressao',
+        'stt_disponivel',
+        'stt_ativo',
+        'stt_ordem',
+        'stt_excluido',
     ];
 
     protected $validationRules = [
-        'stt_nome' => 'required|min_length[5]|nome_status_existe[]',
+        'stt_nome' => 'required|min_length[5]',
     ];
 
     protected $afterInsert = ['logInsert'];
@@ -49,24 +58,29 @@ class ConfigStatusModel extends Model
         return $data;
     }
 
-    /* ===== Métodos de domínio ===== */
 
-    public function getStatus($stt_id = false)
+    public function getStatus($stt_id = false, $ativo = null)
     {
         $db = db_connect('default');
         $builder = $db->table($this->view);
         $builder->select('*');
-        
-        if ($stt_id) {
-            $builder->where("stt_id", $stt_id);
-            return $builder->get()->getFirstRow(); 
+    
+        // Aplica filtro de ativo SOMENTE se informado
+        if ($ativo !== null) {
+            $builder->where('stt_ativo', $ativo);
         }
-
-        return $builder->get()->getResult(); 
+    
+        if ($stt_id) {
+            $builder->where('stt_id', $stt_id);
+            return $builder->get()->getFirstRow();
+        }
+    
+        return $builder->get()->getResult();
     }
 
     public function getStatusTela(int $tel_id)
     {
+        // Conecta ao banco padrão
         $db = db_connect('default');
         $builder = $db->table($this->view); // usando a VIEW como fonte
         $builder->select('*');
@@ -74,18 +88,19 @@ class ConfigStatusModel extends Model
         $builder->orderBy('stt_ordem');
 
         // Retorna array de objetos da Entity
-        return $builder->get()->getResult(\App\Entities\Config\EntCfgStatus::class);
+        return $builder->get()->getResult(EntCfgStatus::class);
     }
 
     public function getStatusNomeTela($tel_id, $nome, $stt_id)
     {
+        // Conecta ao banco padrão
         $db = db_connect('default');
         $builder = $db->table($this->view);
         $builder->select('*');
         $builder->where("tel_id", $tel_id);
         $builder->where("stt_nome", $nome);
         $builder->where("stt_id !=", $stt_id);
-        $ret = $builder->get()->getResult(\App\Entities\Config\EntCfgStatus::class);
+        $ret = $builder->get()->getResult(EntCfgStatus::class);
         // debug($this->db->getLastQuery());
 
         return $ret;
@@ -93,6 +108,7 @@ class ConfigStatusModel extends Model
 
     public function getStatusOrdem($stt_id = false)
     {
+        // Conecta ao banco padrão
         $db = db_connect('default');
         $builder = $db->table('vw_cfg_status_ordem');
         $builder->select('*');
@@ -106,34 +122,37 @@ class ConfigStatusModel extends Model
 
     public function getStatusProximaOrdem($tel_id = false)
     {
+        // Conecta ao banco padrão
         $db = db_connect('default');
         $builder = $db->table('vw_cfg_status_ordem');
         $builder->selectMax('stt_ordem');
         if ($tel_id) {
             $builder->where("tel_id", $tel_id);
         }
-        $ret = $builder->get()->getResult(\App\Entities\Config\EntCfgStatus::class);
+        $ret = $builder->get()->getResult(EntCfgStatus::class);
 
         return $ret;
     }
-    
+
     public function getStatusSearch($termo)
     {
         $array = ['stt_nome' => $termo . '%'];
+        // Conecta ao banco padrão
         $db = db_connect('default');
         $builder = $db->table($this->view);
         $builder->select('*');
         $builder->like($array);
-        $ret = $builder->get()->getResult(\App\Entities\Config\EntCfgStatus::class);
+        $ret = $builder->get()->getResult(EntCfgStatus::class);
 
         return $ret;
     }
 
     public function getProximaOrdem(int $tel_id): int
     {
+        // Busca a maior ordem atual e soma 1
         return (int) ($this->selectMax('stt_ordem')
-                    ->where('tel_id', $tel_id)
-                    ->first()
-                    ->stt_ordem ?? 0) + 1;
+            ->where('tel_id', $tel_id)
+            ->first()
+            ->stt_ordem ?? 0) + 1;
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Libraries;
 
 use App\Models\Config\ConfigDicDadosModel;
@@ -13,12 +14,12 @@ use App\Models\Config\ConfigDicDadosModel;
 
 class MyCampo
 {
+    public string $place = '';      // placeholder do Campo
     public string $objeto;     // informa o tipo de campo a ser criado
     public string $tipo;       // informa o tipo Customizado do campo
     public string $nome;       // Nome do Campo
     public string $id;         // Id do Campo
     public string $label;      // Rótulo do Campo
-    public string $place;      // placeholder do Campo
     public string $hint;       // Hint (tooltip) a ser mostrado no campo
     public string $valor;      // Valor inicial do Campo
     public string $funcChan;   // Função que será executada na alteracao do campo
@@ -62,6 +63,7 @@ class MyCampo
     public function __construct($tabela = '', $campo = '', $showchave = false)
     {
         helper('form');
+        $this->objeto      = 'input';
         $this->tipo        = 'text';
         $this->obrigatorio = false;
         $this->leitura     = false;
@@ -70,11 +72,12 @@ class MyCampo
         $this->funcChan    = '';
         $this->funcBlur    = '';
         $this->ordem       = -1;
+        $this->hint        = '';
         $this->infotop     = '';
         $this->inforig     = '';
         $this->infotexto   = '';
         $this->cadModal    = '';
-        $this->maximo      = 100;
+        $this->maximo      = 100000;
         $this->tabela      = $tabela;
         $this->campo       = $campo;
         $this->nome        = $campo;
@@ -129,6 +132,7 @@ class MyCampo
         $dicionario = new ConfigDicDadosModel();
         // debug($tabela.' '.$campo);
         $dados_campo = $dicionario->getDetalhesCampo($tabela, $campo);
+        // debug($dados_campo);
         if (count($dados_campo)) {
             $dad_camp = $dados_campo[0];
 
@@ -141,6 +145,7 @@ class MyCampo
             }
 
             $this->label = $dad_camp['COLUMN_COMMENT'];
+
             $this->place = 'Informe ' . $dad_camp['COLUMN_COMMENT'];
             if (stripos(strtolower($dad_camp['COLUMN_NAME']), '_id')) {
                 $this->place = 'Selecione ' . $dad_camp['COLUMN_COMMENT'];
@@ -214,9 +219,9 @@ class MyCampo
                     $this->tipo    = 'number';
                     $this->minimo  = 1;
                     $this->step    = 1;
-                    $this->maximo  = 100;
+                    $this->maximo  = 100000;
                     $this->size    = 10;
-                    $this->largura = 20; 
+                    $this->largura = 15;
                     break;
                 case 'Decimal':
                     $this->objeto  = 'input';
@@ -233,6 +238,177 @@ class MyCampo
             }
         }
         return;
+    }
+
+    /**
+     * Define o label (rótulo) do campo.
+     */
+    public function setLabel(string $label): self
+    {
+        $this->label = $label;
+        return $this;
+    }
+
+    /**
+     * Define o valor do campo.
+     */
+    public function setValor(mixed $valor): self
+    {
+        $this->valor = $valor;
+        return $this;
+    }
+
+    /**
+     * Define se o campo é somente leitura.
+     */
+    public function setLeitura(bool $leitura): self
+    {
+        $this->leitura = $leitura;
+        return $this;
+    }
+
+    /**
+     * Define as opções de seleção (para campos select, radio, etc.).
+     */
+    public function setOpcoes(array $opcoes): self
+    {
+        $this->opcoes = $opcoes;
+        return $this;
+    }
+
+    /**
+     * Define a Ordem.
+     */
+    public function setOrdem(int $ordem): self
+    {
+        $this->ordem = $ordem;
+        return $this;
+    }
+
+    /**
+     * Define se o campo é obrigatório.
+     */
+    public function setObrigatorio(bool $obrigatorio = true): self
+    {
+        $this->obrigatorio = $obrigatorio;
+        return $this;
+    }
+
+    /**
+     * Define a disposição visual do campo no formulário (ex: col-4, 2col).
+     */
+    public function setDispForm(string $dispForm): self
+    {
+        $this->dispForm = $dispForm;
+        return $this;
+    }
+
+    /**
+     * Define o valor selecionado em campos com opções.
+     */
+    public function setSelecionado(mixed $selecionado): self
+    {
+        $this->selecionado = $selecionado;
+        return $this;
+    }
+
+    /**
+     * Define o tipo do campo (ex: icone, texto, cor, etc.).
+     */
+    public function setTipo(string $tipo): self
+    {
+        $this->tipo = $tipo;
+        return $this;
+    }
+
+    /**
+     * Define a URL de busca dinâmica do campo.
+     */
+    public function setUrlBusca(string $url): self
+    {
+        $this->urlbusca = $url;
+        return $this;
+    }
+
+    /**
+     * Define o campo pai em campos dependentes.
+     */
+    public function setPai(string $pai): self
+    {
+        $this->pai = $pai;
+        return $this;
+    }
+
+    /**
+     * Define a largura do campo (em caracteres ou unidades).
+     */
+    public function setLargura(int $largura): self
+    {
+        $this->largura = $largura;
+        return $this;
+    }
+
+    /**
+     * Define o número mínimo de caracteres do campo.
+     */
+    public function setMinLength(int $min): self
+    {
+        $this->minLength = $min;
+        return $this;
+    }
+
+    /**
+     * Define o número máximo de caracteres do campo.
+     */
+    public function setMaxLength(int $max): self
+    {
+        $this->maxLength = $max;
+        return $this;
+    }
+
+    /**
+     * Define o número de colunas para campos de texto.
+     */
+    public function setColunas(int $cols): self
+    {
+        $this->colunas = $cols;
+        return $this;
+    }
+
+    /**
+     * Define o número de linhas para campos de texto.
+     */
+    public function setLinhas(int $linhas): self
+    {
+        $this->linhas = $linhas;
+        return $this;
+    }
+
+    /**
+     * Define a URL de cadastro modal relacionada ao campo.
+     */
+    public function setCadModal(string $url): self
+    {
+        $this->cadModal = $url;
+        return $this;
+    }
+
+    /**
+     * Define a função no Change.
+     */
+    public function setFunChan(string $url): self
+    {
+        $this->funcChan = $url;
+        return $this;
+    }
+
+    /**
+     * Define a função no Blur.
+     */
+    public function setFunBlur(string $url): self
+    {
+        $this->funcBlur = $url;
+        return $this;
     }
 
     /**
@@ -343,6 +519,9 @@ class MyCampo
             $respf .= "<div class='text-info'><i class='fa-solid fa-bullhorn'></i> $this->infotop</div>";
         }
 
+        if (!isset($this->label)) {
+            $this->label = '';
+        }
         if ($this->label != '') {
             $respf .= $this->crLabel();
         }
@@ -368,7 +547,7 @@ class MyCampo
         } elseif ($this->tipo == 'editor') {
             $respf .= "<div class='input-group mt-0 $disabled'>";
         } elseif ($this->tipo == 'check') {
-            $respf .= "<div class='input-group mt-0 $disabled' style='width: auto !important; '>";
+            $respf .= "<div class='mt-0 $disabled' style='width: auto !important; '>";
         }
         $respf .= $groupant;
 
@@ -465,12 +644,18 @@ class MyCampo
         $this->field['label']            = isset($this->label) ? $this->label : "";
         $this->field['hint']             = isset($this->hint) ? $this->hint : "";
         $this->field['autocomplete']     = 'off';
-        if($this->ordem > -1 && $this->objeto != 'cr2opcoes'){
+        if ($this->ordem > -1 && $this->objeto != 'cr2opcoes') {
             $this->field['data-index'] = $this->ordem;
         }
         if ($this->tipo != 'botao' && $this->tipo != 'button') {
-            $this->field['onchange'] = isset($this->funcChan) ? $this->funcChan : "";
-            $this->field['onblur']   = isset($this->funcBlur) ? $this->funcBlur : "";
+            if (!empty($this->funcChan)) {
+                $onchange = $this->field['onchange'] ?? '';
+                $this->field['onchange'] = trim($onchange . '; ' . $this->funcChan, '; ');
+            }
+            if (!empty($this->funcBlur)) {
+                $onblur = $this->field['onblur'] ?? '';
+                $this->field['onblur'] = trim($onblur . '; ' . $this->funcBlur, '; ');
+            }
         }
         if (isset($this->default)) {
             $this->field['data-default'] = $this->default;
@@ -541,6 +726,18 @@ class MyCampo
     }
 
     /**
+     * crTextShow
+     * Mostra apenas a informação sem formatação
+     * @return string
+     */
+    public function crTextShow(): string
+    {
+        $resp = '';
+        $resp = $this->valor;
+        return $resp;
+    }
+
+    /**
      * crBotao
      * Cria um botão de ação
      * @return string
@@ -600,17 +797,31 @@ class MyCampo
     {
         $this->acertaId();
         $resp = '';
+        $this->tipo = 'check';
         if (! isset($this->selecionado)) {
             $this->selecionado = $this->valor;
         }
 
-        $this->field = [
-            'name'       => $this->nome,
-            'id'         => $this->id,
-            'value'      => $this->valor,
-            'data-selec' => $this->selecionado,
-            'class'      => "form-check-input ml-2 float-start $this->classep",
-        ];
+        $this->tipo = 'check';
+        $resp       = '';
+
+        $resp .= "<div class='form-check form-switch p-0'>";
+        $this->field = array(
+            'name'          => $this->nome,
+            'id'            => $this->id,
+            'value'         => $this->valor,
+            'role'          => 'switch',
+            'data-selec'     => $this->selecionado,
+            'data-enabled'     => $this->leitura,
+            'data-alter'     => false,
+            'data-label'     => $this->label,
+            'label'         => $this->label,
+            'hint'          => $this->hint,
+            'onchange'         => $this->funcChan,
+            'class'         => "form-check-input",
+            // 'class'         => "form-check-input ml-2 float-start $this->classep",
+        );
+
         if ($this->valor == $this->selecionado) {
             $this->field['checked'] = true;
         }
@@ -619,6 +830,7 @@ class MyCampo
         $campo = form_checkbox($this->field);
 
         $resp .= $this->fmtDisplay($campo);
+        $resp .= "</div>";
 
         return $resp;
     }
@@ -860,12 +1072,12 @@ class MyCampo
                 'id'           => $this->id,
                 'value'        => $this->valor,
                 'size'         => $this->size,
-                'maxlength'    => isset($this->maxLength) ? $this->maxLength : $this->size,
+                'maxlength'    => $this->maxLength ?? $this->size,
                 'class'        => "form-control $this->classep",
                 'data-inicial' => $this->valor,
                 'data-nome'    => $this->campo,
             ];
-            $leng = ! isset($this->maxLength) ? $this->size : $this->maxLength;
+            $leng = $this->maxLength ?? $this->size;
             $pe   = 'pe-auto';
             if ($this->leitura) {
                 $pe = 'pe-none';
@@ -906,8 +1118,9 @@ class MyCampo
                     $this->field['min']              = $this->minimo;
                     $this->field['max']              = $this->maximo;
                     $this->field['step']             = $this->step;
-                    $this->field['onkeyup']          = 'mascara(this, \'mnum\')';
-                    $this->field['onchange']         = 'mascara(this, \'mnum\')';
+                    $this->field['oninput']          = "this.value = this.value.slice(0, $leng)";
+                    $this->field['onkeyup']          = 'mascara(this, \'mnum\'); this.value = this.value.slice(0, ' . $leng . '); ';
+                    $this->field['onchange']         = "mascara(this, 'mnum')";
                     $this->field['pattern']          = '^[1-9][0-9]{0,' . $leng . '}$';
                     $this->field['style']            = 'text-align: right';
                     $this->field['aria-describedby'] = 'ig_' . $this->nome;
@@ -920,12 +1133,15 @@ class MyCampo
                     break;
                 case 'number':
                     // $this->field['type']      = 'text';
+                    $this->field['largura'] = $this->field['largura'] ?? $leng;
                     $this->field['dir']     = 'rtl';
                     $this->field['min']     = $this->minimo;
                     $this->field['max']     = $this->maximo;
                     $this->field['step']    = $this->step;
-                    $this->field['onfocus'] = 'entrar_moeda(this)';
-                    $this->field['onkeyup'] = 'mascara(this, \'mnum\')';
+                    $this->field['onfocus']  = 'entrar_moeda(this)';
+                    $this->field['oninput']  = "this.value = this.value.slice(0, $leng)";
+                    $this->field['onkeyup']  = 'mascara(this, \'mnum\'); this.value = this.value.slice(0, ' . $leng . '); ';
+                    $this->field['onchange'] = "this.value = this.value.slice(0, $leng);";
                     $this->field['pattern'] = '^[1-9][0-9]{0,' . $leng . '}$';
                     $this->field['style']   = 'text-align: right';
                     $this->field['class']   = $this->field['class'] . ' form-number';
@@ -1081,7 +1297,7 @@ class MyCampo
                     $grouppos .= "<div id='view_img_" . $this->nome . "' class='show clearfix'
                                 style='width:200px; height:200px;' >";
                     $grouppos .= "<img id='img_" . $this->nome . "' src='" .
-                    base_url('uploads/tipo_down/') . $ico_arq . "' for='" . $this->id .
+                        base_url('uploads/tipo_down/') . $ico_arq . "' for='" . $this->id .
                         "' class='img-thumbnail col-lg-12 col-xs-12'
                                 style='width:200px; height:200px;' alt='' /></div>";
                     break;
@@ -1114,7 +1330,9 @@ class MyCampo
             }
             $grouppos .= "<div id='dc-$this->id' class='div-caract badge bg-info-subtle'></div>";
 
+            // debug($this->field);
             $this->propriedades();
+            // debug($this->field);
             $campo = form_input($this->field);
 
             $resp .= $this->fmtDisplay($campo, $groupant, $grouppos);
@@ -1137,7 +1355,7 @@ class MyCampo
             'id'        => $this->id,
             'value'     => $this->valor,
             'size'      => $this->size,
-            'maxlength' => isset($this->maxLength) ? $this->maxLength : $this->size,
+            'maxlength'    => $this->maxLength ?? $this->size,
             'class'     => "daterange form-control $this->classep",
         ];
         $this->propriedades();
@@ -1191,7 +1409,7 @@ class MyCampo
             'value'     => $this->valor,
             'cols'      => $this->colunas,
             'rows'      => $this->linhas,
-            'maxlength' => $this->maximo,
+            'maxlength'    => $this->maxLength ?? $this->size,
             'class'     => 'form-control',
         ];
         $grouppos = "<div id='dc-$this->id' class='div-caract badge bg-info-subtle'></div>";
@@ -1255,8 +1473,14 @@ class MyCampo
         $this->tipo = 'select';
 
         $resp = '';
-        if (! isset($this->selecionado)) {
+        if (!isset($this->selecionado)) {
             $this->selecionado = $this->valor;
+        }
+
+        if (!is_array($this->selecionado)) {
+            $this->selecionado = ($this->selecionado !== null && $this->selecionado !== '')
+                ? array_filter(explode(',', (string) $this->selecionado))
+                : [];
         }
 
         $this->nome  = $this->nome . '[]';
@@ -1517,9 +1741,13 @@ class MyCampo
     {
         $this->acertaId();
         $this->tipo = 'select';
+        $this->objeto = 'select';
+
+
         if (! isset($this->selecionado)) {
             $this->selecionado = $this->valor;
         }
+
 
         $resp = '';
 
@@ -1537,7 +1765,7 @@ class MyCampo
         }
         $this->propriedades();
 
-        if ($this->place != '') {
+        if (isset($this->place) && $this->place != '') {
             $this->opcoes = ['' => 'Escolha ' . $this->place] + $this->opcoes;
         }
 
@@ -1557,7 +1785,7 @@ class MyCampo
     {
         $this->acertaId();
         $this->tipo = 'select';
-        if (! isset($this->selecionado)) {
+        if (!isset($this->selecionado)) {
             $this->selecionado = $this->valor;
         }
 
@@ -1586,7 +1814,7 @@ class MyCampo
 
         $extras = 'size=3; data-actions-box="true"; data-size="5"; data-selected-text-format="count > 3"; style = "height:auto; overflow-y:auto max-height:100px;"; ';
 
-        // debug($this->selecionado);
+        // debug($this->opcoes);
         $campo = form_multiselect($this->field, $this->opcoes, $this->selecionado, $extras);
 
         $resp .= $this->fmtDisplay($campo);
@@ -1620,7 +1848,7 @@ class MyCampo
                         style='white-space: normal;width:" . $this->size . "px; padding:0.8em;'
                                 for='" . $this->id . "' data-mdb-toggle='tooltip' data-mdb-placement='bottom' title=''
                                 data-bs-original-title='A imagem será redimensionada para " . $this->size . " X " .
-            $this->largura . " proporcionalmente' aria-label='A imagem será redimensionada para
+                $this->largura . " proporcionalmente' aria-label='A imagem será redimensionada para
                                 $this->size X $this->largura proporcionalmente' >
                                 <i class=\"fas fa-image\"></i> Clique para selecionar imagem de $this->label";
         }

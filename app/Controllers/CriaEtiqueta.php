@@ -930,8 +930,7 @@ private function renderConteudoInterno(array $dados, array $camp, bool $exibirBo
 
         fwrite($socket, $zpl);
         fclose($socket);
-
-        // 🔥 Apaga o PNG depois da impressão
+        
         if (file_exists($pngPath)) {
             unlink($pngPath);
         }

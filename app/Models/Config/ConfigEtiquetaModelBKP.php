@@ -10,7 +10,7 @@ use App\Models\Config\ConfigTelaModel;
 use App\Models\LogMonModel;
 use CodeIgniter\Model;
 
-class ConfigEtiquetaModel extends Model
+class ConfigEtiquetaModelBKP extends Model
 {
     protected $DBGroup          = 'default';
     protected $table            = 'cfg_etiqueta';
@@ -126,7 +126,7 @@ class ConfigEtiquetaModel extends Model
 
     public function getEtiquetaTela($tel_id = false)
     {
-        if(!$tel_id){
+        if (!$tel_id) {
             return;
         }
         $db = db_connect('default');

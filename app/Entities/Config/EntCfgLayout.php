@@ -27,23 +27,26 @@ class EntCfgLayout extends Entity
 
     public function __construct(?array $data = null, bool $show = false)
     {
-      parent::__construct($data);
+        parent::__construct($data);
         $this->campos = $this->defCampos($show);
     }
 
     public function defCampos($dados = false, $show = false)
     {
+        // ID do Layout (campo oculto)
         $ret = [];
         $let_id            = new MyCampo('cfg_layout_etiqueta', 'let_id');
         $let_id->valor     = (isset($dados['let_id'])) ? $dados['let_id'] : '';
         $ret['let_id']   = $let_id->crOculto();
 
+        // Nome do Layout
         $nome           =  new MyCampo('cfg_layout_etiqueta', 'let_nome');
         $nome->valor    = (isset($dados['let_nome'])) ? $dados['let_nome'] : '';
         $nome->obrigatorio = true;
         $nome->leitura  = $show;
         $ret['let_nome'] = $nome->crInput();
 
+        // Altura da Etiqueta
         $altura           =  new MyCampo('cfg_layout_etiqueta', 'let_altura');
         $altura->valor    = (isset($dados['let_altura'])) ? $dados['let_altura'] : '';
         $altura->obrigatorio = true;
@@ -52,6 +55,7 @@ class EntCfgLayout extends Entity
         $altura->largura  = 20;
         $ret['let_altura'] = $altura->crInput();
 
+        // Largura da Etiqueta
         $largura           =  new MyCampo('cfg_layout_etiqueta', 'let_largura');
         $largura->valor    = (isset($dados['let_largura'])) ? $dados['let_largura'] : '';
         $largura->obrigatorio = true;
@@ -60,6 +64,7 @@ class EntCfgLayout extends Entity
         $largura->largura  = 20;
         $ret['let_largura'] = $largura->crInput();
 
+        // Número de Colunas
         $colunas          =  new MyCampo('cfg_layout_etiqueta', 'let_colunas');
         $colunas->valor    = (isset($dados['let_colunas'])) ? $dados['let_colunas'] : '';
         $colunas->obrigatorio = true;
@@ -68,6 +73,7 @@ class EntCfgLayout extends Entity
         $colunas->largura  = 20;
         $ret['let_colunas'] = $colunas->crInput();
 
+        // Número de Linhas
         $let_linhas          =  new MyCampo('cfg_layout_etiqueta', 'let_linhas');
         $let_linhas->valor    = (isset($dados['let_linhas'])) ? $dados['let_linhas'] : '';
         $let_linhas->obrigatorio = true;
@@ -76,6 +82,7 @@ class EntCfgLayout extends Entity
         $let_linhas->largura  = 20;
         $ret['let_linhas'] = $let_linhas->crInput();
 
+        // Margem Direita
         $margemDireita          =  new MyCampo('cfg_layout_etiqueta', 'let_marg_direita');
         $margemDireita->valor    = (isset($dados['let_marg_direita'])) ? $dados['let_marg_direita'] : '';
         $margemDireita->obrigatorio = true;
@@ -84,6 +91,7 @@ class EntCfgLayout extends Entity
         $margemDireita->largura  = 20;
         $ret['let_marg_direita'] = $margemDireita->crInput();
 
+        // Margem Esquerda
         $margemEsquerda          =  new MyCampo('cfg_layout_etiqueta', 'let_marg_esquerda');
         $margemEsquerda->valor    = (isset($dados['let_marg_esquerda'])) ? $dados['let_marg_esquerda'] : '';
         $margemEsquerda->obrigatorio = true;
@@ -92,6 +100,7 @@ class EntCfgLayout extends Entity
         $margemEsquerda->largura  = 20;
         $ret['let_marg_esquerda'] = $margemEsquerda->crInput();
 
+        // Margem Superior
         $margemSuperior          =  new MyCampo('cfg_layout_etiqueta', 'let_marg_superior');
         $margemSuperior->valor    = (isset($dados['let_marg_superior'])) ? $dados['let_marg_superior'] : '';
         $margemSuperior->obrigatorio = true;
@@ -100,6 +109,7 @@ class EntCfgLayout extends Entity
         $margemSuperior->largura  = 20;
         $ret['let_marg_superior'] = $margemSuperior->crInput();
 
+        // Margem Inferior
         $margemInferior          =  new MyCampo('cfg_layout_etiqueta', 'let_marg_inferior');
         $margemInferior->valor    = (isset($dados['let_marg_inferior'])) ? $dados['let_marg_inferior'] : '';
         $margemInferior->obrigatorio = true;
@@ -108,6 +118,7 @@ class EntCfgLayout extends Entity
         $margemInferior->largura =  20;
         $ret['let_marg_inferior'] = $margemInferior->crInput();
 
+        // Distância Horizontal entre Etiquetas
         $let_distancia          =  new MyCampo('cfg_layout_etiqueta', 'let_distancia_h');
         $let_distancia->valor    = (isset($dados['let_distancia_h'])) ? $dados['let_distancia_h'] : '';
         $let_distancia->obrigatorio = true;
@@ -116,6 +127,7 @@ class EntCfgLayout extends Entity
         $let_distancia->largura  = 20;
         $ret['let_distancia_h'] = $let_distancia->crInput();
 
+        // Distância Vertical entre Etiquetas
         $let_distancia          =  new MyCampo('cfg_layout_etiqueta', 'let_distancia_v');
         $let_distancia->valor    = (isset($dados['let_distancia_v'])) ? $dados['let_distancia_v'] : '';
         $let_distancia->obrigatorio = true;
@@ -124,9 +136,11 @@ class EntCfgLayout extends Entity
         $let_distancia->largura  = 20;
         $ret['let_distancia_v'] = $let_distancia->crInput();
 
+        // Opções de Status (Ativo / Inativo)
         $opcat['A'] = 'Ativo';
         $opcat['I'] = 'Inativo';
 
+        // Status do Layout
         $ativ           = new MyCampo('cfg_layout_etiqueta', 'let_ativo');
         $ativ->valor    = (isset($dados['let_ativo'])) ? $dados['let_ativo'] : 'A';
         $ativ->selecionado    = $ativ->valor;

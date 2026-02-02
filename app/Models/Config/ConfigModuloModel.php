@@ -54,12 +54,11 @@ class ConfigModuloModel extends Model
         return $data;
     }
 
-    /* =====================================================
-     * Métodos de domínio
-     * ===================================================== */
 
+    // Métodos de domínio
     public function getModulo(?int $id = null)
     {
+        // Se for informado um ID, retorna o módulo correspondente
         return $id
             ? $this->find($id)
             : $this->where('mod_excluido', null)
@@ -69,6 +68,7 @@ class ConfigModuloModel extends Model
 
     public function getModulosSearch(string $termo)
     {
+        // Seleciona apenas os campos necessários
         return $this->select('mod_id, mod_nome, mod_icone')
                     ->like('mod_nome', $termo, 'after')
                     ->where('mod_excluido', null)

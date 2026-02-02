@@ -91,10 +91,12 @@ class ConfigImpressoraModel extends Model
 
     public function getImpressora($imp_id = null)
     {
+        // Conecta ao banco padrão
         $db = db_connect('default');
         $builder = $db->table($this->view);
         $builder->where('imp_excluido', null);
 
+        // Se informado um ID, retorna apenas a impressora correspondente
         if ($imp_id) {
             $builder->where('imp_id', $imp_id);
             return $builder->get()->getFirstRow(); 
@@ -107,10 +109,12 @@ class ConfigImpressoraModel extends Model
 
     public function getImpressoraSearch($termo)
     {
+        // Monta filtro LIKE para busca pelo nome
         $alike = ['imp_nome' => $termo . '%'];
 
         $db = db_connect('default');
         $builder = $db->table($this->view);
+        // Seleciona apenas os campos necessários e aplica filtros
         return $builder->select(['imp_id', 'imp_nome'])
             ->where('imp_excluido', null)
             ->like($alike)

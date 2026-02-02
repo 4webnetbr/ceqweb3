@@ -20,7 +20,7 @@ class Login extends BaseController
     {
         $this->usuario_config = new ConfigUsuarioModel();
         $this->data['styles'] = 'login';
-        $this->data['scripts'] = 'my_fields,my_mask';
+        $this->data['scripts'] = 'my_mask';
     }
 
     public function defCampos()
@@ -122,14 +122,14 @@ class Login extends BaseController
         $log_config =  $this->usuario_config->usuLogonConfig($data);
         if (!$log_config) {
             $session->setFlashdata('msg', 'Usuário não Encontrado');
-            return redirect()->to('/');
+            return redirect()->to('/login');
         } else {
-            $conf_senha = (md5($senha) == trim($log_config[0]['usu_senha']));
+             $conf_senha = (md5($senha) == trim($log_config[0]->usu_senha));
             if (!$conf_senha) {
                 $session->setFlashdata('msg', 'Senha não corresponde ao Usuário!');
-                return redirect()->to('/');
+                return redirect()->to('/login');
             } else {
-                $img_name       = 'usu_' . $log_config[0]['usu_id'] . '.jpg';
+                $img_name       = 'usu_' . $log_config[0]->usu_id . '.jpg';
                 $sem_avat       = base_url('assets/images/sem_avatar.png');
                 $logo_def       = base_url('assets/images/logo_header.png');
                 $icone          = base_url('assets/images/favicon.ico');
@@ -140,21 +140,21 @@ class Login extends BaseController
                 } else {
                     $avatar = $sem_avat;
                 }
-                if ($log_config[0]['dash_usuario'] != '') {
-                    $dash = $log_config[0]['dash_usuario'];
+                if ($log_config[0]->dash_usuario != '') {
+                    $dash = $log_config[0]->dash_usuario;
                 } else {
-                    $dash = $log_config[0]['dash_perfil'];
+                    $dash = $log_config[0]->dash_perfil;
                 }
 
                 // GRAVAR SESSÃO
                 $newdata = [
-                    'usu_id'        => $log_config[0]['usu_id'],
-                    'usu_nome'      => $log_config[0]['usu_nome'],
-                    'usu_login'     => $log_config[0]['usu_login'],
-                    'usu_perfil_id' => $log_config[0]['prf_id'],
-                    'usu_perfil'    => $log_config[0]['prf_nome'],
+                    'usu_id'        => $log_config[0]->usu_id,
+                    'usu_nome'      => $log_config[0]->usu_nome,
+                    'usu_login'     => $log_config[0]->usu_login,
+                    'usu_perfil_id' => $log_config[0]->prf_id,
+                    'usu_perfil'    => $log_config[0]->prf_nome,
                     'usu_dashboard' => $dash,
-                    'usu_whats'     => isset($log_config[0]['usu_whats']) ? $log_config[0]['usu_whats'] : 'N',
+                    'usu_whats'     => isset($log_config[0]->usu_whats) ? $log_config[0]->usu_whats : 'N',
                     'usu_avatar'    => $avatar,
                     'logo'          => $logo_def,
                     'icone'         => $icone,
@@ -162,7 +162,7 @@ class Login extends BaseController
                     'ismobile'      => $mobile
                 ];
                 $session->set($newdata);
-                $usuarioId = $log_config[0]['usu_id'] ?? null;
+                $usuarioId = $log_config[0]->usu_id ?? null;
 
                 if ($usuarioId) {
                     $cookieNome = 'pguser_' . $usuarioId;

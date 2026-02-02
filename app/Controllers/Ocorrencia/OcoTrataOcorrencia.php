@@ -2,80 +2,83 @@
 
 namespace App\Controllers\Ocorrencia;
 
-use App\Controllers\BaseController;
 use App\Entities\Ocorrencia\EntOcoTratativa;
-use App\Models\Ocorre\OcorreTrataOcorrenciaModel;
+use App\Entities\Ocorrencia\EntOcoOcorrencia;
+use App\Controllers\BaseController;
 use App\Models\Ocorre\OcorreOcorrenciaModel;
-use App\Models\Estoqu\EstoquRequisicaoModel;
-use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
-use App\Models\Ocorre\OcorreModOcorrenciaModel;
-use App\Controllers\BuscasSapiens;
-use App\Models\Produt\ProdutLoteModel;
 
 class OcoTrataOcorrencia extends BaseController
 {
     public $data = [];
-    public $trataocorrencia;
-    public $OcorreTrataOcorrenciaMode;
-    public $novaOcorrencia;
-    public $modelTipo;
-    public $modelMod;
-    public $buscaSapiens;
-    public $ocorreNovOcorrenciaModel;
-    public $produtLoteModel;
+    public $permissao;
+    public $ocorrencia;
 
     public function __construct()
     {
-        $this->trataocorrencia = new OcorreTrataOcorrenciaModel();
-        $this->data = session()->get('dados_tela') ?? [];
+        $this->data      = session()->getFlashdata('dados_tela');
+        $this->permissao = $this->data['permissao'];
 
-        $this->novaOcorrencia           = new EstoquRequisicaoModel();
-        $this->modelTipo                = new OcorreTipoOcorrenciaModel();
-        $this->modelMod                 = new OcorreModOcorrenciaModel();
-        $this->buscaSapiens             = new BuscasSapiens();
-        $this->produtLoteModel          = new ProdutLoteModel();
-        $this->ocorreNovOcorrenciaModel = new OcorreOcorrenciaModel();
+        // debug($this->data, true);
+        // Inicialização dos models auxiliares
+        $this->ocorrencia = new OcorreOcorrenciaModel();
 
-
-        $this->data = session()->get('dados_tela') ?? [];
-        $this->data['tabela']  = $this->trataocorrencia->table;
-        $this->data['view']    = $this->trataocorrencia->view ?? '';
-        session()->set('dados_tela', $this->data); 
+        // debug($this->data['erromsg'], true);
+        if ($this->data['erromsg'] != '') {
+            $this->__erro();
+        }
+    }
+    /**
+     * Erro de Acesso
+     * erro
+     */
+    function __erro()
+    {
+        echo view('vw_semacesso', $this->data);
     }
 
-    
+
     public function index()
     {
         $this->data['colunas']   = montaColunasLista($this->data, 'oco_id');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
+        // Renderiza view de listagem
         echo view('vw_lista', $this->data);
     }
-    
-    
+
+
     public function lista()
     {
+        // Monta definição dos campos da listagem
         $campos   = montaColunasCampos($this->data, 'oco_id');
-        $dados    = $this->trataocorrencia->getListaCompleta();
+        $dados    = $this->ocorrencia->getListaCompleta();
+
+        // Caso não existam registros
         if (!$dados) {
-        return $this->response->setJSON(['data' => []]);
+            return $this->response->setJSON(['data' => []]);
         }
 
         $oco_ids    = array_map(fn($o) => $o->oco_id, $dados);
         $logGeracao = buscaLogTabela('oco_ocorrencia', $oco_ids);
 
         $base_url = base_url($this->data['controler']);
+
+        // Processa cada ocorrência
         foreach ($dados as $nov) {
-        
+
+            // Usuário que realizou a última alteração
             $usuLog = $logGeracao[$nov->oco_id]['usua_alterou'] ?? '';
             $nov->usu_nome = $usuLog;
-        
+
+            // Define usuário de finalização se estiver finalizada
             if ((int) $nov->stt_id === 30) {
                 $nov->usu_fina = $usuLog;
             } else {
                 $nov->usu_fina = '';
             }
-    
+
             $nov->acao_person = [];
+
+            // Botão de finalizar se estiver pendente
             if (trim($nov->stt_nome ?? '') === 'Pendente') {
                 $url_finalizar = $base_url . '/finalizar/' . $nov->oco_id;
                 $nov->acao_person[] = "
@@ -89,82 +92,39 @@ class OcoTrataOcorrencia extends BaseController
                 ";
             }
         }
+        // Retorna JSON formatado para DataTable
         return $this->response->setJSON([
             'data' => montaListaColunasEnt($this->data, 'oco_id', $dados, $campos[1])
         ]);
     }
 
 
-    public function edit($id)
-    {
-        $result = $this->trataocorrencia->getById($id);
-        $dados  = $result[0] ?? null;
-    
-        if (!$dados) {
-            throw new \Exception("Ocorrência não encontrada");
-        }
-    
-        $log = buscaLogTabela('oco_ocorrencia', [$id]);
-        $dados->usu_nome = $log[$id]['usua_alterou'] ?? $dados->usu_nome;
-    
-        $tipo = $this->modelTipo->find($dados->tpo_id);
-        $dados->tpo_nome = $tipo->tpo_nome ?? '';
-    
-        $entity = new EntOcoTratativa($dados, true);
-        $fields = $entity->campos;
-    
-        $secao[0] = 'Dados Gerais';
-    
-        $campos[0][] = $fields['tpo_id'];
-        $campos[0][] = $fields['usu_nome'];
-        $campos[0][] = $fields['oco_descricao'];
-        $campos[0][] = $fields['oco_data'];
-        $campos[0][] = $fields['lot_lote'];
-        $campos[0][] = $fields['pro_despro'];
-        $campos[0][] = $fields['oco_qtd'];
-        $campos[0][] = $fields['tpa_id'];
-
-        if (isset($fields['oco_justi'])) {
-            $campos[0][] = $fields['oco_justi'];
-        }
-        if (isset($fields['tmo_id'])) {
-            $campos[0][] = $fields['tmo_id'];
-        }
-        if (isset($fields['stt_id'])) {
-            $campos[0][] = $fields['stt_id'];
-        }
-        if (isset($fields['tel_id'])) {
-            $campos[0][] = $fields['tel_id'];
-        }
-    
-        $this->data['secoes']  = $secao;
-        $this->data['campos']  = $campos;
-        $this->data['destino'] = "update/$id";
-        $this->data['edicao']  = true;
-    
-        echo view('vw_edicao', $this->data);
-    }
-
     public function finalizar($id)
     {
-        $result = $this->trataocorrencia->getById($id);
+        // Fluxo semelhante ao edit, porém com destino de finalização
+        $result = (array) $this->ocorrencia->getById($id);
         $dados  = $result[0] ?? null;
-    
+
+        $dados = $this->ocorrencia->getById($id);
+
         if (!$dados) {
             throw new \Exception("Ocorrência não encontrada");
         }
-    
+
         $log = buscaLogTabela('oco_ocorrencia', [$id]);
-        $dados->usu_nome = $log[$id]['usua_alterou'] ?? $dados->usu_nome;
-    
-        $tipo = $this->modelTipo->find($dados->tpo_id);
+
+        if (isset($log[$id]['usua_alterou'])) {
+            $dados->usu_nome = $log[$id]['usua_alterou'];
+        }
+
+        $entity = new EntOcoTratativa($dados, true);
         $dados->tpo_nome = $tipo->tpo_nome ?? '';
-    
+
         $entity = new EntOcoTratativa($dados, true);
         $fields = $entity->campos;
-    
+
         $secao[0] = 'Finalizar a Tratativa';
-    
+
         $campos[0][] = $fields['tpo_id'];
         $campos[0][] = $fields['usu_nome'];
         $campos[0][] = $fields['oco_descricao'];
@@ -173,7 +133,7 @@ class OcoTrataOcorrencia extends BaseController
         $campos[0][] = $fields['pro_despro'];
         $campos[0][] = $fields['oco_qtd'];
         $campos[0][] = $fields['tpa_id'];
-    
+
         if (isset($fields['oco_justi'])) {
             $campos[0][] = $fields['oco_justi'];
         }
@@ -186,149 +146,37 @@ class OcoTrataOcorrencia extends BaseController
         if (isset($fields['tel_id'])) {
             $campos[0][] = $fields['tel_id'];
         }
-    
+
         $this->data['secoes']       = $secao;
         $this->data['campos']       = $campos;
-        $this->data['destino']      = "finalizarAction/$id"; 
+        $this->data['destino']      = "store";
         $this->data['desc_metodo']  = 'Finalização da';
-        $this->data['forca_submit'] = true;
 
         echo view('vw_edicao', $this->data);
     }
-    
-    public function finalizarAction($id)
-{
-    if (!$this->request->isAJAX()) {
-        return $this->response->setJSON([
-            'erro' => true,
-            'msg'  => 'Requisição inválida'
-        ]);
-    }
 
-    try {
-
-        $builder = $this->trataocorrencia->builder();
-
-        $builder
-            ->where('oco_id', $id)
-            ->set('stt_id', 30);
-
-        if ($this->request->getPost('oco_justi') !== null) {
-            $builder->set('oco_justi', $this->request->getPost('oco_justi'));
-        }
-
-        $builder->update();
-        $usuarioFinalizou = session()->get('usu_nome') ?? 'Usuário';
-
-        session()->setFlashdata(
-            'msg',
-            "Tratativa finalizada com sucesso!"
-        );
-
-        return $this->response->setJSON([
-            'erro' => false,
-            'url'  => site_url($this->data['controler'])
-        ]);
-
-    } catch (\Exception $e) {
-
-        return $this->response->setJSON([
-            'erro' => true,
-            'msg'  => 'Erro ao finalizar tratativa:<br><br>' . $e->getMessage()
-        ]);
-    }
-}
-    
-
-    public function update($id)
-    {
-        $dados = $this->request->getPost();
-    
-        try {
-                $this->trataocorrencia->update($id, [
-                    'oco_justi' => $dados['oco_justi'] ?? '',
-                    'oco_data'  => date('Y-m-d H:i:s'),
-                ]);
-    
-                session()->setFlashdata(
-                    'msg',
-                    'Tratativa atualizada com sucesso!'
-                );
-    
-            return $this->response->setJSON([
-                'erro' => false,
-                'msg'  => session()->getFlashdata('msg'),
-                'url'  => site_url($this->data['controler'])
-            ]);
-    
-        } catch (\Exception $e) {
-    
-            return $this->response->setJSON([
-                'erro' => true,
-                'msg'  => 'Erro ao atualizar ocorrência:<br><br>' . $e->getMessage()
-            ]);
-        }
-    }
-
-    public function delete($id)
+    public function store()
     {
         $ret = [];
-        try {
-            $this->trataocorrencia->delete($id);
-            $ret['erro'] = false;
-            session()->setFlashdata('msg', 'Tratativa Excluída com Sucesso');
-            $ret['msg']  = 'Tratativa Excluída com Sucesso';
-        } catch (\CodeIgniter\Database\Exceptions\DatabaseException) {
-            $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível Excluir a Tratativa, Verifique!<br><br>';
-        }
-        echo json_encode($ret);
-    }
+        // Recupera os dados enviados pelo formulário
+        $postado = $this->request->getPost();
+        // debug($postado);
+        // Cria a entity de Ocorrência
+        $entity  = new EntOcoOcorrencia($postado);
+        // debug($entity, true);
 
-    public function view($id)
-    {
-        $dados = $this->trataocorrencia->getView($id);
-    
-        if (!$dados) {
-            throw new \Exception("Ocorrência não encontrada");
+        if (!$this->ocorrencia->save($entity)) {
+            $ret = [
+                'erro' => true,
+                'msg'  => implode('<br>', $this->ocorrencia->errors())
+            ];
+        } else {
+            session()->setFlashdata('msg', 'Ocorrência gravada com sucesso!');
+            $ret = [
+                'erro' => false,
+                'url'  => site_url($this->data['controler'])
+            ];
         }
-    
-        $secao[0]  = 'Dados Gerais';
-        $campos[0] = [];
-    
-        foreach ($dados as $dado) {
-    
-            $entity = new EntOcoTratativa($dado, true);
-            $fields = $entity->campos;
-    
-            $campos[0][] = $fields['tpo_id'];
-            $campos[0][] = $fields['usu_nome'];
-            $campos[0][] = $fields['oco_descricao'];
-            $campos[0][] = $fields['oco_data'];
-            $campos[0][] = $fields['lot_lote'];
-            $campos[0][] = $fields['pro_despro'];
-            $campos[0][] = $fields['oco_qtd'];
-            $campos[0][] = $fields['tpa_id'];
-    
-            if (isset($fields['oco_justi'])) {
-                $campos[0][] = $fields['oco_justi'];
-            }
-            if (isset($fields['tmo_id'])) {
-                $campos[0][] = $fields['tmo_id'];
-            }
-            if (isset($fields['stt_id'])) {
-                $campos[0][] = $fields['stt_id'];
-            }
-            if (isset($fields['tel_id'])) {
-                $campos[0][] = $fields['tel_id'];
-            }
-        }
-    
-        $this->data['secoes']  = $secao;
-        $this->data['campos']  = $campos;
-        $this->data['destino'] = '';
-        $this->data['visualizacao'] = true;
-    
-        echo view('vw_visualizacao', $this->data);
+        return json_encode($ret);
     }
 }

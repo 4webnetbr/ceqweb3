@@ -7,9 +7,12 @@ use App\Entities\Config\EntCfgLayout;
 use App\Controllers\BaseController;
 use App\Models\Config\ConfigEtiquetaModel;
 use App\Models\Config\ConfigLayoutEtiqModel;
+use App\Traits\ForeignKeyUsageChecker;
 
 class CfgLayoutEtiq extends BaseController
 {
+    use ForeignKeyUsageChecker;
+
     public $data = [];
     public $permissao = '';
     public $layetiqueta;
@@ -26,6 +29,7 @@ class CfgLayoutEtiq extends BaseController
         $this->layetiqueta = new ConfigLayoutEtiqModel();
         $this->common      = new CommonModel();
 
+        // Caso exista erro de permissão, bloqueia acesso
         if ($this->data['erromsg'] != '') {
             $this->__erro();
         }
@@ -56,15 +60,20 @@ class CfgLayoutEtiq extends BaseController
      */
     public function lista()
     {
-        // if (!$layetiq = cache('layetiq')) {
+        // Monta campos da listagem
         $campos = montaColunasCampos($this->data, 'let_id');
         $dados_layetiq = $this->layetiqueta->getListaLayouts();
+
+        // Não permite a exclusão direta pela listagem
         $this->data['exclusao'] = false;
+
+        // Estrutura padrão para DataTable
         $layetiq = [
             'data' => montaListaColunasEnt($this->data, 'let_id', $dados_layetiq, $campos[1]),
         ];
+
+        // Cache da listagem
         cache()->save('layetiq', $layetiq, 60000);
-        // }
 
         echo json_encode($layetiq);
     }
@@ -78,10 +87,13 @@ class CfgLayoutEtiq extends BaseController
      */
     public function add()
     {
+        // Cria entity vazia
         $lay = new EntCfgLayout();
     
+        // Dados Gerais
         $this->data['secoes'] = ['Dados Gerais'];
     
+        // Campos do layout
         $this->data['campos'] = [[
             $lay->campos['let_id'],
             $lay->campos['let_nome'],
@@ -97,6 +109,7 @@ class CfgLayoutEtiq extends BaseController
             $lay->campos['let_distancia_v'],
         ]];
         
+        // Define método de gravação
         $this->data['destino'] = 'store';
         
         echo view('vw_edicao', $this->data);
@@ -110,16 +123,21 @@ class CfgLayoutEtiq extends BaseController
      */
     public function edit($id, $show = false)
     {
+        // Busca layout pelo ID
         $lay = $this->layetiqueta->find($id);
     
+        // Caso não encontre, lança exceção
         if (!$lay) {
             throw new \Exception('Layout não encontrado');
         }
     
+        // Define campos conforme modo edição/visualização
         $lay->campos = $lay->defCampos($lay->toArray(), $show);
     
+        // Dados Gerais
         $this->data['secoes'] = ['Dados Gerais'];
     
+        // Campos
         $this->data['campos'] = [[
             $lay->campos['let_id'],
             $lay->campos['let_nome'],
@@ -136,7 +154,7 @@ class CfgLayoutEtiq extends BaseController
         ]];
     
         $this->data['destino'] = 'store';
-        $this->data['log']     = buscaLog('cfg_layout_etiqueta', $id);
+        $this->data['log']     = buscaLog('cfg_layout_etiqueta', $id); // Histórico de alterações
     
         echo view('vw_edicao', $this->data);
     }
@@ -144,31 +162,32 @@ class CfgLayoutEtiq extends BaseController
 
     public function ativinativ($id, $tipo)
     {
-        if ($tipo == 1) {
-            $dad_atin = [
-                'let_ativo' => 'A'
-            ];
-        } else {
-            $dad_atin = [
-                'let_ativo' => 'I'
-            ];
-        }
         $ret = [];
-        $etiquetas = new ConfigEtiquetaModel();
-        $existeeti = $etiquetas->getEtiquetaLayout($id);
-        if (count($existeeti)) {
-            $ret['erro'] = true;
-            $ret['msg']  = 14;
-        } else {
-            try {
-                $this->layetiqueta->update($id, $dad_atin);
-                $ret['erro'] = false;
-                session()->setFlashdata('msg', 'Layout de Etiqueta Gravado com Sucesso');
-            } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
-                $ret['erro'] = true;
-                $ret['msg']  = 'Não foi possível Alterar o Layout de Etiqueta, Verifique!<br><br>';
+        try {
+            if ($tipo == 1) {
+                $dad_atin = [
+                    'let_ativo' => 'A'
+                ];
+            } else {
+                $dad_atin = [
+                    'let_ativo' => 'I'
+                ];
+                $this->verificarUsoEmRelacionamentos('cfg_layout_etiqueta', 'let_id', (int) $id);
             }
+
+            $this->layetiqueta->update($id, $dad_atin);
+            $ret['erro'] = false;
+            session()->setFlashdata('msg', 'Layout de Etiqueta Alterado com Sucesso');
+            $ret['msg']  = 'Layout de Etiqueta Alterado com Sucesso';
+        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+            $ret['erro'] = true;
+            // $ret['msg']  = 'Não foi possível Alterar o Status, Verifique!<br><br>';
+            $ret['msg']  = 14;
+        } catch (\Exception $e) {
+            $ret['erro'] = true;
+            $ret['msg']  = 14; // ou código personalizado, se preferir
         }
+
         echo json_encode($ret);
     }
 
@@ -183,15 +202,20 @@ class CfgLayoutEtiq extends BaseController
     public function delete($id)
     {
         $ret = [];
+
         try {
+            // Checa uso do status em outros bancos
+            $this->verificarUsoEmRelacionamentos('cfg_layout_etiqueta', 'let_id', (int) $id);
+
+            // Soft delete
             $this->layetiqueta->delete($id);
             $ret['erro'] = false;
-            session()->setFlashdata('msg', 'Layout Excluído com Sucesso');
-            cache()->clean();
-        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+            session()->setFlashdata('msg', 'Status excluído com sucesso!');
+        } catch (\Exception $e) {
             $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível Excluir esse Layout Verifique!<br><br>';
+            $ret['msg']  = 3;
         }
+
         echo json_encode($ret);
     }
     /**
@@ -205,36 +229,44 @@ class CfgLayoutEtiq extends BaseController
         $ret = [];
         $postado = $this->request->getPost();
         $erros = [];
-
+    
+        // Inicia transação
         $this->layetiqueta->transBegin();
-
-        if (empty($postado['let_id'])) {
-            $exists = $this->common->verificaUnico($this->layetiqueta, 'let_nome', $postado['let_nome'], 'let_id', $postado['let_id']);
-            if ($exists > 0) {
-                $ret['erro'] = true;
-                $ret['msg'] = 8;
-                $erros = [8];
-            }
+    
+        $exists = $this->common->verificaUnico(
+            $this->layetiqueta, 'let_nome', $postado['let_nome'], 'let_id', $postado['let_id'] ?? null
+        );
+    
+        if ($exists > 0) {
+            $ret['erro'] = true;
+            $ret['msg']  = 8;
+            $erros = [8];
         }
-        if(count($erros) == 0){
+    
+        if (count($erros) == 0) {
             try {
+                // Grava layout
                 if (!$this->layetiqueta->save($postado)) {
                     throw new \Exception('Erro ao salvar os dados.');
                 }
-
+    
+                // Commit da transação
                 $this->layetiqueta->transCommit();
                 cache()->clean();
-
+    
                 $ret['erro'] = false;
                 $ret['msg']  = 'Layout gravado com Sucesso!!!';
                 session()->setFlashdata('msg', $ret['msg']);
                 $ret['url']  = site_url($this->data['controler']);
+    
             } catch (\Exception $e) {
+                // Rollback em caso de erro
                 $this->layetiqueta->transRollback();
-
+    
                 $ret['erro'] = true;
                 $ret['msg']  = 'Não foi possível gravar o Layout, Verifique!<br><br>';
-
+    
+                // Concatena erros de validação, se existirem
                 $erros = $this->layetiqueta->errors();
                 if (!empty($erros)) {
                     foreach ($erros as $erro) {
@@ -244,10 +276,12 @@ class CfgLayoutEtiq extends BaseController
                         }
                     }
                 } else {
-                    $ret['msg'] .= $e->getMessage(); 
+                    $ret['msg'] .= $e->getMessage();
                 }
             }
         }
+    
         echo json_encode($ret);
     }
+
 }

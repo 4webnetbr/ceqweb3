@@ -4,6 +4,7 @@ namespace App\Controllers\Config;
 
 use App\Controllers\BaseController;
 use App\Libraries\MyCampo;
+use App\Traits\ForeignKeyUsageChecker;
 use App\Models\Config\ConfigDicDadosModel;
 use App\Models\Config\ConfigMenuModel;
 use App\Models\Config\ConfigModuloModel;
@@ -11,6 +12,8 @@ use App\Models\Config\ConfigTelaModel;
 
 class CfgMenu extends BaseController
 {
+    use ForeignKeyUsageChecker;
+
     public $data = [];
     public $permissao = '';
     public $menu;
@@ -150,16 +153,33 @@ class CfgMenu extends BaseController
 
     public function delete($id)
     {
+        // $ret = [];
+        // try {
+        //     $this->menu->delete($id);
+        //     $ret['erro'] = false;
+        //     session()->setFlashdata('msg', 'Menu Excluído com Sucesso');
+        // } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+        //     $ret['erro'] = true;
+        //     $ret['msg']  = 'Não foi possível Excluir o Menu, Verifique!<br><br>';
+        //     $ret['msg'] .= 'Este Menu possui relacionamentos em outros cadastros!';
+        // }
+        // echo json_encode($ret);
+
         $ret = [];
+
         try {
+            // Checa uso do status em outros bancos
+            $this->verificarUsoEmRelacionamentos('cfg_menu', 'men_id', (int) $id);
+
+            // Soft delete
             $this->menu->delete($id);
             $ret['erro'] = false;
             session()->setFlashdata('msg', 'Menu Excluído com Sucesso');
-        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+        } catch (\Exception $e) {
             $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível Excluir o Menu, Verifique!<br><br>';
-            $ret['msg'] .= 'Este Menu possui relacionamentos em outros cadastros!';
+            $ret['msg']  = 3;
         }
+
         echo json_encode($ret);
     }
 

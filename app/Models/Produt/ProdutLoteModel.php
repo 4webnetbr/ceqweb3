@@ -2,9 +2,9 @@
 
 namespace App\Models\Produt;
 
-use App\Libraries\MyCampo;
 use App\Models\LogMonModel;
 use CodeIgniter\Model;
+use App\Entities\Produto\EntProdutos;
 
 class ProdutLoteModel extends Model
 {
@@ -14,7 +14,7 @@ class ProdutLoteModel extends Model
     protected $primaryKey       = 'lot_id';
     // protected $useAutoIncremodt = false;
 
-    protected $returnType       = 'array';
+    protected $returnType       = EntProdutos::class;
     protected $useSoftDeletes   = false;
 
     protected $allowedFields    = [
@@ -36,73 +36,74 @@ class ProdutLoteModel extends Model
 
     protected $logdb;
 
-    /**
-     * This method saves the session "usu_id" value to "created_by" and "updated_by" array
-     * elements before the row is inserted into the database.
-     *
-     */
     protected function depoisInsert(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'];
-        $log = $logdb->insertLog($this->table, 'Incluído', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Incluído', $data['id'], $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "updated_by" array element before
-     * the row is inserted into the database.
-     *
-     */
     protected function depoisUpdate(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'][0];
-        $log = $logdb->insertLog($this->table, 'Alteração', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Alteração', $data['id'][0], $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "deletede_by" array element before
-     * the row is inserted into the database.
-     *
-     */
     protected function depoisDelete(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'][0];
-        $log = $logdb->insertLog($this->table, 'Excluído', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Excluído', $data['id'][0], $data['data']);
         return $data;
     }
 
     public function getLote($lot_id = false)
     {
+        // Conecta ao banco de produtos
         $db = db_connect('dbProduto');
         $builder = $db->table('vw_pro_sap_lote_relac');
         $builder->select('*');
+
+        // Filtra por ID do lote
         if ($lot_id) {
             $builder->where('lot_id', $lot_id);
         }
-        return $builder->get()->getResultArray();
+        return $builder->get()->getResult();
     }
+
+    public function getLoteId($lot_id = false)
+    {
+        // Conecta ao banco de produtos
+        $db = db_connect('dbProduto');
+        $builder = $db->table('pro_sap_lote');
+        $builder->select('*');
+
+        // Filtra por ID do lote
+        if ($lot_id) {
+            $builder->where('lot_lote', $lot_id);
+        }
+        return $builder->get()->getResult();
+    }
+
 
     public function getLoteCodbar($codbar = false)
     {
+        // Conecta ao banco de produtos
         $db = db_connect('dbProduto');
         $builder = $db->table('vw_pro_sap_lote_relac');
         $builder->select('*');
+
+        // Filtra pelo código de barras, se informado
         if ($codbar) {
             $builder->where('lot_codbar', $codbar);
         }
-        return $builder->get()->getResultArray();
+        return $builder->get()->getResult();
     }
 
     public function getUltimoLote()
     {
+        // Conecta ao banco de produtos
         $db = db_connect('dbProduto');
         $builder = $db->table('pro_sap_lote');
         $builder->selectMax('lot_codbar');
-        return $builder->get()->getResultArray();
+        return $builder->get()->getResult();
     }
 
     public function getLoteSearch($termo)
@@ -110,100 +111,55 @@ class ProdutLoteModel extends Model
         $array = ['lot_lote' => $termo . '%'];
         $db = db_connect('dbProduto');
         $builder = $db->table('vw_pro_sap_lote_relac');
+
+        // Utiliza a VIEW de lotes
         $builder->select('*');
         $builder->like($array);
 
-        $ret = $builder->get()->getResultArray();
-        // debug($this->db->getLastQuery());
-        return $ret;
+        return $builder->get()->getResult();
     }
 
     public function getLoteCodproLote($codpro, $lote)
     {
-        $array = ['lot_lote' => $lote . '%'];
+        // Monta filtro LIKE para lote
+        $array = ['lot_lote' => $lote];
         $db = db_connect('dbProduto');
         $builder = $db->table('vw_pro_sap_lote_relac');
         $builder->select('*');
-        if($codpro){
+
+        // Filtra pelo código do produto, se informado
+        if ($codpro) {
             $builder->where('lot_codpro', $codpro);
         }
         $builder->like($array);
 
-        $ret = $builder->get()->getResultArray();
-        // debug($this->db->getLastQuery());
+        $ret = $builder->get()->getResult();
+
         return $ret;
     }
 
     public function getLoteProduto($termo)
     {
+        // Monta filtro por código do produto
         $array = ['lot_codpro' => $termo];
         $db = db_connect('dbProduto');
         $builder = $db->table('vw_pro_sap_lote_relac');
         $builder->select('*');
         $builder->where($array);
 
-        return $builder->get()->getResultArray();
+        // Retorna os resultados
+        return $builder->get()->getResult();
     }
     public function getLoteIn($termo)
     {
-        $array = ['lot_codpro' => $termo];
+        // Conecta ao banco de produtos
         $db = db_connect('dbProduto');
+
+        // Utiliza a VIEW de lotes
         $builder = $db->table('vw_pro_sap_lote_relac');
         $builder->select('*');
         $builder->whereIn('lot_lote', $termo);
 
-        $ret = $builder->get()->getResultArray();
-        // debug($this->db->getLastQuery());
-        return $ret;
-    }
-
-    public function defCampos($dados = false, $show = false)
-    {
-        // debug($dados, true);
-        $id           =  new MyCampo('pro_sap_lote', 'lot_id', false);
-        $id->valor    = (isset($dados['lot_id'])) ? $dados['lot_id'] : '';
-        $id->leitura  = $show;
-        $ret['lot_id']    = $id->crOculto();
-
-        $codb           =  new MyCampo('pro_sap_lote', 'lot_codbar', true);
-        $codb->valor    = (isset($dados['lot_codbar'])) ? $dados['lot_codbar'] : '';
-        $codb->obrigatorio = true;
-        $codb->leitura  = $show;
-        $ret['lot_codbar'] = $codb->crInput();
-
-        $dcod           =  new MyCampo('pro_sap_lote', 'lot_codpro');
-        $dcod->valor    = (isset($dados['lot_codpro'])) ? $dados['lot_codpro'] : '';
-        $dcod->obrigatorio  = true;
-        $dcod->leitura      = $show;
-        $ret['lot_codpro']  = $dcod->crInput();
-
-        $prod           =  new MyCampo('pro_sap_produto', 'pro_despro');
-        $prod->valor    = (isset($dados['pro_despro'])) ? $dados['pro_despro'] : '';
-        $prod->obrigatorio  = true;
-        $prod->leitura      = $show;
-        $ret['pro_despro']  = $prod->crInput();
-
-        $lote           =  new MyCampo('pro_sap_lote', 'lot_lote', true);
-        $lote->valor    = (isset($dados['lot_lote'])) ? $dados['lot_lote'] : '';
-        $lote->obrigatorio = true;
-        $lote->leitura  = $show;
-        $ret['lot_lote'] = $lote->crInput();
-
-        $vali           =  new MyCampo('pro_sap_lote', 'lot_validade');
-        $vali->valor    = (isset($dados['lot_validade'])) ? $dados['lot_validade'] : '';
-        $vali->obrigatorio = true;
-        $vali->leitura  = $show;
-        $ret['lot_validade'] = $vali->crInput();
-
-        $stat           =  new MyCampo();
-        // $stat->id = $stat->nome = 'lot_status';
-        $stat->label    = 'Status';
-        $stat->valor    = fmtEtiquetaCorBst($dados['stt_cor'], $dados['stt_nome']);
-        // $stat->obrigatorio = true;
-        // $stat->leitura  = $show;
-        $stat->largura     = 30;
-        $ret['lot_status'] = $stat->crShow();
-
-        return $ret;
+        return $builder->get()->getResult();
     }
 }

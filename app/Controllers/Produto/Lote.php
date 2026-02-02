@@ -5,6 +5,7 @@ namespace App\Controllers\Produto;
 use App\Controllers\BaseController;
 use App\Controllers\Ws\WsCeqweb;
 use App\Models\Produt\ProdutLoteModel;
+use App\Entities\Produto\EntLote;
 
 class Lote extends BaseController
 {
@@ -56,34 +57,38 @@ class Lote extends BaseController
      */
     public function lista()
     {
-        // if (!$lotes = cache('lotes')) {
-
         $campos = montaColunasCampos($this->data, 'lot_id');
         $dados_lote = $this->lotes->getLote();
-        // foreach ($dados_lote as $key => $value) {
-        //     if ($value['stt_nome'] != $value['stt_nome_produto']) {
-        //         $dados_lote[$key]['stt_nome'] = $value['stt_nome_produto'];
-        //     }
-        // }
+        $dados_lote = filtrarPorPerfil($dados_lote);
         $lotes = [
-            'data' => montaListaColunas($this->data, 'lot_id', $dados_lote, $campos[1]),
+            'data' => montaListaColunasEnt($this->data, 'lot_id', $dados_lote, $campos[1]),
         ];
         cache()->save('lotes', $lotes, 60000);
-        // }
         echo json_encode($lotes);
     }
 
     public function show($id)
     {
+        // Busca o lote pelo ID informado
         $dados_lotes = $this->lotes->getLote($id);
-        if(count($dados_lotes) == 0){
+
+        // Caso não encontre pelo ID, tenta buscar pelo termo (ex: código/lote)
+        if (count($dados_lotes) === 0) {
             $dados_lotes = $this->lotes->getLoteSearch($id);
         }
-        // debug($dados_lotes, true);
-        if (count($dados_lotes) > 0) {
-            $fields = $this->lotes->defCampos($dados_lotes[0], true);
 
+        // se encontrou algum lote
+        if (count($dados_lotes) > 0) {
+            /** @var \App\Entities\Produto\EntLote $lote */
+
+            $lote   = new EntLote($dados_lotes[0], true);
+            $fields = $lote->campos;    // Campos já montados pelo Entity
+
+            $secao = [];
             $secao[0] = 'Dados Gerais';
+
+            // Monta os campos da seção "Dados Gerais"
+            $campos = [];
             $campos[0][0] = $fields['lot_id'];
             $campos[0][1] = $fields['lot_codbar'];
             $campos[0][2] = $fields['lot_codpro'];
@@ -92,16 +97,15 @@ class Lote extends BaseController
             $campos[0][5] = $fields['lot_validade'];
             $campos[0][6] = $fields['lot_status'];
 
-            $this->data['secoes']     = $secao;
-            $this->data['campos']     = $campos;
-            $this->data['destino']    = 'store';
-            // BUSCAR DADOS DO LOG
-            $this->data['log'] = buscaLog('pro_sap_lote', $id);
+            $this->data['secoes']  = $secao;
+            $this->data['campos']  = $campos;
+            $this->data['destino'] = 'store';
+            $this->data['log']     = buscaLog('pro_sap_lote', $id);
 
             echo view('vw_edicao', $this->data);
         } else {
-            
-            $msg  = 'LOTE não Encontrado, ou não disponível!!!';
+
+            $msg = 'LOTE não Encontrado, ou não disponível!!!';
             session()->setFlashdata('msg', $msg);
             $this->index();
         }

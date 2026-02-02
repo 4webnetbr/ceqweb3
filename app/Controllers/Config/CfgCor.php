@@ -6,9 +6,12 @@ use App\Models\CommonModel;
 use App\Entities\Config\EntCfgCor;
 use App\Controllers\BaseController;
 use App\Models\Config\ConfigCorModel;
+use App\Traits\ForeignKeyUsageChecker;
 
 class CfgCor extends BaseController
 {
+    use ForeignKeyUsageChecker;
+
     public $permissao = '';
     public $cores;
     public $common;
@@ -61,16 +64,21 @@ class CfgCor extends BaseController
     public function lista()
     {
         // if (!$cores = cache('cores')) {
-            $campos = montaColunasCampos($this->data, 'cor_id');
-            $dados_cores = $this->cores->getListaCores();
-            foreach ($dados_cores as $cor) {
-                $cor->div_rgb = fmtEtiquetaCor($cor->cor_valorrgb);
+        $campos = montaColunasCampos($this->data, 'cor_id');
+        $dados_cores = $this->cores->getListaCores();
+        foreach ($dados_cores as $cor) {
+            $cor->div_rgb = fmtEtiquetaCor($cor->cor_valorrgb);
+            if ($cor->cor_ativo == 'I') {
+                $cor->stt_consulta = 'N';
+                $cor->stt_edicao = 'N';
             }
-            $this->data['exclusao'] = false;
-            $cores = [
-                'data' => montaListaColunasEnt($this->data, 'cor_id', $dados_cores, $campos[1]),
-            ];
-            cache()->save('cores', $cores, 60000);
+        }
+        // debug($dados_cores, true);
+        $this->data['exclusao'] = false;
+        $cores = [
+            'data' => montaListaColunasEnt($this->data, 'cor_id', $dados_cores, $campos[1]),
+        ];
+        cache()->save('cores', $cores, 60000);
         // }
 
         echo json_encode($cores);
@@ -78,17 +86,18 @@ class CfgCor extends BaseController
 
     public function ativinativ($id, $tipo)
     {
-        if ($tipo == 1) {
-            $dad_atin = [
-                'cor_ativo' => 'A'
-            ];
-        } else {
-            $dad_atin = [
-                'cor_ativo' => 'I'
-            ];
-        }
         $ret = [];
         try {
+            if ($tipo == 1) {
+                $dad_atin = [
+                    'cor_ativo' => 'A'
+                ];
+            } else {
+                $dad_atin = [
+                    'cor_ativo' => 'I'
+                ];
+                $this->verificarUsoEmRelacionamentos('cfg_cor', 'cor_id', (int) $id);
+            }
             $this->cores->update($id, $dad_atin);
             $ret['erro'] = false;
             session()->setFlashdata('msg', 'Cor Alterada com Sucesso');
@@ -96,7 +105,11 @@ class CfgCor extends BaseController
             cache()->clean();
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
             $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível Alterar a Cor, Verifique!<br><br>';
+            // $ret['msg']  = 'Não foi possível Alterar o Status, Verifique!<br><br>';
+            $ret['msg']  = 14;
+        } catch (\Exception $e) {
+            $ret['erro'] = true;
+            $ret['msg']  = 14; // ou código personalizado, se preferir
         }
         echo json_encode($ret);
     }
@@ -145,7 +158,7 @@ class CfgCor extends BaseController
 
         if (!$cor) {
             $this->data['erromsg'] = '<h2>Cor não encontrada</h2>';
-            echo view('vw_semacesso', $this->data);        
+            echo view('vw_semacesso', $this->data);
         } else {
             $cor->campos = $cor->defCampos($show);
 
@@ -172,15 +185,20 @@ class CfgCor extends BaseController
     public function delete($id)
     {
         $ret = [];
+
         try {
+            // Checa uso do status em outros bancos
+            $this->verificarUsoEmRelacionamentos('cfg_cor', 'cor_id', (int) $id);
+
+            // Soft delete
             $this->cores->delete($id);
             $ret['erro'] = false;
             session()->setFlashdata('msg', 'Cor Excluída com Sucesso');
-            cache()->clean();
-        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+        } catch (\Exception $e) {
             $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível Excluir a Cor, Verifique!<br><br>';
+            $ret['msg']  = 3;
         }
+
         echo json_encode($ret);
     }
     /**
@@ -199,9 +217,10 @@ class CfgCor extends BaseController
 
         $exists = $this->common->verificaUnico($this->cores, 'cor_nome', $postado['cor_nome'], 'cor_id', $postado['cor_id']);
 
-        if ($exists > 0) {
+        // debug(var_dump($exists), true);
+        if (intval($exists) > 0) {
             $ret['erro'] = true;
-            $ret['msg'] = 8;
+            $ret['msg'] = 9;
         } else {
             $this->cores->transBegin();
 

@@ -10,6 +10,7 @@ class ConfigMensagemModel extends Model
 {
     protected $DBGroup          = 'default';
     protected $table            = 'cfg_mensagem';
+    protected $view             = 'cfg_mensagem';
     protected $primaryKey       = 'msg_id';
     protected $useAutoIncrement = true;
 
@@ -62,33 +63,18 @@ class ConfigMensagemModel extends Model
 
     protected $logdb;
 
-    /**
-     * This method saves the session "usu_id" value to "created_by" and "updated_by" array
-     * elements before the row is inserted into the database.
-     *
-     */
     protected function depoisInsert(array $data)
     {
         (new LogMonModel())->insertLog($this->table, 'Incluído', $data['id'], $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "updated_by" array element before
-     * the row is inserted into the database.
-     *
-     */
     protected function depoisUpdate(array $data)
     {
         (new LogMonModel())->insertLog($this->table, 'Alteração', $data['id'][0], $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "deletede_by" array element before
-     * the row is inserted into the database.
-     *
-     */
     protected function depoisDelete(array $data)
     {
         (new LogMonModel())->insertLog($this->table, 'Excluído', $data['id'][0], $data['data']);
@@ -96,42 +82,75 @@ class ConfigMensagemModel extends Model
     }
 
 
-    public function getMensagem(int $msg_id = null)
+    public function getMensagem(?int $msg_id = null)
     {
-        $builder = $this->builder();
+        // Inicializa o builder da tabela padrão do model
+        $db = db_connect('default');
+        $builder = $db->table($this->view);
+        $builder->select('*');
         $builder->where('msg_excluido', null);
 
+        // Se informado um ID, retorna apenas a mensagem correspondente
         if ($msg_id) {
             $builder->where('msg_id', $msg_id);
             return $builder->get()->getFirstRow();
         }
 
-        $builder->orderBy('msg_ativo, msg_titulo');
+        $builder->orderBy('msg_ativo, msg_id');
+
         return $builder->get()->getResult();
     }
-    
 
-    public function getMensagemId(int $msg_id = null)
+
+    public function getMensagemId(?int $msg_id = null)
     {
-        $builder = $this->builder();
+        // Inicializa o builder da tabela padrão do model
+        $db = db_connect('default');
+        $builder = $db->table($this->view);
+        $builder->select('*');
         $builder->where('msg_excluido', null);
-    
+
+        // Se informado um ID, retorna apenas a mensagem correspondente
         if ($msg_id) {
             $builder->where('msg_id', $msg_id);
-            return $builder->get()->getFirstRow(); 
+            return $builder->get()->getFirstRow();
         }
-    
+
         $builder->orderBy('msg_id');
-        return $builder->get()->getResult(); 
+        return $builder->get()->getResult();
     }
 
     public function getMensagemSearch(string $termo)
     {
-        $builder = $this->builder();
+        // Inicializa o builder da tabela padrão do model
+        $db = db_connect('default');
+        $builder = $db->table($this->view);
         $builder->select(['msg_id', 'msg_titulo']);
         $builder->where('msg_excluido', null);
         $builder->like('msg_titulo', $termo);
-    
-        return $builder->get()->getResult(); 
+
+        // Retorna os resultados encontrados
+        return $builder->get()->getResult();
+    }
+
+    public function getMensagensCache(): array
+    {
+        $cacheKey = 'cfg_mensagens_obj';
+
+        if ($mensagens = cache($cacheKey)) {
+            return $mensagens;
+        }
+        $lista = $this->where('msg_excluido', null)
+            ->where('msg_ativo', 'A')
+            ->findAll();
+
+        $mensagens = [];
+        foreach ($lista as $men) {
+            $mensagens[$men->msg_id] = $men;
+        }
+
+        cache()->save($cacheKey, $mensagens, 3600);
+
+        return $mensagens;
     }
 }

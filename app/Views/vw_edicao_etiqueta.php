@@ -32,7 +32,8 @@
                 }
                 echo "<li class='nav-item ' role='presentation'>";
                 echo "<button class='nav-link $active' id='" . $secao . "-tabr' data-bs-toggle='tab' data-bs-target='#" . $secao . "' type='button' role='tab' aria-controls='" . $secao . "' aria-selected='false'>";
-                echo "<i class='far fa-hand-point-right'> </i> - ";
+                // echo "<i class='far fa-hand-point-right'> </i> - ";
+                echo " - ";
                 echo $secoes[$s] . "</button>";
                 echo "</li>";
             }
@@ -47,7 +48,8 @@
                 $secao = url_amigavel($secoes[$s]);
                 echo "<span id='" . $secao . "-valid' class='float-end valid-tab badge rounded-pill bg-danger d-none'>!</span>";
                 echo "<button class='nav-link $active' id='" . $secao . "-tab' data-bs-toggle='tab' data-bs-target='#" . $secao . "' type='button' role='tab' aria-controls='" . $secao . "' aria-selected='false'>";
-                echo "<i class='far fa-hand-point-right'> </i> - ";
+                // echo "<i class='far fa-hand-point-right'> </i> - ";
+                echo " - ";
                 echo $secoes[$s];
                 echo "</button>";
                 echo "</li>";

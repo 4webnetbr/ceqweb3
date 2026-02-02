@@ -19,6 +19,7 @@ class ProdutoMontado
     public string $pro_mindiaanterior;
     public int $pro_qtdemb;
     public int $pro_consumo;
+    public int $pro_consumo_proximo;
     public int $pro_consumo_diaant;
     public int $pro_consumo_medio;
     public int $pro_multiplica;
@@ -50,6 +51,7 @@ class ProdutoMontado
         $this->pro_seguranca   = (int) ($data['pro_seguranca'] ?? 0);
         $this->pro_sugestao   = (int) ($data['pro_sugestao'] ?? 0);
         $this->pro_mindiaanterior   = (string) ($data['pre_mindiaanterior'] ?? 'S');
+        $this->pro_consumo_proximo   = 0;
         $this->pro_minimo   = 0;
         $this->pro_maximo   = 0;
         $this->pro_requisicao   = 0;
@@ -71,6 +73,7 @@ class ProdutoMontado
             'fab_apeFab'   => $this->fab_apeFab,
             'pro_qtdemb'   => $this->pro_qtdemb,
             'pro_consumo'   => $this->pro_consumo,
+            'pro_consumo_proximo'   => $this->pro_consumo_proximo,
             'pro_consumo_diaant'   => $this->pro_consumo_diaant,
             'pro_consumo_medio'   => $this->pro_consumo_medio,
             'pro_multiplica'   => $this->pro_multiplica,

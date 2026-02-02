@@ -69,6 +69,7 @@ class Campos
     public $classs          = '';
     public $tipo_arquivo    = '';
     public $hint            = '';
+    public string $accept   = '';
     public $minimo          = 0;
     public $maximo          = 50;
     public $step            = 1;

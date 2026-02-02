@@ -57,7 +57,7 @@ class CriaEtiquetaZPL extends BaseController
 
     private function escZpl(string $s): string
     {
-        return str_replace(['^','\\'], ['\^','\\\\'], $s);
+        return str_replace(['^', '\\'], ['\^', '\\\\'], $s);
     }
 
     private function alturaLinhaFromTamanho(int $tamPt): int
@@ -297,7 +297,8 @@ class CriaEtiquetaZPL extends BaseController
 
         // Largura total (uma fileira)
         $pw = $ml + ($cols * $etqW) + (($cols - 1) * $gh) + $mr;
-
+        $PW_MAX = 3045; // limite do Labelary (15" em 203 DPI)
+        $pw = min($pw, $PW_MAX);
         // Altura total (todas as fileiras)
         // mt + (etqH+gv)*totalRows - gv (pois não tem gutter após a última) + mb
         $ll = $mt + ($totalRows * $etqH) + (max(0, $totalRows - 1) * $gv) + $mb;
@@ -330,9 +331,10 @@ class CriaEtiquetaZPL extends BaseController
         return $z;
     }
 
-    private function buildConteudoEtiquetaEm(int $baseX, int $baseY, array $registro, array $camp, int $etqW, int $etqH, bool $modelo): string
+    private function buildConteudoEtiquetaEm(int $baseX, int $baseY, $registro, array $camp, int $etqW, int $etqH, bool $modelo): string
     {
         $z = '';
+        $registro = (array) $registro;
         $yCursor  = 0;
         $ocupouPct = 0; // largura ocupada na linha (em % da etiqueta)
         // inicialize fora do loop
@@ -356,10 +358,10 @@ class CriaEtiquetaZPL extends BaseController
 
             // Colocar tudo em maiúsculo
             $font = strtoupper($partes[0]);
-            if($font == 'TIMES'){
+            if ($font == 'TIMES') {
                 $font = 'TIMESNR';
             }
-            $font = $font.'.TTF';
+            $font = $font . '.TTF';
 
             $largDisp = (int) floor($etqW * ($colPct / 100));
 
@@ -370,7 +372,7 @@ class CriaEtiquetaZPL extends BaseController
             }
 
             $xBase = $baseX + (int) floor(($ocupouPct / 100) * $etqW);
-            if($modelo){ // se for modelo desenha a borda
+            if ($modelo) { // se for modelo desenha a borda
                 $z .= "^FO{$baseX},{$baseY}^GB" . ($etqW - 1) . "," . ($etqH - 1) . ",2^FS";
             }
 
@@ -395,7 +397,7 @@ class CriaEtiquetaZPL extends BaseController
             } else {
                 if ($rotulo === 'Sem Rótulo' || $rotulo === '.') $rotulo = '';
                 $val = trim((string) ($registro[$tipoCampo] ?? ''));
-                if(isValidDate($val)){
+                if (isValidDate($val)) {
                     $val = data_br($val);
                 }
                 if ($caracteres > 0 && $linhas == 1) $val = mb_substr($val, 0, $caracteres);
@@ -456,7 +458,7 @@ class CriaEtiquetaZPL extends BaseController
             $wDots = 0;
 
             // Espaço vertical entre linhas (mínimo 2mm)
-            $espacoExtra = $this->mm2dot($hDots *(10 /100));
+            $espacoExtra = $this->mm2dot($hDots * (10 / 100));
             $lineStep    = $hDots + $espacoExtra;
 
             $yBaseLocal = $baseY + $yCursor;
@@ -476,7 +478,7 @@ class CriaEtiquetaZPL extends BaseController
                 // debug($partes);
 
                 // Altura de linha: altura da fonte + opcional leading
-                $leading  = $this->mm2dot($hDots *(2 /100)); // ex.: $this->mm2dot(0.6) se quiser espaço extra
+                $leading  = $this->mm2dot($hDots * (2 / 100)); // ex.: $this->mm2dot(0.6) se quiser espaço extra
                 $lineStep = $hDots + $leading;
 
                 $yBase = $baseY + $yCursor;
@@ -493,7 +495,7 @@ class CriaEtiquetaZPL extends BaseController
                         $z .= "^FD{$part}^FS";
                     }
                 }
-                $yCursor  += ($lineStep * ($maxLines -1));
+                $yCursor  += ($lineStep * ($maxLines - 1));
             } else {
                 $itemPct   = (float)$colPct;        // % do container do item
                 $itemW     = (int) round($etqW * ($itemPct / 100));   // largura (dots)
@@ -527,8 +529,8 @@ class CriaEtiquetaZPL extends BaseController
 
                 // 4) Atualiza ocupação e altura da linha
                 $linhaPctOcupado += $itemPct;
-                if ($linhaPctOcupado > 100) { 
-                    $linhaPctOcupado = 100; 
+                if ($linhaPctOcupado > 100) {
+                    $linhaPctOcupado = 100;
                 } // clamp por segurança
                 $linhaAlturaMax = max($linhaAlturaMax, $itemH);
 
@@ -539,8 +541,8 @@ class CriaEtiquetaZPL extends BaseController
             // Avança para próxima “linha de layout” dentro da etiqueta
             // $yCursor   += max($hDots, $this->mm2dot(2.5));
             $ocupouPct += $colPct;
-            if ($ocupouPct >= 100){
-                $ocupouPct = 0;                
+            if ($ocupouPct >= 100) {
+                $ocupouPct = 0;
                 $yCursor   += $hDots + $this->mm2dot(0.3);
             }
         }
@@ -593,29 +595,18 @@ class CriaEtiquetaZPL extends BaseController
         $this->colunas    = (int)   $etq->let_colunas;
         $this->linhas     = (int)   $etq->let_linhas;
 
-        // $this->largura    = (float) $etq['let_largura'];
-        // $this->altura     = (float) $etq['let_altura'];
-        // $this->esquerda   = (float) $etq['let_marg_esquerda'];
-        // $this->direita    = (float) $etq['let_marg_direita'];
-        // $this->topo       = (float) $etq['let_marg_superior'];
-        // $this->rodape     = (float) $etq['let_marg_inferior'];
-        // $this->horizontal = (float) $etq['let_distancia_h'];
-        // $this->vertical   = (float) $etq['let_distancia_v'];
-        // $this->colunas    = (int)   $etq['let_colunas'];
-        // $this->linhas     = (int)   $etq['let_linhas'];
-
         // Busca 1 linha de dados (até N colunas) — mesma fonte que você já usa
         $modelo = false;
         if ($chave === false || $chave == 'false') {
             $fields = array_column($camp, 'etc_campo');
-            $telid  = $etq['tel_id'];
-            $telas  = $this->tela->getTelaId($telid)[0] ?? null;
+            $telid  = $etq->tel_id;
+            $telas  = (array) $this->tela->getTelaId($telid)[0] ?? null;
 
             if ($telas && !empty($telas['tel_model'])) {
                 $model = $telas['tel_model'];
                 $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
                 $view   = $model_atual->view;
-                if(isset($model_atual->viewoutra)){
+                if (isset($model_atual->viewoutra)) {
                     $view   = $model_atual->viewoutra;
                 }
                 $dados = $this->common->getListaTabela($model_atual->DBGroup, $view, $fields, false, 10);
@@ -646,6 +637,8 @@ class CriaEtiquetaZPL extends BaseController
         $mr   = $this->mm2dot($this->direita);
         $gh   = $this->mm2dot($this->horizontal);
         $pwDots = $ml + ($cols * $etqW) + (($cols - 1) * $gh) + $mr;
+        $PW_MAX = 3045; // limite do Labelary (15" em 203 DPI)
+        $pwDots = min($pwDots, $PW_MAX);
 
         $etqH = $this->mm2dot($this->altura);
         $mt   = $this->mm2dot($this->topo);
@@ -663,31 +656,31 @@ class CriaEtiquetaZPL extends BaseController
         $url = "http://api.labelary.com/v1/printers/{$dpmm}dpmm/labels/{$larg_in}x{$altu_in}/0/";
 
 
-            $ch  = curl_init($url);
-            curl_setopt_array($ch, [
-                CURLOPT_POST           => true,
-                CURLOPT_POSTFIELDS     => $zplLinha, // stream completo com todas as ^XA…^XZ
-                CURLOPT_HTTPHEADER     => ['Accept: image/png'],
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT        => 30,
+        $ch  = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $zplLinha, // stream completo com todas as ^XA…^XZ
+            CURLOPT_HTTPHEADER     => ['Accept: image/png'],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 30,
+        ]);
+
+        $png  = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err  = curl_error($ch);
+        curl_close($ch);
+
+        if ($code !== 200 || !$png) {
+            // se uma página falhar, retorna o erro dessa página
+            return $this->response->setJSON([
+                'erro'   => $url . '<br>Falha no preview (Labelary) ' . $code . '<br>' . $err,
+                'http'   => $code,
+                'pagina' => 0,
+                'detalhe' => $err ?: '',
             ]);
+        }
 
-            $png  = curl_exec($ch);
-            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $err  = curl_error($ch);
-            curl_close($ch);
-
-            if ($code !== 200 || !$png) {
-                // se uma página falhar, retorna o erro dessa página
-                return $this->response->setJSON([
-                    'erro'   => 'Falha no preview (Labelary)',
-                    'http'   => $code,
-                    'pagina' => $i,
-                    'detalhe'=> $err ?: '',
-                ]);
-            }
-
-            $imagem = base64_encode($png);
+        $imagem = base64_encode($png);
 
         // retorna TODAS as imagens
         return $this->response->setJSON(['imagem' => $imagem]);
@@ -734,7 +727,7 @@ class CriaEtiquetaZPL extends BaseController
                 $model = $telas['tel_model'];
                 $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
                 $view   = $model_atual->view;
-                if(isset($model_atual->viewoutra)){
+                if (isset($model_atual->viewoutra)) {
                     $view   = $model_atual->viewoutra;
                 }
                 $dados = $this->common->getListaTabela($model_atual->DBGroup, $view, $fields, false, 10);
@@ -780,11 +773,12 @@ class CriaEtiquetaZPL extends BaseController
         $camp   = $json['campos'];
 
         $etiq = $this->etiqueta->getEtiquetaLayout($let_id);
+
         if (!$etiq) {
             return $this->response->setStatusCode(404)->setJSON(['error' => 'Layout não encontrado.']);
         }
 
-        $etq = $etiq[0];
+        $etq = (array) $etiq[0];
         $this->largura    = (float) $etq['let_largura'];
         $this->altura     = (float) $etq['let_altura'];
         $this->esquerda   = (float) $etq['let_marg_esquerda'];
@@ -798,12 +792,12 @@ class CriaEtiquetaZPL extends BaseController
 
         // pega até N=colunas registros pra compor UMA LINHA de preview
         $dados = [];
-        $telas = $this->tela->getTelaId($tel_id)[0] ?? null;
+        $telas = (array) $this->tela->getTelaId($tel_id)[0] ?? null;
         if ($telas && !empty($telas['tel_model'])) {
             $model = $telas['tel_model'];
             $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
             $view   = $model_atual->view;
-            if(isset($model_atual->viewoutra)){
+            if (isset($model_atual->viewoutra)) {
                 $view   = $model_atual->viewoutra;
             }
             $fields = array_filter(array_column($camp, 'etc_campo'), fn($f) => $f !== '0' && $f !== '1');
@@ -838,31 +832,30 @@ class CriaEtiquetaZPL extends BaseController
         $url = "http://api.labelary.com/v1/printers/{$dpmm}dpmm/labels/{$larg_in}x{$altu_in}/0/";
 
 
-            $ch  = curl_init($url);
-            curl_setopt_array($ch, [
-                CURLOPT_POST           => true,
-                CURLOPT_POSTFIELDS     => $zplLinha, // stream completo com todas as ^XA…^XZ
-                CURLOPT_HTTPHEADER     => ['Accept: image/png'],
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT        => 30,
+        $ch  = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $zplLinha, // stream completo com todas as ^XA…^XZ
+            CURLOPT_HTTPHEADER     => ['Accept: image/png'],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 30,
+        ]);
+
+        $png  = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err  = curl_error($ch);
+        curl_close($ch);
+
+        if ($code !== 200 || !$png) {
+            // se uma página falhar, retorna o erro dessa página
+            return $this->response->setJSON([
+                'erro'   => 'Falha no preview (Labelary)',
+                'http'   => $code,
+                'detalhe' => $err ?: '',
             ]);
+        }
 
-            $png  = curl_exec($ch);
-            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $err  = curl_error($ch);
-            curl_close($ch);
-
-            if ($code !== 200 || !$png) {
-                // se uma página falhar, retorna o erro dessa página
-                return $this->response->setJSON([
-                    'erro'   => 'Falha no preview (Labelary)',
-                    'http'   => $code,
-                    'pagina' => $i,
-                    'detalhe'=> $err ?: '',
-                ]);
-            }
-
-            $imagem = base64_encode($png);
+        $imagem = base64_encode($png);
 
         // retorna TODAS as imagens
         return $this->response->setJSON(['imagem' => $imagem]);

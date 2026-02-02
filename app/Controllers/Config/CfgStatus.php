@@ -5,6 +5,7 @@ namespace App\Controllers\Config;
 use App\Libraries\MyCampo;
 use App\Controllers\BaseController;
 use App\Entities\Config\EntCfgStatus;
+use App\Models\CommonModel;
 use App\Traits\ForeignKeyUsageChecker;
 use App\Models\Config\ConfigStatusModel;
 
@@ -13,6 +14,7 @@ class CfgStatus extends BaseController
     use ForeignKeyUsageChecker;
 
     protected ConfigStatusModel $status;
+    protected CommonModel $common;
     protected array $data;
 
     public function __construct()
@@ -20,6 +22,7 @@ class CfgStatus extends BaseController
         $this->data   = session()->getFlashdata('dados_tela') ?? [];
         $this->status = new ConfigStatusModel();
         $this->permissao = $this->data['permissao'];
+        $this->common    = new CommonModel();
 
         if ($this->data['erromsg'] != '') {
             $this->__erro();
@@ -63,13 +66,16 @@ class CfgStatus extends BaseController
 
         foreach ($dados as $ent) {
             $ent->tabela  = 'cfg_status';
-            $ent->stt_cor = fmtEtiquetaCorBst($ent->stt_cor, $ent->stt_nome);
+            $ent->stt_cor = fmtEtiquetaCor($ent->cor_valorrgb, $ent->stt_nome);
+            // debug($ent);
         }
 
         echo json_encode([
             'data' => montaListaColunasEnt($this->data, 'stt_id', $dados, 'stt_nome')
         ]);
     }
+
+
     public function ordenar()
     {
         $lst_status     =  $this->status->getStatusOrdem();
@@ -84,21 +90,28 @@ class CfgStatus extends BaseController
 
     public function add()
     {
-        $status = new EntCfgStatus();
+        $estatus = new EntCfgStatus();
 
-        $this->data['secoes']  = ['Dados Gerais'];
-        $this->data['campos']  = [[
-            $status->campos['stt_id'],
-            $status->campos['stt_nome'],
-            // 'vazio2',
-            $status->campos['mod_id'],
-            $status->campos['tel_id'],
-            $status->campos['stt_cor'],
-            // 'vazio2',
-            $status->campos['stt_exclusao'],
-            $status->campos['stt_edicao'],
-            $status->campos['stt_disponivel'],
-        ]];
+        $this->data['secoes']  = ['Dados Gerais', 'Permissões'];
+        $this->data['campos']  = [
+            [
+                $estatus->campos['stt_id'],
+                $estatus->campos['stt_nome'],
+                // 'vazio2',
+                $estatus->campos['mod_id'],
+                $estatus->campos['tel_id'],
+                // $estatus->campos['stt_cor'],
+                $estatus->campos['cor_id'],
+                // 'vazio2',
+                $estatus->campos['stt_exclusao'],
+                $estatus->campos['stt_edicao'],
+                $estatus->campos['stt_disponivel'],
+                $estatus->campos['stt_impressao'],
+            ],
+            [
+                $estatus->campos['prf_id'],
+            ]
+        ];
         $this->data['destino'] = 'store';
 
         echo view('vw_edicao', $this->data);
@@ -106,32 +119,92 @@ class CfgStatus extends BaseController
 
     public function edit($id, $show = false)
     {
-        $status = $this->status->find($id);
+        $dados = $this->status->getStatus($id);
 
-        if (!$status) {
-            return view('errors/registro_nao_encontrado', [
+        // debug($dados, true);
+
+        if (!$dados) {
+            return view('errors/vw_semregistro', [
                 'mensagem' => 'Status não encontrado'
             ]);
         }
 
-        $status->campos = $status->defCampos($show);
+        $estatus = new EntCfgStatus((array) $dados);
 
-        $this->data['secoes'] = ['Dados Gerais'];
-        $this->data['campos'] = [[
-            $status->campos['stt_id'],
-            $status->campos['stt_nome'],
-            // 'vazio2',
-            $status->campos['mod_id'],
-            $status->campos['tel_id'],
-            $status->campos['stt_cor'],
-            $status->campos['stt_exclusao'],
-            $status->campos['stt_edicao'],
-            $status->campos['stt_disponivel'],
-        ]];
+        $this->data['secoes'] = ['Dados Gerais', 'Permissões'];
+        $this->data['campos'] = [
+            [
+                $estatus->campos['stt_id'],
+                $estatus->campos['stt_nome'],
+                $estatus->campos['mod_id'],
+                $estatus->campos['tel_id'],
+                // $estatus->campos['stt_cor'],
+                $estatus->campos['cor_id'],
+                // 'vazio2',
+                $estatus->campos['stt_exclusao'],
+                $estatus->campos['stt_edicao'],
+                $estatus->campos['stt_disponivel'],
+                $estatus->campos['stt_impressao'],
+            ],
+            [
+                $estatus->campos['prf_id'],
+            ]
+        ];
         $this->data['destino'] = 'store';
         $this->data['log']     = buscaLog('cfg_status', $id);
 
         echo view('vw_edicao', $this->data);
+    }
+
+    public function delete($id)
+    {
+        $ret = [];
+
+        try {
+            // Checa uso do status em outros bancos
+            $this->verificarUsoEmRelacionamentos('cfg_status', 'stt_id', (int) $id);
+
+            // Soft delete
+            $this->status->delete($id);
+            $ret['erro'] = false;
+            session()->setFlashdata('msg', 'Status excluído com sucesso!');
+        } catch (\Exception $e) {
+            $ret['erro'] = true;
+            $ret['msg']  = 3;
+        }
+
+        echo json_encode($ret);
+    }
+
+    public function ativinativ($id, $tipo)
+    {
+        $ret = [];
+        try {
+            if ($tipo == 1) {
+                $dad_atin = [
+                    'stt_ativo' => 'A'
+                ];
+            } else {
+                $dad_atin = [
+                    'stt_ativo' => 'I'
+                ];
+                $this->verificarUsoEmRelacionamentos('cfg_status', 'stt_id', (int) $id);
+            }
+
+            $this->status->update($id, $dad_atin);
+            $ret['erro'] = false;
+            session()->setFlashdata('msg', 'Status Alterado com Sucesso');
+            $ret['msg'] = 'Status Alterado com Sucesso';
+        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+            $ret['erro'] = true;
+            // $ret['msg']  = 'Não foi possível Alterar o Status, Verifique!<br><br>';
+            $ret['msg']  = 14;
+        } catch (\Exception $e) {
+            $ret['erro'] = true;
+            $ret['msg']  = 14; // ou código personalizado, se preferir
+        }
+
+        echo json_encode($ret);
     }
 
     public function storeOrd()
@@ -160,21 +233,75 @@ class CfgStatus extends BaseController
 
     public function store()
     {
-        $ent = new EntCfgStatus($this->request->getPost());
-        $ent->stt_ordem = $this->status->getProximaOrdem($ent->tel_id);
+        $ret = [];
+        $ret['erro'] = false;
 
-        if (!$this->status->save($ent)) {
-            echo json_encode([
-                'erro' => true,
-                'msg'  => implode('<br>', $this->status->errors())
-            ]);
-            return;
+        $postado = $this->request->getPost();
+        $postado['prf_id'] = array_merge(...$postado['prf_id']);
+
+        $ent = new EntCfgStatus($postado);
+        $ent->fill($postado);
+
+        if ($postado['stt_id'] == '') { // define ordem só se for inclusão
+            $ent->stt_ordem = $this->status->getProximaOrdem($ent->tel_id);
         }
 
-        session()->setFlashdata('msg', 'Status gravado com sucesso!');
-        echo json_encode([
-            'erro' => false,
-            'url'  => site_url($this->data['controler'])
-        ]);
+        $exists = $this->common->verificaUnico($this->status, 'stt_nome', $postado['stt_nome'], 'stt_id', $postado['stt_id'], 'tel_id', $postado['tel_id']);
+
+        // debug(var_dump($exists), true);
+        if (intval($exists) > 0) {
+            $ret['erro'] = true;
+            $ret['msg'] = 8;
+        } else {
+            $this->status->transBegin();
+
+            try {
+                // debug($ent, true);
+                $salva = $this->status->save($ent);
+                // debug($this->status->getLastQuery(), true);
+
+                if (!$salva) {
+                    $ret['erro'] = true;
+                    $ret['msg']  = implode('<br>', $this->status->errors());
+                    // return;
+                } else {
+                    if ($postado['stt_id'] == '') {
+                        $postado['stt_id'] = $this->status->getInsertId();
+                    }
+                    // GRAVAÇÃO DOS PERFIS
+                    $this->common->deleteReg("default", "cfg_status_permissao", "stt_id = " . $postado['stt_id']);
+                    $data_atu = date('Y-m-d H:i');
+                    foreach ($postado['prf_id'] as $key => $value) {
+                        $sql_prf = [
+                            'stt_id' => $postado['stt_id'],
+                            'prf_id' => $postado['prf_id'][$key],
+                            'stp_atualizado' => $data_atu,
+                        ];
+                        $prf_id = $this->common->insertReg('default', 'cfg_status_permissao', $sql_prf);
+                        if (!$prf_id) {
+                            $this->status->transRollback();
+
+                            $ret['erro'] = true;
+                            $erros = $this->common->errors();
+                            $ret['msg'] = 'Não foi possível gravar as Permissões do Status, Verifique!';
+                        }
+                    }
+                }
+
+                if (!$ret['erro']) {
+                    $this->status->transCommit();
+                    session()->setFlashdata('msg', 'Status gravado com sucesso!');
+                    $ret['erro'] = false;
+                    $ret['url'] = site_url($this->data['controler']);
+                }
+            } catch (\Throwable $e) {
+                $this->status->transRollback();
+                $ret = [
+                    'erro' => true,
+                    'msg'  => $e->getMessage() ?: 'Erro ao salvar Status.'
+                ];
+            }
+        }
+        echo json_encode($ret);
     }
 }

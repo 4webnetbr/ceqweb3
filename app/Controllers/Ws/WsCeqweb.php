@@ -312,43 +312,50 @@ class WsCeqweb extends ResourceController
     {
         $ultimo = $this->mode_lote->getUltimoLote();
         // debug($ultimo, true);
-        if (!isset($ultimo[0]['lot_codbar'])) {
-            $ultimo[0]['lot_codbar'] = '';
+    
+        if (!isset($ultimo[0]->lot_codbar)) {
+            $ultimo[0]->lot_codbar = '';
         }
-        // $ultimo[0]['lot_codbar'] = '';
-        // debug($ultimo[0]['lot_codbar'], true);
-        log_message('info', 'Ultimo Lote ' . $ultimo[0]['lot_codbar']);
+    
+        log_message('info', 'Ultimo Lote ' . $ultimo[0]->lot_codbar);
         log_message('info', 'Início do BuscaLotes ' . date('d/m/Y H:i:s'));
-        $r_lots = $this->busca_sap->buscaLotes($ultimo[0]['lot_codbar']);
+    
+        $r_lots = $this->busca_sap->buscaLotes($ultimo[0]->lot_codbar);
+    
         log_message('info', 'Final do BuscaLotes ' . date('d/m/Y H:i:s'));
+    
         if ($r_lots) {
-            // debug(gettype($r_lots));
+    
             if (!is_array($r_lots)) {
-                $a_lots[0] = (array)$r_lots;
+                $a_lots = [];
+                $a_lots[0] = $r_lots; 
                 $r_lots = $a_lots;
-                // debug($r_lots);
             }
+    
             log_message('info', 'Lotes Retornados ' . json_encode($r_lots));
             log_message('info', 'Total de Lotes  ' . count($r_lots));
+    
             $origem = new ProdutOrigemModel();
+    
             for ($d = 0; $d < count($r_lots); $d++) {
-                $lot = $r_lots[$d];
-                // debug($lot);
+                $lot = $r_lots[$d]; // OBJETO
+    
                 log_message('info', 'Contador de Lote  ' . $d);
                 log_message('info', 'Lote  ' . json_encode($lot));
-                $lcodori = (isset($lot->codori) ? $lot->codori : $lot['codori']);
-                // debug($lcodori);
+    
+                $lcodori = $lot->codori ?? null;
                 $temori = $origem->getOrigem($lcodori);
+    
                 if ($temori) {
-                    $lcodpro = (isset($lot->codpro) ? $lot->codpro : $lot['codpro']);
-                    // debug($lcodpro);
+    
+                    $lcodpro = $lot->codpro ?? null;
                     $micro = $this->mode_produto->getProdutoCod($lcodpro);
-                    // debug($micro);
                     $status = 9;
-                    if (isset($micro[0]['stt_disponivel']) && $micro[0]['stt_disponivel'] == 'S') {
-                        if (isset($micro[0]['cla_micro']) && $micro[0]['cla_micro'] == 'S') {
+    
+                    if (isset($micro[0]->stt_disponivel) && $micro[0]->stt_disponivel == 'S') {
+                        if (isset($micro[0]->cla_micro) && $micro[0]->cla_micro == 'S') {
                             $status = 8;
-                            if (isset($micro[0]['stt_id']) && $micro[0]['stt_id'] == 1) {
+                            if (isset($micro[0]->stt_id) && $micro[0]->stt_id == 1) {
                                 $status = 8;
                             } else {
                                 $status = 9;
@@ -359,22 +366,26 @@ class WsCeqweb extends ResourceController
                     } else {
                         $status = 8;
                     }
-                    $lcodbar = (isset($lot->codbar) ? $lot->codbar : $lot['codbar']);
-                    $lcodlot = (isset($lot->codlot) ? $lot->codlot : $lot['codlot']);
-                    $ldatenv = (isset($lot->datenv) ? $lot->datenv : $lot['datenv']);
-                    $ldatval = (isset($lot->datval) ? $lot->datval : $lot['datval']);
-
-                    $lots['lot_codbar']     = $lcodbar;
-                    $lots['lot_codpro']     = $lcodpro;
-                    $lots['lot_lote']       = $lcodlot;
-                    $lots['lot_entrada']    = data_db($ldatenv);
-                    $lots['lot_validade']   = data_db($ldatval);
-                    $lots['stt_id']         = $status;
+    
+                    $lcodbar = $lot->codbar ?? null;
+                    $lcodlot = $lot->codlot ?? null;
+                    $ldatenv = $lot->datenv ?? null;
+                    $ldatval = $lot->datval ?? null;
+    
+                    $lots = new \stdClass();
+                    $lots->lot_codbar   = $lcodbar;
+                    $lots->lot_codpro   = $lcodpro;
+                    $lots->lot_lote     = $lcodlot;
+                    $lots->lot_entrada  = data_db($ldatenv);
+                    $lots->lot_validade = data_db($ldatval);
+                    $lots->stt_id       = $status;
+    
                     $tem = $this->mode_lote->getLoteCodbar($lcodbar);
+    
                     if ($tem) {
-                        $this->mode_lote->update($tem[0]['lot_id'], $lots);
+                        $this->mode_lote->update($tem[0]->lot_id, (array) $lots);
                     } else {
-                        $this->mode_lote->insert($lots);
+                        $this->mode_lote->insert((array) $lots);
                     }
                 }
             }

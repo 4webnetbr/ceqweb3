@@ -72,7 +72,6 @@ class ProClasse extends BaseController
      */
     public function lista()
     {
-        //if (!$classe = cache('classe')) {
         $campos = montaColunasCampos($this->data, 'cla_id');
         $dados_classe = $this->classes->getClasse();
         $this->data['exclusao'] = false;
@@ -80,7 +79,6 @@ class ProClasse extends BaseController
             'data' => montaListaColunas($this->data, 'cla_id', $dados_classe, $campos[1]),
         ];
         cache()->save('classe', $classe, 60000);
-        //}
 
         echo json_encode($classe);
     }

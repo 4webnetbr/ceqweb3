@@ -13,7 +13,7 @@ use ReflectionClass;
 use ReflectionMethod;
 
 
-class ConfigTelaModel extends Model
+class ConfigTelaModelBKP extends Model
 {
     protected $DBGroup          = 'default';
 

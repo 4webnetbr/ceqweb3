@@ -2,15 +2,8 @@
 
 namespace App\Entities\Ocorrencia;
 
-use CodeIgniter\Entity\Entity;
 use App\Libraries\MyCampo;
-use App\Models\Produt\ProdutClasseModel;
-use App\Models\Ocorre\OcorreTipoAcaoModel;
-use App\Models\Config\ConfigModuloModel;
-use App\Models\Config\ConfigPerfilModel;
-use App\Models\Config\ConfigStatusModel;
-use App\Models\Config\ConfigTelaModel;
-use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
+use CodeIgniter\Entity\Entity;
 
 class EntOcoTipoOcorre extends Entity
 {
@@ -19,6 +12,7 @@ class EntOcoTipoOcorre extends Entity
         'tpo_nome'  => null,
         'tpo_ativo' => 'A',
         'cla_id'    => null,
+        'tmo_id'    => null,
     ];
 
     protected $casts = [
@@ -35,12 +29,15 @@ class EntOcoTipoOcorre extends Entity
 
     public function defCampos($dados = false, $show = false)
     {
-        $dados = (array) $dados; 
+        $dados = (array) $dados;
         $ret = [];
+
+        // ID do Tipo de Ocorrência (oculto)
         $mid            = new MyCampo('oco_tipo_ocorrencia', 'tpo_id');
         $mid->valor     = (isset($dados['tpo_id'])) ? $dados['tpo_id'] : '';
         $ret['tpo_id']   = $mid->crOculto();
 
+        // Nome do Tipo de Ocorrência
         $nome            =  new MyCampo('oco_tipo_ocorrencia', 'tpo_nome');
         $nome->valor     = (isset($dados['tpo_nome'])) ? $dados['tpo_nome'] : '';
         $nome->obrigatorio = true;
@@ -48,77 +45,93 @@ class EntOcoTipoOcorre extends Entity
         $nome->largura   = 80;
         $ret['tpo_nome'] = $nome->crInput();
 
+        // Status Ativo / Inativo
         $simnao['A'] = 'Ativo';
         $simnao['I'] = 'Inativo';
-        $teste          = new MyCampo('oco_tipo_ocorrencia','tpo_ativo');
+
+        // Classes vinculadas ao Tipo de Ocorrência
+        $teste          = new MyCampo('oco_tipo_ocorrencia', 'tpo_ativo');
         $teste->valor   = (isset($dados['tpo_ativo'])) ? $dados['tpo_ativo'] : 'A';
         $teste->leitura = $show;
         $teste->opcoes  = $simnao;
         $ret['tpo_ativo'] = $teste->cr2opcoes();
 
-        $classes = new ProdutClasseModel();
-        $lst_classes = $classes->getClasse();
-        $opc_classes = array_column($lst_classes, 'cla_nome', 'cla_id');
-
-        $cla_id                 = new MyCampo('oco_tpo_classe', 'cla_id', false);
-        $cla_id->valor          = (isset($dados['cla_id'])) ? $dados['cla_id']: '';
-        $cla_id->selecionado    = (isset($dados['cla_id'])) ? explode(',',$dados['cla_id']) : [];
-        $cla_id->opcoes         = $opc_classes;
-        $cla_id->largura        = 50;
-        $ret['cla_id']          = $cla_id->crMultiple();
-
+        $config = [];
+        $config['Obrigatorio'] = false;
         
+        $ret['cla_id'] = criaSelectRelativo(
+            'pro_classe',
+            'cla_id',
+            'cla_nome',
+            $dados['cla_id'] ?? '',
+            3,
+            'oco_tipo_ocorrencia_classe',
+            [],
+            $config
+        );
+
+        // Retorna os campos principais
         return $ret;
     }
 
     public function defCamposTelasAplicaveis($dados = false, $pos = 0, $show = false)
     {
-        $dados = (array) $dados; 
-        $modulos = new ConfigModuloModel();
-        $lst_modulos = $modulos->getModulo();
-        $opc_modulos = array_column($lst_modulos, 'mod_nome', 'mod_id');
+        $dados = (array) $dados;
 
-        $mod_id                 = new MyCampo('oco_tpo_tela', 'mod_id', false);
-        $mod_id->valor          = (isset($dados['mod_id'])) ? $dados['mod_id'] : '';
-        $mod_id->selecionado    = $mod_id->valor;
-        $mod_id->ordem          = $pos;
-        $mod_id->opcoes         = $opc_modulos;
-        $mod_id->obrigatorio    = true;
-        $mod_id->largura        = 40;
-        $mod_id->dispForm       = 'col-4';
-        $ret['mod_id'] = $mod_id->crSelect();
+        // modulo
+        $config = [];
+        $config['Label']       = 'Modulo';
+        $config['Largura']     = 40;
+        $config['DispForm']    = 'col-4';
+        $config['Ordem']       = $pos;
+        $config['Obrigatorio'] = false;
+        $config['FunChan']    = "mudaObrigatorio(this,'>-1','tel_id[$pos]')";
 
-        $telas  = new ConfigTelaModel();
-        $lst_telas = $telas->getTelaId();
-        $opc_telas = array_column($lst_telas, 'tel_nome', 'tel_id');
+        $ret['mod_id'] = criaSelectRelativo(
+            'cfg_modulo',
+            'mod_id',
+            'mod_nome',
+            $dados['mod_id'] ?? '',
+            1,
+            'oco_tipo_ocorrencia_tela',
+            [],
+            $config
+        );
 
-        $tela               = new MyCampo('oco_tpo_tela', 'tel_id');
-        $tela->valor        = (isset($dados['tel_id'])) ? $dados['tel_id'] : '';
-        $tela->selecionado  = $tela->valor;
-        $tela->urlbusca     = base_url('buscas/busca_tela_modulo');
-        $tela->opcoes       = $opc_telas;
-        $tela->ordem          = $pos;
-        $tela->obrigatorio  = true;
-        $tela->largura      = 40;
-        $tela->dispForm     = 'col-4';
-        $tela->pai          = "mod_id[$pos]";
-        $ret['tel_id']      = $tela->crDepende();
+        // telas
+        $config['Label']       = 'Tela';
+        $config['Pai']         = "mod_id[$pos]";
+        $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
+        $config['FunChan']    = "mudaObrigatorio(this,'>-1','tof_campo[$pos][]')";
 
-        $tipoCampo  = new ConfigTelaModel();
-        $lst_campo = $tipoCampo->getTelaId();
-        $opc_campo = array_column($lst_campo, 'tel_nome', 'tel_id');
+        $ret['tel_id'] = criaSelectRelativo(
+            'cfg_tela',
+            'tel_id',
+            'tel_nome',
+            $dados['tel_id'] ?? '',
+            2,
+            'oco_tipo_ocorrencia_tela',
+            [],
+            $config
+        );
 
-        $tof_campo               = new MyCampo('oco_tpo_campos', 'tof_campo');
-        $tof_campo->valor        = (isset($dados['tof_campo'])) ? $dados['tof_campo'] : '';
-        $tof_campo->selecionado  = explode(',',$tof_campo->valor);
-        $tof_campo->opcoes       = $opc_campo;
-        $tof_campo->urlbusca     = base_url('buscas/busca_campo_tela');
-        $tof_campo->obrigatorio  = true;
-        $tof_campo->largura      = 40;
-        $tof_campo->dispForm     = 'col-4';
-        $tof_campo->ordem        = $pos;
-        $tof_campo->pai          = "tel_id[$pos]";
-        $ret['tof_campo']           = $tof_campo->crDependeMultiplo();
+        // campo
+        $config['Pai']         = "tel_id[$pos]";
+        $config['Label']       = 'Campo';
+        $config['Urlbusca']    = base_url('buscas/busca_campo_tela');
+        $config['Obrigatorio'] = false;
+
+        $ret['tof_campo'] = criaSelectRelativo(
+            '',
+            '',
+            '',
+            $dados['tof_campo'] ?? '',
+            4,
+            'oco_tipo_ocorrencia_campos',
+            ['tel_id' => $dados['tel_id'] ?? ''],
+            $config,
+            'tof_campo'
+        );
 
         $atrib['data-index'] = $pos;
         $add            = new MyCampo();
@@ -146,26 +159,101 @@ class EntOcoTipoOcorre extends Entity
         return $ret;
     }
 
-    public function defCamposAcao($dados = false, $pos = 0, $show = false)
+    public function defCamposAcao($dados = false, $pos = 0)
     {
-        $dados = (array) $dados; 
+        $dados = (array) $dados;
         $ret = [];
 
-        $tipoacao     = new OcorreTipoAcaoModel;
-        $lst_tipoacao = $tipoacao->getTipoAcao();
-        $opc_tipoacao = array_column($lst_tipoacao, 'tpa_nome', 'tpa_id');
+        // tipo de ação
+        $config = [];
+        $config['Label']    = 'Tipo de Ação';
+        $config['DispForm'] = 'col-6';
+        $config['Largura']  = 50;
+        $config['Ordem']    = $pos;
+        $config['FunChan']  = 'verificaTipoAcao(this)';
 
-        $tpa_id               =  new MyCampo('oco_tpo_acao', 'tpa_id');
-        $tpa_id->obrigatorio  =  true;
-        $tpa_id->ordem        =  $pos;
-        $tpa_id->valor        =  (isset($dados['tpa_id'])) ? $dados['tpa_id'] : '';
-        $tpa_id->selecionado  =  [$tpa_id->valor];
-        $tpa_id->dispForm     =  '2col';
-        $tpa_id->largura      =  50;
-        $tpa_id->opcoes       =  $opc_tipoacao;
-        $tpa_id->funcChan     =  'verificaTipoAcao(this)';
-        // debug($tpa_id, false);
-        $ret['tpa_id']        =  $tpa_id->crSelect();
+        $ret['tpa_id'] = criaSelectRelativo(
+            'oco_tipo_acao',
+            'tpa_id',
+            'tpa_nome',
+            $dados['tpa_id'] ?? '',
+            1,
+            'oco_tipo_acao',
+            [],
+            $config
+        );
+
+        // tipo de movimentação
+        $config['FunChan']     = '';
+        $config['Label']       = 'Tipo de Movimentação';
+        $config['DispForm']    = 'col-12';
+        $config['Obrigatorio'] = false;
+
+        $ret['tmo_id'] = criaSelectRelativo(
+            'est_tipo_movimentacao',
+            'tmo_id',
+            'tmo_nome',
+            $dados['tmo_id'] ?? '',
+            1,
+            'oco_tipo_acao',
+            [],
+            $config,
+            "tmo_id_acao[$pos]"
+        );
+
+        // modulo
+        $config['Label']    = 'Módulo';
+        $config['DispForm'] = 'col-6';
+        $config['Largura']  = 30;
+        $config['Obrigatorio'] = false;
+
+        $ret['mod_id'] = criaSelectRelativo(
+            'cfg_modulo',
+            'mod_id',
+            'mod_nome',
+            $dados['mod_id'] ?? '',
+            1,
+            'oco_tipo_acao',
+            [],
+            $config,
+            "mod_id_acao[$pos]"  
+        );
+
+        // tela
+        $config['Label']       = 'Tela';
+        $config['Pai']         = "mod_id_acao[$pos]";
+        $config['Obrigatorio'] = false;
+        $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
+
+        $ret['tel_id'] = criaSelectRelativo(
+            '',
+            '',
+            '',
+            $dados['tel_id'] ?? '',
+            2,
+            'oco_tipo_acao',
+            ['mod_id' => $dados['mod_id'] ?? ''],
+            $config,
+            "tel_id_acao[$pos]"
+        );
+
+        // status
+        $config['DispForm'] = 'col-12';
+        $config['Label']    = 'Status';
+        $config['Largura']  = 50;
+        $config['Obrigatorio'] = false;
+
+        $ret['stt_id'] = criaSelectRelativo(
+            'vw_cfg_status_relac',
+            'stt_id',
+            'stt_tela_status',
+            $dados['stt_id'] ?? '',
+            1,
+            'oco_tipo_acao',
+            [],
+            $config,
+            "stt_id_acao[$pos]"
+        );
 
         $atrib['data-index'] = $pos;
         $add            = new MyCampo();
@@ -176,7 +264,8 @@ class EntOcoTipoOcorre extends Entity
         $add->i_cone    = "<i class='fas fa-plus'></i>";
         $add->place     = "Adicionar Campo";
         $add->classep   = "btn-outline-success btn-sm bt-repete";
-        $add->funcChan  = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTp/") . "','acoes',this)";
+        $add->funcChan = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTp/") . "','acoes',this); setTimeout(corrigeObrigatorio, 50)";
+
         $ret['bt_addtp']   = $add->crBotao();
 
         $del            = new MyCampo();
@@ -190,108 +279,57 @@ class EntOcoTipoOcorre extends Entity
         $del->place     = "Excluir Campo";
         $ret['bt_deltp']   = $del->crBotao();
 
-        $tmoModel = new EstoquTipoMovimentacaoModel();
-        $lst_tmo  = $tmoModel->getTipoMovimentacao();
-        $opc_tmo  = array_column($lst_tmo, 'tmo_nome', 'tmo_id');
-        
-        $tmo_id               =  new MyCampo('oco_tpo_acao', 'tmo_id');
-        $tmo_id->nome = $tmo_id->id = 'tmo_id_tpa';
-        $tmo_id->obrigatorio  =  false;
-        $tmo_id->valor        =  (isset($dados['tmo_id'])) ? $dados['tmo_id'] : '';
-        $tmo_id->dispForm     =  '2col';
-        $tmo_id->largura      =  30;
-        $tmo_id->opcoes       = $opc_tmo;
-        $tmo_id->ordem        =  $pos;
-        $tmo_id->selecionado  =  $tmo_id->valor;
-        $ret['tmo_id']        =  $tmo_id->crSelect();
-
-        $modulos = new ConfigModuloModel();
-        $lst_modulos = $modulos->getModulo();
-        $opc_modulos = array_column($lst_modulos, 'mod_nome', 'mod_id');
-
-        $mod_id                 = new MyCampo('oco_tpo_acao', 'mod_id', false);
-        $mod_id->nome = $mod_id->id = 'mod_id_tpa';
-        $mod_id->valor          = (isset($dados['mod_id'])) ? $dados['mod_id'] : '';
-        $mod_id->selecionado    = $mod_id->valor;
-        $mod_id->label          = 'Módulo';
-        $mod_id->opcoes         = $opc_modulos;
-        $mod_id->ordem          = $pos;
-        // $mod_id->obrigatorio    = true;
-        $mod_id->largura        = 30;
-        $mod_id->dispForm       = '2col';
-        $ret['mod_id'] = $mod_id->crSelect();
-
-        $telas  = new ConfigTelaModel();
-        $lst_telas = $telas->getTelaId();
-        $opc_telas = array_column($lst_telas, 'tel_nome', 'tel_id');
-
-        $tela               = new MyCampo('oco_tpo_acao', 'tel_id');
-        $tela->nome = $tela->id = 'tel_id_tpa';
-        $tela->valor        = (isset($dados['tel_id'])) ? $dados['tel_id'] : '';
-        $tela->selecionado  = $tela->valor;
-        $tela->urlbusca     = base_url('buscas/busca_tela_modulo');
-        $tela->opcoes       = $opc_telas;
-        $tela->ordem        = $pos;
-        // $tela->obrigatorio  = true;
-        $tela->largura      = 30;
-        $tela->dispForm     = '2col';
-        $tela->pai          = "mod_id_tpa[$pos]";
-        $ret['tel_id']     = $tela->crDepende();
-
-        $stat  = new ConfigStatusModel();
-        $lst_stat = $stat->getStatus();
-        // debug($lst_stat);
-        $opc_stat = array_column($lst_stat, 'stt_tela_status', 'stt_id');
-
-        $statu               = new MyCampo('oco_tpo_acao', 'stt_id');
-        $statu->nome = $statu->id = 'stt_id_tpa';
-        $statu->valor        = (isset($dados['stt_id'])) ? $dados['stt_id'] : '';
-        $statu->selecionado  = $statu->valor;
-        $statu->ordem        = $pos;
-        $statu->opcoes       = $opc_stat;
-        // $statu->obrigatorio  = true;
-        $statu->largura      = 50;
-        $statu->dispForm     = '2col';
-        $ret['stt_id']     = $statu->crSelect();
-
         return $ret;
     }
 
-    public function defCamposParaMostrar($dados = false, $show = false)
+    public function defCamposParaMostrar($dados = false)
     {
-        $dados = (array) $dados; 
+        $dados = (array) $dados;
         $ret = [];
 
-        $pegatela = new ConfigTelaModel();
-        $lst_pegatela = $pegatela->getTelaId();
-        $opc_tela = array_column($lst_pegatela, 'tel_nome', 'tel_id');
 
-        $tel_id                 = new MyCampo('oco_tpo_campos', 'tel_id', false);
-        $tel_id->valor          = (isset($dados['tel_id'])) ? $dados['tel_id'] : '';
-        $tel_id->selecionado    = $tel_id->valor;
-        $tel_id->opcoes         = $opc_tela;
-        $tel_id->obrigatorio    = true;
-        $tel_id->largura        = 50;
-        $tel_id->dispForm       = '2col';
-        $ret['tel_id'] = $tel_id->crSelect();
+        // tela
+        $config = [];
+        $config['Label']       = 'Tela';
+        $config['DispForm']    = '2col';
+        $config['Largura']     = 30;
+        $config['Obrigatorio'] = false;
 
-        $opc_campo = [];
+        $ret['tel_id'] = criaSelectRelativo(
+            'cfg_tela',
+            'tel_id',
+            'tel_nome',
+            $dados['tel_id'] ?? '',
+            1,
+            'oco_tipo_ocorrencia_campos',
+            [],
+            $config
+        );
 
-        $tof_campo               = new MyCampo('oco_tpo_campos', 'tof_campo');
-        $tof_campo->valor        = (isset($dados['tof_campo'])) ? $dados['tof_campo'] : '';
-        $tof_campo->selecionado  = $tof_campo->valor;
-        $tof_campo->opcoes       = $opc_campo;
-        $tof_campo->urlbusca     = base_url('buscas/busca_tela_modulo');
-        $tof_campo->obrigatorio  = true;
-        $tof_campo->largura      = 50;
-        $tof_campo->dispForm     = '2col';
-        $tof_campo->pai          = 'tel_id';
-        $ret['tof_campo']           = $tof_campo->crDepende();
 
-        $toc_rotulo                 =  new MyCampo('oco_tpo_campos', 'toc_rotulo');
+        // Campo da Tela
+        $config['DispForm']    = '2col';
+        $config['Largura']     = 50;
+        $config['Pai']         = 'tel_id';
+        $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
+
+        $ret['tof_id'] = criaSelectRelativo(
+            'cfg_tela',
+            'tof_id',
+            'tof_campo',
+            $dados['tof_id'] ?? '',
+            2,
+            'oco_tipo_ocorrencia_campos',
+            [],
+            $config
+        );
+
+
+        // Rótulo do campo
+        $toc_rotulo                 =  new MyCampo('oco_tipo_ocorrencia_campos', 'toc_rotulo');
         $toc_rotulo->valor          = (isset($dados['toc_rotulo'])) ? $dados['toc_rotulo'] : '';
         $toc_rotulo->obrigatorio    =  true;
-        $toc_rotulo->leitura        = $show;
+        $toc_rotulo->leitura        = false;
         $toc_rotulo->largura        = 50;
         $toc_rotulo->dispForm       = '2col';
         $ret['toc_rotulo']          = $toc_rotulo->crInput();
@@ -300,21 +338,27 @@ class EntOcoTipoOcorre extends Entity
 
     public function defPermissoes($dados = false, $show = false)
     {
-        $dados = (array) $dados; 
+        $dados = (array) $dados;
         $ret = [];
 
-        $pegPerfil               = new ConfigPerfilModel;
-        $lst_permissao           = $pegPerfil->getPerfil();
-        $opc_prf                 = array_column($lst_permissao, 'prf_nome', 'prf_id');
+        // Perfis com permissão
+        $config = [];
+        $config['Label']    = 'Perfis com Permissão';
+        $config['Obrigatorio'] = true;
+        $config['Largura']     = 50;
+        $config['Leitura']     = $show;
 
-        $top_id                = new MyCampo('oco_tpo_permissao', 'prf_id', false);
-        $top_id->valor         = (isset($dados['prf_id'])) ? $dados['prf_id'][0] : '';
-        $top_id->selecionado   = (isset($dados['prf_id'])) ?[$dados['prf_id']] : [];
-        $top_id->opcoes        = $opc_prf;
-        $top_id->leitura       = $show;
-        $top_id->largura       = 50;
-        $top_id->obrigatorio   = true;
-        $ret['prf_id']         = $top_id->crMultiple();
+        $ret['prf_id'] = criaSelectRelativo(
+            'cfg_perfil',
+            'prf_id',
+            'prf_nome',
+            $dados['prf_id'] ?? '',
+            3,
+            'oco_tipo_ocorrencia_permissao',
+            [],
+            $config
+        );
+
         return $ret;
     }
 }

@@ -9,7 +9,7 @@ use App\Models\Produt\ProdutProdutoModel;
 use CodeIgniter\Model;
 use DateTime;
 
-class EstoquRequisicaoModel extends Model
+class EstoquRequisicaoModelBKP extends Model
 {
     protected $DBGroup          = 'dbEstoque';
     protected $table            = 'est_requisicao';
@@ -126,7 +126,7 @@ class EstoquRequisicaoModel extends Model
         if ($req_id) {
             $builder->where('req_id', $req_id);
         }
-        
+
         $ret = $builder->get()->getResultArray();
         // debug($this->db->getLastQuery(), false);
         return $ret;
@@ -140,7 +140,7 @@ class EstoquRequisicaoModel extends Model
         if ($rep_id) {
             $builder->where('rep_id', $rep_id);
         }
-        
+
         $ret = $builder->get()->getResultArray();
         // debug($this->db->getLastQuery(), false);
         return $ret;
@@ -166,7 +166,7 @@ class EstoquRequisicaoModel extends Model
         $id->tipo           = 'text';
         $id->dispForm       = 'linha';
         $id->classep        = 'mb3';
-        if($show){
+        if ($show) {
             $ret['req_id']      = $id->crInput();
         } else {
             $ret['req_id']      = $id->crOculto();
@@ -367,7 +367,7 @@ class EstoquRequisicaoModel extends Model
         $ret = [];
 
         $canc                 = new MyCampo('est_requisicao_produto', 'rep_cancelada', false);
-        $canc->id = $canc->nome = "rep_cancelada_".$dados['rep_id'];
+        $canc->id = $canc->nome = "rep_cancelada_" . $dados['rep_id'];
         $canc->valor          = 0;
         $canc->label          = '';
         $canc->leitura        = false;
@@ -378,11 +378,11 @@ class EstoquRequisicaoModel extends Model
         $ret['rep_cancelada']      = $canc->crInput();
 
         $aten                 = new MyCampo('est_requisicao_produto', 'rep_atendida', false);
-        $aten->id = $aten->nome = "rep_atendida_".$dados['rep_id'];
+        $aten->id = $aten->nome = "rep_atendida_" . $dados['rep_id'];
         $aten->valor          = 0;
         $aten->label          = '';
         $aten->leitura        = true;
-        if($dados['pre_cbfabricante'] == 'N' && $dados['pre_undfabricante'] == 'N'){
+        if ($dados['pre_cbfabricante'] == 'N' && $dados['pre_undfabricante'] == 'N') {
             $aten->leitura        = false;
         }
         $aten->classep        = 'mb2';

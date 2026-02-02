@@ -2,20 +2,14 @@
 
 namespace App\Controllers\Estoque;
 
-use Config\Database;
-use App\DTOs\LoteOrigem;
-use App\DTOs\LotePadrao;
-use App\DTOs\LoteDestino;
-use App\Libraries\MyCampo;
-use App\DTOs\ProdutoMontado;
 use App\Controllers\BuscasSapiens;
 use App\Controllers\BaseController;
 use App\Models\Produt\ProdutLoteModel;
+use App\Entities\Estoque\EntRequisicao;
 use App\Models\Produt\ProdutClasseModel;
 use App\Models\Produt\ProdutProdutoModel;
 use App\Models\Estoqu\EstoquDepositoModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
-use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
 
@@ -90,13 +84,13 @@ class EtqProduto extends BaseController
         $base_url = base_url($this->data['controler']);
         foreach ($dados_requis as &$req) {
             // Verificar se o log já está disponível para esse ana_id
-            if ($req['req_id']) {
-                $req['usu_nome'] = $log[$req['req_id']]['usua_alterou'] ?? '';
+            if ($req->req_id) {
+                $req->usu_nome = $log[$req->req_id]['usua_alterou'] ?? '';
                 // Concatenar o URL de forma mais eficiente
                 // $url_eti = $base_url .'/EtqProduto/' . $req['req_id'];
-                $url_eti = base_url($this->data['controler'].'/Etiqueta/' . $req['req_id']);
+                $url_eti = $base_url . '/Etiqueta/' . $req->req_id;
                 // Gerar a ação do botão
-                $req['acao_person'] = [
+                $req->acao_person = [
                     "<button class='btn btn-outline-warning btn-sm border-0 mx-0 fs-0' 
                     data-mdb-toggle='tooltip' data-mdb-placement='top' 
                     title='Etiquetas de Produtos' onclick='redireciona(\"$url_eti\")'>
@@ -107,7 +101,7 @@ class EtqProduto extends BaseController
         // debug($dados_requis, true);
         $this->data['edicao'] = false;
         $requis = [
-            'data' => montaListaColunas($this->data, 'req_id', $dados_requis, $campos[1]),
+            'data' => montaListaColunasEnt($this->data, 'req_id', $dados_requis, $campos[1]),
         ];
         cache()->save('requis', $requis, 60000);
         // }
@@ -129,9 +123,9 @@ class EtqProduto extends BaseController
             session()->setFlashdata('erromsg', 'Requisição não encontrada.');
             return redirect()->to(site_url($this->data['controler']));
         }
+        $ent    = new EntRequisicao((array) $requisicao, true);
 
-        // Montar campos como no add()
-        $fields = $this->requisicao->defCampos($requisicao, true);
+        $fields = $ent->campos;
         $secao[0] = 'Dados Gerais';
         $campos[0][0] = $fields['req_id'];
         $campos[0][count($campos[0])] = $fields['req_data'];
@@ -141,29 +135,29 @@ class EtqProduto extends BaseController
         // $campos[0][count($campos[0])] = $fields['lot_codbar'];
 
         $produtosreq = $this->requisicao->getRequisicaoProdutos($id);
-        // debug($produtosreq, true);
-        $colunas = ['Cód ERP','Descrição','Fabricante','Lote','Qtde.Requerida','Qtde.Imprimir','Coloração Etiqueta','Imprimir'];
+
+        $colunas = ['Cód ERP', 'Descrição', 'Fabricante', 'Lote', 'Qtde.Requerida', 'Qtde.Imprimir', 'Coloração Etiqueta', 'Imprimir'];
         $produtos = [];
         $produtos[0] = $id;
-        if(count($produtosreq) > 0){
-            for ($p=0; $p < count($produtosreq) ; $p++) { 
+        if (count($produtosreq) > 0) {
+            for ($p = 0; $p < count($produtosreq); $p++) {
                 $prod = $produtosreq[$p];
 
-                $rep_id = $prod['rep_id'];
-                $qtia = $prod['rep_quantia'];
-                $url_ati = base_url($this->data['controler'].'/GeraEtiqueta/'.$rep_id.'/'.$qtia);
+                $rep_id = $prod->rep_id;
+                $qtia = $prod->rep_quantia;
+                $url_ati = base_url($this->data['controler'] . '/GeraEtiqueta/' . $rep_id . '/' . $qtia);
                 $imprimir =
                     "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
-                    data-mdb-placement='top' title='Imprimir Etiqueta' onclick='geraEiquetaProd(\"".$url_ati."\")'><i class='fas fa-print'></i></button>";
+                    data-mdb-placement='top' title='Imprimir Etiqueta' onclick='geraEiquetaProd(\"" . $url_ati . "\")'><i class='fas fa-print'></i></button>";
                 $item = [];
                 $item[0] = $rep_id;
-                $item[count($item)] = $prod['pro_codpro'];
-                $item[count($item)] = $prod['pro_despro'];
-                $item[count($item)] = $prod['fab_apeFab'];
-                $item[count($item)] = $prod['lot_lote'];
-                $item[count($item)] = $prod['rep_quantia'];
-                $item[count($item)] = $prod['rep_quantia'];
-                $item[count($item)] = $prod['etiq_cor'];
+                $item[count($item)] = $prod->pro_codpro;
+                $item[count($item)] = $prod->pro_despro;
+                $item[count($item)] = $prod->fab_apeFab;
+                $item[count($item)] = $prod->lot_lote;
+                $item[count($item)] = $prod->rep_quantia;
+                $item[count($item)] = $prod->rep_quantia;
+                $item[count($item)] = $prod->etiq_cor;
                 $item[count($item)] = $imprimir;
                 $produtos[count($produtos)] = $item;
             }
@@ -175,9 +169,8 @@ class EtqProduto extends BaseController
             'produtos' => $produtos
         ];
 
-        $campos[0][count($campos[0])] = view('partials/pw_show_produtos_req',$data); // mesma estrutura do add()
-        
-        // $this->data['mostrar']   = ''; // ou 'update' se você for criar
+        $campos[0][count($campos[0])] = view('partials/pw_show_produtos_req', $data); // mesma estrutura do add()
+
         $this->data['icone']   = "<i class='fas fa-tag'></i>"; // ou 'update' se você for criar
         $this->data['desc_metodo']   = ''; // ou 'update' se você for criar
         $this->data['title']   = 'Impressão de Etiquetas de Produtos'; // ou 'update' se você for criar
@@ -190,7 +183,8 @@ class EtqProduto extends BaseController
         echo view('vw_edicao', $this->data);
     }
 
-    public function GeraEtiqueta($id, $qtia){
+    public function GeraEtiqueta($id, $qtia)
+    {
         $produtos = $this->requisicao->getRequisicaoRep($id);
         // debug($produtos);
         $produtosreq = array_fill(0, $qtia, $produtos[0]);
@@ -212,7 +206,5 @@ class EtqProduto extends BaseController
      *
      * @return void
      */
-    public function store()
-    {
-    }
+    public function store() {}
 }

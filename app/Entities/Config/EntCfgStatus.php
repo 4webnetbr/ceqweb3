@@ -2,96 +2,39 @@
 
 namespace App\Entities\Config;
 
+use App\Traits\HasTela;
+use App\Traits\HasModulo;
 use App\Libraries\MyCampo;
 use CodeIgniter\Entity\Entity;
-use App\Models\Config\ConfigTelaModel;
-use App\Models\Config\ConfigModuloModel;
 
 class EntCfgStatus extends Entity
 {
-    /**
-     * Atributos mapeados diretamente da tabela / view
-     */
+    use HasModulo, HasTela;
+
     protected $attributes = [
         'stt_id'         => null,
         'stt_nome'       => null,
-        'stt_cor'        => null,
         'mod_id'         => null,
         'tel_id'         => null,
-        'stt_exclusao'   => 'S',
-        'stt_edicao'     => 'S',
-        'stt_disponivel' => 'S',
+        'cor_id'         => null,
+        'stt_exclusao'   => null,
+        'stt_edicao'     => null,
+        'stt_impressao'  => null,
+        'stt_disponivel' => null,
         'stt_ativo'      => 'A',
         'stt_ordem'      => null,
         'stt_excluido'   => null,
     ];
 
-    /**
-     * Datas tratadas automaticamente pelo CI4
-     */
-    protected $dates = [
-        'stt_excluido',
-    ];
+    protected $dates = ['stt_excluido'];
 
-    /**
-     * Campos de formulário (MyCampo)
-     */
     public array $campos = [];
 
-    /**
-     * Cache interno do relacionamento
-     */
-    protected ?EntCfgModulo $modulo = null;
-
-    /**
-     * Construtor
-     */
     public function __construct(?array $data = null, bool $show = false)
     {
         parent::__construct($data);
         $this->campos = $this->defCampos($show);
     }
-
-    /* =====================================================
-     * RELACIONAMENTO
-     * ===================================================== */
-
-    /**
-     * Getter mágico:
-     * permite usar $status->modulo
-     */
-    public function getModulo(): ?EntCfgModulo
-    {
-        // Se não houver mod_id
-        if (empty($this->attributes['mod_id'])) {
-            return null;
-        }
-
-        // Se já carregou, retorna do cache
-        if ($this->modulo instanceof EntCfgModulo) {
-            return $this->modulo;
-        }
-
-        // Lazy loading do módulo
-        $model = new ConfigModuloModel();
-        $this->modulo = $model->find($this->attributes['mod_id']);
-
-        return $this->modulo;
-    }
-
-    /**
-     * Setter opcional (caso queira injetar o módulo manualmente)
-     */
-    public function setModulo(EntCfgModulo $modulo): self
-    {
-        $this->modulo = $modulo;
-        $this->attributes['mod_id'] = $modulo->mod_id;
-        return $this;
-    }
-
-    /* =====================================================
-     * CAMPOS DE FORMULÁRIO
-     * ===================================================== */
 
     public function defCampos(bool $show = false): array
     {
@@ -99,69 +42,104 @@ class EntCfgStatus extends Entity
         $ret = [];
 
         // ID
-        $mid = new MyCampo('cfg_status', 'stt_id');
-        $mid->valor = $dados['stt_id'] ?? '';
-        $ret['stt_id'] = $mid->crOculto();
+        $ret['stt_id'] = (new MyCampo('cfg_status', 'stt_id'))
+            ->setValor($dados['stt_id'] ?? '')
+            ->crOculto();
+
+        $ret['stt_ordem'] = (new MyCampo('cfg_status', 'stt_ordem'))
+            ->setValor($dados['stt_ordem'] ?? '')
+            ->crOculto();
 
         // Nome
-        $nome = new MyCampo('cfg_status', 'stt_nome');
-        $nome->valor = $dados['stt_nome'] ?? '';
-        $nome->obrigatorio = true;
-        $nome->dispForm = 'col-12';
-        $nome->leitura = $show;
-        $ret['stt_nome'] = $nome->crInput();
+        $ret['stt_nome'] = (new MyCampo('cfg_status', 'stt_nome'))
+            ->setValor($dados['stt_nome'] ?? '')
+            ->setObrigatorio()
+            ->setDispForm('col-12')
+            ->setLeitura($show)
+            ->crInput();
 
-        // Módulo (usa mod_id, mas relacionamento é via Entity)
-        $modModel = new ConfigModuloModel();
-        $mods = array_column($modModel->getModulo(), 'mod_nome', 'mod_id');
-
-        $mod = new MyCampo('cfg_status', 'mod_id');
-        $mod->valor = $dados['mod_id'] ?? '';
-        $mod->selecionado = $mod->valor;
-        $mod->opcoes = $mods;
-        $mod->obrigatorio = true;
-        $mod->dispForm = 'col-4';
-        $mod->leitura = $show;
-        $ret['mod_id'] = $mod->crSelect();
-
-        // Tela
-        $telModel = new ConfigTelaModel();
-        $telas = array_column(
-            $telModel->getTelaId($dados['tel_id'] ?? false),
-            'tel_nome',
-            'tel_id'
+        $config['Leitura'] = $show;
+        $config['Largura'] = 50;
+        $ret['cor_id'] = criaSelectRelativo(
+            'cfg_cor',
+            'cor_id',
+            'cor_nome_rgb',
+            $dados['cor_id'] ?? '',
+            1,
+            'cfg_status',
+            [],
+            $config
         );
 
-        $tel = new MyCampo('cfg_status', 'tel_id');
-        $tel->valor = $dados['tel_id'] ?? '';
-        $tel->selecionado = $tel->valor;
-        $tel->opcoes = $telas;
-        $tel->urlbusca = base_url('buscas/busca_tela_modulo');
-        $tel->pai = 'mod_id';
-        $tel->obrigatorio = true;
-        $tel->dispForm = 'col-4';
-        $tel->leitura = $show;
-        $ret['tel_id'] = $tel->crDepende();
+        // debug($dados);
+        // Módulo (reutilizado via trait EntCfgModulo)
+        $ret['mod_id'] = criaSelectRelativo(
+            'cfg_modulo',
+            'mod_id',
+            'mod_nome',
+            $dados['mod_id'] ?? '',
+            1,
+            'cfg_status',
+            [],
+            $config
+        );
+
+        $config['Pai'] = 'mod_id';
+        $config['Urlbusca'] = base_url('buscas/busca_tela_modulo');
+
+        $ret['tel_id'] = criaSelectRelativo(
+            'cfg_tela',
+            'tel_id',
+            'tel_nome',
+            $dados['tel_id'] ?? '',
+            2,
+            'cfg_status',
+            [],
+            $config
+        );
+        // $ret['mod_id'] = EntCfgModulo::campoSelectModulo($dados['mod_id'] ?? '', $show, 'cfg_status');
+
+        // $ret['tel_id'] = EntCfgTela::campoSelectTela($dados['tel_id'] ?? '', $show, 'cfg_status');
 
         // Cor
-        $cor = new MyCampo('cfg_status', 'stt_cor');
-        $cor->valor = $dados['stt_cor'] ?? '';
-        $cor->obrigatorio = true;
-        $cor->dispForm = 'col-4';
-        $cor->leitura = $show;
-        $ret['stt_cor'] = $cor->crCorbst();
+        $ret['stt_cor'] = (new MyCampo('cfg_status', 'stt_cor'))
+            ->setValor($dados['stt_cor'] ?? '')
+            ->setObrigatorio()
+            ->setDispForm('col-12')
+            ->setLeitura($show)
+            ->crCorbst();
 
+        // Opções Sim/Não
         $op = ['S' => 'Sim', 'N' => 'Não'];
-
-        foreach (['stt_exclusao','stt_edicao','stt_disponivel'] as $campo) {
-            $c = new MyCampo('cfg_status', $campo);
-            $c->valor = $dados[$campo] ?? 'S';
-            $c->selecionado = $c->valor;
-            $c->opcoes = $op;
-            $c->dispForm = 'col-4';
-            $c->leitura = $show;
-            $ret[$campo] = $c->cr2opcoes();
+        foreach (['stt_exclusao', 'stt_edicao', 'stt_disponivel', 'stt_impressao'] as $campo) {
+            // debug($campo);
+            // debug($dados[$campo]);
+            $ret[$campo] = (new MyCampo('cfg_status', $campo))
+                ->setValor($dados[$campo] ?? 'S')
+                ->setSelecionado($dados[$campo] ?? 'S')
+                ->setOpcoes($op)
+                ->setDispForm('col-12')
+                ->setLeitura($show)
+                ->cr2opcoes();
         }
+
+        $config = [];
+        $config['Largura']      = 50;
+        $config['Leitura']      = $show;
+        $config['Obrigatorio']  = true;
+        $config['Selecionado']  = $dados->prf_id ?? [];
+
+        // debug($dados['prf_id']);
+        $ret['prf_id'] = criaSelectRelativo(
+            'cfg_perfil',
+            'prf_id',
+            'prf_nome',
+            (isset($dados['prf_id']) ? $dados['prf_id'] : ''),
+            3,
+            'cfg_status_permissao',
+            [],
+            $config
+        );
 
         return $ret;
     }

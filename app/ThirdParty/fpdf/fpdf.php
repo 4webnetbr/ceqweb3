@@ -267,7 +267,7 @@ class FPDF
 	function Error($msg)
 	{
 		// Fatal error
-		throw new Exception('FPDF error: ' . $msg);
+		die('FPDF error: ' . $msg);
 	}
 
 	function Close()

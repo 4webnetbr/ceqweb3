@@ -14,22 +14,22 @@ if (!isset($desc_edicao)) {
 // if (!isset($desc_metodo)){
 if ($metodo == 'index' || $metodo == '') {
   $ajuda = $regras_gerais;
-  if(!isset($desc_metodo)){
+  if (!isset($desc_metodo)) {
     $desc_metodo = '';
   }
 } elseif ($metodo == 'add' || $metodo == '000') {
-  if(!isset($desc_metodo)){
+  if (!isset($desc_metodo)) {
     $desc_metodo = 'Cadastro de ';
   }
   $ajuda = $regras_cadastro;
 } elseif ($metodo == 'edit' || $metodo == '200') {
   $ajuda = $regras_cadastro;
-  if(!isset($desc_metodo)){
+  if (!isset($desc_metodo)) {
     $desc_metodo = 'Alteração de ';
   }
 } elseif ($metodo == 'show' || $metodo == '000') {
   $ajuda = $regras_cadastro;
-  if(!isset($desc_metodo)){
+  if (!isset($desc_metodo)) {
     $desc_metodo = 'Consulta de ';
   }
 }
@@ -44,13 +44,13 @@ if (strlen($ajuda) > 5) {
     <div class='d-block float-start col-1' style='font-size: calc(1.275rem + 1.1vw);margin-top: -.3rem;'>
       <?= $icone; ?>
     </div>
-    <div class='d-inline-flex float-start col-11'>
+    <div class='d-inline-flex float-start col-11 ps-3'>
       <?= "<span id='legenda' style='font-size:calc(1.3rem + 0.3vw);line-height: " . $heig . "'>" .
         $desc_metodo . " " . $title . "</span>"; ?>
     </div>
     <?
     if ($desc_edicao != '') { ?>
-      <div class='d-inline-flex float-start col-11'>
+      <div class='d-inline-flex float-start col-11 ps-3'>
         <?= "<span id='desc_edicao' style='font-size:calc(1rem + 0.1vw);line-height: 1.5rem'>" .
           $desc_edicao . "</span>"; ?>
       </div>
@@ -58,7 +58,7 @@ if (strlen($ajuda) > 5) {
     } ?>
   </div>
   <div class="titulo col-lg-6 col-4 float-start d-inline flex-nowrap text-nowrap p-0" style="overflow-x: auto;overflow-y: hidden;font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;">
-  <!-- <div class='titulo col-lg-6 col-4 float-start text-right'> -->
+    <!-- <div class='titulo col-lg-6 col-4 float-start text-right'> -->
     <?
     // VERIFICA O MÉTODO E AS PERMISSÕES PARA MOSTRAR OS BOTÕES
     // echo $metodo;

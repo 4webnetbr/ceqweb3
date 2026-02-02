@@ -4,7 +4,7 @@ namespace App\Controllers\Estoque;
 
 use App\Controllers\BaseController;
 use App\Controllers\BuscasSapiens;
-use App\Libraries\MyCampo;
+use App\Entities\Estoque\EntSaldoEstoque;
 use App\Models\Estoqu\EstoquDepositoModel;
 use App\Models\Produt\ProdutProdutoModel;
 
@@ -46,20 +46,21 @@ class SaldoEstoque extends BaseController
      */
     public function index()
     {
-        $this->defCampos();
-
+        $entity = new EntSaldoEstoque();
+        $fields = $entity->campos;
+    
         $secao[0] = 'Buscar';
-        $campos[0][0] = $this->sal_depo;
-        $campos[0][1] = $this->sal_code;
-        $campos[0][2] = $this->sal_btbu;
-
+        $campos[0][0] = $fields->sal_depo;
+        $campos[0][1] = $fields->sal_code;
+        $campos[0][2] = $fields->sal_btbu;
+    
         $colunas = ['Depósito', 'CodErp', 'Produto', 'Lote', 'Validade', 'Saldo', 'Und', 'Entrada'];
-
-        $this->data['secoes'] = $secao;
-        $this->data['campos'] = $campos;
+    
+        $this->data['secoes']  = $secao;
+        $this->data['campos']  = $campos;
         $this->data['colunas'] = $colunas;
         $this->data['destino'] = 'lista';
-
+    
         echo view('vw_filtro', $this->data);
     }
 
@@ -90,23 +91,23 @@ class SaldoEstoque extends BaseController
                 ) {
                     if ($this->produto->getProdutoCod($dep->codigoProduto)) {
                         $lote = [
-                            'codDep'   => $dep->codigoDeposito,
-                            'Coderp'    => $dep->codigoProduto,
+                            'codDep'      => $dep->codigoDeposito,
+                            'Coderp'      => $dep->codigoProduto,
                             'DescProduto' => $dep->descricaoProduto,
-                            'Produto'   => $dep->codigoProduto . ' - ' . $dep->descricaoProduto,
-                            'lote'      => $dep->codigoLote,
-                            'validade'  => $dep->validade,
+                            'Produto'     => $dep->codigoProduto . ' - ' . $dep->descricaoProduto,
+                            'lote'        => $dep->codigoLote,
+                            'validade'    => $dep->validade,
                             'validadeord' => data_db($dep->validade),
-                            'entrada'   => $dep->entrada,
-                            'entradaord' => data_db($dep->entrada),
-                            'und'       => $dep->unidmedida,
+                            'entrada'     => $dep->entrada,
+                            'entradaord'  => data_db($dep->entrada),
+                            'und'         => $dep->unidmedida,
                         ];
                         if ($dep->codigoLote == 'N/A') {
                             $lote['saldo'] = $dep->estoqueDeposito;
-                            $lote['validade']  = '';
+                            $lote['validade']    = '';
                             $lote['validadeord'] = '';
-                            $lote['entrada']  = '';
-                            $lote['entradaord'] = '';
+                            $lote['entrada']     = '';
+                            $lote['entradaord']  = '';
                         } else {
                             $lote['saldo'] = $dep->quantidadeEstoque;
                         }
@@ -126,23 +127,23 @@ class SaldoEstoque extends BaseController
                         ) {
                             // debug($dep, true);
                             $lote = [
-                                'codDep'   => $dep->codigoDeposito,
-                                'Coderp'    => $dep->codigoProduto,
+                                'codDep'      => $dep->codigoDeposito,
+                                'Coderp'      => $dep->codigoProduto,
                                 'DescProduto' => $dep->descricaoProduto,
-                                'Produto'   => $dep->codigoProduto . ' - ' . $dep->descricaoProduto,
-                                'lote'      => $dep->codigoLote,
-                                'validade'  => $dep->validade,
+                                'Produto'     => $dep->codigoProduto . ' - ' . $dep->descricaoProduto,
+                                'lote'        => $dep->codigoLote,
+                                'validade'    => $dep->validade,
                                 'validadeord' => data_db($dep->validade),
-                                'entrada'   => $dep->entrada,
-                                'entradaord' => data_db($dep->entrada),
-                                'und'       => $dep->unidmedida,
+                                'entrada'     => $dep->entrada,
+                                'entradaord'  => data_db($dep->entrada),
+                                'und'         => $dep->unidmedida,
                             ];
                             if ($dep->codigoLote == 'N/A') {
                                 $lote['saldo'] = $dep->estoqueDeposito;
-                                $lote['validade']  = '';
+                                $lote['validade']    = '';
                                 $lote['validadeord'] = '';
-                                $lote['entrada']  = '';
-                                $lote['entradaord'] = '';
+                                $lote['entrada']     = '';
+                                $lote['entradaord']  = '';
                             } else {
                                 $lote['saldo'] = $dep->quantidadeEstoque;
                             }
@@ -152,72 +153,6 @@ class SaldoEstoque extends BaseController
                 }
             }
         }
-        // array_push($estoques, $lote);
         echo json_encode($estoques);
-    }
-
-    /**
-     * Definição de Campos
-     * def_campos
-     *
-     * @param array $dados
-     * @return void
-     */
-    public function defCampos()
-    {
-        // $busca = new BuscasSapiens();
-        // $r_deps = $busca->buscaDepositos();
-
-        $r_deps = $this->deposito->getDeposito();
-
-        // debug($r_deps);
-        $depos = array_column($r_deps, 'dep_codDescricao', 'dep_codDep');
-        // debug($depos, true);
-        $depo               =  new MyCampo();
-        $depo->objeto       = 'select';
-        $depo->id           = 'codDep';
-        $depo->nome         = 'codDep';
-        $depo->label        = 'Depósito';
-        $depo->obrigatorio  = true;
-        $depo->size         = 50;
-        $depo->largura      = 50;
-        $depo->valor        = '';
-        $depo->dispForm     = 'col-5';
-        $depo->opcoes       = $depos;
-        $depo->selecionado  = 'GER';
-        $this->sal_depo     = $depo->crSelect();
-
-        $code               =  new MyCampo();
-        $code->objeto       = 'input';
-        $code->id           = 'codPro';
-        $code->nome         = 'codPro';
-        $code->label        = 'Código ERP';
-        $code->obrigatorio  = false;
-        $code->size         = 15;
-        $code->valor        = '';
-        $code->dispForm     = 'col-2';
-        $this->sal_code     = $code->crInput();
-
-        $lote               =  new MyCampo();
-        $lote->objeto       = 'input';
-        $lote->id           = 'codLot';
-        $lote->nome         = 'codLot';
-        $lote->label        = 'Lote';
-        $lote->size         = 15;
-        $lote->valor        = '';
-        $lote->dispForm     = 'col-2';
-        $this->sal_lote     = $lote->crInput();
-
-        $btbu               = new MyCampo();
-        $btbu->id           = 'btBuscar';
-        $btbu->nome         = 'btBuscar';
-        $btbu->tipo         = 'button';
-        $btbu->label        = 'Buscar';
-        $btbu->dispForm     = '2col';
-        $btbu->funcChan     = 'buscaSaldo()';
-        $btbu->i_cone       = '<i class="fa-solid fa-magnifying-glass"></i> Buscar Estoque';
-        $btbu->place        = 'Buscar Saldo';
-        $btbu->classep      = 'btn-primary mt-2';
-        $this->sal_btbu     = $btbu->crBotao();
     }
 }

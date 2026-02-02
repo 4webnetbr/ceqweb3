@@ -67,12 +67,13 @@ class OcorreTipoAcaoModel extends Model
         return $data;
     }
 
-
+    
     public function getTipoAcao($tpa_id = false)
     {
         $builder = $this->builder();
         $builder->select('*');
     
+        // Filtra por tipo de ação específico, se informado
         if ($tpa_id) {
             $builder->where('tpa_id', $tpa_id);
         }
@@ -85,6 +86,7 @@ class OcorreTipoAcaoModel extends Model
     
     public function getTipoAcaoSearch($termo)
     {
+        // Inicializa o builder da tabela do model
         $builder = $this->builder();
         $builder->select(['tpa_id', 'tpa_nome']);
         $builder->where('tpa_excluido', null);

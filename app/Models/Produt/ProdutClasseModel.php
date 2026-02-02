@@ -85,74 +85,88 @@ class ProdutClasseModel extends Model
 
 
     public function getClasse($cla_id = false)
-{
-    $db = db_connect('dbProduto');
-    $builder = $db->table('vw_pro_classe_lista_relac');
-    $builder->select('*');
-
-    if ($cla_id) {
-        $builder->where('cla_id', $cla_id);
-    }
-
-    $builder->orderBy('cla_ativo, cla_ordem, cla_nome');
-    return $builder->get()->getResult(); // 👈 OBJETO
-}
-
-    public function getClasseOrdem($cla_id = false)
-{
-    $db = db_connect('dbProduto');
-    $builder = $db->table('vw_pro_classe_lista_relac');
-    $builder->select('*');
-
-    if ($cla_id) {
-        $builder->where('cla_id', $cla_id);
-    }
-
-    $builder->orderBy('cla_ordem, cla_nome');
-    return $builder->get()->getResult(); // 👈 OBJETO
-}
-
-    public function getUltimaOrdemClasse()
-{
-    $db = db_connect('dbProduto');
-    $builder = $db->table('pro_classe');
-    $builder->select('MAX(cla_ordem) as ultima');
-
-    return $builder->get()->getResult(); // 👈 OBJETO
-}
-
-    public function getClasseSearch($termo)
     {
-        $array = ['cla_nome' => $termo . '%'];
+        // Conecta ao banco de produtos
         $db = db_connect('dbProduto');
         $builder = $db->table('vw_pro_classe_lista_relac');
         $builder->select('*');
-        $builder->like($array);
 
-        return $builder->get()->getResultArray();
+        // Filtra por classe específica, se informado
+        if ($cla_id) {
+            $builder->where('cla_id', $cla_id);
+        }
+        $builder->orderBy('cla_ativo, cla_ordem, cla_nome');
+        
+        return $builder->get()->getResult(); 
     }
+    public function getClassePorId($cla_id)
+{
+    $db = db_connect('dbProduto');
+    return $db->table('vw_pro_classe_lista_relac')   // ou a tabela/view certa da classe
+        ->where('cla_id', $cla_id)
+        ->get()
+        ->getRow(); // ✅ retorna 1 stdClass ou null
+}
+    
+        public function getClasseOrdem($cla_id = false)
+    {
+        $db = db_connect('dbProduto');
+        $builder = $db->table('vw_pro_classe_lista_relac');
+        $builder->select('*');
 
-    public function getClasseClassificacao($cla_id = false)
+        // Filtra por classe específica, se informado
+        if ($cla_id) {
+            $builder->where('cla_id', $cla_id);
+        }
+        $builder->orderBy('cla_ordem, cla_nome');
+
+        return $builder->get()->getResult(); 
+    }
+    
+        public function getUltimaOrdemClasse()
+    {
+        $db = db_connect('dbProduto');
+        // Tabela base de classes
+        $builder = $db->table('pro_classe');
+        $builder->select('MAX(cla_ordem) as ultima');
+    
+        return $builder->get()->getResult(); 
+    }
+    
+        public function getClasseSearch($termo)
+    {
+        $db = db_connect('dbProduto');
+        // Utiliza a VIEW de classes
+        $builder = $db->table('vw_pro_classe_lista_relac');
+        $builder->select('*');
+        $builder->like(['cla_nome' => $termo . '%']);
+    
+        return $builder->get()->getResult(); 
+    }
+    
+        public function getClasseClassificacao($cla_id = false)
     {
         $db = db_connect('dbProduto');
         $builder = $db->table('pro_classe_classificacao');
         $builder->select('*');
+        // Filtra por classe específica, se informado
         if ($cla_id) {
             $builder->where('cla_id', $cla_id);
         }
         $builder->orderBy('pcl_ordem');
-        return $builder->get()->getResultArray();
-    }
 
-    public function getClassificacaoClasse($origem, $familia)
+        return $builder->get()->getResult(); 
+    }
+    
+        public function getClassificacaoClasse($origem, $familia)
     {
         $db = db_connect('dbProduto');
+        // Utiliza a VIEW de classes relacionadas
         $builder = $db->table('vw_pro_classe_relac');
         $builder->select('*');
         $builder->where('ori_codOri', $origem);
         $builder->where('fam_codFam', $familia);
-        // $sql = $builder->getCompiledSelect();
-        // debug($sql, true);
-        return $builder->get()->getResultArray();
+    
+        return $builder->get()->getResult(); 
     }
 }

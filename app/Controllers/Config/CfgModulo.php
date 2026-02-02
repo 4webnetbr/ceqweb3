@@ -5,9 +5,12 @@ namespace App\Controllers\Config;
 use App\Controllers\BaseController;
 use App\Models\Config\ConfigModuloModel;
 use App\Entities\Config\EntCfgModulo;
+use App\Traits\ForeignKeyUsageChecker;
 
 class CfgModulo extends BaseController
 {
+    use ForeignKeyUsageChecker;
+
     protected array $data;
     protected ConfigModuloModel $modulo;
 
@@ -65,7 +68,7 @@ class CfgModulo extends BaseController
         $this->data['campos'] = [[
             $mod->campos['mod_id'],
             $mod->campos['mod_nome'],
-            $mod->campos['mod_icon'],
+            $mod->campos['mod_icone'],
             // $mod->campos['mod_ativo'],
         ]];
         $this->data['destino'] = 'store';
@@ -76,16 +79,31 @@ class CfgModulo extends BaseController
 
     public function delete($id)
     {
+        // try {
+        //     $this->modulo->delete($id);
+        //     session()->setFlashdata('msg', 'Módulo excluído com sucesso!');
+        //     echo json_encode(['erro' => false]);
+        // } catch (\Throwable $e) {
+        //     echo json_encode([
+        //         'erro' => true,
+        //         'msg'  => 'Não foi possível excluir o módulo.'
+        //     ]);
+        // }
+
+        $ret = [];
         try {
+            // Checa uso do status em outros bancos
+            $this->verificarUsoEmRelacionamentos('cfg_modulo', 'mod_id', (int) $id);
+
+            // Soft delete
             $this->modulo->delete($id);
+            $ret['erro'] = false;
             session()->setFlashdata('msg', 'Módulo excluído com sucesso!');
-            echo json_encode(['erro' => false]);
-        } catch (\Throwable $e) {
-            echo json_encode([
-                'erro' => true,
-                'msg'  => 'Não foi possível excluir o módulo.'
-            ]);
+        } catch (\Exception $e) {
+            $ret['erro'] = true;
+            $ret['msg']  = 3;
         }
+        echo json_encode($ret);
     }
 
     public function ativinativ($id, $tipo)

@@ -1,219 +1,282 @@
-<?php 
+<?php
 
-// namespace App\Entities\Config;
+namespace App\Entities\Config;
 
-// use CodeIgniter\Entity\Entity;
-// use App\Libraries\MyCampo;
-// use App\Models\Config\ConfigDicDadosModel;
-// use App\Models\Config\ConfigModuloModel;
-// use ReflectionClass;
-// use ReflectionMethod;
+use CodeIgniter\Entity\Entity;
+use App\Libraries\MyCampo;
+use App\Models\Config\ConfigDicDadosModel;
+use ReflectionClass;
+use ReflectionMethod;
+use App\Traits\HasModulo;
 
-// class EntCfgTela extends Entity
-// {
-//     public array $campos = [];
+class EntCfgTela extends Entity
+{
+    use HasModulo;
 
-//     public function __construct(array $data = [], $show = false)
-//     {
-//         parent::__construct($data);
-//         $this->campos = $this->defCampos($show);
-//     }
+    public array $campos = [];
 
-//     public function defCampos($dados, $show = false, $tabela = '', $view = '')
-//     {
-//         $dicionario = new ConfigDicDadosModel();
-//         // $usuario   = new ConfigUsuarioModel();
-//         $modulo    = new ConfigModuloModel();
-//         // $common    = new CommonModel();
+    /** Cache do relacionamento */
+    protected ?EntCfgModulo $modulo = null;
 
-//         $ret = [];
-//         $id         = new MyCampo('cfg_tela', 'tel_id');
-//         $id->valor  = array_key_exists('tel_id', $dados) ? $dados['tel_id'] : '';
-//         $ret['tel_id'] = $id->crOculto();
+    public function __construct(array $data = [], bool $show = false)
+    {
+        parent::__construct($data);
+        $this->campos = $this->defCampos($show);
+    }
 
-//         $opc_mod = [];
-//         // if (isset($dados['mod_id'])){
-//         $opc_mods = $modulo->getModulo();
-//         $opc_mod  = array_column($opc_mods, 'mod_nome', 'mod_id');
-//         // }
+    /**
+     * Definição dos campos da tela
+     */
+    public function defCampos(bool $show = false, $tabela = '', $view = ''): array
+    {
+        $dados = $this->toArray();
+        $ret = [];
+        $dicionario = new ConfigDicDadosModel();
 
-//         $modu               =  new MyCampo('cfg_tela', 'mod_id');
-//         $modu->label        = 'Módulo';
-//         $modu->largura      = 50;
-//         $modu->obrigatorio  = true;
-//         $modu->urlbusca     = base_url('buscas/busca_modulo');
-//         $modu->cadModal     = base_url('CfgModulo/add/modal=true');
-//         $modu->valor        = array_key_exists('mod_id', $dados) ? $dados['mod_id'] : '';
-//         $modu->selecionado  = $modu->valor;
-//         $modu->opcoes       = $opc_mod;
-//         $modu->leitura      = $show;
-//         $modu->dispForm     = '2col';
-//         $ret['tel_modulo']   = $modu->crSelBusca();
+        // ID
+        $id = new MyCampo('cfg_tela', 'tel_id');
+        $id->valor = $dados['tel_id'] ?? '';
+        $ret['tel_id'] = $id->crOculto();
 
-//         $nome               = new MyCampo('cfg_tela', 'tel_nome');
-//         $nome->obrigatorio  = true;
-//         $nome->valor        = array_key_exists('tel_nome', $dados) ? $dados['tel_nome'] : '';
-//         $nome->dispForm     = '2col';
-//         $nome->leitura      = $show;
-//         $ret['tel_nome']    = $nome->crInput();
+        $config['Leitura'] = $show;
+        $config['DispForm'] = 'col-6';
 
-//         // debug($dados,true);
-//         $iden               = new MyCampo('cfg_tela', 'tel_ident');
-//         $iden->obrigatorio  = true;
-//         $iden->valor        = array_key_exists('tel_ident', $dados) ? $dados['tel_ident'] : '';
-//         $iden->dispForm     = '2col';
-//         $iden->leitura      = $show;
-//         $iden->largura      = 15;
-//         $iden->minLength    = 2;
-//         $ret['tel_ident']    = $iden->crInput();
+        // debug($dados);
+        $ret['mod_id'] = criaSelectRelativo(
+            'cfg_modulo',
+            'mod_id',
+            'mod_nome',
+            $dados['mod_id'] ?? '',
+            1,
+            'cfg_status',
+            [],
+            $config
+        );
 
-//         $icon                = new MyCampo('cfg_tela', 'tel_icone');
-//         $icon->tipo         = 'icone';
-//         $icon->valor        = (isset($dados['tel_icone'])) ? $dados['tel_icone'] : '';
-//         $icon->dispForm     = '2col';
-//         $icon->leitura      = $show;
-//         $ret['tel_icon']     = $icon->crInput();
+        // Nome
+        $nome = new MyCampo('cfg_tela', 'tel_nome');
+        $nome->obrigatorio = true;
+        $nome->valor = $dados['tel_nome'] ?? '';
+        $nome->dispForm = 'col-6';
+        $nome->leitura = $show;
+        $ret['tel_nome'] = $nome->crInput();
 
-//         $pasta    = APPPATH . '/Controllers';
-//         $arquivos = buscaArquivos($pasta, false, ['BaseController.php', 'Buscas.php', 'Logger.php']);
-//         sort($arquivos);
+        // Identificador
+        $iden = new MyCampo('cfg_tela', 'tel_ident');
+        $iden->obrigatorio = true;
+        $iden->valor = $dados['tel_ident'] ?? '';
+        $iden->dispForm = 'col-6';
+        $iden->leitura = $show;
+        $iden->largura = 15;
+        $iden->minLength = 2;
+        $ret['tel_ident'] = $iden->crInput();
 
-//         $arqs               = array_combine(array_values($arquivos), array_values($arquivos));
-//         $cont               = new MyCampo('cfg_tela', 'tel_controler');
-//         $cont->obrigatorio  = true;
-//         $cont->valor        = array_key_exists('tel_controler', $dados) ? $dados['tel_controler'] : '';
-//         $cont->dispForm     = '2col';
-//         $cont->opcoes       = $arqs;
-//         $cont->selecionado  = $cont->valor;
-//         $cont->leitura      = $show;
-//         $ret['tel_cont']   = $cont->crSelect();
+        // Ícone
+        $icon = new MyCampo('cfg_tela', 'tel_icone');
+        $icon->tipo = 'icone';
+        $icon->valor = $dados['tel_icone'] ?? '';
+        $icon->dispForm = '2col';
+        $icon->leitura = $show;
+        $ret['tel_icon'] = $icon->crInput();
 
-//         $pasta = APPPATH . '/Models';
-//         $models = buscaArquivos($pasta, false, []);
-//         sort($models);
-//         $mods = array_combine(array_values($models), array_values($models));
-//         $mode               = new MyCampo('cfg_tela', 'tel_model');
-//         $mode->obrigatorio  = false;
-//         $mode->valor        = array_key_exists('tel_model', $dados) ? $dados['tel_model'] : '';
-//         $mode->dispForm     = '2col';
-//         $mode->opcoes       = $mods;
-//         $mode->selecionado  = $mode->valor;
-//         $mode->leitura      = $show;
-//         $ret['tel_mode']   =  $mode->crSelect();
+        // Controller
+        $pasta = APPPATH . '/Controllers';
+        $arquivos = buscaArquivos($pasta, false, [
+            'BaseController.php',
+            'Buscas.php',
+            'Logger.php'
+        ]);
+        sort($arquivos);
 
-//         $txtb               = new MyCampo('cfg_tela', 'tel_texto_botao');
-//         $txtb->obrigatorio  = false;
-//         $txtb->dispForm     = '2col';
-//         $txtb->valor        = array_key_exists('tel_texto_botao', $dados) ? $dados['tel_texto_botao'] : '';
-//         $txtb->leitura      = $show;
-//         $ret['tel_txtb']   = $txtb->crInput();
+        $arqs = array_combine($arquivos, $arquivos);
+        $cont = new MyCampo('cfg_tela', 'tel_controler');
+        $cont->obrigatorio = true;
+        $cont->valor = $dados['tel_controler'] ?? '';
+        $cont->dispForm = '2col';
+        $cont->opcoes = $arqs;
+        $cont->selecionado = $cont->valor;
+        $cont->leitura = $show;
+        $ret['tel_cont'] = $cont->crSelect();
 
-//         $desc           = new MyCampo('cfg_tela', 'tel_descricao');
-//         $desc->colunas  = 80;
-//         $desc->linhas   = 3;
-//         $desc->maximo   = 255;
-//         $desc->valor    = array_key_exists('tel_descricao', $dados)
-//             ? $dados['tel_descricao']
-//             : '';
-//         $desc->leitura      = $show;
-//         $ret['tel_desc'] = $desc->crTexto();
+        // Model
+        $pasta = APPPATH . '/Models';
+        $models = buscaArquivos($pasta, false, []);
+        sort($models);
 
-//         $regg           = new MyCampo('cfg_tela', 'tel_regras_gerais');
-//         $regg->valor    = array_key_exists('tel_regras_gerais', $dados)
-//             ? $dados['tel_regras_gerais']
-//             : '';
-//         $regg->leitura      = $show;
-//         $ret['tel_regg'] = $regg->crEditor();
+        $mods = array_combine($models, $models);
+        $mode = new MyCampo('cfg_tela', 'tel_model');
+        $mode->valor = $dados['tel_model'] ?? '';
+        $mode->dispForm = '2col';
+        $mode->opcoes = $mods;
+        $mode->selecionado = $mode->valor;
+        $mode->leitura = $show;
+        $ret['tel_mode'] = $mode->crSelect();
 
-//         $regc           = new MyCampo('cfg_tela', 'tel_regras_cadastro');
-//         $regc->valor    = array_key_exists('tel_regras_cadastro', $dados)
-//             ? $dados['tel_regras_cadastro']
-//             : '';
-//         $regc->leitura      = $show;
-//         $ret['tel_regc'] = $regc->crEditor();
+        // Texto botão
+        $txtb = new MyCampo('cfg_tela', 'tel_texto_botao');
+        $txtb->valor = $dados['tel_texto_botao'] ?? '';
+        $txtb->dispForm = '2col';
+        $txtb->leitura = $show;
+        $ret['tel_txtb'] = $txtb->crInput();
 
-//         $tabe               =  new MyCampo();
-//         $tabe->largura      = 40;
-//         $tabe->dispForm     = '2col';
-//         $tabe->label        = 'Tabela Principal';
-//         $tabe->valor        = isset($tabela) ? $tabela : '';
-//         $tabe->leitura      = $show;
-//         $ret['tel_tabela']   = $tabe->crShow();
+        // Descrição
+        $desc = new MyCampo('cfg_tela', 'tel_descricao');
+        $desc->linhas = 3;
+        $desc->maximo = 255;
+        $desc->valor = $dados['tel_descricao'] ?? '';
+        $desc->leitura = $show;
+        $ret['tel_desc'] = $desc->crTexto();
 
-//         $cvie               =  new MyCampo();
-//         $cvie->largura      = 40;
-//         $cvie->dispForm     = '2col';
-//         $cvie->label        = 'Visão Principal';
-//         $cvie->valor        = isset($view) ? $view : '';
-//         $cvie->leitura      = $show;
-//         $ret['tel_view']   = $cvie->crShow();
+        $ret['tel_codi'] = '';
+        if ($dados) {
+            if (substr($dados['tel_controler'], 0, 3) == 'Cfg') {
+                $fonte = verCodigo('Controllers/Config/' . $dados['tel_controler']);
+            } else if (substr($dados['tel_controler'], 0, 3) == 'Pro') {
+                $fonte = verCodigo('Controllers/Produto/' . $dados['tel_controler']);
+            } else if (substr($dados['tel_controler'], 0, 3) == 'Oco') {
+                $fonte = verCodigo('Controllers/Ocorrencia/' . $dados['tel_controler']);
+            } else {
+                $fonte = verCodigo('Controllers/Estoque/' . $dados['tel_controler']);
+            }
 
-//         // if ($tabela != '') {
-//         $camp           = new MyCampo();
-//         $camp->label    = 'Campos da Tabela';
-//         $camp->valor    = '';
-//         if ($tabela != '') {
-//             $campos_tab = $dicionario->getCampos($tabela);
-//             $camp->valor    = campos_tabela($campos_tab);
-//         }
-//         $ret['tel_camp'] = $camp->crShow();
+            $codi           = new MyCampo();
+            $codi->label    = 'Código Fonte';
+            $codi->valor    = '<pre>' . $fonte . '</pre>';
+            $ret['tel_codi'] = $codi->crShow();
+        }
 
-//         $camp           = new MyCampo();
-//         $camp->label    = 'Campos da Visão Principal';
-//         if ($view != '') {
-//             $campos_view = $dicionario->getCampos($view);
-//             // debug($campos_view, false);
-//             $camp->valor   = campos_tabela($campos_view);
-//         }
-//         $ret['tel_camp_view'] = $camp->crShow();
+        // Regras
+        foreach (['tel_regras_gerais', 'tel_regras_cadastro'] as $campo) {
+            $reg = new MyCampo('cfg_tela', $campo);
+            $reg->valor = $dados[$campo] ?? '';
+            $reg->leitura = $show;
+            $ret[$campo] = $reg->crEditor();
+        }
 
-//         $trel           = new MyCampo();
-//         $trel->label    = 'Tabelas Relacionadas';
-//         if ($tabela != '') {
-//             $relac = $dicionario->getRelacionamentos($tabela);
-//             $trel->valor    = relacion_tabela($relac);
-//         }
-//         $ret['tel_trel'] = $trel->crShow();
+        $ret['tel_regg'] = $ret['tel_regras_gerais'];
+        $ret['tel_regc'] = $ret['tel_regras_cadastro'];
 
-//         $meto           = new MyCampo();
-//         $meto->label    = 'Métodos';
-//         $meto->valor    = '';
-//         if (isset($dados['tel_controler'])) {
-//             $path = 'App\\Controllers\\Estoque\\';
-//             if (substr($dados['tel_controler'], 0, 3) == 'Cfg') {
-//                 $path = 'App\\Controllers\\Config\\';
-//             } else if (substr($dados['tel_controler'], 0, 3) == 'Pro') {
-//                 $path = 'App\\Controllers\\Produto\\';
-//             } else if (substr($dados['tel_controler'], 0, 3) == 'Oco') {
-//                 $path = 'App\\Controllers\\Ocorrencia\\';
-//             }
-//             if (class_exists($path . $dados['tel_controler'])) {
-//                 $class      = new ReflectionClass($path . $dados['tel_controler']);
-//                 $methods    = $class->getMethods(ReflectionMethod::IS_PUBLIC);
-//                 $meto->valor = metodosTela($methods, $class->name);
-//             } else {
-//                 $meto->valor = 'Tela ainda não foi codificada!';
-//             }
-//         }
-//         $ret['tel_meto'] = $meto->crShow();
+        // Informações técnicas
+        $ret['tel_tabela'] = (new MyCampo())->setLabel('Tabela Principal')
+            ->setDispForm('col-6')
+            ->setLargura(40)
+            ->setValor($tabela)->crShow();
 
-//         if ($dados) {
-//             if (substr($dados['tel_controler'], 0, 3) == 'Cfg') {
-//                 $fonte = verCodigo('Controllers/Config/' . $dados['tel_controler']);
-//             } else if (substr($dados['tel_controler'], 0, 3) == 'Pro') {
-//                 $fonte = verCodigo('Controllers/Produto/' . $dados['tel_controler']);
-//             } else if (substr($dados['tel_controler'], 0, 3) == 'Oco') {
-//                 $fonte = verCodigo('Controllers/Ocorrencia/' . $dados['tel_controler']);
-//             } else {
-//                 $fonte = verCodigo('Controllers/Estoque/' . $dados['tel_controler']);
-//             }
+        $ret['tel_view'] = (new MyCampo())->setLabel('Visão Principal')
+            ->setDispForm('col-6')
+            ->setLargura(40)
+            ->setValor($view)->crShow();
 
-//             $codi           = new MyCampo();
-//             $codi->label    = 'Código Fonte';
-//             $codi->valor    = '<pre>' . $fonte . '</pre>';
-//             $ret['tel_codi'] = $codi->crShow();
-//         }
+        $ret['tel_camp'] = '';
+        if ($tabela) {
+            $ret['tel_camp'] = (new MyCampo())
+                ->setDispForm('col-12')
+                ->setLabel('Campos da Tabela')
+                ->setValor(campos_tabela($dicionario->getCampos($tabela)))
+                ->crShow();
+        }
 
-//         return $ret;
-//     }
-// }
+        $ret['tel_camp_view'] = '';
+        if ($view) {
+            $ret['tel_camp_view'] = (new MyCampo())
+                ->setDispForm('col-12')
+                ->setLabel('Campos da Visão Principal')
+                ->setValor(campos_tabela($dicionario->getCampos($view)))
+                ->crShow();
+        }
+
+        $trel = (new MyCampo())->setDispForm('col-12');
+        $trel->label = 'Tabelas Relacionadas';
+
+        if (!empty($tabela)) {
+            $relac = $dicionario->getRelacionamentos($tabela);
+            $trel->valor = relacion_tabela($relac);
+        } else {
+            $trel->valor = '';
+        }
+
+        $ret['tel_trel'] = $trel->crShow();
+
+        // Métodos do controller
+        $ret['tel_meto'] = '';
+        if (!empty($dados['tel_controler'])) {
+            $path = 'App\\Controllers\\Config\\';
+            $ctrl = $path . $dados['tel_controler'];
+
+            $meto = new MyCampo();
+            $meto->setLabel('Métodos');
+
+            if (class_exists($ctrl)) {
+                $class = new ReflectionClass($ctrl);
+                $methods = $class->getMethods(ReflectionMethod::IS_PUBLIC);
+                $meto->valor = metodosTela($methods, $class->name);
+            } else {
+                $meto->valor = 'Tela ainda não foi codificada!';
+            }
+
+            $ret['tel_meto'] = $meto->crShow();
+        }
+
+        return $ret;
+    }
+
+    public function defCamposLista($dados, $show = false, $pos = 0, $view)
+    {
+        $dados = (array) $dados;
+        $ret = [];
+        $dicionario = new ConfigDicDadosModel();
+
+        $campos_tab = $dicionario->getCampos($view);
+        // debug($campos_tab);
+        $campos_lis = array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME');
+
+        $id             = new MyCampo('cfg_tela_lista', 'lis_id');
+        $id->nome       = $id->nome . "[$pos]";
+        $id->id         = $id->id . "[$pos]";
+        $id->valor      = isset($dados['lis_id']) ? $dados['lis_id'] : '';
+        $ret['lis_id']   = $id->crOculto();
+
+        $camp           = new MyCampo('cfg_tela_lista', 'lis_campo');
+        $camp->nome     = $camp->nome . "[$pos]";
+        $camp->id       = $camp->id . "[$pos]";
+        $camp->opcoes         = $campos_lis;
+        $camp->valor          = (isset($dados['lis_campo'])) ? $dados['lis_campo'] : '';
+        $camp->selecionado    = $camp->valor;
+        $camp->dispForm        = 'col-6';
+        $camp->classep        = 'semmb';
+        $camp->leitura        = $show;
+        $ret['lis_campo']      = $camp->crSelect();
+
+        $rotu           = new MyCampo('cfg_tela_lista', 'lis_rotulo');
+        $rotu->nome     = $rotu->nome . "[$pos]";
+        $rotu->id       = $rotu->id . "[$pos]";
+        $rotu->valor          = (isset($dados['lis_rotulo'])) ? $dados['lis_rotulo'] : '';
+        $rotu->dispForm        = 'col-6';
+        $rotu->classep        = 'semmb';
+        $rotu->leitura      = $show;
+        $ret['lis_rotulo']       = $rotu->crInput();
+
+        $atrib['data-index'] = $pos;
+        $add            = new MyCampo();
+        $add->attrdata  = $atrib;
+        $add->nome      = "bt_add[$pos]";
+        $add->id        = "bt_add[$pos]";
+        $add->i_cone    = "<i class='fas fa-plus'></i>";
+        $add->place     = "Adicionar Campo";
+        $add->classep   = "btn-outline-success btn-sm bt-repete listagem";
+        $add->funcChan  = "addCampo('" . base_url("CfgTela/addCampoLista/" . $dados['tel_id']) . "','listagem',this)";
+        $ret['bt_add']   = $add->crBotao();
+
+        $del            = new MyCampo();
+        $del->attrdata  = $atrib;
+        $del->nome      = "bt_del[$pos]";
+        $del->id        = "bt_del[$pos]";
+        $del->i_cone    = "<i class='fas fa-trash'></i>";
+        $del->classep   = "btn-outline-danger btn-sm bt-exclui listagem";
+        $del->funcChan  = "exclui_campo('listagem',this)";
+        $del->place     = "Excluir Campo";
+        $ret['bt_del']   = $del->crBotao();
+
+        return $ret;
+    }
+}

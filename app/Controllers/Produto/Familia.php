@@ -53,7 +53,6 @@ class Familia extends BaseController
      */
     public function lista()
     {
-        // if (!$familias = cache('familias')) {
             $campos = montaColunasCampos($this->data, 'fam_codFam');
             $dados_tela = $this->familias->getFamilia();
 
@@ -61,33 +60,32 @@ class Familia extends BaseController
             $this->data['exclusao'] = false;
 
             $familias = [
-                'data' => montaListaColunas($this->data, 'fam_codFam', $dados_tela, $campos[1]),
+                'data' => montaListaColunasEnt($this->data, 'fam_codFam', $dados_tela, $campos[1]),
             ];
             cache()->save('familias', $familias, 60000);
-        // }
         echo json_encode($familias);
     }
 
-    public function show($id){
-        $integ = new WsCeqweb();
-        $integ->integraFamilia();
+    // public function show($id){
+    //     $integ = new WsCeqweb();
+    //     $integ->integraFamilia();
 
-		$dados_familias = $this->familias->getFamilia($id);
-        $fields = $this->familias->defCampos($dados_familias[0], true);
+	// 	$dados_familias = $this->familias->getFamilia($id);
+    //     $fields = $this->familias->defCampos($dados_familias[0], true);
 
-        $secao[0] = 'Dados Gerais'; 
-        $campos[0][0] = $fields['fam_codFam']; 
-        $campos[0][1] = $fields['fam_desFam'];
-        $campos[0][2] = $fields['fam_codDescricao'];
-        $campos[0][3] = $fields['ori_codOri'];
+    //     $secao[0] = 'Dados Gerais'; 
+    //     $campos[0][0] = $fields['fam_codFam']; 
+    //     $campos[0][1] = $fields['fam_desFam'];
+    //     $campos[0][2] = $fields['fam_codDescricao'];
+    //     $campos[0][3] = $fields['ori_codOri'];
         
-		$this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
-        $this->data['destino']    = 'store';
-        // BUSCAR DADOS DO LOG
-        $this->data['log'] = buscaLog('pro_sap_familia', $id);
+	// 	$this->data['secoes']     = $secao;
+    //     $this->data['campos']     = $campos;
+    //     $this->data['destino']    = 'store';
+    //     // BUSCAR DADOS DO LOG
+    //     $this->data['log'] = buscaLog('pro_sap_familia', $id);
 
-        echo view('vw_edicao', $this->data);
-    }
+    //     echo view('vw_edicao', $this->data);
+    // }
 
 }

@@ -472,6 +472,20 @@ class MyPdf2025 extends FPDF
 
     function EtiqTexto($etiq, $texto, $font, $tamfont, $h, $w, $border = 0, $ln = 0, $align = 'L', $preenche = 0, $negita = '')
     {
+
+        $coreFonts = ['arial','helvetica','times','courier','symbol','zapfdingbats'];
+
+        if (!is_string($font) || is_numeric($font) || !in_array(strtolower($font), $coreFonts)) {
+            $font = 'Arial';
+        }
+        
+        if (!is_string($negita)) {
+            $negita = '';
+        }
+        
+        if (!is_numeric($tamfont)) {
+            $tamfont = 8;
+        }
         $this->SetFont($font, 'B', $tamfont);
         $x = $this->GetX();
         if (strlen($etiq) > 0) {

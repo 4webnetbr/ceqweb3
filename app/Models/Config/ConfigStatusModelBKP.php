@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models\Config;
 
 use App\Libraries\MyCampo;
@@ -18,17 +19,18 @@ class ConfigStatusModel extends Model
     protected $returnType       = 'array';
     protected $useSoftDeletes   = true;
 
-    protected $allowedFields    = ['stt_id',
-                                    'stt_nome',
-                                    'stt_cor',
-                                    'mod_id',
-                                    'tel_id',
-                                    'stt_exclusao',
-                                    'stt_edicao',
-                                    'stt_disponivel',
-                                    'stt_ativo',
-                                    'stt_ordem',                                    
-                                ];
+    protected $allowedFields    = [
+        'stt_id',
+        'stt_nome',
+        'stt_cor',
+        'mod_id',
+        'tel_id',
+        'stt_exclusao',
+        'stt_edicao',
+        'stt_disponivel',
+        'stt_ativo',
+        'stt_ordem',
+    ];
 
     protected $deletedField  = 'stt_excluido';
 
@@ -100,6 +102,7 @@ class ConfigStatusModel extends Model
         if ($stt_id) {
             $builder->where("stt_id", $stt_id);
         }
+        $builder->where("stt_ativo", 'A');
         $ret = $builder->get()->getResultArray();
 
         return $ret;
@@ -156,7 +159,7 @@ class ConfigStatusModel extends Model
 
         return $ret;
     }
-    
+
     public function getStatusSearch($termo)
     {
         $array = ['stt_nome' => $termo . '%'];
@@ -193,7 +196,7 @@ class ConfigStatusModel extends Model
         $modu->largura      = 30;
         $modu->dispForm     = '2col';
         $ret['mod_id'] = $modu->crSelect();
-    
+
         $telas_mod = new ConfigTelaModel();
         $telass = $telas_mod->getTelaId((isset($dados['tel_id'])) ? $dados['tel_id'] : false);
         $telas = array_column($telass, 'tel_nome', 'tel_id');
@@ -208,8 +211,8 @@ class ConfigStatusModel extends Model
         $tela->dispForm     = '2col';
         $tela->pai          = 'mod_id';
         $ret['tel_id']     = $tela->crDepende();
-        
-        $cor                =  new MyCampo('cfg_status','stt_cor');
+
+        $cor                =  new MyCampo('cfg_status', 'stt_cor');
         $cor->valor         = (isset($dados['stt_cor'])) ? $dados['stt_cor'] : '';
         $cor->selecionado   = $this->valor;
         $cor->obrigatorio   = true;
@@ -241,9 +244,8 @@ class ConfigStatusModel extends Model
         $disp->dispForm     = '2col';
         $ret['stt_disponivel'] = $disp->cr2opcoes();
 
-        
+
 
         return $ret;
     }
-    
 }

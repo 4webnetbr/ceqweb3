@@ -34,112 +34,139 @@ class Buscas extends BaseController
 
     public function __construct()
     {
-        $this->menu                 = new ConfigMenuModel();
-        $this->modulo                 = new ConfigModuloModel();
-        $this->tela                 = new ConfigTelaModel();
-        $this->usuario              = new ConfigUsuarioModel();
-        $this->admDados             = new ConfigDicDadosModel();
-        $this->status               = new ConfigStatusModel();
+        $this->menu     = new ConfigMenuModel();
+        $this->modulo   = new ConfigModuloModel();
+        $this->tela     = new ConfigTelaModel();
+        $this->usuario  = new ConfigUsuarioModel();
+        $this->admDados = new ConfigDicDadosModel();
+        $this->status   = new ConfigStatusModel();
     }
 
     public function busca_hierarquia()
     {
+        $hierarquia = new \stdClass();
 
-        $ret    = [];
         if ($_REQUEST['campo']) {
-            $data = $_REQUEST;
-            $termo              = $data['campo'][0]['id_dep'];
+            $termo = $_REQUEST['campo'][0]['id_dep'];
+
             if ($termo == 1) {
-                $hierarquia[2] = 'Pai';
-                $hierarquia[3] = 'Filho';
+                $hierarquia->{2} = 'Pai';
+                $hierarquia->{3} = 'Filho';
             } else {
-                $hierarquia[1] = 'Órfão';
-                $hierarquia[3] = 'Filho';
-                $hierarquia[4] = 'Neto';
+                $hierarquia->{1} = 'Órfão';
+                $hierarquia->{3} = 'Filho';
+                $hierarquia->{4} = 'Neto';
             }
         }
+
         echo json_encode($hierarquia);
     }
+
     public function busca_menu_pai()
     {
         $menus = $this->menu->getMenuPai();
-        $menu_pai = array_column($menus, 'men_etiqueta', 'men_id');
+        $menu_pai = new \stdClass();
+
+        foreach ($menus as $m) {
+            $menu_pai->{$m->men_id} = $m->men_etiqueta;
+        }
+
         echo json_encode($menu_pai);
     }
 
     public function busca_submenu()
     {
         $ret = [];
+
         if ($_REQUEST['busca']) {
-            $termo              = $_REQUEST['busca'];
-            $submenus = $this->menu->getSubMenu($termo);
-            if (sizeof($submenus) <= 0) {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'SubMenu não encontrada...';
+            $submenus = $this->menu->getSubMenu($_REQUEST['busca']);
+
+            if (empty($submenus)) {
+                $o = new \stdClass();
+                $o->id = '-1';
+                $o->text = 'SubMenu não encontrada...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($submenus); $c++) {
-                    $ret[$c]['id']      = $submenus[$c]['men_id'];
-                    $ret[$c]['text']    = $submenus[$c]['men_etiqueta'];
+                // debug($submenus, true);
+                foreach ($submenus as $s) {
+                    $o = new \stdClass();
+                    $o->id = $s['men_id'];
+                    $o->text = $s['men_etiqueta'];
+                    $ret[] = $o;
                 }
             }
         }
+
         echo json_encode($ret);
         exit;
     }
 
     public function busca_modulo()
     {
-        $ret    = [];
+        $ret = [];
+
         if ($_REQUEST['busca']) {
-            $termo              = $_REQUEST['busca'];
-            $modulos            = $this->modulo->getModulosSearch($termo);
-            if (sizeof($modulos) <= 0) {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'Módulo não encontrado...';
+            $modulos = $this->modulo->getModulosSearch($_REQUEST['busca']);
+
+            if (empty($modulos)) {
+                $o = new \stdClass();
+                $o->id = '-1';
+                $o->text = 'Módulo não encontrado...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($modulos); $c++) {
-                    $ret[$c]['id']      = $modulos[$c]['mod_id'];
-                    $ret[$c]['text']    = $modulos[$c]['mod_nome'];
-                    $ret[$c]['icone']    = $modulos[$c]['mod_icone'];
+                foreach ($modulos as $m) {
+                    $o = new \stdClass();
+                    $o->id = $m->mod_id;
+                    $o->text = $m->mod_nome;
+                    $o->icone = $m->mod_icone;
+                    $ret[] = $o;
                 }
             }
         }
+
         echo json_encode($ret);
         exit;
     }
 
     public function busca_modulo_id()
     {
-        $ret    = [];
+        $ret = [];
+
         if ($_REQUEST['busca']) {
-            $termo              = $_REQUEST['busca'];
-            $modulos            = $this->modulo->getModulo($termo);
-            if (sizeof($modulos) <= 0) {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'Módulo não encontrada...';
+            $modulos = $this->modulo->getModulo($_REQUEST['busca']);
+
+            if (empty($modulos)) {
+                $o = new \stdClass();
+                $o->id = '-1';
+                $o->text = 'Módulo não encontrada...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($modulos); $c++) {
-                    $ret[$c]['id']      = $modulos[$c]['mod_id'];
-                    $ret[$c]['text']    = $modulos[$c]['mod_nome'];
-                    $ret[$c]['icone']    = $modulos[$c]['mod_icone'];
+                foreach ($modulos as $m) {
+                    $o = new \stdClass();
+                    $o->id = $m->mod_id;
+                    $o->text = $m->mod_nome;
+                    $o->icone = $m->mod_icone;
+                    $ret[] = $o;
                 }
             }
         }
+
         echo json_encode($ret);
         exit;
     }
 
     public function busca_menu()
     {
-        $data = $_REQUEST;
-        $tipo = $data['campo'][0]['id_dep'];
+        $tipo = $_REQUEST['campo'][0]['id_dep'];
         $menus = $this->menu->getMenuModulo($tipo);
-        // echo $this->db->last_query();
-        if (count($menus) > 0) {
-            $menu = array_column($menus, 'men_nome', 'men_id');
-            $menu_ret = json_encode($menu);
-            echo $menu_ret;
+
+        $menu = new \stdClass();
+
+        foreach ($menus as $m) {
+            $menu->{$m->men_id} = $m->men_nome;
         }
+
+        echo json_encode($menu);
         exit;
     }
 
@@ -154,9 +181,9 @@ class Buscas extends BaseController
                 $ret[0]['text'] = 'Tela não encontrada...';
             } else {
                 for ($c = 0; $c < sizeof($telas); $c++) {
-                    $ret[$c]['id']      = $telas[$c]['tel_id'];
-                    $ret[$c]['text']    = $telas[$c]['tel_nome'];
-                    $ret[$c]['icone']    = $telas[$c]['tel_icone'];
+                    $ret[$c]['id']      = $telas[$c]->tel_id;
+                    $ret[$c]['text']    = $telas[$c]->tel_nome;
+                    $ret[$c]['icone']   = $telas[$c]->tel_icone;
                 }
             }
         }
@@ -166,443 +193,525 @@ class Buscas extends BaseController
 
     public function busca_tela()
     {
-        $ret    = [];
+        $ret = [];
+
         if ($_REQUEST['busca']) {
-            $termo              = $_REQUEST['busca'];
-            $telas = $this->tela->getTelaSearch($termo);
-            if (sizeof($telas) <= 0) {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'Tela não encontrada...';
+            $telas = $this->tela->getTelaSearch($_REQUEST['busca']);
+
+            if (empty($telas)) {
+                $o = new \stdClass();
+                $o->id = '-1';
+                $o->text = 'Tela não encontrada...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($telas); $c++) {
-                    $ret[$c]['id']      = $telas[$c]['tel_id'];
-                    $ret[$c]['text']    = $telas[$c]['tel_nome'];
-                    $ret[$c]['icone']    = $telas[$c]['tel_icone'];
+                foreach ($telas as $t) {
+                    $o = new \stdClass();
+                    $o->id = $t->tel_id;
+                    $o->text = $t->tel_nome;
+                    $o->icone = $t->tel_icone;
+                    $ret[] = $o;
                 }
             }
         }
+
         echo json_encode($ret);
         exit;
     }
 
     public function busca_tela_id()
     {
-        $ret    = [];
+        $ret = [];
+
         if ($_REQUEST['busca']) {
-            $termo              = $_REQUEST['busca'];
-            $class = $this->tela->getTelaId($termo);
-            if (sizeof($class) <= 0) {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'Tela não encontrada...';
+            $class = $this->tela->getTelaId($_REQUEST['busca']);
+
+            if (empty($class)) {
+                $o = new \stdClass();
+                $o->id = '-1';
+                $o->text = 'Tela não encontrada...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($class); $c++) {
-                    $ret[$c]['id']      = $class[$c]['tel_id'];
-                    $ret[$c]['text']    = $class[$c]['tel_nome'];
-                    $ret[$c]['icone']    = $class[$c]['tel_icone'];
+                foreach ($class as $t) {
+                    $o = new \stdClass();
+                    $o->id    = $t->tel_id;
+                    $o->text  = $t->tel_nome;
+                    $o->icone = $t->tel_icone;
+                    $ret[] = $o;
                 }
             }
         }
+
         echo json_encode($ret);
         exit;
     }
 
     public function busca_status_tela()
     {
-        $ret    = [];
+        $ret = [];
+
         if ($_REQUEST['busca']) {
-            $termo              = $_REQUEST['busca'];
-            $status = $this->status->getStatusTela($termo);
-            if (sizeof($status) <= 0) {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'Tela não encontrada...';
+            $status = $this->status->getStatusTela($_REQUEST['busca']);
+
+            if (empty($status)) {
+                $o = new \stdClass();
+                $o->id = '-1';
+                $o->text = 'Tela não encontrada...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($status); $c++) {
-                    $ret[$c]['id']      = $status[$c]['stt_id'];
-                    $ret[$c]['text']    = $status[$c]['stt_nome'];
+                foreach ($status as $s) {
+                    $o = new \stdClass();
+                    $o->id   = $s->stt_id;
+                    $o->text = $s->stt_nome;
+                    $ret[] = $o;
                 }
             }
         }
+
         echo json_encode($ret);
         exit;
     }
 
     public function busca_menupai()
     {
-        $data = $_REQUEST;
-        $tipo = $data['campo'][0]['id_dep'];
+        $tipo  = $_REQUEST['campo'][0]['id_dep'];
         $menus = $this->menu->getMenuModulo($tipo);
-        // echo $this->db->last_query();
-        if (count($menus) > 0) {
-            $menu = array_column($menus, 'men_nome', 'men_id');
-            $menu_ret = json_encode($menu);
-            echo $menu_ret;
+
+        $menu = new \stdClass();
+
+        foreach ($menus as $m) {
+            $menu->{$m->men_id} = $m->men_nome;
         }
+
+        echo json_encode($menu);
         exit;
     }
 
     public function busca_tabela()
     {
-        $ret    = [];
-        // debug($_REQUEST,false);
+        $ret = [];
+
         if ($_REQUEST['busca']) {
-            $termo            = $_REQUEST['busca'];
-            $tabelas         = $this->admDados->getTabelaSearch($termo);
-            if (sizeof($tabelas) <= 0) {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'Tabela não encontrada...';
+            $tabelas = $this->admDados->getTabelaSearch($_REQUEST['busca']);
+
+            if (empty($tabelas)) {
+                $o = new \stdClass();
+                $o->id = '-1';
+                $o->text = 'Tabela não encontrada...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($tabelas); $c++) {
-                    $ret[$c]['id'] = $tabelas[$c]['table_name'];
-                    $ret[$c]['text'] = $tabelas[$c]['table_name'];
+                foreach ($tabelas as $t) {
+                    $o = new \stdClass();
+                    $o->id   = $t->table_name;
+                    $o->text = $t->table_name;
+                    $ret[] = $o;
                 }
             }
         }
+
         echo json_encode($ret);
     }
 
     public function busca_familia()
     {
-        $ret    = [];
-        // debug($_REQUEST,false);
+        $ret = [];
+
         if ($_REQUEST['busca']) {
-            $termo            = $_REQUEST['busca'];
-            $famil = new ProdutFamiliaModel();
-            $familias         = $famil->getFamiliaOrigem($termo);
-            if (sizeof($familias) <= 0) {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'Família não encontrada...';
+            $familias = (new ProdutFamiliaModel())->getFamiliaOrigem($_REQUEST['busca']);
+
+            if (empty($familias)) {
+                $o = new \stdClass();
+                $o->id = '-1';
+                $o->text = 'Família não encontrada...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($familias); $c++) {
-                    $ret[$c]['id'] = $familias[$c]['fam_codFam'];
-                    $ret[$c]['text'] = $familias[$c]['fam_codDescricao'];
+                foreach ($familias as $f) {
+                    $o = new \stdClass();
+                    $o->id   = $f->fam_codFam;
+                    $o->text = $f->fam_codDescricao;
+                    $ret[] = $o;
                 }
             }
         }
+
         echo json_encode($ret);
     }
 
     public function buscaProdutoClasse()
     {
-        $ret    = [];
-        // debug($_REQUEST,false);         
+        $ret = [];
+
         if ($_REQUEST['busca']) {
-            $termo            = $_REQUEST['busca'];
-            $prods            = new ProdutProdutoModel();
-            $produtos         = $prods->getProdutoClasse($termo);
-            if (sizeof($produtos) <= 0) {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'Produto não encontrado...';
+            $produtos = (new ProdutProdutoModel())->getProdutoClasse($_REQUEST['busca']);
+
+            if (empty($produtos)) {
+                $o = new \stdClass();
+                $o->id = '-1';
+                $o->text = 'Produto não encontrado...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($produtos); $c++) {
-                    $ret[$c]['id'] = $produtos[$c]['pro_id'];
-                    $ret[$c]['text'] = $produtos[$c]['pro_desinf'];
+                foreach ($produtos as $p) {
+                    $o = new \stdClass();
+                    $o->id   = $p->pro_id;
+                    $o->text = $p->pro_desinf;
+                    $ret[] = $o;
                 }
             }
         }
+
         echo json_encode($ret);
     }
 
     public function buscaDescricaoProdutoClasse()
     {
-        $ret    = [];
-        // debug($_REQUEST,false);         
+        $ret = [];
+
         if ($_REQUEST['busca']) {
-            $termo            = $_REQUEST['busca'];
-            $prods            = new ProdutProdutoModel();
-            $produtos         = $prods->getProdutoClasse($termo);
-            if (sizeof($produtos) <= 0) {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'Produto não encontrado...';
+            $produtos = (new ProdutProdutoModel())->getProdutoClasse($_REQUEST['busca']);
+
+            if (empty($produtos)) {
+                $o = new \stdClass();
+                $o->id = '-1';
+                $o->text = 'Produto não encontrado...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($produtos); $c++) {
-                    $ret[$c]['id'] = $produtos[$c]['pro_id'];
-                    $ret[$c]['text'] = $produtos[$c]['pro_despro'];
+                foreach ($produtos as $p) {
+                    $o = new \stdClass();
+                    $o->id   = $p->pro_id;
+                    $o->text = $p->pro_despro;
+                    $ret[] = $o;
                 }
             }
         }
+
         echo json_encode($ret);
     }
+
     public function buscaProdutoClasseSemIngrediente($ing = 0)
     {
-        $ret    = [];
-        // debug($_REQUEST,false);         
-        if ($_REQUEST['busca']) {
-            $termo            = $_REQUEST['busca'];
-            $prods            = new ProdutProdutoModel();
+        $ret = [];
+
+        if (!empty($_REQUEST['busca'])) {
+            $prods = new ProdutProdutoModel();
+
             if ($ing != 0) {
-                $produtos    = $prods->getProdutoClasse($termo, $ing);
+                $produtos = $prods->getProdutoClasse($_REQUEST['busca'], $ing);
             } else {
-                $produtos    = $prods->getProdutoSemIngrediente(false, $termo);
+                $produtos = $prods->getProdutoSemIngrediente(false, $_REQUEST['busca']);
             }
-            if (sizeof($produtos) <= 0) {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'Produto não encontrado...';
+
+            if (empty($produtos)) {
+                $o = new \stdClass();
+                $o->id = '-1';
+                $o->text = 'Produto não encontrado...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($produtos); $c++) {
-                    $ret[$c]['id'] = $produtos[$c]['pro_id'];
-                    $ret[$c]['text'] = $produtos[$c]['pro_despro'];
+                foreach ($produtos as $p) {
+                    $o = new \stdClass();
+                    $o->id   = $p->pro_id;
+                    $o->text = $p->pro_despro;
+                    $ret[] = $o;
                 }
             }
         }
-        echo json_encode($ret);
+
+        return $this->response->setJSON($ret);
     }
 
     public function buscaProduto()
     {
-        $ret    = [];
-        // debug($_REQUEST,false);
+        $ret = [];
+
         if ($_REQUEST['busca']) {
-            $termo            = $_REQUEST['busca'];
-            $prods            = new ProdutProdutoModel();
-            $produtos         = $prods->getProdutoSearch($termo);
-            if (sizeof($produtos) <= 0) {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'Produto não encontrado...';
+            $prods    = new ProdutProdutoModel();
+            $produtos = $prods->getProdutoSearch($_REQUEST['busca']);
+
+            if (empty($produtos)) {
+                $o = new \stdClass();
+                $o->id   = '-1';
+                $o->text = 'Produto não encontrado...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($produtos); $c++) {
-                    $ret[$c]['id'] = $produtos[$c]['pro_id'];
-                    $pro_despro = $produtos[$c]['pro_despro'];
-                    $ret[$c]['text'] = $pro_despro;
+                foreach ($produtos as $p) {
+                    $o = new \stdClass();
+                    $o->id   = $p->pro_id;
+                    $o->text = $p->pro_despro;
+                    $ret[] = $o;
                 }
             }
         }
+
         echo json_encode($ret);
     }
 
     public function buscaProdutoporLote()
     {
-        $ret    = [];
-        // debug($_REQUEST,false);
-        if ($_REQUEST['busca']) {
-            $termo            = $_REQUEST['busca'];
-            $lotesm            = new ProdutLoteModel();
-            $lote              = $lotesm->getLoteCodproLote(false, $termo);
-            if (sizeof($lote) <= 0) {
-                $ret['lotid'] = '-1';
+        $ret = new \stdClass();
+        $busca = $this->request->getVar('busca');
+        // debug($busca);
+        if (!empty($busca)) {
+            $lotesm = new ProdutLoteModel();
+            $lote   = $lotesm->getLoteCodproLote(false, $busca);
+
+            if (empty($lote)) {
+                $ret->lotid = '-1';
             } else {
-                $ret['lotid']     = $lote[0]['lot_id'];
-                $ret['despro'] = $lote[0]['pro_despro'];
+                $ret->proid  = $lote[0]->pro_id;
+                $ret->lotid  = $lote[0]->lot_id;
+                $ret->despro = $lote[0]->pro_despro;
             }
         }
-        echo json_encode($ret);
+
+        return $this->response->setJSON($ret);
     }
 
     public function buscaIngredienteClasse()
     {
-        $ret    = [];
-        // debug($_REQUEST,false);
-        if ($_REQUEST['busca']) {
-            $termo            = $_REQUEST['busca'];
-            $ingreds            = new ProdutIngredienteModel();
-            $ingredientes       = $ingreds->getIngredienteClasse($termo);
-            if (sizeof($ingredientes) <= 0) {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'Ingrediente não encontrado...';
+        $ret = [];
+
+        if (!empty($_REQUEST['busca'])) {
+            $ingreds      = new ProdutIngredienteModel();
+            $ingredientes = $ingreds->getIngredienteClasse($_REQUEST['busca']);
+
+            if (empty($ingredientes)) {
+                $o = new \stdClass();
+                $o->id   = '-1';
+                $o->text = 'Ingrediente não encontrado...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($ingredientes); $c++) {
-                    $ret[$c]['id'] = $ingredientes[$c]['ing_id'];
-                    $ret[$c]['text'] = $ingredientes[$c]['ing_nome'];
+                foreach ($ingredientes as $ing) {
+                    $o = new \stdClass();
+                    $o->id   = $ing->ing_id;
+                    $o->text = $ing->ing_nome;
+                    $ret[] = $o;
                 }
             }
         }
-        echo json_encode($ret);
+
+        return $this->response->setJSON($ret);
     }
 
     public function buscaTipoMovimentacao()
-{
-    $ret = [];
+    {
+        $ret = new \stdClass();
 
-    if (!empty($_REQUEST['busca'])) {
-        $termo    = $_REQUEST['busca'];
-        $tmovs    = new EstoquTipoMovimentacaoModel();
-        $tmovimen = $tmovs->getTipoMovimentacao($termo);
+        if (!empty($_REQUEST['busca'])) {
+            $tmovs    = new EstoquTipoMovimentacaoModel();
+            $tmovimen = $tmovs->getTipoMovimentacao($_REQUEST['busca']);
 
-        if (empty($tmovimen)) {
-            $ret['id']   = '-1';
-            $ret['text'] = 'Tipo de Movimentação não encontrado...';
-        } else {
-            $ret['id']     = $tmovimen[0]->tmo_id;
-            $ret['depori'] = $tmovimen[0]->dep_codorigem;
-            $ret['depdes'] = $tmovimen[0]->dep_coddestino;
-            $ret['deppad'] = $tmovimen[0]->dep_codpadrao;
+            if (empty($tmovimen)) {
+                $ret->id   = '-1';
+                $ret->text = 'Tipo de Movimentação não encontrado...';
+            } else {
+                $ret->id     = $tmovimen[0]->tmo_id;
+                $ret->depori = $tmovimen[0]->dep_codorigem;
+                $ret->depdes = $tmovimen[0]->dep_coddestino;
+                $ret->deppad = $tmovimen[0]->dep_codpadrao;
+            }
         }
-    }
 
-    return $this->response->setJSON($ret);
-}
+        return $this->response->setJSON($ret);
+    }
 
     public function buscaTipoAcao()
     {
-        $ret = [];
-    
+        $ret = new \stdClass();
+
         if (!empty($_REQUEST['busca'])) {
-            $termo  = $_REQUEST['busca'];
             $tacao  = new OcorreTipoAcaoModel();
-            $tacaos = $tacao->getTipoAcao($termo);
-    
+            $tacaos = $tacao->getTipoAcao($_REQUEST['busca']);
+
             if (empty($tacaos)) {
-                $ret['id']   = '-1';
-                $ret['text'] = 'Tipo de Movimentação não encontrado...';
+                $ret->id   = '-1';
+                $ret->text = 'Tipo de Movimentação não encontrado...';
             } else {
-                $ret['id']   = $tacaos[0]->tpa_id;
-                $ret['acao'] = $tacaos[0]->tpa_tipo;
+                $ret->id   = $tacaos[0]->tpa_id;
+                $ret->acao = $tacaos[0]->tpa_tipo;
             }
         }
+
         return $this->response->setJSON($ret);
     }
 
     public function buscatelasaplicaveis()
     {
-        $ret    = [];
-        // debug($_REQUEST,false);
+        $ret = [];
+
         if ($_REQUEST['tipoocor']) {
-            $termo            = $_REQUEST['tipoocor'];
-            $ttipo            = new OcorreTipoOcorrenciaModel();
-            $ttelas           = $ttipo->getTOTelasAplicaveis($termo);
-            if (sizeof($ttelas) <= 0) {
-                $ret['id'] = '-1';
-                $ret['text'] = 'Tipo de Ocorrência não encontrado...';
+            $ttipo  = new OcorreTipoOcorrenciaModel();
+            $ttelas = $ttipo->getTOTelasAplicaveis($_REQUEST['tipoocor']);
+
+            if (empty($ttelas)) {
+                $o = new \stdClass();
+                $o->id   = '-1';
+                $o->text = 'Tipo de Ocorrência não encontrado...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($ttelas); $c++) {
-                    $ret[$c]['id'] = $ttelas[$c]['tot_id'];
-                    $ret[$c]['text'] = '';
+                foreach ($ttelas as $t) {
+                    $o = new \stdClass();
+                    $o->id   = $t->tot_id;
+                    $o->text = '';
+                    $ret[] = $o;
                 }
             }
         }
+
         echo json_encode($ret);
     }
 
     public function buscaetiqcontroler()
     {
-        $ret    = [];
-        // debug($_REQUEST,false);
+        $ret = [];
+
         if ($_REQUEST['busca']) {
-            $termo            = $_REQUEST['busca'];
-            $mtela            = new ConfigTelaModel();
-            $tela             = $mtela->getTelaSearch($termo);
-            if($tela){
-                $tel_id = $tela[0]['tel_id'];
-                $tetqs            = new ConfigEtiquetaModel();
-                $tetquetas        = $tetqs->getEtiquetaTela($tel_id);
-                if (sizeof($tetquetas) <= 0) {
-                    $ret[0]['id'] = '-1';
-                    $ret[0]['text'] = 'Etiqueta não encontrada...';
+            $mtela = new ConfigTelaModel();
+            $tela  = $mtela->getTelaSearch($_REQUEST['busca'])[0];
+            // debug($tela, true);
+            if ($tela) {
+                $tetqs     = new ConfigEtiquetaModel();
+                $tetquetas = $tetqs->getEtiquetaTela($tela->tel_id);
+
+                if (empty($tetquetas)) {
+                    $o = new \stdClass();
+                    $o->id   = '-1';
+                    $o->text = 'Etiqueta não encontrada...';
+                    $ret[] = $o;
                 } else {
-                    $c = 0;
                     foreach ($tetquetas as $etq) {
-                        $ret[$c]['id'] = $etq->etq_id;
-                        $ret[$c]['text'] = $etq->etq_nome;
-                        $c++;
+                        $o = new \stdClass();
+                        $o->id   = $etq->etq_id;
+                        $o->text = $etq->etq_nome;
+                        $ret[] = $o;
                     }
                 }
             } else {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'Tela não encontrada...';
+                $o = new \stdClass();
+                $o->id   = '-1';
+                $o->text = 'Tela não encontrada...';
+                $ret[] = $o;
             }
         }
+
         echo json_encode($ret);
     }
 
-
     public function buscaimpressoras()
     {
-        $termo = $this->request->getGetPost('busca');
-        $model = new ConfigImpressoraModel();
+        $termo    = $this->request->getGetPost('busca');
+        $model    = new ConfigImpressoraModel();
         $printers = $model->getImpressoraSearch($termo);
-    
+
         $ret = [];
-    
+
         if (empty($printers)) {
-            $ret[] = [
-                'id'   => -1,
-                'text' => 'Impressora não encontrada...'
-            ];
+            $o = new \stdClass();
+            $o->id   = -1;
+            $o->text = 'Impressora não encontrada...';
+            $ret[] = $o;
         } else {
-            foreach ($printers as $printer) {
-                $ret[] = [
-                    'id'   => $printer->imp_id,
-                    'text' => $printer->imp_nome,
-                ];
+            foreach ($printers as $p) {
+                $o = new \stdClass();
+                $o->id   = $p->imp_id;
+                $o->text = $p->imp_nome;
+                $ret[] = $o;
             }
         }
+
         return $this->response->setJSON($ret);
     }
-    
 
+    public function busca_tipo_movimentacao()
+    {
+        $ret = [];
+
+        $tmoModel = new EstoquTipoMovimentacaoModel();
+        $lista = $tmoModel->getTipoMovimentacao();
+
+        foreach ($lista as $tmo) {
+            $ret[] = [
+                'id'   => $tmo->tmo_id,
+                'text' => $tmo->tmo_nome
+            ];
+        }
+
+        return $this->response->setJSON($ret);
+    }
 
     public function busca_dep_destino()
     {
-        $ret    = [];
+        $ret = [];
+
         if ($_REQUEST['busca']) {
-            $termo            = $_REQUEST['busca'];
-            $destinos         = new EstoquDepositoModel();
-            $lst_destinos     = $destinos->getDestino($termo);
-            if (sizeof($lst_destinos) <= 0) {
-                $ret[0]['id'] = '-1';
-                $ret[0]['text'] = 'Depósito de Destino não encontrado...';
+            $destinos = new EstoquDepositoModel();
+            $lst = $destinos->getDestino($_REQUEST['busca']);
+
+            if (empty($lst)) {
+                $o = new \stdClass();
+                $o->id   = '-1';
+                $o->text = 'Depósito de Destino não encontrado...';
+                $ret[] = $o;
             } else {
-                for ($c = 0; $c < sizeof($lst_destinos); $c++) {
-                    $ret[$c]['id'] = $lst_destinos[$c]['dep_codDep'];
-                    $ret[$c]['text'] = $lst_destinos[$c]['dep_desDep'];
+                foreach ($lst as $d) {
+                    $o = new \stdClass();
+                    $o->id   = $d->dep_codDep;
+                    $o->text = $d->dep_desDep;
+                    $ret[] = $o;
                 }
             }
         }
+
         echo json_encode($ret);
     }
 
     public function gravasessao()
     {
+        $ret = new \stdClass();
+
         if ($_REQUEST['msg']) {
-            $msg            = $_REQUEST['msg'];
-            session()->setFlashdata('msg', $msg);
-            $ret['erro'] = false;
+            session()->setFlashdata('msg', $_REQUEST['msg']);
+            $ret->erro = false;
         } else {
-            $ret['erro'] = true;
+            $ret->erro = true;
         }
+
         echo json_encode($ret);
     }
 
     public function verSessao()
     {
-        $sessao = session();
-        $ret['sessao'] = $sessao->logged_in;
+        $ret = new \stdClass();
+        $ret->sessao = session()->logged_in ?? false;
         echo json_encode($ret);
     }
 
-
-     public function buscaAcoesPorTipo()
+    public function buscaAcoesPorTipo()
     {
         $ret = [];
     
-        if (!isset($_REQUEST['busca'])) {
-            echo json_encode($ret);
-            exit;
-        }
+        $busca = $_REQUEST['busca'] ?? null;
     
-        $tpo_id = $_REQUEST['busca'];
+        if ($busca) {
     
-        $db = \Config\Database::connect('dbOcorrencia');
+            // Model correto para SUBTIPO
+            $subtipoModel = new OcorreModOcorrenciaModel();
     
-        $acoes = $db->table('oco_tpo_acao a')
-            ->select('a.tpa_id, t.tpa_nome')
-            ->join('oco_tipo_acao t', 't.tpa_id = a.tpa_id')
-            ->where('a.tpo_id', $tpo_id)
-            ->where('t.tpa_ativo', 'A')
-            ->orderBy('t.tpa_nome')
-            ->get()
-            ->getResultArray();
+            // Método coerente com o que está buscando
+            $lst = $subtipoModel->getSubtipoPorTipo($busca);
     
-        if (empty($acoes)) {
-            $ret[] = [
-                'id'   => -1,
-                'text' => 'Nenhuma ação encontrada'
-            ];
-        } else {
-            foreach ($acoes as $acao) {
-                $ret[] = [
-                    'id'   => $acao['tpa_id'],
-                    'text' => $acao['tpa_nome'],
-                ];
+            if (empty($lst)) {
+    
+                $o = new \stdClass();
+                $o->id   = -1;
+                $o->text = 'Nenhum Subtipo encontrado';
+                $ret[] = $o;
+    
+            } else {
+    
+                foreach ($lst as $l) {
+                    $o = new \stdClass();
+                    $o->id   = $l->sut_id;     // ID do Subtipo
+                    $o->text = $l->sut_nome;   // Nome do Subtipo
+                    $ret[] = $o;
+                }
             }
         }
     
@@ -610,31 +719,39 @@ class Buscas extends BaseController
         exit;
     }
 
+    public function buscaSubtipoPorTipo()
+    {
+        $ret = [];
+
+        if ($_REQUEST['busca']) {
+            $subtipos = new OcorreModOcorrenciaModel();
+            $lst = $subtipos->getModOcorrenciaPorTipo($_REQUEST['busca']);
+            if (empty($lst)) {
+                $o = new \stdClass();
+                $o->id   = -1;
+                $o->text = 'Nenhum Subtipo encontrado';
+                $ret[] = $o;
+            } else {
+                foreach ($lst as $l) {
+                    $o = new \stdClass();
+                    $o->id   = $l->moc_id;
+                    $o->text = $l->moc_nome;
+                    $ret[] = $o;
+                }
+            }
+        }
+
+        echo json_encode($ret);
+        exit;
+    }
 
     public function verificaSessao()
     {
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            $ret = ['status' => 'sessao_ativa'];
-            // echo "A sessão está ativa.";
-        } else {
-            $ret = ['status' => 'sessao_expirada'];
-            // echo "A sessão não está ativa.";
-        }
-        // $sessionCookieName = config('App')->sessionCookieName; // Nome padrão é 'ci_session'
-        // $sessionValue = $this->request->getCookie($sessionCookieName);
-        // // debug($sessionValue, true);
+        $ret = new \stdClass();
+        $ret->status = (session_status() === PHP_SESSION_ACTIVE)
+            ? 'sessao_ativa'
+            : 'sessao_expirada';
 
-        // $tempoLimite = 1795; // 30 minutos
-        // $sessionPath = WRITEPATH . 'session'; // Diretório onde as sessões são armazenadas
-        // $sessionFile = $sessionPath . DIRECTORY_SEPARATOR . 'ci_session' . $sessionValue;
-        // $ret = ['status' => 'sessao_ativa'];
-        // if(file_exists($sessionFile)){
-        //     if (time() - filemtime($sessionFile) > $tempoLimite) {
-        //         $ret = ['status' => 'sessao_expirada'];
-        //     }
-        // } else {
-        //     $ret = ['status' => 'sessao_expirada'];
-        // }
         echo json_encode($ret);
     }
 
@@ -650,24 +767,25 @@ class Buscas extends BaseController
 
             if ($referer) {
                 $path = parse_url($referer, PHP_URL_PATH); // extrai apenas "/produtos/editar/5"
-                
+
                 $segments = explode('/', trim($path, '/')); // quebra em ['produtos', 'editar', '5']
-                
+
                 $controller = $segments[0] ?? null; // pega 'produtos'
 
-                if(strtolower($controller) != 'cfgetiqueta'){
+                if (strtolower($controller) != 'cfgetiqueta') {
                     $etiq = false;
                 }
             }
 
             $telas = $this->tela->getTelaId($termo)[0];
-            if (isset($telas['tel_model']) && $telas['tel_model'] != null) {
-                $model = $telas['tel_model'];
+
+            if (isset($telas->tel_model) && $telas->tel_model != null) {
+                $model = $telas->tel_model;
                 $compl_model = substr($model, 0, 6);
                 $pasta = "App\\Models\\" . $compl_model . "\\";
                 $model_atual = model($pasta . $model);
                 $view   = $model_atual->view;
-                if(isset($model_atual->viewoutra)){
+                if (isset($model_atual->viewoutra)) {
                     $view   = $model_atual->viewoutra;
                 }
                 $campos_tab = $this->admDados->getCampos($view);
@@ -681,7 +799,7 @@ class Buscas extends BaseController
                     $ret[0]['text'] = 'Campos não encontrados...';
                 } else {
                     $c = 0;
-                    if($etiq){
+                    if ($etiq) {
                         $ret[$c]['id']      = '99';
                         $ret[$c]['text']    = 'Texto Livre';
                         $c++;
@@ -710,7 +828,7 @@ class Buscas extends BaseController
             }
         }
         // debug($ret, true);
-        if($busca){
+        if ($busca) {
             return $ret;
         } else {
             echo json_encode($ret);

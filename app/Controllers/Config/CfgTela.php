@@ -2,19 +2,21 @@
 
 namespace App\Controllers\Config;
 
-use App\Controllers\BaseController;
-use App\Libraries\MyCampo;
 use App\Models\CommonModel;
-use App\Models\Config\ConfigDicDadosModel;
-use App\Models\Config\ConfigModuloModel;
-use App\Models\Config\ConfigTelaListaModel;
+use App\Controllers\BaseController;
+use App\Traits\ForeignKeyUsageChecker;
+use App\Entities\Config\EntCfgTela;
+use App\Entities\Config\EntCfgTelaLista;
 use App\Models\Config\ConfigTelaModel;
+use App\Models\Config\ConfigModuloModel;
 use App\Models\Config\ConfigUsuarioModel;
-use ReflectionClass;
-use ReflectionMethod;
+use App\Models\Config\ConfigDicDadosModel;
+use App\Models\Config\ConfigTelaListaModel;
 
 class CfgTela extends BaseController
 {
+    use ForeignKeyUsageChecker;
+
     public $data = [];
     public $permissao = '';
     public $tela;
@@ -94,12 +96,12 @@ class CfgTela extends BaseController
     public function lista()
     {
         // if (!$telas = cache('telas')) {
-            $campos = montaColunasCampos($this->data, 'tel_id');
-            $dados_tela = $this->tela->getTelaId();
-            $telas = [
-                'data' => montaListaColunas($this->data, 'tel_id', $dados_tela, $campos[3]),
-            ];
-            cache()->save('telas', $telas, 60000);
+        $campos = montaColunasCampos($this->data, 'tel_id');
+        $dados_tela = $this->tela->getTelaId();
+        $telas = [
+            'data' => montaListaColunasEnt($this->data, 'tel_id', $dados_tela, $campos[3]),
+        ];
+        cache()->save('telas', $telas, 60000);
         // }
 
         echo json_encode($telas);
@@ -115,11 +117,13 @@ class CfgTela extends BaseController
     {
         $this->model_atual = $this->tela;
 
-        $fields = $this->tela->defCampos([], false, '', '');
+        // Entity (OBJ)
+        $ent = new EntCfgTela();
+        $fields = $ent->defCampos(false);
 
         $secao[0] = 'Dados Gerais';
         $campos[0][0] = $fields['tel_id'];
-        $campos[0][1] = $fields['tel_modulo'];
+        $campos[0][1] = $fields['mod_id'];
         $campos[0][2] = $fields['tel_nome'];
         $campos[0][3] = $fields['tel_icon'];
         $campos[0][4] = $fields['tel_txtb'];
@@ -135,14 +139,16 @@ class CfgTela extends BaseController
         $secao[2] = 'Regras do Cadastro';
         $campos[2][0] = $fields['tel_regc'];
 
-        $this->data['secoes'] = $secao;
-        $this->data['campos'] = $campos;
+        $this->data['secoes']  = $secao;
+        $this->data['campos']  = $campos;
         $this->data['destino'] = 'store';
 
         echo view('vw_edicao', $this->data);
     }
 
-    public function show($id){
+
+    public function show($id)
+    {
         $this->edit($id, true);
     }
     /**
@@ -154,79 +160,90 @@ class CfgTela extends BaseController
      */
     public function edit($id, $show = false)
     {
-        $dados_tela = $this->tela->getTelaId($id)[0];
+        $dados_tela = (array) $this->tela->getTelaId($id)[0];
         $this->model_atual = $this->tela;
         // debug($dados_tela['tel_model']);
         if (isset($dados_tela['tel_model']) && $dados_tela['tel_model'] != null) {
             $model = $dados_tela['tel_model'];
             $compl_model = substr($model, 0, 6);
-            $pasta = "App\\Models\\".$compl_model."\\";
-            // debug($pasta.$model);
-            $this->model_atual = model($pasta . $model);
+            $pasta = "App\\Models\\" . $compl_model . "\\";
+            // debug($pasta . $model);
+            $nomeModel = $pasta . $model;
+            $this->model_atual = new $nomeModel();
+
+            // $this->model_atual = new model($pasta . $model);
             // var_dump($this->model_atual);  
         }
         // debug($this->model_atual);
         $tabela = $this->model_atual->table;
         $view   = $this->model_atual->view;
-        if(isset($this->model_atual->viewlista)){
+        if (isset($this->model_atual->viewlista)) {
             $view   = $this->model_atual->viewlista;
         }
         // debug($view, true);
-        $fields = $this->tela->defCampos($dados_tela, $show, $tabela, $view);
+        $ent = new EntCfgTela($dados_tela);
+        $fields = $ent->defCampos($show, $tabela, $view);
+        // debug($fields, true);
 
         $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['tel_id'];
-        $campos[0][1] = $fields['tel_modulo'];
-        $campos[0][2] = $fields['tel_nome'];
-        $campos[0][3] = $fields['tel_icon'];
-        $campos[0][4] = $fields['tel_txtb'];
-        $campos[0][5] = $fields['tel_ident'];
-        $campos[0][6] = 'vazio2';
-        $campos[0][7] = $fields['tel_cont'];
-        $campos[0][8] = $fields['tel_mode'];
-        $campos[0][9] = $fields['tel_desc'];
+        $campos[0][] = $fields['tel_id'];
+        $campos[0][] = $fields['mod_id'];
+        $campos[0][] = $fields['tel_nome'];
+        $campos[0][] = $fields['tel_icon'];
+        $campos[0][] = $fields['tel_txtb'];
+        $campos[0][] = $fields['tel_ident'];
+        $campos[0][] = 'vazio2';
+        $campos[0][] = $fields['tel_cont'];
+        $campos[0][] = $fields['tel_mode'];
+        $campos[0][] = $fields['tel_desc'];
 
         $secao[1] = 'Regras Gerais';
-        $campos[1][0] = $fields['tel_regg'];
+        $campos[1][] = $fields['tel_regg'];
 
         $secao[2] = 'Regras do Cadastro';
-        $campos[2][0] = $fields['tel_regc'];
+        $campos[2][] = $fields['tel_regc'];
 
         $secao[3] = 'Base de Dados';
-        $campos[3][0] = $fields['tel_tabela'];
-        $campos[3][1] = $fields['tel_view'];
-        $campos[3][2] = $fields['tel_camp'];
-        $campos[3][3] = $fields['tel_trel'];
-        $campos[3][4] = $fields['tel_camp_view'];
+        $campos[3][] = $fields['tel_tabela'];
+        $campos[3][] = $fields['tel_view'];
+        $campos[3][] = $fields['tel_camp'];
+        $campos[3][] = $fields['tel_trel'];
+        $campos[3][] = $fields['tel_camp_view'];
 
         $secao[4] = 'Listagem';
         $displ[4] = 'tabela';
         $dados_lista = $this->telalista->getListagem($id);
+        // debug($dados_lista, true);
+        // $entLista = new EntCfgTelaLista();
+
         if (count($dados_lista) > 0) {
             for ($c = 0; $c < count($dados_lista); $c++) {
-                $this->defCamposLista($dados_lista[$c], $c, $show, $tabela, $view);
-                $campos[4][$c][0] = $this->lis_id;
-                $campos[4][$c][1] = $this->lis_campo;
-                $campos[4][$c][2] = $this->lis_rotulo;
-                if(!$show){
-                    $campos[4][$c][3] = $this->bt_add;
-                    $campos[4][$c][4] = $this->bt_del;
+                $fieldslis = $ent->defCamposLista($dados_lista[$c], $show, $c, $view);
+                // $this->defCamposLista($dados_lista[$c], $c, $show, $tabela, $view);
+                $campos[4][$c][0] = $fieldslis['lis_id'];
+                $campos[4][$c][1] = $fieldslis['lis_campo'];
+                $campos[4][$c][2] = $fieldslis['lis_rotulo'];
+                if (!$show) {
+                    $campos[4][$c][3] = $fieldslis['bt_add'];
+                    $campos[4][$c][4] = $fieldslis['bt_del'];
                 } else {
                     $campos[4][$c][3] = '';
                     $campos[4][$c][4] = '';
                 }
             }
         } else {
-            $this->defCamposLista($dados_tela, 0, $show, $tabela, $view);
-            $campos[4][0][0] = $this->lis_id;
-            $campos[4][0][1] = $this->lis_campo;
-            $campos[4][0][2] = $this->lis_rotulo;
-            if(!$show){
-                $campos[4][0][3] = $this->bt_add;
-                $campos[4][0][4] = $this->bt_del;
+            $c = 0;
+            $fieldslis = $ent->defCamposLista($dados_tela, $show, $c, $view);
+            // $this->defCamposLista($dados_tela, 0, $show, $tabela, $view);
+            $campos[4][$c][0] = $fieldslis['lis_id'];
+            $campos[4][$c][1] = $fieldslis['lis_campo'];
+            $campos[4][$c][2] = $fieldslis['lis_rotulo'];
+            if (!$show) {
+                $campos[4][$c][3] = $fieldslis['bt_add'];
+                $campos[4][$c][4] = $fieldslis['bt_del'];
             } else {
-                $campos[4][0][3] = '';
-                $campos[4][0][4] = '';
+                $campos[4][$c][3] = '';
+                $campos[4][$c][4] = '';
             }
         }
 
@@ -257,31 +274,34 @@ class CfgTela extends BaseController
      */
     public function addCampoLista($id, $ind)
     {
-        $dados_tela = $this->tela->getTelaId($id)[0];
+        $dados_tela = (array) $this->tela->getTelaId($id)[0];
         // debug($dados_tela);
         $this->model_atual = $this->tela;
         // debug($dados_tela['tel_model']);
         if (isset($dados_tela['tel_model']) && $dados_tela['tel_model'] != null) {
             $model = $dados_tela['tel_model'];
             $compl_model = substr($model, 0, 6);
-            $pasta = "App\\Models\\".$compl_model."\\";
+            $pasta = "App\\Models\\" . $compl_model . "\\";
             $this->model_atual = model($pasta . $model);
         }
         $tabela = $this->model_atual->table;
         $view   = $this->model_atual->view;
-        if(isset($this->model_atual->viewlista)){
+        if (isset($this->model_atual->viewlista)) {
             $view   = $this->model_atual->viewlista;
         }
-        
+
         $lista['tel_id'] = $dados_tela['tel_id'];
 
-        $this->defCamposLista($lista, $ind, false, $tabela, $view);
+        $ent = new EntCfgTela($dados_tela);
+        // $fields = $ent->defCampos(false, $tabela, $view);
 
-        $campo[0] = $this->lis_id;
-        $campo[1] = $this->lis_campo;
-        $campo[2] = $this->lis_rotulo;
-        $campo[3] = $this->bt_add;
-        $campo[4] = $this->bt_del;
+        $fieldslis = $ent->defCamposLista($lista, false, $ind, $view);
+
+        $campo[0] = $fieldslis['lis_id'];
+        $campo[1] = $fieldslis['lis_campo'];
+        $campo[2] = $fieldslis['lis_rotulo'];
+        $campo[3] = $fieldslis['bt_add'];
+        $campo[4] = $fieldslis['bt_del'];
 
         echo json_encode($campo);
         exit;
@@ -296,83 +316,34 @@ class CfgTela extends BaseController
      */
     public function delete($id)
     {
+        // $ret = [];
+        // try {
+        //     $this->tela->delete($id);
+        //     $ret['erro'] = false;
+        //     session()->setFlashdata('msg', 'Tela Excluída com Sucesso');
+        // } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+        //     $ret['erro'] = true;
+        //     $ret['msg']  = 'Não foi possível Excluir a Tela, Verifique!<br><br>';
+        //     $ret['msg'] .= 'Esta Tela possui relacionamentos em outros cadastros!';
+        // }
+        // echo json_encode($ret);
+
         $ret = [];
+
         try {
+            // Checa uso do status em outros bancos
+            $this->verificarUsoEmRelacionamentos('cfg_tela', 'tel_id', (int) $id);
+
+            // Soft delete
             $this->tela->delete($id);
             $ret['erro'] = false;
             session()->setFlashdata('msg', 'Tela Excluída com Sucesso');
-        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+        } catch (\Exception $e) {
             $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível Excluir a Tela, Verifique!<br><br>';
-            $ret['msg'] .= 'Esta Tela possui relacionamentos em outros cadastros!';
+            $ret['msg']  = 3;
         }
+
         echo json_encode($ret);
-    }
-
-    /**
-     * Definição de Campos
-     * def_campos
-     *
-     * @param array $dados
-     * @return void
-     */
-    
-    public function defCamposLista($lista = '', $pos = 0, $show = false, $tabela = '', $view ='')
-    {
-        $campos_tab = $this->dicionario->getCampos($view);
-        // debug($campos_tab);
-        $campos_lis = array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME');
-
-        // $campos_tab = $this->dicionario->getCampos($view);
-        // debug($campos_tab);
-        // $campos_lis = array_column($campos_tab, 'NOME_COMPLETO', 'COLUMN_NAME');
-
-        $id             = new MyCampo('cfg_tela_lista', 'lis_id');
-        $id->nome       = $id->nome . "[$pos]";
-        $id->id         = $id->id . "[$pos]";
-        $id->valor      = isset($lista['lis_id']) ? $lista['lis_id'] : '';
-        $this->lis_id   = $id->crOculto();
-
-        $camp           = new MyCampo('cfg_tela_lista', 'lis_campo');
-        $camp->nome     = $camp->nome . "[$pos]";
-        $camp->id       = $camp->id . "[$pos]";
-        $camp->opcoes         = $campos_lis;
-        $camp->valor          = (isset($lista['lis_campo'])) ? $lista['lis_campo'] : '';
-        $camp->selecionado    = $camp->valor;
-        $camp->dispForm        = '2col';
-        $camp->classep        = 'semmb';
-        $camp->leitura        = $show;
-        $this->lis_campo      = $camp->crSelect();
-
-        $rotu           = new MyCampo('cfg_tela_lista', 'lis_rotulo');
-        $rotu->nome     = $rotu->nome . "[$pos]";
-        $rotu->id       = $rotu->id . "[$pos]";
-        $rotu->valor          = (isset($lista['lis_rotulo'])) ? $lista['lis_rotulo'] : '';
-        $rotu->dispForm        = '2col';
-        $rotu->classep        = 'semmb';
-        $rotu->leitura      = $show;
-        $this->lis_rotulo       = $rotu->crInput();
-
-        $atrib['data-index'] = $pos;
-        $add            = new MyCampo();
-        $add->attrdata  = $atrib;
-        $add->nome      = "bt_add[$pos]";
-        $add->id        = "bt_add[$pos]";
-        $add->i_cone    = "<i class='fas fa-plus'></i>";
-        $add->place     = "Adicionar Campo";
-        $add->classep   = "btn-outline-success btn-sm bt-repete listagem";
-        $add->funcChan  = "addCampo('".base_url("CfgTela/addCampoLista/".$lista['tel_id']) . "','listagem',this)";
-        $this->bt_add   = $add->crBotao();
-
-        $del            = new MyCampo();
-        $del->attrdata  = $atrib;
-        $del->nome      = "bt_del[$pos]";
-        $del->id        = "bt_del[$pos]";
-        $del->i_cone    = "<i class='fas fa-trash'></i>";
-        $del->classep   = "btn-outline-danger btn-sm bt-exclui listagem";
-        $del->funcChan  = "exclui_campo('listagem',this)";
-        $del->place     = "Excluir Campo";
-        $this->bt_del   = $del->crBotao();
     }
 
     /**

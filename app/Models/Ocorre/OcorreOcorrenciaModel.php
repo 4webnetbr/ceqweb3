@@ -18,13 +18,13 @@ class OcorreOcorrenciaModel extends Model
 
     protected $allowedFields = [
         'oco_id',
+        'tel_id',
         'tpo_id',
         'moc_id',
         'tpa_id',
         'oco_descricao',
-        'lot_lote',
         'pro_id',
-        'pro_despro',
+        'lot_id',
         'oco_qtd',
         'oco_data',
         'stt_id',
@@ -33,13 +33,14 @@ class OcorreOcorrenciaModel extends Model
     ];
 
     protected $validationRules = [
-        'oco_descricao' => 'required|max_length[100]|min_length[3]',
+        'oco_descricao' => 'required|max_length[50]|min_length[3]',
     ];
+
 
     protected $validationMessages = [
         'oco_descricao'   => [
             'required'    => 'O campo Nome do Tipo da Ocorrência é Obrigatório',
-            'max_length'  => 'O Campo deve Conter no Máximo 100 Caracteres',
+            'max_length'  => 'O Campo deve Conter no Máximo 50 Caracteres',
             'min_length'  => 'O Campo Devente Conter no Minimo 3 Caracteres',
         ],
     ];
@@ -70,46 +71,45 @@ class OcorreOcorrenciaModel extends Model
         (new LogMonModel())->insertLog($this->table, 'Excluído', $data['id'][0], $data['data']);
         return $data;
     }
-    
-    
+
+
     public function getStatusIdByNome(string $nome, ?int $telId = null): ?int
     {
         $builder = $this->db->table('config_ceqweb_db.cfg_status')
             ->select('stt_id')
             ->where('stt_nome', $nome);
-    
+
         if ($telId !== null) {
             $builder->where('tel_id', $telId);
         }
-    
+
         $result = $builder
             ->orderBy('stt_id', 'DESC')
             ->get()
             ->getResult();
-    
+
         return $result[0]->stt_id ?? null;
     }
-        
+
 
     public function getListaCompleta()
     {
         $builder = $this->db->table($this->view);
-    
+
         return $builder
             ->get()
             ->getResult();
     }
-    
 
     public function getById($id)
     {
         $builder = $this->db->table($this->view)
             ->where('oco_id', $id);
-    
+
         $result = $builder
             ->get()
             ->getResult();
-    
+
         return $result[0] ?? null;
     }
 
@@ -118,38 +118,46 @@ class OcorreOcorrenciaModel extends Model
     {
         $builder = $this->db->table('oco_moc_acao')
             ->where('moc_id', $moc_id);
-    
+
         return $builder
             ->get()
             ->getResult();
     }
-    
+
+    public function getListaOcorrenciaPdf($oco_id)
+    {
+        return $this->db
+            ->table('vw_oco_ocorrencia_relac')
+            ->where('oco_id', $oco_id)
+            ->get()
+            ->getResult();
+    }
+
 
     public function salvarOcorrencia(EntOcoOcorrencia $ocorrencia)
     {
+        $ret   = [];
+        $erros = [];
+
+        $this->db->transBegin();
+
         try {
-            $this->db->transBegin();
 
             $statusPendente = $this->getStatusIdByNome('Pendente', 56);
             $statusFinaliza = $this->getStatusIdByNome('Finalização automática', 56);
 
-            // padrão
             $status = $statusPendente;
-
-            // AÇÃO
             $tpa_id = $ocorrencia->tpa_id ?? null;
-
-            // MOVIMENTAÇÃO
             $tmo_id = $ocorrencia->tmo_id ?? null;
 
-            // REGRA DE NEGÓCIO
             if ((int) $tpa_id === 8) {
                 $status = $statusFinaliza;
             }
 
-            // MODELO DA OCORRÊNCIA
             $modelMod = new OcorreModOcorrenciaModel();
             $modelo   = $modelMod->buscarPorTipo($ocorrencia->tpo_id);
+
+            $moc_id = null;
             if (!empty($modelo) && isset($modelo[0])) {
                 $moc_id = is_object($modelo[0])
                     ? ($modelo[0]->moc_id   ?? null)
@@ -173,67 +181,73 @@ class OcorreOcorrenciaModel extends Model
                 $insert['oco_justi'] = $ocorrencia->oco_justi;
             }
 
+            // SALVAR
             if (!$this->insert($insert)) {
-                throw new \Exception('Erro ao inserir ocorrência.');
+                $erros = $this->errors();
+                throw new \Exception('erro_validacao');
             }
 
             $this->db->transCommit();
+            cache()->clean();
 
-            return [
-                'erro' => false,
-                'msg'  => 'Ocorrência registrada com sucesso!',
-                'url'  => site_url('OcoOcorrencia'),
-            ];
-
+            $ret['erro'] = false;
+            $ret['msg']  = 'Ocorrência registrada com Sucesso!!!';
+            session()->setFlashdata('msg', $ret['msg']);
+            $ret['url']  = site_url('OcoOcorrencia');
         } catch (\Exception $e) {
 
             $this->db->transRollback();
 
-            return [
-                'erro' => true,
-                'msg'  => 'Erro ao gravar a Ocorrência:<br><br>' . $e->getMessage(),
-            ];
+            $ret['erro'] = true;
+            $ret['msg']  = 'Não foi possível gravar a Ocorrência, Verifique!<br><br>';
+
+            if (!empty($erros)) {
+                foreach ($erros as $erro) {
+                    $ret['msg'] .= $erro . '<br>';
+                }
+            } else {
+                $ret['msg'] .= $e->getMessage();
+            }
         }
+        return $ret;
     }
 
 
     public function atualizarOcorrencia(int $id, EntOcoOcorrencia $ocorrencia)
     {
+        $ret   = [];
+        $erros = [];
+
+        $this->db->transBegin();
+
         try {
-            $this->db->transBegin();
-    
+
             $registro = $this->find($id);
             if (!$registro) {
                 throw new \Exception('Ocorrência não encontrada.');
             }
-    
-            // Status
+
             $statusPendente = $this->getStatusIdByNome('Pendente', 56);
             $statusFinaliza = $this->getStatusIdByNome('Finalização automática', 56);
-    
-            // padrão
+
             $status = $statusPendente;
-    
-            // AÇÃO
             $tpa_id = $ocorrencia->tpa_id ?? null;
-    
-            // MOVIMENTAÇÃO
             $tmo_id = $ocorrencia->tmo_id ?? null;
-    
-            // REGRA DE NEGÓCIO
+
             if ((int) $tpa_id === 8) {
                 $status = $statusFinaliza;
             }
-    
-            // MODELO DA OCORRÊNCIA
+
             $modelMod = new OcorreModOcorrenciaModel();
             $modelo   = $modelMod->buscarPorTipo($ocorrencia->tpo_id);
+
+            $moc_id = null;
             if (!empty($modelo) && isset($modelo[0])) {
                 $moc_id = is_object($modelo[0])
                     ? ($modelo[0]->moc_id   ?? null)
                     : ($modelo[0]['moc_id'] ?? null);
             }
-    
+
             $atualiza = [
                 'tpo_id'        => $ocorrencia->tpo_id,
                 'oco_descricao' => $ocorrencia->oco_descricao,
@@ -246,46 +260,55 @@ class OcorreOcorrenciaModel extends Model
                 'tpa_id'        => $tpa_id,
                 'tmo_id'        => $tmo_id,
             ];
-    
+
             if (!empty($ocorrencia->oco_justi)) {
                 $atualiza['oco_justi'] = $ocorrencia->oco_justi;
             }
-    
+
+            // ATUALIZAR
             if (!$this->update($id, $atualiza)) {
-                throw new \Exception('Erro ao atualizar ocorrência.');
+                $erros = $this->errors();
+                throw new \Exception('erro_validacao');
             }
-    
+
             $this->db->transCommit();
-    
-            return [
-                'erro' => false,
-                'msg'  => 'Ocorrência atualizada com sucesso!',
-                'url'  => site_url('OcoOcorrencia'),
-            ];
-    
+            cache()->clean();
+
+            $ret['erro'] = false;
+            $ret['msg']  = 'Ocorrência atualizada com Sucesso!';
+            session()->setFlashdata('msg', $ret['msg']);
+            $ret['url']  = site_url('OcoOcorrencia');
         } catch (\Exception $e) {
-    
+
             $this->db->transRollback();
-    
-            return [
-                'erro' => true,
-                'msg'  => 'Erro ao atualizar a ocorrência:<br><br>' . $e->getMessage(),
-            ];
+
+            $ret['erro'] = true;
+            $ret['msg']  = 'Não foi possível atualizar a Ocorrência, Verifique!<br><br>';
+
+            if (!empty($erros)) {
+                foreach ($erros as $erro) {
+                    $ret['msg'] .= $erro . '<br>';
+                }
+            } else {
+                $ret['msg'] .= $e->getMessage();
+            }
         }
+
+        return $ret;
     }
-    
-        
+
+
     public function getSelectPorTipo(int $tpo_id): array
     {
         $modelMod    = new OcorreModOcorrenciaModel();
         $ocorrencias = $modelMod->buscarPorTipo($tpo_id);
-    
+
         $retorno = [];
-    
+
         foreach ($ocorrencias as $ocorrencia) {
             $retorno[$ocorrencia->moc_id] = $ocorrencia->moc_nome;
         }
-    
+
         return $retorno;
     }
 }

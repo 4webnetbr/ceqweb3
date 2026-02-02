@@ -64,33 +64,18 @@ class ConfigEtiquetaModel extends Model
 
     protected $logdb;
 
-    /**
-     * This method saves the session "usu_id" value to "created_by" and "updated_by" array
-     * elements before the row is inserted into the database.
-     *
-     */
     protected function depoisInsert(array $data)
     {
-       (new LogMonModel())->insertLog($this->table, 'Incluído', $data['id'], $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Incluído', $data['id'], $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "updated_by" array element before
-     * the row is inserted into the database.
-     *
-     */
     protected function depoisUpdate(array $data)
     {
         (new LogMonModel())->insertLog($this->table, 'Alteração', $data['id'][0], $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "deletede_by" array element before
-     * the row is inserted into the database.
-     *
-     */
     protected function depoisDelete(array $data)
     {
         (new LogMonModel())->insertLog($this->table, 'Excluído', $data['id'][0], $data['data']);
@@ -102,57 +87,64 @@ class ConfigEtiquetaModel extends Model
 
     public function getEtiqueta($etq_id = false)
     {
-        $builder = $this->builder($this->view);
+        $db = db_connect('default');
+        $builder = $db->table($this->view);
         $builder->select('*');
-    
+
+        // Filtra por ID da etiqueta, se informado
         if ($etq_id) {
             $builder->where('etq_id', $etq_id);
         }
-    
         $builder->orderBy('etq_ativo, etq_nome');
-    
+
         return $builder->get()->getResult();
     }
 
     public function getEtiquetaTela($tel_id = false)
     {
+        // Se não houver tela informada, retorna array vazio
         if (!$tel_id) {
             return [];
         }
-    
-        $builder = $this->builder($this->view);
+
+        $db = db_connect('default');
+        $builder = $db->table($this->view);
         $builder->select('*');
         $builder->where('tel_id', $tel_id);
         $builder->where('etq_ativo', 'A');
         $builder->orderBy('etq_ativo, etq_nome');
-    
+
+        // Retorna o resultado da consulta
         return $builder->get()->getResult();
     }
 
 
     public function getEtiquetaLayout($lay_id = false)
     {
-        $builder = $this->builder($this->view);
+        // Inicializa o builder utilizando a VIEW do model
+        $db = db_connect('default');
+        $builder = $db->table($this->view);
         $builder->select('*');
-    
         if ($lay_id) {
             $builder->where('let_id', $lay_id);
         }
-    
-        $builder->where('etq_ativo', 'A');
-        $builder->orderBy('etq_ativo, etq_nome');
-    
+
+        $builder->where('etq_ativo', 'A');        // Apenas etiquetas ativas
+        $builder->orderBy('etq_ativo, etq_nome'); // Ordena por status e nome
+
         return $builder->get()->getResult();
     }
 
 
     public function getEtiquetaSearch($termo)
     {
-        $builder = $this->builder($this->view);
+        // Inicializa o builder utilizando a VIEW do model
+        $db = db_connect('default');
+        $builder = $db->table($this->view);
         $builder->select('*');
-        $builder->where('etq_ativo', 'A');
-        $builder->like('etq_nome', $termo, 'after');
-      
+        $builder->where('etq_ativo', 'A');           // Apenas etiquetas ativas
+        $builder->like('etq_nome', $termo, 'after'); // Aplica busca pelo nome da etiqueta
+
         return $builder->get()->getResult();
     }
 }

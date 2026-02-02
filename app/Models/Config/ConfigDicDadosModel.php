@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Summary of namespace App\Models\Config
  * Classe para tratamento das Tabelas e Campos do Sistema
@@ -7,6 +8,7 @@
  * Criada por: Douglas Junior Ferreira
  * Dezembro/2023
  */
+
 namespace App\Models\Config;
 
 use CodeIgniter\Model;
@@ -19,10 +21,11 @@ class ConfigDicDadosModel extends Model
     protected $primaryKey       = 'table_name';
     protected $returnType       = 'array';
 
-    protected $allowedFields    = ['table_name',
-                                    'table_rows',
-                                    'table_comment',
-                                ];
+    protected $allowedFields    = [
+        'table_name',
+        'table_rows',
+        'table_comment',
+    ];
 
     /**
      * Summary of getTabelas
@@ -34,58 +37,66 @@ class ConfigDicDadosModel extends Model
     public function getTabelas($nome_tabela = false)
     {
         $this->DBGroup          = 'dbEstoque';
-
-        $this->builder()
-                ->select(['table_schema','table_name','table_rows','table_comment']);
+        $db      = db_connect($this->DBGroup);
+        $builder = $db->table('information_schema.tables');
+        $builder
+            ->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
 
         if ($nome_tabela) {
-            $this->builder()->where('table_name', $nome_tabela);
+            $builder->where('table_name', $nome_tabela);
         }
-        $this->builder()->where('table_schema', 'estoque_db');
-        $this->builder()->orderBy('table_name', 'ASC');
+        $builder->where('table_schema', 'estoque_db');
+        $builder->orderBy('table_name', 'ASC');
 
-        $ret = $this->builder()->get()->getResultArray();
+        $ret = $builder->get()->getResultArray();
+
         $this->DBGroup          = 'dbProduto';
-
-        $this->builder()
-                ->select(['table_schema','table_name','table_rows','table_comment']);
+        $db      = db_connect($this->DBGroup);
+        $builder = $db->table('information_schema.tables');
+        $builder
+            ->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
 
         if ($nome_tabela) {
-            $this->builder()->where('table_name', $nome_tabela);
+            $builder->where('table_name', $nome_tabela);
         }
-        $this->builder()->where('table_schema', 'produto_db');
-        $this->builder()->orderBy('table_name', 'ASC');
+        $builder->where('table_schema', 'produto_db');
+        $builder->orderBy('table_name', 'ASC');
 
-        $ret2 = $this->builder()->get()->getResultArray();
+        $ret2 = $builder->get()->getResultArray();
         foreach ($ret2 as $reg) {
             array_push($ret, $reg);
         }
 
         $this->DBGroup          = 'dbOcorrencia';
+        $db      = db_connect($this->DBGroup);
+        $builder = $db->table('information_schema.tables');
 
-        $this->builder()
-                ->select(['table_schema','table_name','table_rows','table_comment']);
+        $builder
+            ->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
 
         if ($nome_tabela) {
-            $this->builder()->where('table_name', $nome_tabela);
+            $builder->where('table_name', $nome_tabela);
         }
-        $this->builder()->where('table_schema', 'ocorrencia_db');
-        $this->builder()->orderBy('table_name', 'ASC');
-        $ret3 = $this->builder()->get()->getResultArray();
+        $builder->where('table_schema', 'ocorrencia_db');
+        $builder->orderBy('table_name', 'ASC');
+        $ret3 = $builder->get()->getResultArray();
         foreach ($ret3 as $reg) {
             array_push($ret, $reg);
         }
 
         $this->DBGroup          = 'default';
-        $this->builder()
-                ->select(['table_schema','table_name','table_rows','table_comment']);
+        $db      = db_connect($this->DBGroup);
+        $builder = $db->table('information_schema.tables');
+
+        $builder
+            ->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
 
         if ($nome_tabela) {
-            $this->builder()->where('table_name', $nome_tabela);
+            $builder->where('table_name', $nome_tabela);
         }
-        $this->builder()->where('table_schema', 'config_ceqweb_db');
-        $this->builder()->orderBy('table_name', 'ASC');
-        $ret4 = $this->builder()->get()->getResultArray();
+        $builder->where('table_schema', 'config_ceqweb_db');
+        $builder->orderBy('table_name', 'ASC');
+        $ret4 = $builder->get()->getResultArray();
         foreach ($ret4 as $reg) {
             array_push($ret, $reg);
         }
@@ -100,32 +111,18 @@ class ConfigDicDadosModel extends Model
      */
     public function getTabelaSearch($nome_tabela)
     {
-        if(substr($nome_tabela,0,3) == 'est' || 
-            substr($nome_tabela,0,6) == 'vw_est') {
-            $this->DBGroup          = 'dbEstoque';
-            $schema                 = 'estoque_db';
-        } else if(substr($nome_tabela,0,3) == 'oco' || 
-            substr($nome_tabela,0,6) == 'vw_oco') {
-            $this->DBGroup          = 'dbOcorrencia';
-            $schema                 = 'ocorrencia_db';
-        } else if(substr($nome_tabela,0,3) == 'pro' || 
-            substr($nome_tabela,0,6) == 'vw_pro') {
-            $this->DBGroup          = 'dbProduto';
-            $schema                 = 'produto_db';
-        } else if(substr($nome_tabela,0,3) == 'cfg' || 
-            substr($nome_tabela,0,6) == 'vw_cfg') {
-            $this->DBGroup          = 'default';
-            $schema                 = 'config_ceqweb_db';
-        }
+        $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
+        $db      = db_connect($dbGrSche['dbGroup']);
+        $builder = $db->table($this->table);
         $array = ['table_name' => $nome_tabela . '%'];
-        $this->builder()
-                ->select(['table_name','table_rows','table_comment'])
-                ->like($array);
+        $builder
+            ->select(['table_name', 'table_rows', 'table_comment'])
+            ->like($array);
 
-        $this->builder()->where('table_schema', $schema);
-        $this->builder()->orderBy('table_name', 'ASC');
+        $builder->where('table_schema', $dbGrSche['schema']);
+        $builder->orderBy('table_name', 'ASC');
 
-        $ret = $this->builder()->get()->getResultArray();
+        $ret = $builder->get()->getResultArray();
         return $ret;
     }
 
@@ -137,26 +134,13 @@ class ConfigDicDadosModel extends Model
      */
     public function getRelacionamentos($nome_tabela)
     {
-        if(substr($nome_tabela,0,3) == 'est' || 
-            substr($nome_tabela,0,6) == 'vw_est') {
-            $this->DBGroup          = 'dbEstoque';
-            $schema                 = 'estoque_db';
-        } else if(substr($nome_tabela,0,3) == 'oco' || 
-            substr($nome_tabela,0,6) == 'vw_oco') {
-            $this->DBGroup          = 'dbOcorrencia';
-            $schema                 = 'ocorrencia_db';
-        } else if(substr($nome_tabela,0,3) == 'pro' || 
-            substr($nome_tabela,0,6) == 'vw_pro') {
-            $this->DBGroup          = 'dbProduto';
-            $schema                 = 'produto_db';
-        } else if(substr($nome_tabela,0,3) == 'cfg' || 
-            substr($nome_tabela,0,6) == 'vw_cfg') {
-            $this->DBGroup          = 'default';
-            $schema                 = 'config_ceqweb_db';
-        }
+        $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
         $array = ['kc.table_name' => $nome_tabela];
-        // $db = db_connect();
-        $builder = $this->builder('information_schema.KEY_COLUMN_USAGE kc');
+        $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
+        $db      = db_connect($dbGrSche['dbGroup']);
+        $builder = $db->table('information_schema.KEY_COLUMN_USAGE kc');
+
+        // $builder = $this->builder('information_schema.KEY_COLUMN_USAGE kc');
         $builder->select('CONSTRAINT_NAME, 
                             kc.TABLE_NAME, 
                             kc.COLUMN_NAME, 
@@ -165,9 +149,10 @@ class ConfigDicDadosModel extends Model
                             tb.TABLE_COMMENT');
         $builder->join('information_schema.TABLES tb', 'tb.TABLE_NAME = kc.REFERENCED_TABLE_NAME', 'inner');
         $builder->where($array);
-        $builder->where('kc.table_schema', $schema);
+        $builder->where('kc.table_schema', $dbGrSche['schema']);
         $builder->where('REFERENCED_TABLE_SCHEMA IS NOT NULL');
 
+        // debug($builder->getCompiledSelect(), true);
         $ret = $builder->get()->getResultArray();
         return $ret;
     }
@@ -180,34 +165,8 @@ class ConfigDicDadosModel extends Model
      */
     public function getCampos($nome_tabela)
     {
-        // debug('Tabela Chegou '.$nome_tabela);
-        if(substr($nome_tabela,0,3) == 'est' || 
-            substr($nome_tabela,0,6) == 'vw_est') {
-            $this->DBGroup          = 'dbEstoque';
-            $schema                 = 'estoque_db';
-        } else if(substr($nome_tabela,0,3) == 'oco' || 
-            substr($nome_tabela,0,6) == 'vw_oco') {
-            $this->DBGroup          = 'dbOcorrencia';
-            $schema                 = 'ocorrencia_db';
-        } else if(substr($nome_tabela,0,3) == 'pro' || 
-            substr($nome_tabela,0,6) == 'vw_pro') {
-            $this->DBGroup          = 'dbProduto';
-            $schema                 = 'produto_db';
-        } else if(substr($nome_tabela,0,3) == 'cfg' || 
-            substr($nome_tabela,0,6) == 'vw_cfg') {
-            $this->DBGroup          = 'default';
-            $schema                 = 'config_ceqweb_db';
-        } else 
-        {
-                    $this->DBGroup = 'default';
-                    $schema = 'ocorrencia_db';
-        }
-        // else {
-        //     $this->DBGroup          = 'default';
-        //     $schema                 = 'config_ceqweb_db';
-        // }
-        // debug($schema);
-        $db = db_connect($this->DBGroup);
+        $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
+        $db = db_connect($dbGrSche['dbGroup']);
         $query = $db->query("SELECT TABLE_NAME, 
                             COLUMN_NAME, 
                             IS_NULLABLE, 
@@ -218,8 +177,8 @@ class ConfigDicDadosModel extends Model
                             COLUMN_KEY,
                             CONCAT(COLUMN_COMMENT,' - ',COLUMN_NAME) AS NOME_COMPLETO
                             FROM information_schema.columns
-                            WHERE TABLE_NAME = '".$nome_tabela."'
-                            AND TABLE_SCHEMA = '".$schema."'");
+                            WHERE TABLE_NAME = '" . $nome_tabela . "'
+                            AND TABLE_SCHEMA = '" . $dbGrSche['schema'] . "'");
         $ret = $query->getResultArray();
         $lq = $query = $db->getLastQuery();
         // debug($lq);
@@ -236,24 +195,8 @@ class ConfigDicDadosModel extends Model
      */
     public function getDetalhesCampo($nome_tabela, $nome_campo)
     {
-        if(substr($nome_tabela,0,3) == 'est' || 
-            substr($nome_tabela,0,6) == 'vw_est') {
-            $this->DBGroup          = 'dbEstoque';
-            $schema                 = 'estoque_db';
-        } else if(substr($nome_tabela,0,3) == 'oco' || 
-            substr($nome_tabela,0,6) == 'vw_oco') {
-            $this->DBGroup          = 'dbOcorrencia';
-            $schema                 = 'ocorrencia_db';
-        } else if(substr($nome_tabela,0,3) == 'pro' || 
-            substr($nome_tabela,0,6) == 'vw_pro') {
-            $this->DBGroup          = 'dbProduto';
-            $schema                 = 'produto_db';
-        } else if(substr($nome_tabela,0,3) == 'cfg' || 
-            substr($nome_tabela,0,6) == 'vw_cfg') {
-            $this->DBGroup          = 'default';
-            $schema                 = 'config_ceqweb_db';
-        }
-        $db = db_connect($this->DBGroup);
+        $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
+        $db = db_connect($dbGrSche['dbGroup']);
         $consulta = "SELECT TABLE_NAME, 
                             COLUMN_NAME, 
                             IS_NULLABLE, 
@@ -264,20 +207,20 @@ class ConfigDicDadosModel extends Model
                             COLUMN_KEY,
                             CONCAT(COLUMN_COMMENT,' - ',COLUMN_NAME) AS NOME_COMPLETO
                             FROM information_schema.columns
-                            WHERE TABLE_NAME = '".$nome_tabela."'
-                            AND TABLE_SCHEMA = '".$schema."' ";
+                            WHERE TABLE_NAME = '" . $nome_tabela . "'
+                            AND TABLE_SCHEMA = '" . $dbGrSche['schema'] . "' ";
         if (gettype($nome_campo) == 'array') {
             $str_nome_campo = '';
-            for($n=0;$n<count($nome_campo);$n++){
-                $str_nome_campo .= "'".$nome_campo[$n]."',";
+            for ($n = 0; $n < count($nome_campo); $n++) {
+                $str_nome_campo .= "'" . $nome_campo[$n] . "',";
             }
             $str_nome_campo = rtrim($str_nome_campo, ",");
             $consulta .= "AND column_name IN ($str_nome_campo) ";
         } else {
-            $consulta .= "AND column_name = '".$nome_campo."' ";
+            $consulta .= "AND column_name = '" . $nome_campo . "' ";
         }
         // debug($consulta, true);
-                                            
+
         $query = $db->query($consulta);
         $ret = $query->getResultArray();
         $lq = $query = $db->getLastQuery();
@@ -294,26 +237,12 @@ class ConfigDicDadosModel extends Model
      */
     public function getCampoChave($nome_tabela)
     {
-        if(substr($nome_tabela,0,3) == 'est' || 
-            substr($nome_tabela,0,6) == 'vw_est') {
-            $this->DBGroup          = 'dbEstoque';
-            $schema                 = 'estoque_db';
-        } else if(substr($nome_tabela,0,3) == 'oco' || 
-            substr($nome_tabela,0,6) == 'vw_oco') {
-            $this->DBGroup          = 'dbOcorrencia';
-            $schema                 = 'ocorrencia_db';
-        } else if(substr($nome_tabela,0,3) == 'pro' || 
-            substr($nome_tabela,0,6) == 'vw_pro') {
-            $this->DBGroup          = 'dbProduto';
-            $schema                 = 'produto_db';
-        } else if(substr($nome_tabela,0,3) == 'cfg' || 
-            substr($nome_tabela,0,6) == 'vw_cfg') {
-            $this->DBGroup          = 'default';
-            $schema                 = 'config_ceqweb_db';
-        }
+        $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
         $array = ['table_name' => $nome_tabela];
         // $db = db_connect();
-        $builder = $this->builder('information_schema.columns');
+        $db      = db_connect($this->DBGroup);
+        $builder = $db;
+        // $builder = $this->builder('information_schema.columns');
         $builder->select('TABLE_NAME, COLUMN_NAME, 
                                 IS_NULLABLE, 
                                 DATA_TYPE, 
@@ -322,10 +251,36 @@ class ConfigDicDadosModel extends Model
                                 COLUMN_KEY');
         $builder->where($array);
         $builder->where('COLUMN_KEY', 'PRI');
-        $builder->where('table_schema', $schema);
+        $builder->where('table_schema', $dbGrSche['schema']);
 
         $ret = $builder->get()->getResultArray();
 
         return $ret;
+    }
+
+    function getDbGroupAndSchema(?string $nome_tabela): array
+    {
+        $prefixMap = [
+            'vw_est' => ['dbGroup' => 'dbEstoque',    'schema' => 'estoque_db'],
+            'est'    => ['dbGroup' => 'dbEstoque',    'schema' => 'estoque_db'],
+            'vw_oco' => ['dbGroup' => 'dbOcorrencia', 'schema' => 'ocorrencia_db'],
+            'oco'    => ['dbGroup' => 'dbOcorrencia', 'schema' => 'ocorrencia_db'],
+            'vw_pro' => ['dbGroup' => 'dbProduto',    'schema' => 'produto_db'],
+            'pro'    => ['dbGroup' => 'dbProduto',    'schema' => 'produto_db'],
+            'vw_cfg' => ['dbGroup' => 'default',      'schema' => 'config_ceqweb_db'],
+            'cfg'    => ['dbGroup' => 'default',      'schema' => 'config_ceqweb_db'],
+        ];
+
+        // Ordem de verificação: prefixos maiores primeiro para evitar conflito (ex: vw_est vs est)
+        $prefixes = ['vw_est', 'vw_oco', 'vw_pro', 'vw_cfg', 'est', 'oco', 'pro', 'cfg'];
+
+        foreach ($prefixes as $prefix) {
+            if (str_starts_with($nome_tabela, $prefix)) {
+                return $prefixMap[$prefix];
+            }
+        }
+
+        // Retorna nulo caso nenhum prefixo conhecido seja encontrado
+        return ['dbGroup' => null, 'schema' => null];
     }
 }

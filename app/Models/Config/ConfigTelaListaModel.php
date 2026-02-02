@@ -1,7 +1,10 @@
-<?php namespace App\Models\Config;
+<?php
 
-use App\Models\LogMonModel;
+namespace App\Models\Config;
+
 use CodeIgniter\Model;
+use App\Models\LogMonModel;
+use App\Entities\Config\EntCfgTela;
 
 class ConfigTelaListaModel extends Model
 {
@@ -11,15 +14,16 @@ class ConfigTelaListaModel extends Model
     protected $primaryKey       = 'lis_id';
     protected $useAutoIncrement = true;
 
-    protected $returnType       = 'array';
+    protected $returnType       = EntCfgTela::class;
     protected $useSoftDeletes   = false;
 
-    protected $allowedFields    = ['lis_id',
-                                    'tel_id',
-                                    'lis_campo',
-                                    'lis_rotulo',
-                                    'lis_atualizado'
-                                ];
+    protected $allowedFields    = [
+        'lis_id',
+        'tel_id',
+        'lis_campo',
+        'lis_rotulo',
+        'lis_atualizado'
+    ];
 
 
     protected $skipValidation   = true;
@@ -27,47 +31,27 @@ class ConfigTelaListaModel extends Model
 
     // Callbacks
     protected $allowCallbacks = true;
-    protected $afterInsert   = ['depoisInsert'];
-    protected $afterUpdate   = ['depoisUpdate'];
-    protected $afterDelete   = ['depoisDelete'];
+    protected $afterInsert = ['logInsert'];
+    protected $afterUpdate = ['logUpdate'];
+    protected $afterDelete = ['logDelete'];
 
     protected $logdb;
 
-/**
-     * This method saves the session "usu_id" value to "created_by" and "updated_by" array
-     * elements before the row is inserted into the database.
-     *
-     */
-    protected function depoisInsert(array $data) {
-        $logdb = new LogMonModel();
-        $registro = $data['id'];
-        $log = $logdb->insertLog($this->table, 'Incluído', $registro, $data['data']);
+    protected function logInsert(array $data)
+    {
+        (new LogMonModel())->insertLog($this->table, 'Incluído', $data['id'], $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "updated_by" array element before
-     * the row is inserted into the database.
-     *
-     */
-    protected function depoisUpdate(array $data)
+    protected function logUpdate(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'][0];
-        $log = $logdb->insertLog($this->table, 'Alteração', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Alteração', $data['id'][0], $data['data']);
         return $data;
     }
 
-    /**
-     * This method saves the session "usu_id" value to "deletede_by" array element before
-     * the row is inserted into the database.
-     *
-     */
-    protected function depoisDelete(array $data)
+    protected function logDelete(array $data)
     {
-        $logdb = new LogMonModel();
-        $registro = $data['id'][0];
-        $log = $logdb->insertLog($this->table, 'Excluído', $registro, $data['data']);
+        (new LogMonModel())->insertLog($this->table, 'Excluído', $data['id'][0], $data['data']);
         return $data;
     }
 
@@ -89,7 +73,7 @@ class ConfigTelaListaModel extends Model
         $builder->where($clas);
         // $builder->like($s_nome);
         // $builder->orLike($s_nome);
-        $ret = $builder->get()->getResultArray();
+        $ret = $builder->get()->getResult();
         // debug($this->db->getLastQuery(), false);
         return $ret;
     }

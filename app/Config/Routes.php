@@ -75,6 +75,7 @@ $routes->group('Showfile', static function ($routes) {
 $routes->group('CriaPdf2025', static function ($routes) {
     $routes->match(['get', 'post'], 'PrintAnaRequisicao/(:any)', 'CriaPdf2025::PrintAnaRequisicao/$1', ['as' => 'criapdf2025_match']);
     $routes->match(['get', 'post'], 'PrintRequisicaoEstoq/(:any)', 'CriaPdf2025::PrintRequisicaoEstoq/$1', ['as' => 'criapdf2025_match_two']);
+    $routes->match(['get', 'post'], 'PrintOcorrencia/(:any)', 'CriaPdf2025::PrintOcorrencia/$1', ['as' => 'criapdf2025_print_ocorrencia']);
 });
 
 // Grupo: CriaEtiqueta
@@ -95,9 +96,20 @@ $routes->group('CriaEtiquetaZPL', static function ($routes) {
 
 // Controladores de Configuração
 $cfgControllers = [
-    'CfgCor', 'CfgModulo', 'CfgTela', 'CfgMenu', 'CfgDicionario',
-    'CfgFuncoes', 'CfgPerfil', 'CfgUsuario', 'CfgMensagem',
-    'CfgStatus', 'CfgLayoutEtiq', 'CfgEtiqueta', 'CfgEmpresa', 'CfgImpressora'
+    'CfgCor',
+    'CfgModulo',
+    'CfgTela',
+    'CfgMenu',
+    'CfgDicionario',
+    'CfgFuncoes',
+    'CfgPerfil',
+    'CfgUsuario',
+    'CfgMensagem',
+    'CfgStatus',
+    'CfgLayoutEtiq',
+    'CfgEtiqueta',
+    'CfgEmpresa',
+    'CfgImpressora'
 ];
 
 foreach ($cfgControllers as $ctrl) {
@@ -119,9 +131,19 @@ $routes->group('CfgModulo', static function ($routes) {
 
 // Controladores de Estoque
 $estoqueControllers = [
-    'SaldoEstoque', 'Movimento', 'Deposito', 'Transacao',
-    'TipoMovimentacao', 'Requisicao', 'CfgEtiqueta',
-    'AteRequisicao', 'ConfRequisicao','Inspecao','EtqProduto','EtqProdutoReq'
+    'SaldoEstoque',
+    'Movimento',
+    'Deposito',
+    'Transacao',
+    'TipoMovimentacao',
+    'Requisicao',
+    'CfgEtiqueta',
+    'AteRequisicao',
+    'ConfRequisicao',
+    'Inspecao',
+    'EtqProduto',
+    'EtqMisturador',
+    'EtqProdutoReq'
 ];
 
 foreach ($estoqueControllers as $ctrl) {
@@ -136,8 +158,13 @@ $routes->get('AteRequisicao/GeraEtiqueta/(:num)/(:num)', 'Estoque\\AteRequisicao
 
 // Controladores de Produto
 $produtoControllers = [
-    'Origem', 'Familia', 'Lote', 'ProClasse',
-    'ProIngrediente', 'Produto', 'Fabricante'
+    'Origem',
+    'Familia',
+    'Lote',
+    'ProClasse',
+    'ProIngrediente',
+    'Produto',
+    'Fabricante'
 ];
 
 foreach ($produtoControllers as $ctrl) {
@@ -189,8 +216,12 @@ $routes->group('WsCeqweb', static function ($routes) {
     $routes->match(['get', 'post'], '(:any)/(:any)/(:any)', 'Ws\\WsCeqweb::$1::$2::$3', ['as' => 'wsceqweb_triple_match']);
 });
 
+$routes->get(
+    'config/cfgmensagem/getMensagemAjax/(:num)',
+    'Config\CfgMensagem::getMensagemAjax/$1'
+);
+
 // Rotas por ambiente
 if (is_file(APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php')) {
     require APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php';
 }
-

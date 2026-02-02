@@ -1,4 +1,3 @@
-
 <?= $this->extend('templates/default_template') ?>
 <?= $this->section('header'); ?>
 <?= view('strut/vw_titulo'); ?>
@@ -33,7 +32,7 @@
                 }
                 echo "<li class='nav-item ' role='presentation'>";
                 echo "<button class='nav-link $active' id='" . $secao . "-tabr' data-bs-toggle='tab' data-bs-target='#" . $secao . "' type='button' role='tab' aria-controls='" . $secao . "' aria-selected='false'>";
-                echo "<i class='far fa-hand-point-right'> </i> - ";
+                // echo "<i class='far fa-hand-point-right'> </i> - ";
                 echo $secoes[$s] . "</button>";
                 echo "</li>";
             }
@@ -48,7 +47,8 @@
                 $secao = url_amigavel($secoes[$s]);
                 echo "<span id='" . $secao . "-valid' class='float-end valid-tab badge rounded-pill bg-danger d-none'>!</span>";
                 echo "<button class='nav-link $active' id='" . $secao . "-tab' data-bs-toggle='tab' data-bs-target='#" . $secao . "' type='button' role='tab' aria-controls='" . $secao . "' aria-selected='false'>";
-                echo "<i class='far fa-hand-point-right'> </i> - ";
+                // echo "<i class='far fa-hand-point-right'> </i> - ";
+                echo " - ";
                 echo $secoes[$s];
                 echo "</button>";
                 echo "</li>";
@@ -60,7 +60,7 @@
             echo "<div class='tab-content bg-white' id='myTabContent'>";
             for ($s = 0; $s < count($secoes); $s++) {
                 $secao = url_amigavel($secoes[$s]);
-                echo "<div class='tab-pane fade p-lg-3 p-2 $active' style='max-height:90vh !important' id='" . $secao . "' role='tabpanel' aria-labelledby='" . $secao . "-tab' tabindex='0'>";
+                echo "<div class='tab-pane fade p-lg-3 p-2 $active' style='max-height:86vh !important' id='" . $secao . "' role='tabpanel' aria-labelledby='" . $secao . "-tab' tabindex='0'>";
                 if (isset($botaosecao[$s])) {
                     echo $botaosecao[$s];
                 }
@@ -116,7 +116,7 @@
                             if ($count % 2) {
                                 $clear = 'clear: left;';
                             }
-                            echo "<div id='vazio2' class='row col-6 col-lg-6 float-start d-block mb-5' style='height:33px; $clear'></div>";
+                            echo "<div id='vazio2' class='row col-6 col-lg-6 float-start d-block mb-3' style='height:33px; $clear'></div>";
                         } else if ($quebra == 'vazio3') {
                             $clear = 'clear: right;';
                             if ($count % 3) {
@@ -187,5 +187,3 @@ if (isset($script)) {
 }
 ?>
 <?= $this->endSection(); ?>
-
-

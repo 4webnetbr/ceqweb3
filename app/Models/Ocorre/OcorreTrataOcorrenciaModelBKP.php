@@ -155,7 +155,7 @@ class OcorreTrataOcorrenciaModel extends Model
         $ret['tpo_id'] = $tipo->crInput();
 
 
-         // USUÁRIO 
+        // USUÁRIO 
         $usu           = new MyCampo('oco_ocorrencia', 'usu_nome');
         $usu->valor    = (isset($dados['usu_nome'])) ? $dados['usu_nome'] : '';
         $usu->objeto   = '';

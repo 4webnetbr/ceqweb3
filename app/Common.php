@@ -274,15 +274,15 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
             (strpbrk($data_lis['permissao'], 'C') &&
                 !$podeeditar)
         ) { // mas tem acesso de consulta
-                $url_con = $data_lis['controler'] . '/show/' . $dat_i[$chave];
-                $bt_con = new MyCampo();
-                $bt_con->id = $bt_con->nome = 'bt_show';
-                $bt_con->classep = 'btn btn-outline-info btn-sm border-0 mx-0 fs-0';
-                $bt_con->i_cone = "<i class='far fa-eye'></i>";
-                $bt_con->label = "";
-                $bt_con->place = "Consulta";
-                $bt_con->funcChan = "redireciona('{$url_con}',event)";
-                $edit = $bt_con->crBotao();
+            $url_con = $data_lis['controler'] . '/show/' . $dat_i[$chave];
+            $bt_con = new MyCampo();
+            $bt_con->id = $bt_con->nome = 'bt_show';
+            $bt_con->classep = 'btn btn-outline-info btn-sm border-0 mx-0 fs-0';
+            $bt_con->i_cone = "<i class='far fa-eye'></i>";
+            $bt_con->label = "";
+            $bt_con->place = "Consulta";
+            $bt_con->funcChan = "redireciona('{$url_con}',event)";
+            $edit = $bt_con->crBotao();
         }
         if (strpbrk($data_lis['permissao'], 'E')) {
             if ($podeeditar && $edicao) {
@@ -307,7 +307,7 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
                 $bt_ati->place = "Ativar";
                 $bt_ati->classep = 'btn btn-outline-secondary btn-sm border-0 mx-0 fs-0';
                 $bt_ati->funcChan = "ativInativ('{$url_ati}','{$dat_i[$nome]}', false)";
-                if($ativo){
+                if ($ativo) {
                     // debug('etq_ativo '.$dat_i['etq_ativo']);
                     // debug('etq_nome '.$dat_i[$nome]);
                     $url_ina = $data_lis['controler'] . '/ativinativ/' . $dat_i[$chave] . '/0';
@@ -322,7 +322,7 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
         if (strpbrk($data_lis['permissao'], 'X')) {
             if ($podeinativar && $exclusao) {
                 $url_del = $data_lis['controler'] . '/delete/' . $dat_i[$chave];
-                
+
                 $bt_del = new MyCampo();
                 $bt_del->id = $bt_del->nome = 'bt_delete';
                 $bt_del->classep = 'btn btn-outline-danger btn-sm border-0 mx-0 fs-0';
@@ -523,7 +523,19 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
 
         if (property_exists($ent, 'acao_person') && is_array($ent->acao_person)) {
             foreach ($ent->acao_person as $bt) {
-                $ent->acao .= $bt . ' ';
+                $name = '';
+                $inserirbotao = true;
+                if (preg_match('/name=["\']?([^"\'>\s]+)["\']?/', $bt, $matches)) {
+                    $name = $matches[1];
+                }
+                // if ($name == 'bt_print') {
+                //     if (property_exists($ent, 'stt_impressao') && trim($ent->stt_impressao) === 'N') {
+                //         $inserirbotao = false;
+                //     }
+                // }
+                if ($inserirbotao) {
+                    $ent->acao .= $bt . ' ';
+                }
             }
             // $ent->acao = rtrim($ent->acao);
         }
@@ -539,21 +551,21 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
             $valor = $ent->{$field} ?? '';
 
             if ($field === 'stt_nome' && isset($ent->stt_cor)) {
-                $linha[] = fmtEtiquetaCorBst($ent->stt_cor, $valor);
+                $linha[] = fmtEtiquetaCor($ent->stt_cor, $valor);
             } elseif (is_string($valor) && preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $valor)) {
                 $linha[] = "<div class='text-center'>" . data_br($valor) . "</div>";
             } elseif (is_numeric($valor) && $field != $chave && is_float($valor)) {
                 $linha[] = "<div class='text-end'>" . (
                     strlen(strrchr($valor, '.')) > 3
-                        ? floatToQuantia($valor)
-                        : floatToMoeda($valor)
+                    ? floatToQuantia($valor)
+                    : floatToMoeda($valor)
                 ) . "</div>";
             } elseif (is_numeric($valor) && $field != $chave && is_int($valor)) {
                 $linha[] = "<div class='text-end'>" . $valor . "</div>";
             } elseif (str_contains($field, 'msg_cor')) {
                 $linha[] = fmtEtiquetaCorBst($valor);
             } else {
-                $linha[] = $valor; 
+                $linha[] = $valor;
             }
         }
 
@@ -574,7 +586,8 @@ function montaListaEditColunas($colunas, $data_lis, $chave, $dados, $nome, $deta
     // debug($fields);
     $result = [];
     for ($p = 0; $p < sizeof($dados); $p++) {
-        $dat_i = $dados[$p];
+        $dat_i = (array) $dados[$p];
+        $dados[$p] = $dat_i;
         $temativo = false;
         $ativo = false;
         $inativa = '';
@@ -740,6 +753,7 @@ function montaListaEditColunas($colunas, $data_lis, $chave, $dados, $nome, $deta
     // debug($result);
     return $result;
 }
+
 
 function mostra_botao($campo, $condic)
 {

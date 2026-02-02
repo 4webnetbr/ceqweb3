@@ -195,12 +195,18 @@ class CommonModel extends Model
         return $ret;
     }
 
-    public function verificaUnico($model, $campo, $valor, $chave, $id)
+    public function verificaUnico($model, $campo, $valor, $chave, $id, $chave2 = false, $id2 = false)
     {
-        $tem = $model->where($campo, $valor)
-            ->where("$chave !=", $id)
-            ->countAllResults();
+        $builder = $model->where($campo, $valor)
+            ->where("$chave !=", $id);
+        if ($chave2) {
+            $builder->where("$chave2", $id2);
+        }
 
+        $tem = $builder->countAllResults();
+
+        // Pegando o SQL gerado
+        // debug($builder->getLastQuery(), true);
         return $tem;
     }
 }

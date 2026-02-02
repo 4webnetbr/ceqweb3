@@ -42,7 +42,7 @@ class OcorreTipoOcorrenciaModel extends Model
     protected $afterInsert   = ['depoisInsert'];
     protected $afterUpdate   = ['depoisUpdate'];
     protected $afterDelete   = ['depoisDelete'];
-    
+
     protected $logdb;
 
 
@@ -65,16 +65,29 @@ class OcorreTipoOcorrenciaModel extends Model
     }
 
 
-    public function getTipoOcorrencia($tpo_id = false)
+    public function getTipoOcorrencia($tpo_id = false, $tel_id = false, bool $somenteAtivos = false)
     {
         $db = db_connect('dbOcorrencia');
         $builder = $db->table('vw_oco_tpo_ocorrencia_relac');
-
         $builder->select('*');
-        if ($tpo_id) {
+
+        if ($somenteAtivos) {
+            $builder->groupStart()
+                ->where('tpo_ativo', 'A');
+
+            if ($tpo_id) {
+                $builder->orWhere('tpo_id', $tpo_id);
+            }
+            $builder->groupEnd();
+        } elseif ($tpo_id) {
             $builder->where('tpo_id', $tpo_id);
         }
-        $builder->orderBy('tpo_ativo, tpo_nome');
+        if ($tel_id) {
+            $builder->where('tel_id', $tel_id);
+        }
+
+        $builder->orderBy("CASE WHEN tpo_ativo = 'A' THEN 0 ELSE 1 END");
+        $builder->orderBy('tpo_nome');
 
         return $builder->get()->getResult();
     }
@@ -83,8 +96,9 @@ class OcorreTipoOcorrenciaModel extends Model
     {
         $db = db_connect('dbOcorrencia');
         $builder = $db->table('vw_oco_tela_campo_relac');
-
         $builder->select('*');
+
+        // Filtra pelo tipo de ocorrência
         if ($tpo_id) {
             $builder->where('tpo_id', $tpo_id);
         }
@@ -97,9 +111,10 @@ class OcorreTipoOcorrenciaModel extends Model
     public function getTOAcao($tpo_id = false)
     {
         $db = db_connect('dbOcorrencia');
-        $builder = $db->table('oco_tpo_acao');
-
+        $builder = $db->table('oco_tipo_ocorrencia_acao');
         $builder->select('*');
+
+        // Filtra pelo tipo de ocorrência
         if ($tpo_id) {
             $builder->where('tpo_id', $tpo_id);
         }
@@ -111,30 +126,50 @@ class OcorreTipoOcorrenciaModel extends Model
     public function getTipoOcorrenciaSearch($termo)
     {
         $array = ['tpo_nome' => $termo . '%'];
-
         $db = db_connect('dbOcorrencia');
         $builder = $db->table('vw_oco_tpo_ocorrencia_relac');
 
+        // Aplica filtros e ordenação
         $builder->select('*');
         $builder->like($array);
         $builder->orderBy('tpo_ativo, tpo_nome');
-        
+
         return $builder->get()->getResult();
     }
 
+    public function SubVinculado(int $tpo_id): bool
+    {
+        $db = db_connect('dbOcorrencia');
+    
+        return $db->table('oco_subt_ocorrencia')
+            ->where('tpo_id', $tpo_id)
+            ->countAllResults() > 0;
+    }
+    
     public function getTipoMovimentacao($tmo_id = false, $prf_id = false)
     {
         $db = db_connect('dbEstoque');
         $builder = $db->table('oco_tipo_ocorrencia');
         $builder->select('*');
+
+        // Filtra pelo tipo de movimentação
         if ($tmo_id) {
             $builder->where('tmo_id', $tmo_id);
         }
+        // Filtra pelos perfis vinculados 
         if ($prf_id) {
             $builder->where("FIND_IN_SET($prf_id, prf_id) >", 0);
-        }   
+        }
         $builder->orderBy('tmo_ativo, tmo_nome');
 
         return $builder->get()->getResult();
+    }
+
+    public function getTipoOcorrenciaAtivo()
+    {
+        return $this
+            ->where('tpo_ativo', 'A')
+            ->orderBy('tpo_nome')
+            ->findAll();
     }
 }

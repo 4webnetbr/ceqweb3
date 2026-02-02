@@ -3,14 +3,17 @@
 namespace App\Controllers\Config;
 
 use App\Controllers\BaseController;
-use App\Libraries\Campos;
-use App\Models\Config\ConfigPerfilItemModel;
-use App\Models\Config\ConfigPerfilModel;
+use App\Entities\Config\EntCfgPerfil;
 use App\Models\Config\ConfigTelaModel;
+use App\Traits\ForeignKeyUsageChecker;
+use App\Models\Config\ConfigPerfilModel;
+use App\Models\Config\ConfigPerfilItemModel;
 
 class CfgPerfil extends BaseController
 {
-    public $data = [];
+    use ForeignKeyUsageChecker;
+
+    public $data;
     public $permissao = '';
     public $perfil;
     public $perfilitem;
@@ -31,13 +34,13 @@ class CfgPerfil extends BaseController
 
     public function __construct()
     {
-        $this->data         = session()->getFlashdata('dados_tela');
-        $this->permissao    = $this->data['permissao'];
+        $this->data      = session()->getFlashdata('dados_tela');
+        $this->permissao = $this->data['permissao'] ?? '';
         $this->perfil       = new ConfigPerfilModel();
         $this->perfilitem   = new ConfigPerfilItemModel();
         $this->tela         = new ConfigTelaModel();
 
-        if ($this->data['erromsg'] != '') {
+        if (!empty($this->data['erromsg'])) {
             $this->__erro();
         }
     }
@@ -53,10 +56,12 @@ class CfgPerfil extends BaseController
      */
     public function index()
     {
-        $this->data['colunas'] = montaColunasLista($this->data, 'prf_id,');
+        $this->data['colunas']   = montaColunasLista($this->data, 'prf_id,');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
+
         echo view('vw_lista', $this->data);
     }
+
 
     /**
      * Listagem
@@ -67,25 +72,31 @@ class CfgPerfil extends BaseController
     public function lista()
     {
         $dados_perfil = $this->perfil->getPerfil();
-        $this->data['exclusao'] = false;
-        $perfis = [
-            'data' => montaListaColunas($this->data, 'prf_id', $dados_perfil, 'prf_nome'),
-        ];
 
-        echo json_encode($perfis);
+        // garante que os registros também sejam OBJ 
+        if (!empty($dados_perfil) && is_array($dados_perfil) && isset($dados_perfil[0]) && is_array($dados_perfil[0])) {
+            $dados_perfil = array_map(fn($r) => (object) $r, $dados_perfil);
+        }
+
+        $dataArr = (array) $this->data;   // helper antigo precisa array
+        // $dataArr['exclusao'] = false;
+
+        echo json_encode([
+            'data' => montaListaColunasEnt($dataArr, 'prf_id', $dados_perfil, 'prf_nome')
+        ]);
     }
 
 
 
     public function add()
     {
-        $this->defCampos();
+        $ent = new EntCfgPerfil();
 
-        $secao[0] = 'Dados Gerais'; 
-        $campos[0][0][0] = $this->prf_id;
-        $campos[0][0][1] = $this->prf_nome;
-        $campos[0][0][2] = $this->prf_dashboard;
-        $campos[0][0][3] = $this->prf_descricao;
+        $secao[0] = 'Dados Gerais';
+        $campos[0][0][0] = $ent->prf_id;
+        $campos[0][0][1] = $ent->prf_nome;
+        $campos[0][0][2] = $ent->prf_dashboard;
+        $campos[0][0][3] = $ent->prf_descricao;
 
         $secao[1] = 'Permissões';
         $itens = montaListaTelas();
@@ -93,102 +104,111 @@ class CfgPerfil extends BaseController
         $ctm  = -1;
         $campos[1][0][0] = 'ite_perfil';
         for ($mn = 0; $mn < sizeof($itens); $mn++) {
-            if ($modu != $itens[$mn]['mod_id']) {
+            if ($modu != $itens[$mn]->mod_id) {
                 $cti = 0;
                 $ctm++;
-                $modu = $itens[$mn]['mod_id'];
-                $this->defCamposItens(0, $modu, $itens[$mn]);
-                $campos2[1][$modu][$cti][0] = $this->pit_modu;
-                $campos2[1][$modu][$cti][1] = $this->pit_tela;
-                $campos2[1][$modu][$cti][2] = $this->pit_all;
-                $campos2[1][$modu][$cti][3] = $this->pit_consulta;
-                $campos2[1][$modu][$cti][4] = $this->pit_adicao;
-                $campos2[1][$modu][$cti][5] = $this->pit_edicao;
-                $campos2[1][$modu][$cti][6] = $this->pit_exclusao;
-                $campos2[1][$modu][$cti][7] = $this->pit_notifica;
+                $modu = $itens[$mn]->mod_id;
+                $ent->defCamposPermissoes(0, $modu, $itens[$mn]);
+                $campos2[1][$modu][$cti][0] = $ent->pit_modu;
+                $campos2[1][$modu][$cti][1] = $ent->pit_tela;
+                $campos2[1][$modu][$cti][2] = $ent->pit_all;
+                $campos2[1][$modu][$cti][3] = $ent->pit_consulta;
+                $campos2[1][$modu][$cti][4] = $ent->pit_adicao;
+                $campos2[1][$modu][$cti][5] = $ent->pit_edicao;
+                $campos2[1][$modu][$cti][6] = $ent->pit_exclusao;
+                $campos2[1][$modu][$cti][7] = $ent->pit_notifica;
             }
             $cti++;
-            $item = $itens[$mn]['tel_id'];
-            $this->defCamposItens($item, $modu, $itens[$mn]);
-            $campos2[1][$modu][$cti][0] = $this->pit_modu;
-            $campos2[1][$modu][$cti][1] = $this->pit_tela;
-            $campos2[1][$modu][$cti][2] = $this->pit_all;
-            $campos2[1][$modu][$cti][3] = $this->pit_consulta;
-            $campos2[1][$modu][$cti][4] = $this->pit_adicao;
-            $campos2[1][$modu][$cti][5] = $this->pit_edicao;
-            $campos2[1][$modu][$cti][6] = $this->pit_exclusao;
-            $campos2[1][$modu][$cti][7] = $this->pit_notifica;
+            $item = $itens[$mn]->tel_id;
+            $ent->defCamposPermissoes($item, $modu, $itens[$mn]);
+            $campos2[1][$modu][$cti][0] = $ent->pit_modu;
+            $campos2[1][$modu][$cti][1] = $ent->pit_tela;
+            $campos2[1][$modu][$cti][2] = $ent->pit_all;
+            $campos2[1][$modu][$cti][3] = $ent->pit_consulta;
+            $campos2[1][$modu][$cti][4] = $ent->pit_adicao;
+            $campos2[1][$modu][$cti][5] = $ent->pit_edicao;
+            $campos2[1][$modu][$cti][6] = $ent->pit_exclusao;
+            $campos2[1][$modu][$cti][7] = $ent->pit_notifica;
         }
 
-        $this->data['secoes']   = $secao;
-        $this->data['campos']   = $campos;
-        $this->data['campos2']  = $campos2;
-        $this->data['destino']  = 'store';
+        $this->data['secoes']  = $secao;
+        $this->data['campos']  = $campos;
+        $this->data['campos2'] = $campos2;
+        $this->data['destino'] = 'store';
 
-        echo view('vw_edicao_perfil', $this->data);
+        echo view('vw_edicao_perfil', (array) $this->data);
     }
 
     public function edit($id)
     {
-        $dados_perfil = $this->perfil->find($id);
-        $this->defCampos($dados_perfil);
+        $dados = $this->perfil->getPerfil($id);
 
-        $secao[0] = 'Dados Gerais';
-        $campos[0][0][0] = $this->prf_id;
-        $campos[0][0][1] = $this->prf_nome;
-        $campos[0][0][2] = $this->prf_dashboard;
-        $campos[0][0][3] = $this->prf_descricao;
+        if (!$dados) {
+            return view('errors/vw_semregistro', [
+                'mensagem' => 'Perfil não encontrado'
+            ]);
+        }
 
-        $secao[1] = 'Permissões';
+        $ePerfil = new EntCfgPerfil((array) $dados);
+
+        // DADOS GERAIS
+        $this->data['secoes'] = ['Dados Gerais', 'Permissões'];
+        $campos[0][0][] = $ePerfil->campos['prf_id'];
+        $campos[0][0][] = $ePerfil->campos['prf_nome'];
+        $campos[0][0][] = $ePerfil->campos['prf_dashboard'];
+        $campos[0][0][] = $ePerfil->campos['prf_descricao'];
+
+        // $telas = montaListaTelas();
+        // $id_telas = array_column($telas, 'tel_nome', 'tel_id');
+        // $itens = montaListaItensPerfil($id, $id_telas);
+        // foreach ($itens as $key => $value) {
+        //     for ($t = 0; $t < count($telas); $t++) {
+        //         if ($telas[$t]['tel_id'] == $key) {
+        //             $telas[$t]['pit_permissao'] = $itens[$key];
+        //             break;
+        //         }
+        //     }
+        // }
+
         $telas = montaListaTelas();
-        $id_telas = array_column($telas, 'tel_nome', 'tel_id');
+
+        // Criar um mapa [tel_id => tel_nome] a partir dos objetos
+        $id_telas = [];
+        foreach ($telas as $tela) {
+            $id_telas[$tela->tel_id] = $tela->tel_nome;
+        }
+
         $itens = montaListaItensPerfil($id, $id_telas);
+
         foreach ($itens as $key => $value) {
-            for ($t = 0; $t < count($telas); $t++) {
-                if ($telas[$t]['tel_id'] == $key) {
-                    $telas[$t]['pit_permissao'] = $itens[$key];
+            foreach ($telas as $tela) {
+                if ($tela->tel_id == $key) {
+                    $tela->pit_permissao = $value;
                     break;
                 }
             }
         }
+
         $modu = '';
         $ctm  = -1;
         $campos[1][0][0] = 'ite_perfil';
-        for ($mn = 0; $mn < sizeof($telas); $mn++) {
-            if ($modu != $telas[$mn]['mod_id']) {
+        $campos2 = [];
+        for ($mn = 0; $mn < count($telas); $mn++) {
+            $tela = $telas[$mn];
+
+            if ($modu != $tela->mod_id) {
                 $cti = 0;
                 $ctm++;
-                $modu = $telas[$mn]['mod_id'];
-                $clas = $telas[$mn]['tel_id'];
-                // $perfil = $this->perfilitem->getItemPerfil($dados_perfil['prf_id'], $tela);
-                // debug($perfil, false);
-                $this->defCamposItens(0, $modu, $telas[$mn]);
-
-                $campos2[1][$modu][$cti][0] = $this->pit_modu;
-                $campos2[1][$modu][$cti][1] = $this->pit_tela;
-                $campos2[1][$modu][$cti][2] = $this->pit_all;
-                $campos2[1][$modu][$cti][3] = $this->pit_consulta;
-                $campos2[1][$modu][$cti][4] = $this->pit_adicao;
-                $campos2[1][$modu][$cti][5] = $this->pit_edicao;
-                $campos2[1][$modu][$cti][6] = $this->pit_exclusao;
-                $campos2[1][$modu][$cti][7] = $this->pit_notifica;
+                $modu = $tela->mod_id;
+                $ePerfil->defCamposPermissoes(0, $modu, $tela);
+                $this->preencherCampos($campos2, $ePerfil, $modu, $cti);
             }
-            // debug('Módulo', false);
             $cti++;
-            $item = $telas[$mn]['tel_id'];
-            // debug($itens[$mn], false);
-            $this->defCamposItens($item, $modu, $telas[$mn]);
-            $campos2[1][$modu][$cti][0] = $this->pit_modu;
-            $campos2[1][$modu][$cti][1] = $this->pit_tela;
-            $campos2[1][$modu][$cti][2] = $this->pit_all;
-            $campos2[1][$modu][$cti][3] = $this->pit_consulta;
-            $campos2[1][$modu][$cti][4] = $this->pit_adicao;
-            $campos2[1][$modu][$cti][5] = $this->pit_edicao;
-            $campos2[1][$modu][$cti][6] = $this->pit_exclusao;
-            $campos2[1][$modu][$cti][7] = $this->pit_notifica;
+            $item = $tela->tel_id;
+            $ePerfil->defCamposPermissoes($item, $modu, $telas[$mn]);
+            $this->preencherCampos($campos2, $ePerfil, $modu, $cti);
         }
 
-        $this->data['secoes']   = $secao;
         $this->data['campos']   = $campos;
         $this->data['campos2']  = $campos2;
         $this->data['destino']  = 'store';
@@ -199,179 +219,47 @@ class CfgPerfil extends BaseController
         echo view('vw_edicao_perfil', $this->data);
     }
 
+    function preencherCampos(&$campos2, $ePerfil, $modu, $cti)
+    {
+        $campos2[1][$modu][$cti] = [
+            $ePerfil->camposPermissoes['pit_modu'],
+            $ePerfil->camposPermissoes['pit_tela'],
+            $ePerfil->camposPermissoes['pit_all'],
+            $ePerfil->camposPermissoes['pit_consulta'],
+            $ePerfil->camposPermissoes['pit_adicao'],
+            $ePerfil->camposPermissoes['pit_edicao'],
+            $ePerfil->camposPermissoes['pit_exclusao'],
+            $ePerfil->camposPermissoes['pit_notifica'],
+        ];
+    }
+
     public function delete($id)
     {
-        $this->perfil->delete($id);
-        session()->setFlashdata('msg', 'Registro Excluído com Sucesso');
-        return redirect()->to(site_url($this->data['controler']));
-    }
+        // if ($this->perfil->delete($id)) {
+        //     return $this->response->setJSON([
+        //         'erro' => false,
+        //         'msg'  => 'Registro excluído com sucesso!'
+        //     ]);
+        // }
+        // return $this->response->setJSON([
+        //     'erro' => true,
+        //     'msg'  => 'Erro ao excluir o registro.'
+        // ]);
 
-    public function defCampos($dados = false)
-    {
-        $id             = new Campos();
-        $id->objeto     = 'oculto';
-        $id->nome       = 'prf_id';
-        $id->valor      = (isset($dados['prf_id'])) ? $dados['prf_id'] : '';
-        $this->prf_id   = $id->create();
 
-        $nome           =  new Campos();
-        $nome->objeto   = 'input';
-        $nome->tipo     = 'text';
-        $nome->nome     = 'prf_nome';
-        $nome->id       = 'prf_nome';
-        $nome->label    = 'Nome';
-        $nome->place    = 'Nome';
-        $nome->obrigatorio = true;
-        $nome->hint     = 'Informe o Nome do Perfil';
-        $nome->size     = 30;
-        $nome->tamanho  = 30;
-        $nome->valor    = (isset($dados['prf_nome'])) ? $dados['prf_nome'] : '';
-        $this->prf_nome = $nome->create();
-
-        $telas = array_column($this->tela->getTelaId(), 'tel_nome', 'tel_id');
-        $dash               =  new Campos();
-        $dash->objeto       = 'select';
-        $dash->nome         = 'prf_dashboard';
-        $dash->id           = 'prf_dashboard';
-        $dash->label        = 'Dashboard';
-        $dash->obrigatorio  = true;
-        $dash->hint         = 'Escolha o Dashboard';
-        $dash->size         = 50;
-        $dash->tamanho      = 55;
-        $dash->opcoes       = $telas;
-        $dash->valor        = (isset($dados['prf_dashboard'])) ? $dados['prf_dashboard'] : '';
-        $dash->selecionado  = $dash->valor;
-        $this->prf_dashboard   = $dash->create();
-
-        $desc =  new Campos();
-        $desc->objeto   = 'texto';
-        $desc->nome     = 'prf_descricao';
-        $desc->id       = 'prf_descricao';
-        $desc->label    = 'Descrição';
-        $desc->place    = 'Descrição';
-        $desc->obrigatorio = false;
-        $desc->hint     = 'Informe a Descrição';
-        $desc->size     = 70;
-        $desc->max_size = 3;
-        $desc->tamanho  = 80;
-        $desc->valor    = (isset($dados['prf_descricao'])) ? $dados['prf_descricao'] : '';
-        $this->prf_descricao = $desc->create();
-    }
-
-    public function defCamposItens($pos, $mod, $items = false)
-    {
-		$modu				= new Campos();
-		$modu->objeto		= 'text_show';
-		$modu->valor		= (isset($items['mod_nome']))?$items['mod_nome']:'';
-		$this->pit_modu	    = $modu->create();
-
-        $tela				= new Campos();
-		$tela->objeto		= 'text_show';
-		$tela->valor		= (isset($items['tel_nome']))?$items['tel_nome']:'';
-		$this->pit_tela	    = $tela->create();
-
-        $all =  new Campos();
-        $all->objeto       = 'checkbox';
-        $all->nome         = "pit_all[$mod][$pos]";
-        $all->id           = "pit_all[$mod][$pos]";
-        $all->label        = '';
-        $all->obrigatorio  = false;
-        $all->valor        = '';
-        $all->selecionado  = 'X';
-        $all->size         = 20;
-        $all->tamanho      = 1;
-        $all->classs       = "pit_all[$mod]";
-        $this->pit_all     = $all->create();
-
-        $consulta =  new Campos();
-        $consulta->objeto       = 'checkbox';
-        $consulta->nome         = "pit_consulta[$mod][$pos]";
-        $consulta->id           = "pit_consulta[$mod][$pos]";
-        $consulta->label        = '';
-        $consulta->obrigatorio  = false;
-        $consulta->valor        = 'C';
-        $consulta->selecionado  = '';
-        if (isset($items['pit_permissao'])) {
-            if (strpos($items['pit_permissao'], 'C') !== false) {
-                $consulta->selecionado  = 'C';
-            }
+        $ret = [];
+        try {
+            // Checa uso do status em outros bancos
+            $this->verificarUsoEmRelacionamentos('cfg_perfil', 'prf_id', (int) $id);
+            // Soft delete
+            $this->perfil->delete($id);
+            $ret['erro'] = false;
+            session()->setFlashdata('msg', 'Registro Excluído com Sucesso');
+        } catch (\Exception $e) {
+            $ret['erro'] = true;
+            $ret['msg']  = 3;
         }
-        $consulta->size         = 20;
-        $consulta->tamanho      = 1;
-        $consulta->classs       = "pit_consulta[$mod] pit_all[$mod]";
-        $this->pit_consulta     = $consulta->create();
-
-        $adicao =  new Campos();
-        $adicao->objeto      = 'checkbox';
-        $adicao->nome        = "pit_adicao[$mod][$pos]";
-        $adicao->id          = "pit_adicao[$mod][$pos]";
-        $adicao->label       = '';
-        $adicao->obrigatorio = false;
-        $adicao->valor          = 'A';
-        $adicao->selecionado    = '';
-        if (isset($items['pit_permissao'])) {
-            if (strpos($items['pit_permissao'], 'A') !== false) {
-                $adicao->selecionado  = 'A';
-            }
-        }
-        $adicao->size       = 20;
-        $adicao->tamanho   = 1;
-        $adicao->classs    = "pit_adicao[$mod]  pit_all[$mod]";
-        $this->pit_adicao  = $adicao->create();
-
-        $edicao =  new Campos();
-        $edicao->objeto         = 'checkbox';
-        $edicao->nome           = "pit_edicao[$mod][$pos]";
-        $edicao->id             = "pit_edicao[$mod][$pos]";
-        $edicao->label          = '';
-        $edicao->obrigatorio    = false;
-        $edicao->valor          = 'E';
-        $edicao->selecionado    = '';
-        if (isset($items['pit_permissao'])) {
-            if (strpos($items['pit_permissao'], 'E') !== false) {
-                $edicao->selecionado  = 'E';
-            }
-        }
-        $edicao->size           = 20;
-        $edicao->tamanho        = 1;
-        $edicao->classs         = "pit_edicao[$mod] pit_all[$mod]";
-        $this->pit_edicao       = $edicao->create();
-
-        $exclusao =  new Campos();
-        $exclusao->objeto      = 'checkbox';
-        $exclusao->nome        = "pit_exclusao[$mod][$pos]";
-        $exclusao->id          = "pit_exclusao[$mod][$pos]";
-        $exclusao->label       = '';
-        $exclusao->obrigatorio = false;
-        $exclusao->valor       = 'X';
-        $exclusao->selecionado = '';
-        if (isset($items['pit_permissao'])) {
-            if (strpos($items['pit_permissao'], 'X') !== false) {
-                $exclusao->selecionado  = 'X';
-            }
-        }
-        $exclusao->size        = 20;
-        $exclusao->tamanho     = 1;
-        $exclusao->classs      = "pit_exclusao[$mod] pit_all[$mod]";
-        $this->pit_exclusao    = $exclusao->create();
-
-        $notifica =  new Campos();
-        $notifica->objeto      = 'checkbox';
-        $notifica->nome        = "pit_notifica[$mod][$pos]";
-        $notifica->id          = "pit_notifica[$mod][$pos]";
-        $notifica->label       = '';
-        $notifica->obrigatorio = false;
-        $notifica->valor       = 'N';
-        $notifica->selecionado = '';
-        if (isset($items['pit_permissao'])) {
-            if (strpos($items['pit_permissao'], 'N') !== false) {
-                $notifica->selecionado  = 'N';
-            }
-        }
-        $notifica->size        = 20;
-        $notifica->tamanho     = 1;
-        $notifica->classs      = "pit_notifica[$mod] pit_all[$mod]";
-        $this->pit_notifica    = $notifica->create();
+        echo json_encode($ret);
     }
 
     public function store()
@@ -412,7 +300,7 @@ class CfgPerfil extends BaseController
                     foreach ($pit_consulta as $chave => $valor) {
                         foreach ($valor as $tela => $opcao) {
                             if ($tela > 0) {
-                                $d_ite[$chave][$tela]['permissao'] = isset($d_ite[$chave][$tela]['permissao'])?$d_ite[$chave][$tela]['permissao'].$opcao:$opcao;
+                                $d_ite[$chave][$tela]['permissao'] = isset($d_ite[$chave][$tela]['permissao']) ? $d_ite[$chave][$tela]['permissao'] . $opcao : $opcao;
                             }
                         }
                     }
@@ -422,7 +310,7 @@ class CfgPerfil extends BaseController
                     foreach ($pit_adicao as $chave => $valor) {
                         foreach ($valor as $tela => $opcao) {
                             if ($tela > 0) {
-                                $d_ite[$chave][$tela]['permissao'] = isset($d_ite[$chave][$tela]['permissao'])?$d_ite[$chave][$tela]['permissao'].$opcao:$opcao;
+                                $d_ite[$chave][$tela]['permissao'] = isset($d_ite[$chave][$tela]['permissao']) ? $d_ite[$chave][$tela]['permissao'] . $opcao : $opcao;
                             }
                         }
                     }
@@ -432,7 +320,7 @@ class CfgPerfil extends BaseController
                     foreach ($pit_edicao as $chave => $valor) {
                         foreach ($valor as $tela => $opcao) {
                             if ($tela > 0) {
-                                $d_ite[$chave][$tela]['permissao'] = isset($d_ite[$chave][$tela]['permissao'])?$d_ite[$chave][$tela]['permissao'].$opcao:$opcao;
+                                $d_ite[$chave][$tela]['permissao'] = isset($d_ite[$chave][$tela]['permissao']) ? $d_ite[$chave][$tela]['permissao'] . $opcao : $opcao;
                             }
                         }
                     }
@@ -442,7 +330,7 @@ class CfgPerfil extends BaseController
                     foreach ($pit_exclusao as $chave => $valor) {
                         foreach ($valor as $tela => $opcao) {
                             if ($tela > 0) {
-                                $d_ite[$chave][$tela]['permissao'] = isset($d_ite[$chave][$tela]['permissao'])?$d_ite[$chave][$tela]['permissao'].$opcao:$opcao;
+                                $d_ite[$chave][$tela]['permissao'] = isset($d_ite[$chave][$tela]['permissao']) ? $d_ite[$chave][$tela]['permissao'] . $opcao : $opcao;
                             }
                         }
                     }
@@ -452,7 +340,7 @@ class CfgPerfil extends BaseController
                     foreach ($pit_notifica as $chave => $valor) {
                         foreach ($valor as $tela => $opcao) {
                             if ($tela > 0) {
-                                $d_ite[$chave][$tela]['permissao'] = isset($d_ite[$chave][$tela]['permissao'])?$d_ite[$chave][$tela]['permissao'].$opcao:$opcao;
+                                $d_ite[$chave][$tela]['permissao'] = isset($d_ite[$chave][$tela]['permissao']) ? $d_ite[$chave][$tela]['permissao'] . $opcao : $opcao;
                             }
                         }
                     }
@@ -503,5 +391,4 @@ class CfgPerfil extends BaseController
             echo json_encode($retorno);
         }
     }
-
 }

@@ -3,12 +3,16 @@
 namespace App\Controllers\Produto;
 
 use App\Controllers\BaseController;
+use App\Entities\Produto\EntProdutIngrediente;
+use App\Traits\ForeignKeyUsageChecker;
 use App\Models\CommonModel;
 use App\Models\Produt\ProdutIngredienteModel;
 use App\Models\Produt\ProdutProdutoModel;
 
 class ProIngrediente extends BaseController
 {
+    use ForeignKeyUsageChecker;
+
     public $data = [];
     public $permissao = '';
     public $ingrediente;
@@ -20,12 +24,14 @@ class ProIngrediente extends BaseController
      */
     public function __construct()
     {
-        $this->data      = session()->getFlashdata('dados_tela');
-        $this->permissao = $this->data['permissao'];
-        $this->ingrediente  = new ProdutIngredienteModel();
-        $this->common       = new CommonModel();
-
-        if ($this->data['erromsg'] != '') {
+        $tmp = session()->getFlashdata('dados_tela') ?? [];
+        $this->data = (object) $tmp;
+    
+        $this->permissao   = $this->data->permissao ?? '';
+        $this->ingrediente = new ProdutIngredienteModel();
+        $this->common      = new CommonModel();
+    
+        if (!empty($this->data->erromsg)) {
             $this->__erro();
         }
     }
@@ -35,7 +41,7 @@ class ProIngrediente extends BaseController
      */
     function __erro()
     {
-        echo view('vw_semacesso', $this->data);
+        echo view('vw_semacesso', (array) $this->data);
     }
     /**
      * Tela de Abertura
@@ -43,9 +49,9 @@ class ProIngrediente extends BaseController
      */
     public function index()
     {
-        $this->data['colunas'] = montaColunasLista($this->data, 'ing_id');
-        $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
-        echo view('vw_lista', $this->data);
+        $this->data->colunas = montaColunasLista((array) $this->data, 'ing_id');
+        $this->data->url_lista = base_url($this->data->controler . '/lista');
+        echo view('vw_lista', (array) $this->data);
     }
     /**
      * Listagem
@@ -55,17 +61,15 @@ class ProIngrediente extends BaseController
      */
     public function lista()
     {
-        // if (!$ingred = cache('ingred')) {
-        $campos = montaColunasCampos($this->data, 'ing_id');
+        $campos = montaColunasCampos((array) $this->data, 'ing_id');
         $dados_ingred = $this->ingrediente->getIngredienteLista();
-        $this->data['exclusao'] = false;
-        $ingred = [
-            'data' => montaListaColunas($this->data, 'ing_id', $dados_ingred, $campos[1]),
-        ];
-        cache()->save('ingred', $ingred, 60000);
-        // }
-
-        echo json_encode($ingred);
+    
+        $ret = new \stdClass();
+        $ret->data = montaListaColunasEnt((array) $this->data, 'ing_id', $dados_ingred, $campos[1]);
+        $ret->exclusao = false;
+        cache()->save('ingred', $ret, 60000);
+    
+        return $this->response->setJSON($ret);
     }
     /**
      * Inclusão
@@ -75,21 +79,28 @@ class ProIngrediente extends BaseController
      */
     public function add()
     {
-        $fields = $this->ingrediente->defCampos();
-        $fieldprod = $this->ingrediente->defCamposProduto();
-
-        $secao[0] = 'Dados Gerais';
-        $campos[0] = [];
-        $campos[0][count($campos[0])] = $fields['ing_id'];
-        $campos[0][count($campos[0])] = $fields['ing_nome'];
-        $campos[0][count($campos[0])] = $fields['cla_id'];
-        $campos[0][count($campos[0])] = $fieldprod['pro_id'];
-
-        $this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
-        $this->data['destino']    = 'store';
-
-        echo view('vw_edicao', $this->data);
+        // ENTITY
+        $entity = new EntProdutIngrediente();
+    
+        $fields    = (object) $entity->campos;
+        $fieldprod = (object) $entity->defCamposProduto();
+    
+        // SEÇÕES
+        $this->data->secoes    = [];
+        $this->data->secoes[0] = 'Dados Gerais';
+    
+        // CAMPOS
+        $this->data->campos    = [];
+        $this->data->campos[0] = [];
+    
+        $this->data->campos[0][] = $fields->ing_id;
+        $this->data->campos[0][] = $fields->ing_nome;
+        $this->data->campos[0][] = $fields->cla_id;
+        $this->data->campos[0][] = $fieldprod->pro_id;
+    
+        $this->data->destino = 'store';
+    
+        echo view('vw_edicao', (array) $this->data);
     }
 
     /**
@@ -106,30 +117,61 @@ class ProIngrediente extends BaseController
 
     public function ativinativ($id, $tipo)
     {
-        if ($tipo == 1) {
-            $dad_atin = [
-                'ing_ativo' => 'A'
-            ];
-        } else {
-            $dad_atin = [
-                'ing_ativo' => 'I'
-            ];
-        }
+        // Define o status do ingrediente (Ativo/Inativo)
+        // if ($tipo == 1) {
+        //     $dad_atin = [
+        //         'ing_ativo' => 'A'
+        //     ];
+        // } else {
+        //     $dad_atin = [
+        //         'ing_ativo' => 'I'
+        //     ];
+        // }
+        // $ret = [];
+
+        // // Verifica se existem produtos vinculados a este ingrediente
+        // $produtos = new ProdutProdutoModel();
+        // $existepro = $produtos->getProdutoComIngrediente($id);
+        // if (count($existepro)) {
+        //     $ret['erro'] = true;
+        //     $ret['msg']  = 14;
+        // } else {
+        //     try {
+        //         // Atualiza o status do ingrediente
+        //         $this->ingrediente->update($id, $dad_atin);
+        //         $ret['erro'] = false;
+        //         session()->setFlashdata('msg', 'Ingrediente Alterado com Sucesso');
+        //     } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+        //         $ret['erro'] = true;
+        //         $ret['msg']  = 'Não foi possível Alterar o Ingrediente, Verifique!<br><br>';
+        //     }
+        // }
+        // echo json_encode($ret);
+
         $ret = [];
-        $produtos = new ProdutProdutoModel();
-        $existepro = $produtos->getProdutoComIngrediente($id);
-        if (count($existepro)) {
-            $ret['erro'] = true;
-            $ret['msg']  = 14;
-        } else {
-            try {
-                $this->ingrediente->update($id, $dad_atin);
-                $ret['erro'] = false;
-                session()->setFlashdata('msg', 'Ingrediente Alterado com Sucesso');
-            } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
-                $ret['erro'] = true;
-                $ret['msg']  = 'Não foi possível Alterar o Ingrediente, Verifique!<br><br>';
+        try {
+            if ($tipo == 1) {
+                $dad_atin = [
+                    'ing_ativo' => 'A'
+                ];
+            } else {
+                $dad_atin = [
+                    'ing_ativo' => 'I'
+                ];
+                $this->verificarUsoEmRelacionamentos('pro_ingrediente', 'ing_id', (int) $id);
             }
+            $this->ingrediente->update($id, $dad_atin);
+            $ret['erro'] = false;
+            session()->setFlashdata('msg', 'Ingrediente Alterado com Sucesso');
+            $ret['msg']  = 'Ingrediente Alterado com Sucesso';
+            cache()->clean();
+        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+            $ret['erro'] = true;
+            // $ret['msg']  = 'Não foi possível Alterar o Status, Verifique!<br><br>';
+            $ret['msg']  = 14;
+        } catch (\Exception $e) {
+            $ret['erro'] = true;
+            $ret['msg']  = 14; // ou código personalizado, se preferir
         }
         echo json_encode($ret);
     }
@@ -143,28 +185,47 @@ class ProIngrediente extends BaseController
      */
     public function edit($id, $show = false)
     {
-        $dados_ings = $this->ingrediente->getIngrediente($id)[0];
-        $dados_prod = $this->ingrediente->getIngredienteProdutos($id);
-        $fields = $this->ingrediente->defCampos($dados_ings, $show);
-        $prods['pro_id'] = [];
-        if (count($dados_prod) > 0) {
-            for ($p = 0; $p < count($dados_prod); $p++) {
-                array_push($prods['pro_id'], $dados_prod[$p]['pro_id']);
+        // Busca os dados do ingrediente
+        $dadosIng  = $this->ingrediente->getIngrediente($id)[0] ?? null;
+        $dadosProd = $this->ingrediente->getIngredienteProdutos($id);
+        $entity = new EntProdutIngrediente($dadosIng, $show); // Instancia a entity 
+    
+        // Campos principais do ingrediente
+        $fields = (object) $entity->campos;
+        
+        // Objeto auxiliar para armazenar os produtos vinculados
+        $prods = new \stdClass();
+        $prods->pro_id = [];
+    
+        if (!empty($dadosProd)) {
+            foreach ($dadosProd as $prod) {
+                $prods->pro_id[] = $prod->pro_id;
             }
         }
-        $fieldprod = $this->ingrediente->defCamposProduto($dados_ings, $prods, $show);
-        $secao[0] = 'Dados Gerais';
-        $campos[0] = [];
-        $campos[0][count($campos[0])] = $fields['ing_id'];
-        $campos[0][count($campos[0])] = $fields['ing_nome'];
-        $campos[0][count($campos[0])] = $fields['cla_id'];
-        $campos[0][count($campos[0])] = $fieldprod['pro_id'];
-
-        $this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
-        $this->data['destino']    = 'store';
-
-        echo view('vw_edicao', $this->data);
+    
+        // Campos relacionados aos produtos
+        $fieldprod = (object) $entity->defCamposProduto(
+            (array) $dadosIng,
+            (array) $prods,
+            $show
+        );
+    
+        // SEÇÕES
+        $this->data->secoes    = [];
+        $this->data->secoes[0] = 'Dados Gerais';
+    
+        // CAMPOS
+        $this->data->campos    = [];
+        $this->data->campos[0] = [];
+    
+        $this->data->campos[0][] = $fields->ing_id;
+        $this->data->campos[0][] = $fields->ing_nome;
+        $this->data->campos[0][] = $fields->cla_id;
+        $this->data->campos[0][] = $fieldprod->pro_id;
+    
+        $this->data->destino = 'store';
+    
+        echo view('vw_edicao', (array) $this->data);
     }
 
     /**
@@ -176,18 +237,39 @@ class ProIngrediente extends BaseController
      */
     public function delete($id)
     {
+        // $ret = [];
+        // try {
+        //     $this->ingrediente->delete($id);
+    
+        //     $ret['erro'] = false;
+        //     $ret['msg']  = 'Ingrediente Excluído com Sucesso';
+        //     session()->setFlashdata('msg', $ret['msg']);
+    
+        // } catch (\CodeIgniter\Database\Exceptions\DatabaseException) {
+        //     $ret['erro'] = true;
+        //     $ret['msg']  = 'Não foi possível Excluir esse Ingrediente. Verifique!';
+        // }
+    
+        // return $this->response->setJSON($ret);
 
         $ret = [];
+
         try {
+            // Checa uso do status em outros bancos
+            $this->verificarUsoEmRelacionamentos('pro_ingrediente', 'ing_id', (int) $id);
+
+            // Soft delete
             $this->ingrediente->delete($id);
             $ret['erro'] = false;
             session()->setFlashdata('msg', 'Ingrediente Excluído com Sucesso');
-        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+        } catch (\Exception $e) {
             $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível Excluir esse Ingrediente Verifique!<br><br>';
+            $ret['msg']  = 3;
         }
+
         echo json_encode($ret);
     }
+    
     /**
      * Gravação
      * store
@@ -200,18 +282,23 @@ class ProIngrediente extends BaseController
         $postado = $this->request->getPost();
         $ret['erro'] = false;
         $erros = [];
+
+        // Dados principais do ingrediente
         $sql_ing = [
-            'ing_id' => $postado['ing_id'],
+            'ing_id'   => $postado['ing_id'],
             'ing_nome' => $postado['ing_nome'],
             'cla_id'   => $postado['cla_id'],
         ];
-        // debug($sql_ing, true);
+
+        // Atualiza ou insere o ingrediente
         if ($postado['ing_id'] != '') {
             $salva = $this->ingrediente->update($postado['ing_id'], $sql_ing);
         } else {
             $salva = $this->ingrediente->insert($sql_ing);
         }
+
         if ($salva) {
+            // Recupera o ID do ingrediente
             $ing_id = $this->ingrediente->getInsertID();
             if ($postado['ing_id'] != '') {
                 $ing_id = $postado['ing_id'];
@@ -220,6 +307,7 @@ class ProIngrediente extends BaseController
 
             // GRAVAÇãO DOS Produtos
             $this->common->deleteReg("dbProduto", "pro_ing_produto", "ing_id = " . $ing_id . "");
+
             if (isset($postado['pro_id'])) {
                 foreach ($postado['pro_id'] as $key => $value) {
                     $sql_pro = [
@@ -228,30 +316,36 @@ class ProIngrediente extends BaseController
                         'pro_id' => $postado['pro_id'][$key],
                         'inp_atualizado' => $data_atu,
                     ];
+
+                    // Insere vínculo do ingrediente com o produto
                     $pro_id = $this->common->insertReg('dbProduto', 'pro_ing_produto', $sql_pro);
+
                     if (!$pro_id) {
                         $ret['erro'] = true;
                         $erros = $this->common->errors();
                         $ret['msg'] = 'Não foi possível gravar os Produtos do Ingrediente, Verifique!';
                     }
                 }
+                // Remove vínculos antigos não atualizados
                 $this->common->deleteReg("dbProduto", "pro_ing_produto", "ing_id = " . $ing_id . " AND inp_atualizado != '" . $data_atu . "'");
             }
         } else {
+            // Captura erros do model de ingrediente
             $ret['erro'] = true;
             $erros = $this->ingrediente->errors();
         }
+        // Monta mensagem de erro
         if ($ret['erro']) {
-            // $ret['msg']  = 'Não foi possível gravar o Ingrediente, Verifique!<br><br>';
             $ret['msg']  = '';
             foreach ($erros as $erro) {
                 $ret['msg'] .= $erro;
             }
         } else {
+            // Limpa cache e retorna sucesso
             cache()->clean();
             $ret['msg']  = 'Ingrediente Gravado com Sucesso!!!';
             session()->setFlashdata('msg', $ret['msg']);
-            $ret['url']  = site_url($this->data['controler']);
+            $ret['url']  = site_url($this->data->controler);
         }
         echo json_encode($ret);
         cache()->clean();
