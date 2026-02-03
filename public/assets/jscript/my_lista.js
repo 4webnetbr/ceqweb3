@@ -37,7 +37,7 @@ function montaListaDados(tabela, url) {
       { width: "8em", targets: [-1] },
       { orderable: false, targets: [-1] },
       { searchable: false, targets: [-1] },
-      { className: "acao text-center text-nowrap", targets: [-1] },
+      { className: "acao text-start text-nowrap", targets: [-1] },
     ],
     buttons: {
       dom: {
@@ -144,7 +144,7 @@ function montaListaDados(tabela, url) {
           if (valelement.indexOf("<ttp>") > 0) {
             title = valelement.substring(
               valelement.indexOf("<ttp>") + 5,
-              valelement.length - 6
+              valelement.length - 6,
             );
             valelement = valelement.substring(0, valelement.indexOf("<ttp>"));
             jQuery(td)[0].innerHTML = valelement;

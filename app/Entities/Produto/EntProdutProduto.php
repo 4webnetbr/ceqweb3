@@ -546,7 +546,10 @@ class EntProdutProduto extends Entity
         $ges->leitura        = $show;
         $ges->opcoes         = $simnao;
         $ges->selecionado    = $ges->valor;
-        $ges->funcChan       = "mostraOcultaDiv(this,'S','div_est_minimo\\[$pos\\],div_est_maximo\\[$pos\\]');mostraOcultaCampo(this,'S','pre_sugerida\\[$pos\\],pre_estdataatual\\[$pos\\],pre_minimo\\[$pos\\],pre_maximo\\[$pos\\]');";
+        $ges->funcChan       = "mostraOcultaDiv(this,'S','div_est_minimo\\[$pos\\],div_est_maximo\\[$pos\\]');
+                                mostraOcultaCampo(this,'S','pre_sugerida\\[$pos\\],pre_estdataatual\\[$pos\\]');
+                                mostraOcultaCampo('pre_mindiaanterior','S','pre_minimo\\[$pos\\]');
+                                mostraOcultaCampo('pre_maxdiaanterior','S','pre_maximo\\[$pos\\]');";
         $ges->dispForm       = '4col';
         $ret['pre_gestaoestoque']          = $ges->cr2opcoes();
 

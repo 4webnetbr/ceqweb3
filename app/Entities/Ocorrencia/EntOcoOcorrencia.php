@@ -13,7 +13,7 @@ class EntOcoOcorrencia extends Entity
         'tpo_id'        => null,
         'sut_id'        => null,
         'tel_id'        => null,
-        'moc_nome'      => null,
+        'req_id'        => null,
         'tpa_id'        => null,
         'oco_descricao' => null,
         'pro_id'        => null,
@@ -36,6 +36,7 @@ class EntOcoOcorrencia extends Entity
         'oco_qtd'  => 'integer',
         'stt_id'   => 'integer',
         'tmo_id'   => 'integer',
+        'req_id'   => 'integer',
     ];
 
     public array $campos = [];
@@ -54,6 +55,10 @@ class EntOcoOcorrencia extends Entity
         $ocoid              = new MyCampo('oco_ocorrencia', 'oco_id');
         $ocoid->valor       = (isset($dados['oco_id'])) ? $dados['oco_id'] : '';
         $ret['oco_id'] = $ocoid->crOculto();
+
+        $reqid              = new MyCampo('oco_ocorrencia', 'req_id');
+        $reqid->valor       = (isset($dados['req_id'])) ? $dados['req_id'] : '';
+        $ret['req_id']      = $reqid->crOculto();
         // TIPO DE OCORRÊNCIA
         $config = [];
         $config['Label'] = 'Tipo de Ocorrência';

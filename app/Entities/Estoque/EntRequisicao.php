@@ -117,7 +117,7 @@ class EntRequisicao extends Entity
         $config['Label'] = 'Tipo de Movimentação';
         $config['DispForm'] = 'col-6';
         $config['Largura'] = 50;
-        $config['Leitura'] = true;
+        $config['Leitura'] = $show;
 
         // MOVIMENTAÇÃO
         $perfilId = session()->get('usu_perfil_id');
@@ -306,6 +306,10 @@ class EntRequisicao extends Entity
     {
         $ret = [];
         // debug($dados);
+        $rpaid           =  new MyCampo('est_requisicao_produto_atendimento', 'rpa_id', false);
+        $rpaid->valor    = (isset($dados->rpa_id)) ? $dados->rpa_id : '';
+        $rpaid->leitura  = $show;
+        $ret['rpa_id']    = $rpaid->crOculto();
 
         // Campo para quantidade cancelada 
         $canc                 = new MyCampo('est_requisicao_produto_atendimento', 'rpa_cancelada', false);
@@ -351,6 +355,10 @@ class EntRequisicao extends Entity
     public function defCamposProdutoConf(object $dados, bool $show = false)
     {
         $ret = [];
+        $rpaid           =  new MyCampo('est_requisicao_produto_atendimento', 'rpa_id', false);
+        $rpaid->valor    = (isset($dados->rpa_id)) ? $dados->rpa_id : '';
+        $rpaid->leitura  = $show;
+        $ret['rpa_id']    = $rpaid->crOculto();
 
         // Quantidade atendida 
         // Campo para quantidade atendida

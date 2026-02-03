@@ -10,6 +10,7 @@ use App\Entities\Estoque\EntRequisicao;
 use App\Models\Produt\ProdutClasseModel;
 use App\Models\Produt\ProdutProdutoModel;
 use App\Models\Estoqu\EstoquDepositoModel;
+use App\Entities\Estoque\EntConfRequisicao;
 use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
@@ -165,17 +166,17 @@ class ConfRequisicao extends BaseController
         }
 
         // Montar campos como no add()
-        $ent = new EntRequisicao((array) $requisicao, $show, 'conf');
+        $ent = new EntConfRequisicao((array) $requisicao, $show, 'conf');
         $fields = $ent->campos;
         // debug($fields, true);
 
         $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['req_id'];
-        $campos[0][count($campos[0])] = $fields['req_data'];
-        $campos[0][count($campos[0])] = $fields['req_dataentrega'];
-        $campos[0][count($campos[0])] = $fields['tmo_id'];
-        $campos[0][count($campos[0])] = "<div class='col-6'>.</div>";
-        $campos[0][count($campos[0])] = $fields['lot_codbar'];
+        $campos[0][] = $fields['req_id'];
+        $campos[0][] = $fields['req_data'];
+        $campos[0][] = $fields['req_dataentrega'];
+        $campos[0][] = $fields['tmo_id'];
+        $campos[0][] = "<div class='col-6'>.</div>";
+        $campos[0][] = $fields['lot_codbar'];
 
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
         // debug($produtos, true);
@@ -273,6 +274,7 @@ class ConfRequisicao extends BaseController
 
             $fields = $ent->defCamposProdutoConf($prod);
 
+            $resultado[$p]->rpa_id = $prod->rpa_id;
             $resultado[$p]->rpa_cancelada = $prod->rpa_cancelada;
             $resultado[$p]->rpa_atendida = $fields['rpa_atendida'];
             $resultado[$p]->rpa_cancelada_val = $val_cancelada;
@@ -284,6 +286,7 @@ class ConfRequisicao extends BaseController
 
             // CONTEXTO
             $prod->req_id = $requisicao->req_id;
+            $prod->rpa_id        = $prod->rpa_id;
 
             // IDENTIFICAÇÃO DO PRODUTO
             $prod->pro_id       = $prod->pro_id       ?? 0;
@@ -392,6 +395,9 @@ class ConfRequisicao extends BaseController
                     if ($campo === "tmo_id") {
                         $dadosTemp->tmo_id = $val;
                     }
+                    if ($campo === "rpa_id") {
+                        $dadosTemp->rpa_id = $val;
+                    }
                 }
 
                 // Verificação
@@ -426,14 +432,16 @@ class ConfRequisicao extends BaseController
                     'rpa_conferida' => $val->rpa_conferida,
                     'rpa_data_conferencia' => date('Y-m-d H:i:s'),
                 ];
-
-                if (!$this->requisicaoate->update($val->repid, $sql_save)) {
+                // debug($sql_save);
+                // debug($val, true);
+                if (!$this->requisicaoate->update($val->rpaid, $sql_save)) {
                     $ret['erro'] = true;
                     $ret['msg']  = 'Erro ao gravar a Conferência.';
                     $this->requisicaoate->transRollback();
                     echo json_encode($ret);
                     return;
                 } else {
+                    debug($this->requisicaoate->getLastQuery());
 
                     $idmov = $val->tmo_id;
                     $conf  = $val->rpa_conferida;
@@ -453,7 +461,7 @@ class ConfRequisicao extends BaseController
             }
 
             if (!$ret['erro']) {
-                $status = 5;
+                $status = 25;
                 $dadosReq = ['stt_id' => $status];
 
                 $this->requisicao->transStart();

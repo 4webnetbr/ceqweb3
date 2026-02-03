@@ -10,6 +10,7 @@ class EntAteRequisicao extends EntRequisicao
      * Atributos da Requisição
      */
     protected $attributes = [
+        'rpa_id'                => null,
         'req_id'                => null,
         'req_data'              => null,
         'req_dataentrega'       => null,
@@ -32,6 +33,7 @@ class EntAteRequisicao extends EntRequisicao
      * Casts 
      */
     protected $casts = [
+        'rpa_id'              => 'integer',
         'req_id'              => 'integer',
         'tmo_id'              => 'integer',
         'req_meddias'         => 'integer',

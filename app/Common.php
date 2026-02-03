@@ -519,7 +519,7 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
             $exclui = $bt_del->crBotao();
         }
 
-        $ent->acao = "<div class='col-12 float-start text-center'>" . rtrim("{$edit} {$exclui} {$inativa}");
+        $ent->acao = "<div class='col-12 d-flex justify-content-between flex-nowrap'>" . rtrim("{$edit} {$exclui} {$inativa}");
 
         if (property_exists($ent, 'acao_person') && is_array($ent->acao_person)) {
             foreach ($ent->acao_person as $bt) {
@@ -528,11 +528,6 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
                 if (preg_match('/name=["\']?([^"\'>\s]+)["\']?/', $bt, $matches)) {
                     $name = $matches[1];
                 }
-                // if ($name == 'bt_print') {
-                //     if (property_exists($ent, 'stt_impressao') && trim($ent->stt_impressao) === 'N') {
-                //         $inserirbotao = false;
-                //     }
-                // }
                 if ($inserirbotao) {
                     $ent->acao .= $bt . ' ';
                 }

@@ -21,6 +21,7 @@ class OcorreOcorrenciaModel extends Model
         'tel_id',
         'tpo_id',
         'sut_id',
+        'req_id',
         'tpa_id',
         'oco_descricao',
         'pro_id',
@@ -122,7 +123,7 @@ class OcorreOcorrenciaModel extends Model
             ->get()
             ->getResult();
     }
-    
+
 
     public function getListaOcorrenciaPdf($oco_id)
     {
@@ -132,21 +133,21 @@ class OcorreOcorrenciaModel extends Model
             ->get()
             ->getResult();
     }
-    
+
     public function getBuscaLote($lot_id)
     {
         if (empty($lot_id)) {
             return '';
         }
         $dbProduto = db_connect('dbProduto');
-    
+
         $lote = $dbProduto
             ->table('pro_sap_lote')
             ->select('lot_lote')
             ->where('lot_id', $lot_id)
             ->get()
             ->getRow();
-    
+
         return $lote->lot_lote ?? '';
     }
 
@@ -159,21 +160,21 @@ class OcorreOcorrenciaModel extends Model
             ->get()
             ->getRow();
     }
-    
+
     public function getBuscaProduto($pro_id)
     {
         if (empty($pro_id)) {
             return '';
         }
         $dbProduto = db_connect('dbProduto');
-    
+
         $produto = $dbProduto
             ->table('pro_sap_produto')
             ->select('pro_despro')
             ->where('pro_id', $pro_id)
             ->get()
             ->getRow();
-    
+
         return $produto->pro_despro  ?? '';
     }
 
@@ -186,7 +187,7 @@ class OcorreOcorrenciaModel extends Model
             ->where('sut_nome', 'Nenhuma')
             ->get()
             ->getRow();
-    
+
         return $row?->sut_id;
     }
 
@@ -199,7 +200,7 @@ class OcorreOcorrenciaModel extends Model
                 ->where('sut_id', $sut_id)
                 ->get()
                 ->getRow();
-    
+
             if ($acao) {
                 return $acao;
             }

@@ -61,6 +61,7 @@ if (!isset($show)) {
                                 <? } ?>
                                 <td>
                                     <input type='hidden' id='repid_<?= $produto->rep_id ?>' name='repid_<?= $produto->rep_id ?>' value='<?= $produto->rep_id ?>'></input>
+                                    <input type='hidden' id='rpaid_<?= $produto->rep_id ?>' name='rpaid_<?= $produto->rep_id ?>' value='<?= $produto->rpa_id ?>'></input>
                                     <input type='hidden' id='cbfab_<?= $produto->rep_id ?>' name='cbfab_<?= $produto->rep_id ?>' value='<?= $produto->pre_cbfabricante ?>'></input>
                                     <input type='hidden' id='undfab_<?= $produto->rep_id ?>' name='undfab_<?= $produto->rep_id ?>' value='<?= $produto->pre_undfabricante ?>'></input>
                                     <input type='hidden' id='cblot_<?= $produto->rep_id ?>' name='cblot_<?= $produto->rep_id ?>' value='<?= $produto->pre_cblote ?>'></input>
