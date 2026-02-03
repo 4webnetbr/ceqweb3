@@ -879,6 +879,7 @@ function criaSelectRelativo(
     string $nomeCampo = '' // Configurações adicionais para o MyCampo
 ): string {
     $opcoes = [];
+    $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
     if ($nomeTabela != '') {
         // Detecta o DBGroup e o schema com base no nome da tabela
         $dicDados = new ConfigDicDadosModel();
@@ -892,7 +893,9 @@ function criaSelectRelativo(
         // Verifica se a coluna 'prf_id' existe na tabela
         $fields = $db->getFieldNames("{$schema}.{$nomeTabela}");
 
-        if (in_array('prf_id', $fields, true) && $nomeTabela != 'cfg_perfil') {
+        // verifica se existe um campo chamado prf_id e se não é a tabela cfg_perfil
+        // se não for somente leitura filtra pelo perfil
+        if (in_array('prf_id', $fields, true) && $nomeTabela != 'cfg_perfil' && !$configCampo['Leitura']) {
             $perfilId = session()->get('usu_perfil_id');
             // Se existe, aplica filtro WHERE
             $builder->like('prf_id', $perfilId);

@@ -95,6 +95,7 @@ class Requisicao extends BaseController
             $dados_requis
         );
 
+        $perfilId = session()->get('usu_perfil_id');
         // Busca logs
         $log = buscaLogTabela('est_requisicao', $req_ids_assoc);
 
@@ -112,27 +113,34 @@ class Requisicao extends BaseController
                 $dataLimite->modify('-30 days');
 
                 // URLs
-                $url_cop = $base_url . '/copy/' . $req->req_id;
-                $url_imp = base_url('/CriaPdf2025/PrintRequisicaoEstoq/' . $req->req_id);
 
-                // Se não pode editar
-                if (trim($req->stt_edicao) === 'N') {
-
+                // Se não pode editar e se o usuário tem acesso a esse tipo de movimentação
+                if (trim($req->stt_edicao) === 'N' && str_contains($req->prf_id_tmo, $perfilId)) {
                     // Botão copiar (somente se dentro do prazo)
                     if ($dataBanco > $dataLimite) {
+                        $url_cop = $base_url . '/copy/' . $req->req_id;
+
                         $bt_cop = new MyCampo();
                         $bt_cop->id = $bt_cop->nome = 'bt_copy';
                         $bt_cop->classep  = 'btn btn-outline-primary btn-sm border-0 mx-0 fs-0';
                         $bt_cop->i_cone   = "<i class='fas fa-copy'></i>";
                         $bt_cop->label    = '';
                         $bt_cop->place    = 'Copiar Requisição';
-                        $bt_cop->funcChan = "copiar_requisicao('{$url_cop}')";
+                        $bt_cop->funcChan = "redireciona('{$url_cop}',event)";
                         $btcop = $bt_cop->crBotao();
                         $req->acao_person[] = $btcop;
                     }
                 }
+
+                // se o usuário não tem acesso a esse tipo de movimentação não pode editar
+                if (!str_contains($req->prf_id_tmo, $perfilId)) {
+                    $req->stt_edicao = 'N';
+                    $req->stt_exclusao = 'N';
+                }
                 // Botão imprimir
                 if (trim($req->stt_impressao) === 'S') {
+                    $url_imp = base_url('/CriaPdf2025/PrintRequisicaoEstoq/' . $req->req_id);
+
                     $bt_prn = new MyCampo();
                     $bt_prn->id = $bt_prn->nome = 'bt_print';
                     $bt_prn->classep  = 'btn btn-outline-dark btn-sm border-0 mx-0 fs-0';
@@ -940,9 +948,10 @@ class Requisicao extends BaseController
                 $status = 4;
             }
         }
+        $hoje = new DateTime();
 
         $dadosReq = [
-            'req_data'            => $postado['req_data'],
+            'req_data'            => $hoje->format('Y-m-d H:i:s'),
             'req_dataentrega'     => $postado['req_dataentrega'],
             'tmo_id'              => $postado['tmo_id'],
             'req_deporigem'       => $postado['req_deporigem'],

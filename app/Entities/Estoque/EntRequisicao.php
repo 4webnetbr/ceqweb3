@@ -117,6 +117,7 @@ class EntRequisicao extends Entity
         $config['Label'] = 'Tipo de Movimentação';
         $config['DispForm'] = 'col-6';
         $config['Largura'] = 50;
+        $config['Leitura'] = true;
 
         // MOVIMENTAÇÃO
         $perfilId = session()->get('usu_perfil_id');

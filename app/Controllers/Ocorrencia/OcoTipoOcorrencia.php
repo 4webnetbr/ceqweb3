@@ -185,6 +185,7 @@ class OcoTipoOcorrencia extends BaseController
      */
     public function edit($id)
     {
+        
         // BUSCA DADOS 
         $dados_TipoOcorrencia = $this->tipoocorrencia->getTipoOcorrencia($id);
         // debug($dados_TipoOcorrencia);
@@ -242,6 +243,7 @@ class OcoTipoOcorrencia extends BaseController
                 $fields = $entity->defCamposAcao($dados_Acao[$c], $c);
 
                 $campos[2][$c][] = $fields['tpa_id'];
+                // debug(array_keys($dados_Acao[$c]), true);
 
                 $dnone = ($dados_Acao[$c]['tmo_id'] != 0) ? '' : 'd-none';
                 $campos[2][$c][] = "<div id='divmovi[$c]' class='$dnone row col-6'>" . $fields['tmo_id'] . "</div>";
@@ -291,53 +293,75 @@ class OcoTipoOcorrencia extends BaseController
     public function delete($id)
     {
         $ret = [];
-
+    
         try {
-            // Checa uso do status em outros bancos
-            $this->verificarUsoEmRelacionamentos('oco_tipo_ocorrencia', 'tpo_id', (int) $id);
-
+            // verifica somente subtipo
+            $existeSubtipo = $this->tipoocorrencia->db
+                ->table('oco_subt_ocorrencia')
+                ->where('tpo_id', (int) $id)
+                ->countAllResults();
+    
+            if ($existeSubtipo > 0) {
+                throw new \Exception('MSG_3'); // possui subtipo vinculado
+            }
+    
             // Soft delete
             $this->tipoocorrencia->delete($id);
+    
             $ret['erro'] = false;
-            session()->setFlashdata('msg', 'Tipo de Ocorrência excluída com sucesso!');
+            $ret['msg']  = 'Tipo de Ocorrência excluída com sucesso!';
+            session()->setFlashdata('msg', $ret['msg']);
+    
         } catch (\Exception $e) {
             $ret['erro'] = true;
             $ret['msg']  = 3;
         }
-
+    
         echo json_encode($ret);
     }
+
 
     public function ativinativ($id, $tipo)
     {
         $ret = [];
         try {
             if ($tipo == 1) {
+                // ATIVAR
                 $dad_atin = [
                     'tpo_ativo' => 'A'
                 ];
             } else {
+                // INATIVAR
+                // só verifica subtipo
+                $existeSubtipo = $this->tipoocorrencia->db
+                    ->table('oco_subt_ocorrencia')
+                    ->where('tpo_id', (int) $id)
+                    ->where('sut_ativo', 'A')
+                    ->countAllResults();
+    
+                if ($existeSubtipo > 0) {
+                    throw new \Exception('MSG_14'); // Tipo possui subtipo ativo
+                }
+    
                 $dad_atin = [
                     'tpo_ativo' => 'I'
                 ];
-                $this->verificarUsoEmRelacionamentos('oco_tipo_ocorrencia', 'tpo_id', (int) $id);
             }
             $this->tipoocorrencia->update($id, $dad_atin);
+    
             $ret['erro'] = false;
-            session()->setFlashdata('msg', 'Tipo de Ocorrência Alterada com Sucesso');
-            $ret['msg']  = 'Tipo de Ocorrência Alterada com Sucesso';
+            $ret['msg']  = 'Tipo de Ocorrência alterado com sucesso';
+            session()->setFlashdata('msg', $ret['msg']);
             cache()->clean();
-        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
-            $ret['erro'] = true;
-            // $ret['msg']  = $e->getMessage();
-            $ret['msg']  = 14;
+    
         } catch (\Exception $e) {
             $ret['erro'] = true;
-            // $ret['msg']  = $e->getMessage();
-            $ret['msg']  = 14; // ou código personalizado, se preferir
+            $ret['msg']  = 14; // código da mensagem
         }
+    
         echo json_encode($ret);
     }
+
 
     /**
      * Gravação
@@ -348,26 +372,6 @@ class OcoTipoOcorrencia extends BaseController
     public function store()
     {
         $postado = $this->request->getPost();
-
-        // Campos simples por linha (pegam o [0])
-        $normalizaSimples = [
-            'tpa_id',
-            'mod_id_tpa',
-            'tel_id_tpa',
-            'stt_id_tpa',
-            'tmo_id_tpa',
-            'mod_id',
-            'tel_id',
-        ];
-
-        foreach ($normalizaSimples as $campo) {
-            if (isset($postado[$campo]) && is_array($postado[$campo])) {
-                $postado[$campo] = array_map(
-                    fn($v) => is_array($v) ? ($v[0] ?? null) : $v,
-                    $postado[$campo]
-                );
-            }
-        }
 
         // Classes (array de arrays)
         if (isset($postado['cla_id']) && is_array($postado['cla_id'])) {
@@ -411,6 +415,19 @@ class OcoTipoOcorrencia extends BaseController
         try {
             $db->transBegin();
 
+            // não permitir edição se já houver subtipo vinculado
+            if (!empty($postado['tpo_id'])) {
+            
+                if ($this->tipoocorrencia->SubVinculado((int) $postado['tpo_id'])) {
+                    $db->transRollback();
+            
+                    return $this->response->setJSON([
+                        'erro' => true,
+                        'msg'  => 15 // Alteração não permitida
+                    ]);
+                }
+            }
+            
             // Verifica unicidade
             $exists = $this->common->verificaUnico(
                 $this->tipoocorrencia,
@@ -421,7 +438,7 @@ class OcoTipoOcorrencia extends BaseController
             );
 
             if ($exists > 0) {
-                throw new \Exception('Tipo de Ocorrência já existente.');
+                throw new \Exception('MSG_8');
             }
 
             // Salva tipo de ocorrência
@@ -436,27 +453,49 @@ class OcoTipoOcorrencia extends BaseController
 
             // Limpa relacionamentos
             if ($tpo_id) {
-                $this->common->deleteReg($grupo, 'oco_tpo_acao',      "tpo_id = {$tpo_id}");
-                $this->common->deleteReg($grupo, 'oco_tpo_classe',    "tpo_id = {$tpo_id}");
-                $this->common->deleteReg($grupo, 'oco_tpo_tela',      "tpo_id = {$tpo_id}");
-                $this->common->deleteReg($grupo, 'oco_tpo_campos',    "tpo_id = {$tpo_id}");
-                $this->common->deleteReg($grupo, 'oco_tpo_permissao', "tpo_id = {$tpo_id}");
+                $this->common->deleteReg($grupo, 'oco_tipo_ocorrencia_acao',     "tpo_id = {$tpo_id}");
+                $this->common->deleteReg($grupo, 'oco_tipo_ocorrencia_classe',   "tpo_id = {$tpo_id}");
+                $this->common->deleteReg($grupo, 'oco_tipo_ocorrencia_tela',     "tpo_id = {$tpo_id}");
+                $this->common->deleteReg($grupo, 'oco_tipo_ocorrencia_campos',   "tpo_id = {$tpo_id}");
+                $this->common->deleteReg($grupo, 'oco_tipo_ocorrencia_permissao',"tpo_id = {$tpo_id}");
             }
 
             // Ações
             if (!empty($postado['tpa_id'])) {
                 $acoes = [];
+            
                 foreach ($postado['tpa_id'] as $i => $tpa_id) {
+                    
+            
+                    if (!$tpa_id) continue;
+            
+                    $mod_id = (!isset($postado['mod_id_acao'][$i]) || $postado['mod_id_acao'][$i] <= 0)
+                        ? null
+                        : (int) $postado['mod_id_acao'][$i];
+                    
+                    $tel_id = (!isset($postado['tel_id_acao'][$i]) || $postado['tel_id_acao'][$i] <= 0)
+                        ? null
+                        : (int) $postado['tel_id_acao'][$i];
+                    
+                    $stt_id = (!isset($postado['stt_id_acao'][$i]) || $postado['stt_id_acao'][$i] <= 0)
+                        ? null
+                        : (int) $postado['stt_id_acao'][$i];
+                    
+                    $tmo_id = (!isset($postado['tmo_id_acao'][$i]) || $postado['tmo_id_acao'][$i] <= 0)
+                        ? null
+                        : (int) $postado['tmo_id_acao'][$i];
+            
                     $acoes[] = [
                         'tpo_id' => $tpo_id,
                         'tpa_id' => $tpa_id,
-                        'mod_id' => $postado['mod_id_tpa'][$i] ?? null,
-                        'tel_id' => $postado['tel_id_tpa'][$i] ?? null,
-                        'stt_id' => $postado['stt_id_tpa'][$i] ?? null,
-                        'tmo_id' => $postado['tmo_id_tpa'][$i] ?? null,
+                        'mod_id' => $mod_id,
+                        'tel_id' => $tel_id,
+                        'stt_id' => $stt_id,
+                        'tmo_id' => $tmo_id,
                     ];
                 }
-                $this->common->insertRegBatch($grupo, 'oco_tpo_acao', $acoes);
+            
+                $this->common->insertRegBatch('dbOcorrencia','oco_tipo_ocorrencia_acao',$acoes);
             }
 
             // Classes
@@ -465,7 +504,7 @@ class OcoTipoOcorrencia extends BaseController
                 foreach ($postado['cla_id'] as $cla_id) {
                     $classes[] = ['tpo_id' => $tpo_id, 'cla_id' => $cla_id];
                 }
-                $this->common->insertRegBatch($grupo, 'oco_tpo_classe', $classes);
+                $this->common->insertRegBatch($grupo, 'oco_tipo_ocorrencia_classe', $classes);
             }
 
             // Telas
@@ -480,7 +519,9 @@ class OcoTipoOcorrencia extends BaseController
                         ];
                     }
                 }
-                $this->common->insertRegBatch($grupo, 'oco_tpo_tela', $telas);
+                if (!empty($telas)) {
+                    $this->common->insertRegBatch($grupo,'oco_tipo_ocorrencia_tela', $telas);
+                }
             }
 
             // Campos
@@ -500,8 +541,8 @@ class OcoTipoOcorrencia extends BaseController
                         }
                     }
                 }
-                if ($campos) {
-                    $this->common->insertRegBatch($grupo, 'oco_tpo_campos', $campos);
+                if (!empty($campos)) {
+                    $this->common->insertRegBatch($grupo, 'oco_tipo_ocorrencia_campos', $campos);
                 }
             }
 
@@ -514,7 +555,7 @@ class OcoTipoOcorrencia extends BaseController
                         'prf_id' => $prf_id
                     ];
                 }
-                $this->common->insertRegBatch($grupo, 'oco_tpo_permissao', $permissoes);
+                $this->common->insertRegBatch($grupo, 'oco_tipo_ocorrencia_permissao', $permissoes);
             }
 
             $db->transCommit();
@@ -527,7 +568,14 @@ class OcoTipoOcorrencia extends BaseController
             ]);
         } catch (\Exception $e) {
             $db->transRollback();
-
+        
+            if ($e->getMessage() === 'MSG_8') {
+                return $this->response->setJSON([
+                    'erro' => true,
+                    'msg'  => 8
+                ]);
+            }
+        
             return $this->response->setJSON([
                 'erro' => true,
                 'msg'  => 'Erro ao gravar o Tipo de Ocorrência:<br><br>' . $e->getMessage()

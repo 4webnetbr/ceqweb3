@@ -20,7 +20,7 @@ class OcorreOcorrenciaModel extends Model
         'oco_id',
         'tel_id',
         'tpo_id',
-        'moc_id',
+        'sut_id',
         'tpa_id',
         'oco_descricao',
         'pro_id',
@@ -101,205 +101,114 @@ class OcorreOcorrenciaModel extends Model
             ->getResult();
     }
 
-    public function getById($id)
+    public function getAcoesFinalizar(int $oco_id): array
     {
-        $builder = $this->db->table($this->view)
-            ->where('oco_id', $id);
+        $select = [
+            'o.*',
+            'a.tpa_id',
+            'a.tmo_id',
+            'a.tel_id',
+            'a.stt_id',
+            'ta.tpa_nome',
+        ];
 
-        $result = $builder
+        return $this->db
+            ->table('oco_ocorrencia o')
+            ->select($select)
+            ->join('oco_tipo_ocorrencia_acao a', 'a.tpo_id = o.tpo_id', 'inner')
+            ->join('oco_tipo_acao ta', 'ta.tpa_id = a.tpa_id', 'left')
+            ->where('o.oco_id', $oco_id)
+            ->orderBy('a.tpa_id')
             ->get()
             ->getResult();
-
-        return $result[0] ?? null;
     }
+    
 
-
-    public function getAcoesByModelo($moc_id)
+    public function getListaOcorrenciaPdf($oco_id)
     {
-        $builder = $this->db->table('oco_moc_acao')
-            ->where('moc_id', $moc_id);
-
-        return $builder
+        return $this->db
+            ->table('vw_oco_ocorrencia_relac')
+            ->where('oco_id', $oco_id)
             ->get()
             ->getResult();
     }
-
-
-    public function salvarOcorrencia(EntOcoOcorrencia $ocorrencia)
+    
+    public function getBuscaLote($lot_id)
     {
-        $ret   = [];
-        $erros = [];
-
-        $this->db->transBegin();
-
-        try {
-
-            $statusPendente = $this->getStatusIdByNome('Pendente', 56);
-            $statusFinaliza = $this->getStatusIdByNome('Finalização automática', 56);
-
-            $status = $statusPendente;
-            $tpa_id = $ocorrencia->tpa_id ?? null;
-            $tmo_id = $ocorrencia->tmo_id ?? null;
-
-            if ((int) $tpa_id === 8) {
-                $status = $statusFinaliza;
-            }
-
-            $modelMod = new OcorreModOcorrenciaModel();
-            $modelo   = $modelMod->buscarPorTipo($ocorrencia->tpo_id);
-
-            $moc_id = null;
-            if (!empty($modelo) && isset($modelo[0])) {
-                $moc_id = is_object($modelo[0])
-                    ? ($modelo[0]->moc_id   ?? null)
-                    : ($modelo[0]['moc_id'] ?? null);
-            }
-
-            $insert = [
-                'tpo_id'        => $ocorrencia->tpo_id,
-                'oco_descricao' => $ocorrencia->oco_descricao,
-                'lot_lote'      => $ocorrencia->lot_lote,
-                'pro_despro'    => $ocorrencia->pro_despro,
-                'oco_qtd'       => $ocorrencia->oco_qtd,
-                'oco_data'      => $ocorrencia->oco_data,
-                'moc_id'        => $moc_id,
-                'stt_id'        => $status,
-                'tpa_id'        => $tpa_id,
-                'tmo_id'        => $tmo_id,
-            ];
-
-            if (!empty($ocorrencia->oco_justi)) {
-                $insert['oco_justi'] = $ocorrencia->oco_justi;
-            }
-
-            // SALVAR
-            if (!$this->insert($insert)) {
-                $erros = $this->errors();
-                throw new \Exception('erro_validacao');
-            }
-
-            $this->db->transCommit();
-            cache()->clean();
-
-            $ret['erro'] = false;
-            $ret['msg']  = 'Ocorrência registrada com Sucesso!!!';
-            session()->setFlashdata('msg', $ret['msg']);
-            $ret['url']  = site_url('OcoOcorrencia');
-        } catch (\Exception $e) {
-
-            $this->db->transRollback();
-
-            $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível gravar a Ocorrência, Verifique!<br><br>';
-
-            if (!empty($erros)) {
-                foreach ($erros as $erro) {
-                    $ret['msg'] .= $erro . '<br>';
-                }
-            } else {
-                $ret['msg'] .= $e->getMessage();
-            }
+        if (empty($lot_id)) {
+            return '';
         }
-        return $ret;
+        $dbProduto = db_connect('dbProduto');
+    
+        $lote = $dbProduto
+            ->table('pro_sap_lote')
+            ->select('lot_lote')
+            ->where('lot_id', $lot_id)
+            ->get()
+            ->getRow();
+    
+        return $lote->lot_lote ?? '';
     }
 
-
-    public function atualizarOcorrencia(int $id, EntOcoOcorrencia $ocorrencia)
+    public function getByIdFinalizar(int $oco_id)
     {
-        $ret   = [];
-        $erros = [];
-
-        $this->db->transBegin();
-
-        try {
-
-            $registro = $this->find($id);
-            if (!$registro) {
-                throw new \Exception('Ocorrência não encontrada.');
-            }
-
-            $statusPendente = $this->getStatusIdByNome('Pendente', 56);
-            $statusFinaliza = $this->getStatusIdByNome('Finalização automática', 56);
-
-            $status = $statusPendente;
-            $tpa_id = $ocorrencia->tpa_id ?? null;
-            $tmo_id = $ocorrencia->tmo_id ?? null;
-
-            if ((int) $tpa_id === 8) {
-                $status = $statusFinaliza;
-            }
-
-            $modelMod = new OcorreModOcorrenciaModel();
-            $modelo   = $modelMod->buscarPorTipo($ocorrencia->tpo_id);
-
-            $moc_id = null;
-            if (!empty($modelo) && isset($modelo[0])) {
-                $moc_id = is_object($modelo[0])
-                    ? ($modelo[0]->moc_id   ?? null)
-                    : ($modelo[0]['moc_id'] ?? null);
-            }
-
-            $atualiza = [
-                'tpo_id'        => $ocorrencia->tpo_id,
-                'oco_descricao' => $ocorrencia->oco_descricao,
-                'lot_lote'      => $ocorrencia->lot_lote,
-                'pro_despro'    => $ocorrencia->pro_despro,
-                'oco_qtd'       => $ocorrencia->oco_qtd,
-                'oco_data'      => $ocorrencia->oco_data,
-                'moc_id'        => $moc_id,
-                'stt_id'        => $status,
-                'tpa_id'        => $tpa_id,
-                'tmo_id'        => $tmo_id,
-            ];
-
-            if (!empty($ocorrencia->oco_justi)) {
-                $atualiza['oco_justi'] = $ocorrencia->oco_justi;
-            }
-
-            // ATUALIZAR
-            if (!$this->update($id, $atualiza)) {
-                $erros = $this->errors();
-                throw new \Exception('erro_validacao');
-            }
-
-            $this->db->transCommit();
-            cache()->clean();
-
-            $ret['erro'] = false;
-            $ret['msg']  = 'Ocorrência atualizada com Sucesso!';
-            session()->setFlashdata('msg', $ret['msg']);
-            $ret['url']  = site_url('OcoOcorrencia');
-        } catch (\Exception $e) {
-
-            $this->db->transRollback();
-
-            $ret['erro'] = true;
-            $ret['msg']  = 'Não foi possível atualizar a Ocorrência, Verifique!<br><br>';
-
-            if (!empty($erros)) {
-                foreach ($erros as $erro) {
-                    $ret['msg'] .= $erro . '<br>';
-                }
-            } else {
-                $ret['msg'] .= $e->getMessage();
-            }
+        return $this->db
+            ->table('oco_ocorrencia o')
+            ->select('o.*')
+            ->where('o.oco_id', $oco_id)
+            ->get()
+            ->getRow();
+    }
+    
+    public function getBuscaProduto($pro_id)
+    {
+        if (empty($pro_id)) {
+            return '';
         }
-
-        return $ret;
+        $dbProduto = db_connect('dbProduto');
+    
+        $produto = $dbProduto
+            ->table('pro_sap_produto')
+            ->select('pro_despro')
+            ->where('pro_id', $pro_id)
+            ->get()
+            ->getRow();
+    
+        return $produto->pro_despro  ?? '';
     }
 
-
-    public function getSelectPorTipo(int $tpo_id): array
+    public function getSubtipoPorTipo(int $tpo_id): ?int
     {
-        $modelMod    = new OcorreModOcorrenciaModel();
-        $ocorrencias = $modelMod->buscarPorTipo($tpo_id);
+        $row = $this->db
+            ->table('oco_subt_ocorrencia')
+            ->select('sut_id')
+            ->where('tpo_id', $tpo_id)
+            ->where('sut_nome', 'Nenhuma')
+            ->get()
+            ->getRow();
+    
+        return $row?->sut_id;
+    }
 
-        $retorno = [];
-
-        foreach ($ocorrencias as $ocorrencia) {
-            $retorno[$ocorrencia->moc_id] = $ocorrencia->moc_nome;
+    public function getAcaoConfigurada(int $tpo_id, ?int $sut_id = null)
+    {
+        // SUBTIPO
+        if ($sut_id) {
+            $acao = $this->db
+                ->table('oco_subt_ocorrencia_acao')
+                ->where('sut_id', $sut_id)
+                ->get()
+                ->getRow();
+    
+            if ($acao) {
+                return $acao;
+            }
         }
-
-        return $retorno;
+        // TIPO
+        return $this->db
+            ->table('oco_tipo_ocorrencia_acao')
+            ->where('tpo_id', $tpo_id)
+            ->get()
+            ->getRow();
     }
 }

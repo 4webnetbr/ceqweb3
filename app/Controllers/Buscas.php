@@ -686,25 +686,35 @@ class Buscas extends BaseController
     public function buscaAcoesPorTipo()
     {
         $ret = [];
-
-        if ($_REQUEST['busca']) {
-            $acoes = new OcorreTipoAcaoModel();
-            $lst = $acoes->getTipoAcaoporTipo($_REQUEST['busca']);
+    
+        $busca = $_REQUEST['busca'] ?? null;
+    
+        if ($busca) {
+    
+            // Model correto para SUBTIPO
+            $subtipoModel = new OcorreModOcorrenciaModel();
+    
+            // Método coerente com o que está buscando
+            $lst = $subtipoModel->getSubtipoPorTipo($busca);
+    
             if (empty($lst)) {
+    
                 $o = new \stdClass();
                 $o->id   = -1;
                 $o->text = 'Nenhum Subtipo encontrado';
                 $ret[] = $o;
+    
             } else {
+    
                 foreach ($lst as $l) {
                     $o = new \stdClass();
-                    $o->id   = $l->tpa_id;
-                    $o->text = $l->tpa_nome;
+                    $o->id   = $l->sut_id;     // ID do Subtipo
+                    $o->text = $l->sut_nome;   // Nome do Subtipo
                     $ret[] = $o;
                 }
             }
         }
-
+    
         echo json_encode($ret);
         exit;
     }

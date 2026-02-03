@@ -791,9 +791,7 @@ async function enviarAteRequisicoes(event) {
 
         const resposta = await boxAlert(33, false, "", false, 1, true);
 
-        if (!resposta) {
-          return false; // Interrompe o processamento
-        }
+        return resposta; // Interrompe o processamento
       }
     }
   }
@@ -824,4 +822,8 @@ async function gerarOcorrencia(tela, indice) {
     // document.onreadystatechange = function () {
     myModal.show();
   }
+}
+
+async function copiar_requisicao(url) {
+  const retornoAjax = await executaAjaxWait(url, "html", dados);
 }

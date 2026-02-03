@@ -75,6 +75,7 @@ $routes->group('Showfile', static function ($routes) {
 $routes->group('CriaPdf2025', static function ($routes) {
     $routes->match(['get', 'post'], 'PrintAnaRequisicao/(:any)', 'CriaPdf2025::PrintAnaRequisicao/$1', ['as' => 'criapdf2025_match']);
     $routes->match(['get', 'post'], 'PrintRequisicaoEstoq/(:any)', 'CriaPdf2025::PrintRequisicaoEstoq/$1', ['as' => 'criapdf2025_match_two']);
+    $routes->match(['get', 'post'], 'PrintOcorrencia/(:any)', 'CriaPdf2025::PrintOcorrencia/$1', ['as' => 'criapdf2025_print_ocorrencia']);
 });
 
 // Grupo: CriaEtiqueta

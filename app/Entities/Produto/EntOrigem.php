@@ -34,27 +34,6 @@ class EntOrigem extends Entity
         parent::__construct($data, $cast);
     }
 
-
-
-    //  public static function campoSelectOrigem(mixed $valor = null, bool $leitura = false, string $entidade = ''): string
-    // {
-    //     $origemModel = new ProdutOrigemModel();
-    //     $lst_origem  = $origemModel->getOrigem();
-    //     $opc_ori     = array_column($lst_origem, 'ori_codDescricao', 'ori_codOri');
-    
-    //     $orig = (new MyCampo($entidade, 'ori_codOri', false))
-    //         ->setLabel('Origem')
-    //         ->setValor($valor ?? '')
-    //         ->setSelecionado($valor ?? '')
-    //         ->setOpcoes($opc_ori)
-    //         ->setLeitura($leitura)
-    //         ->setLargura(50)
-    //         ->setObrigatorio()
-    //         ->setDispForm('2col');
-    
-    //     return $orig->crSelect();
-    // }
-
     /**
      * Define os campos da tela (padrão MyCampo)
      *

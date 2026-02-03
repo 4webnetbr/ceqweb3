@@ -6,6 +6,7 @@ use CodeIgniter\Entity\Entity;
 use App\Libraries\MyCampo;
 use App\Entities\Estoque\EntTipoMovimentacao;
 use App\Entities\Produto\EntLote;
+use App\Models\Ocorre\OcorreOcorrenciaModel;
 use App\Models\Ocorre\OcorreModOcorrenciaModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 
@@ -115,7 +116,7 @@ class EntOcoTratativa extends Entity
       $ret['lot_id'] = $lotid->crOculto();  
 
       $lote              = new MyCampo('pro_sap_lote', 'lot_lote');
-      $lote->valor       = (isset($dados['lot_lote'])) ? $dados['lot_lote'] : '';
+      $lote->valor       = model(OcorreOcorrenciaModel::class)->getBuscaLote($dados['lot_id'] ?? null);
       $lote->leitura     = true;
       $lote->label       = 'Lote';
       $lote->size        = 54;
@@ -124,7 +125,7 @@ class EntOcoTratativa extends Entity
   
       // PRODUTO 
       $produto           = new MyCampo('pro_sap_produto', 'pro_despro');
-      $produto->valor    = (isset($dados['pro_despro'])) ? $dados['pro_despro'] : '';
+      $produto->valor    = model(OcorreOcorrenciaModel::class)->getBuscaProduto($dados['pro_id'] ?? null);
       $produto->dispForm = '2col';
       $produto->label    = ' ';
       $produto->size     = 54;
@@ -160,13 +161,18 @@ class EntOcoTratativa extends Entity
     public function defCamposAcao(object $dados): array
     {
         $ret = [];
+        $dados->tpa_id = $dados->tpa_id ?? null;
+        $leitura = $dados->somente_leitura ?? false;
     
         // TIPO DE AÇÃO
-        $ret['tpa_id'] = EntOcoTipoAcao::campoSelectTipoAcao(
-            $dados->tpa_id ?? '',
-            true,
-            'oco_tipo_acao'
-        );
+        $acao = new MyCampo('oco_tipo_ocorrencia_acao', 'tpa_nome');
+        $acao->valor    = $dados->tpa_nome ?? '';
+        $acao->label    = 'Ação';
+        $acao->leitura  = true;
+        $acao->size     = 50;
+        $acao->dispForm = '2col';
+        
+        $ret['tpa_nome'] = $acao->crInput();
     
         // JUSTIFICAR
         if ((int)$dados->tpa_id === 6) {
@@ -177,6 +183,8 @@ class EntOcoTratativa extends Entity
             $justi->dispForm    = '2col';
             $justi->linhas      = 3;
             $justi->colunas     = 56;
+            $justi->leitura     = $leitura;
+            $justi->obrigatorio = !$leitura;
     
             $ret['oco_justi'] = $justi->crTexto();
         }
@@ -258,6 +266,4 @@ class EntOcoTratativa extends Entity
     
         return $ret;
     }
-
-  
 }

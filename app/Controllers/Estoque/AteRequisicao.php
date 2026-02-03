@@ -135,24 +135,6 @@ class AteRequisicao extends BaseController
                     $btetq,
                     $btprn
                 ];
-
-                // Gerar a ação do botão
-                // $req->acao_person = [
-                //     "<button name='bt_atende' id='bt_atende' class='btn btn-outline-success btn-sm border-0 mx-0 fs-0' 
-                //     data-mdb-toggle='tooltip' data-mdb-placement='top' 
-                //     title='Atendimento' onclick='redireciona(\"$url_ate\")'>
-                //     <i class='fas fa-bell-concierge'></i></button>",
-
-                //     "<button name='bt_etiqueta' id='bt_etiqueta' class='btn btn-outline-warning btn-sm border-0 mx-0 fs-0' 
-                //     data-mdb-toggle='tooltip' data-mdb-placement='top' 
-                //     title='Etiquetas de Produtos' onclick='redireciona(\"$url_eti\")'>
-                //     <i class='fas fa-tag'></i></button>",
-
-                //     "<button name='bt_print' id='bt_print' class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end' 
-                //     data-mdb-toggle='tooltip' data-mdb-placement='top' 
-                //     title='Imprimir Requisição' onclick='openPDFModal(\"$url_imp\",\"Imprimir Requisição\")'>
-                //     <i class='fa-solid fa-print'></i></button>"
-                // ];
             }
         }
 
@@ -216,7 +198,7 @@ class AteRequisicao extends BaseController
 
         $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $requisicao->req_deporigem);
         // debug($produtos, false);
-        // debug($dados_est_produto, false);
+        // debug($dados_est_produto, true);
 
         // Transformar $produtos em um array indexado por pro_id
         $produtosIndexado = [];
@@ -230,78 +212,118 @@ class AteRequisicao extends BaseController
             $estoqueIndexado[$itemEstoque->pro_id] = $itemEstoque;
         }
 
-        // Resultado final com todos os produtos
-        $resultado = [];
+        $estoqueOrigem  = $this->busca->buscaEstoqueDeposito($requisicao->req_deporigem);
+        $estoqueOrigemIndexado = [];
 
-        foreach ($produtosIndexado as $pro_id => $produto) {
-            if (isset($estoqueIndexado[$pro_id])) {
-                // Mescla produto com dados de estoque (OBJ para array temporário)
-                $resultado[] = array_merge((array)$produto, (array)$estoqueIndexado[$pro_id]);
-            } else {
-                // Apenas dados do produto 
-                $resultado[] = (array)$produto;
-            }
-        }
-        // debug($resultado, true);
-
-        for ($p = 0; $p < count($resultado); $p++) {
-            $prod = (object)$resultado[$p];
-
-            if (!isset($prod->pre_cbfabricante)) {
-                $resultado[$p]['pre_cbfabricante'] = 'N';
-                $resultado[$p]['pre_undfabricante'] = 'N';
-                $resultado[$p]['pre_cblote'] = 'N';
-                $resultado[$p]['pre_undlote'] = 'N';
-
-                $prod->pre_cbfabricante = 'N';
-                $prod->pre_undfabricante = 'N';
-                $prod->pre_cblote = 'N';
-                $prod->pre_undlote = 'N';
+        foreach ($estoqueOrigem as $itemOrigem) {
+            // debug($itemOrigem, true);
+            if (($itemOrigem->quantidadeEstoque ?? 0) <= 0) {
+                continue; // ignora itens sem estoque
             }
 
-            $fields = $entReq->defCamposProdutoAte($prod);
+            $pro_id = $itemOrigem->codigoProduto;
+            $lote   = $itemOrigem->codigoLote ?? 'SEM_LOTE';
 
-            $url = base_url("OcoOcorrencia/addOutraTela/" . $this->data['tel_id'] . "/" . $id . "/" . $prod->pro_id);
+            $estoqueOrigemIndexado[$pro_id][$lote] = $itemOrigem;
+        }
+        // debug($estoqueOrigemIndexado);
 
-            // $resultado[$p]['bt_ocorre'] = "<button type='button' class='btn btn-outline-warning btn-sm border-0 mx-0 fs-0' 
-            // data-mdb-toggle='tooltip' data-mdb-placement='top' 
-            // title='Gerar Ocorrência' onclick='openModal(\"$url\")'>
-            // <i class='fas fa-exclamation-triangle'></i></button>";
+        $semsaldo = false;
+        foreach ($produtos as $produto) {
+            $pro_id = $produto->pro_codpro;
+            $lote   = $produto->lot_lote ?? 'SEM_LOTE'; // caso lote venha da requisição
+            // debug($pro_id);
+            // debug($lote);
 
-            $bt_oco = new MyCampo();
-            $bt_oco->id = $bt_oco->nome = 'bt_ocorre';
-            $bt_oco->classep  = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0';
-            $bt_oco->i_cone   = "<i class='fa-solid fa-exclamation-triangle'></i>";
-            $bt_oco->label    = '';
-            // $bt_oco->attrdata = ['data-id' => ];
-            $bt_oco->place    = 'Gerar Ocorrência';
-            $bt_oco->funcChan = "gerarOcorrencia({$this->data['tel_id']}, {$prod->rep_id})";
-            $btoco = $bt_oco->crBotao();
+            $qtdRequisitada = $produto->rep_quantia;
 
-            $resultado[$p]['bt_ocorre'] = $btoco;
-
-            $resultado[$p]['rpa_cancelada']     = $fields['rpa_cancelada'];
-            $resultado[$p]['rpa_atendida']      = $fields['rpa_atendida'];
-            $resultado[$p]['rpa_cancelada_val'] = $prod->rpa_cancelada;
-            $resultado[$p]['rpa_atendida_val']  = $prod->rpa_atendida;
-            $resultado[$p]['saldo'] =
-                intval($resultado[$p]['rep_quantia']) -
-                (intval($prod->rpa_cancelada) + intval($prod->rpa_atendida));
+            $disponivel = $estoqueOrigemIndexado[$pro_id][$lote]->quantidadeEstoque ?? 0;
+            // debug($disponivel);
+            if ($disponivel < $qtdRequisitada) {
+                // debug($disponivel);
+                // debug($qtdRequisitada);
+                // Sem saldo suficiente
+                $semsaldo = true;
+            }
         }
 
-        // $secao[1] = 'Produtos';
-        $campos[0][count($campos[0])] =
-            view('partials/pw_produtos_requisicao', ['produtos' => $resultado]); // mesma estrutura do add
+        if ($semsaldo) {
+            $ret['erro'] = true;
+            $ret['msg']  = 37;
+            session()->setFlashdata('msg', 37);
+            return redirect()->to(site_url($this->data['controler']));
+        } else {
+            // Resultado final com todos os produtos
+            $resultado = [];
 
-        $this->data['title']       = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
-        $this->data['desc_metodo'] = ' Atendimento de ';
-        $this->data['secoes']      = $secao;
-        $this->data['campos']      = $campos;
-        $this->data['destino']     = 'store';
-        $this->data['scripts']     = 'my_requisicao';
+            foreach ($produtosIndexado as $pro_id => $produto) {
+                if (isset($estoqueIndexado[$pro_id])) {
+                    // Mescla produto com dados de estoque (OBJ para array temporário)
+                    $resultado[] = array_merge((array)$produto, (array)$estoqueIndexado[$pro_id]);
+                } else {
+                    // Apenas dados do produto 
+                    $resultado[] = (array)$produto;
+                }
+            }
+            // debug($resultado, true);
 
-        $this->data['script'] = "<SCRIPT>jQuery('#lot_codbar').focus();</SCRIPT>";
-        echo view('vw_edicao', $this->data);
+            for ($p = 0; $p < count($resultado); $p++) {
+                $prod = (object)$resultado[$p];
+
+                if (!isset($prod->pre_cbfabricante)) {
+                    $resultado[$p]['pre_cbfabricante'] = 'N';
+                    $resultado[$p]['pre_undfabricante'] = 'N';
+                    $resultado[$p]['pre_cblote'] = 'N';
+                    $resultado[$p]['pre_undlote'] = 'N';
+
+                    $prod->pre_cbfabricante = 'N';
+                    $prod->pre_undfabricante = 'N';
+                    $prod->pre_cblote = 'N';
+                    $prod->pre_undlote = 'N';
+                }
+
+                $fields = $entReq->defCamposProdutoAte($prod);
+
+                $url = base_url("OcoOcorrencia/addOutraTela/" . $this->data['tel_id'] . "/" . $id . "/" . $prod->pro_id);
+
+
+                $bt_oco = new MyCampo();
+                $bt_oco->id = $bt_oco->nome = 'bt_ocorre';
+                $bt_oco->classep  = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0';
+                $bt_oco->i_cone   = "<i class='fa-solid fa-exclamation-triangle'></i>";
+                $bt_oco->label    = '';
+                // $bt_oco->attrdata = ['data-id' => ];
+                $bt_oco->place    = 'Gerar Ocorrência';
+                $bt_oco->funcChan = "gerarOcorrencia({$this->data['tel_id']}, {$prod->rep_id})";
+                $btoco = $bt_oco->crBotao();
+
+                $resultado[$p]['bt_ocorre'] = $btoco;
+
+                $resultado[$p]['rpa_cancelada']     = $fields['rpa_cancelada'];
+                $resultado[$p]['rpa_atendida']      = $fields['rpa_atendida'];
+                $resultado[$p]['rpa_cancelada_val'] = $prod->rpa_cancelada;
+                $resultado[$p]['rpa_atendida_val']  = $prod->rpa_atendida;
+                $resultado[$p]['saldo'] =
+                    intval($resultado[$p]['rep_quantia']) -
+                    (intval($prod->rpa_cancelada) + intval($prod->rpa_atendida));
+            }
+
+            // $secao[1] = 'Produtos';
+            $campos[0][count($campos[0])] =
+                view('partials/pw_produtos_requisicao', ['produtos' => $resultado]); // mesma estrutura do add
+
+            $scripti = "<SCRIPT>jQuery('#lot_codbar').focus();</SCRIPT>";
+
+            $this->data['title']       = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+            $this->data['desc_metodo'] = ' Atendimento de ';
+            $this->data['secoes']      = $secao;
+            $this->data['campos']      = $campos;
+            $this->data['destino']     = 'store';
+            $this->data['scripts']     = 'my_requisicao';
+
+            $this->data['script'] = $scripti;
+            echo view('vw_edicao', $this->data);
+        }
     }
 
     /**
@@ -443,7 +465,7 @@ class AteRequisicao extends BaseController
                     session()->setFlashdata('msg', $ret['msg']);
                 } else {
                     $ret['erro'] = true;
-                    $ret['msg']  = 'Erro ao realizar os Movimentos de Estoque.';
+                    $ret['msg']  = 'Erro ao gravar Atendimento de Requisição.';
                     $this->reqprodutoate->transRollback();
                 }
             }

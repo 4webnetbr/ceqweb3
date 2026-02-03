@@ -5,7 +5,7 @@ namespace App\Controllers\Ocorrencia;
 use App\Models\CommonModel;
 use App\Controllers\BuscasSapiens;
 use App\Controllers\BaseController;
-use App\Controllers\Ocorrencia\EntOcoTratativa;
+use App\Entities\Ocorrencia\EntOcoTratativa;
 use App\Traits\ForeignKeyUsageChecker;
 use App\Models\Config\ConfigTelaModel;
 use App\Models\Produt\ProdutLoteModel;
@@ -70,6 +70,19 @@ class OcoOcorrencia extends BaseController
 
         foreach ($dados as $nov) {
             $nov->usu_nome = $log[$nov->oco_id]['usua_alterou'] ?? '';
+            // Botão imprimir
+            $url_imp = base_url('/CriaPdf2025/PrintOcorrencia/' . $nov->oco_id);
+            
+            $nov->acao_person[] = "
+                <button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0'
+                    data-mdb-toggle='tooltip'
+                    data-mdb-placement='top'
+                    title='Imprimir Ocorrência'
+                    onclick='openPDFModal(\"{$url_imp}\",\"Imprimir Ocorrência\")'>
+                    <i class='fa-solid fa-print'></i>
+                </button>
+            ";
+            
             // Botão de finalizar se estiver pendente
             if (trim($nov->stt_nome ?? '') === 'Pendente') {
                 $url_finalizar = $base_url . '/finalizar/' . $nov->oco_id;
@@ -105,7 +118,7 @@ class OcoOcorrencia extends BaseController
         $this->data['campos']  = [[
             $fields['oco_id'],
             $fields['tpo_id'],
-            $fields['tpa_id'],
+            $fields['sut_id'],
             $fields['oco_descricao'],
             $fields['pro_id'],
             $fields['lot_id'],
@@ -166,9 +179,9 @@ class OcoOcorrencia extends BaseController
         $config['Pai'] = "tpo_id";
         $config['Urlbusca'] = base_url('Buscas/buscaSubtipoPorTipo');
         $mod_oc = criaSelectRelativo(
-            'vw_oco_mod_ocorrencia_relac',
-            'moc_id',
-            'moc_nome',
+            'vw_oco_subt_ocorrencia_relac',
+            'sut_id',
+            'sut_nome',
             null,
             2,
             'oco_ocorrencia',
@@ -347,39 +360,58 @@ class OcoOcorrencia extends BaseController
     public function store()
     {
         $postado = $this->request->getPost();
-
+    
         try {
             if (empty($postado['oco_id'])) {
                 unset($postado['oco_id']);
             }
-
-            $db = $this->ocorrencia->db;
-            $possuiModalidadeNenhuma = $db
-                ->table('oco_mod_ocorrencia')
-                ->where('tpo_id', $postado['tpo_id'])
-                ->where('moc_nome', 'Nenhuma')
-                ->countAllResults() > 0;
-
-            if ($possuiModalidadeNenhuma) {
+    
+            // SUBTIPO / STATUS
+            $subtipoNenhuma = $this->ocorrencia
+                ->getSubtipoPorTipo((int) $postado['tpo_id']);
+    
+            if ($subtipoNenhuma !== null) {
+                $postado['sut_id'] = $subtipoNenhuma;
                 $postado['stt_id'] = 29; // Finalização automática
             } else {
+                if (empty($postado['sut_id']) || $postado['sut_id'] == -1) {
+                    $postado['sut_id'] = null;
+                }
                 $postado['stt_id'] = 28; // Pendente
             }
-
+    
+            // BUSCA AÇÃO PELO MODEL
+            $acao = $this->ocorrencia->getAcaoConfigurada(
+                (int) $postado['tpo_id'],
+                $postado['sut_id']
+            );
+    
+            // INJETA NA OCORRENCIA
+            if ($acao) {
+                $postado['tpa_id'] = $acao->tpa_id ?? null;
+                $postado['tmo_id'] = $acao->tmo_id ?? null;
+                $postado['tel_id'] = $acao->tel_id ?? null;
+    
+                if (!empty($acao->stt_id)) {
+                    $postado['stt_id'] = $acao->stt_id;
+                }
+            }
+    
+            // cria a entity
             $entity = new EntOcoOcorrencia($postado);
-
+    
             if (!$this->ocorrencia->save($entity)) {
                 throw new \Exception(implode('<br>', $this->ocorrencia->errors()));
             }
-
+    
             session()->setFlashdata('msg', 'Ocorrência gravada com sucesso!');
-
-            return json_encode([
+    
+            return $this->response->setJSON([
                 'erro' => false,
                 'url'  => site_url($this->data['controler'])
             ]);
         } catch (\Exception $e) {
-            return json_encode([
+            return $this->response->setJSON([
                 'erro' => true,
                 'msg'  => $e->getMessage()
             ]);

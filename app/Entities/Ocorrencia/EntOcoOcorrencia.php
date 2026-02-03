@@ -4,14 +4,14 @@ namespace App\Entities\Ocorrencia;
 
 use CodeIgniter\Entity\Entity;
 use App\Libraries\MyCampo;
-use App\Entities\Ocorrencia\OcorreTipoOcorrenciaModel;
+use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
 
 class EntOcoOcorrencia extends Entity
 {
     protected $attributes = [
         'oco_id'        => null,
         'tpo_id'        => null,
-        'moc_id'        => null,
+        'sut_id'        => null,
         'tel_id'        => null,
         'moc_nome'      => null,
         'tpa_id'        => null,
@@ -31,7 +31,7 @@ class EntOcoOcorrencia extends Entity
         'pro_id'   => 'integer',
         'lot_id'   => 'integer',
         'tpo_id'   => 'integer',
-        'moc_id'   => 'integer',
+        'sut_id'   => 'integer',
         'tpa_id'   => 'integer',
         'oco_qtd'  => 'integer',
         'stt_id'   => 'integer',
@@ -74,16 +74,16 @@ class EntOcoOcorrencia extends Entity
         $config['Pai'] = 'tpo_id';
         $config['Urlbusca'] = base_url('Buscas/buscaAcoesPorTipo');
 
-        $ret['tpa_id'] = criaSelectRelativo(
+        $ret['sut_id'] = criaSelectRelativo(
             '',
             '',
             '',
-            $dados['moc_id'] ?? null,
+            $dados['sut_id'] ?? null,
             2,
             'oco_ocorrencia',
-            [],
+            ['sut_id' => $dados['sut_id'] ?? ''],
             $config,
-            'moc_id'
+            'sut_id'
         );
 
 

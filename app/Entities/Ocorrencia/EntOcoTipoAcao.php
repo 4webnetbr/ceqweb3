@@ -30,24 +30,6 @@ class EntOcoTipoAcao extends Entity
     }
 
     
-     public static function campoSelectTipoAcao(mixed $valor = null, bool $leitura = false, string $entidade = ''): string
-    {
-        $tpoModel = new OcorreTipoAcaoModel();
-        $tpos = array_column($tpoModel->getTipoAcao(), 'tpa_nome', 'tpa_id');
-
-        $mod = (new MyCampo($entidade, 'tpa_id'))
-            ->setLabel('Tipo de Ação') 
-            ->setValor($valor ?? '')
-            ->setSelecionado($valor ?? '')
-            ->setOpcoes($tpos)
-            ->setLargura(50)
-            ->setObrigatorio()
-            ->setDispForm('col-6')
-            ->setLeitura($leitura);
-
-        return $mod->crSelect();
-    }
-
     public function defCampos($dados = false, $show = false)
     {
         $ret = [];

@@ -94,5 +94,4 @@ class OcorreTipoAcaoModel extends Model
     
         return $builder->get()->getResult();
     }
-
 }
