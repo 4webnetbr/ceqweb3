@@ -82,6 +82,7 @@ if (!isset($show)) {
                                     <input type='hidden' id='lotlote_<?= $produto["rep_id"] ?>' name='lotlote_<?= $produto["rep_id"] ?>' value='<?= $produto['lot_lote'] ?>'></input>
                                     <input type='hidden' id='repqtia_<?= $produto["rep_id"] ?>' name='repqtia_<?= $produto["rep_id"] ?>' value='<?= $produto['rep_quantia'] ?>'></input>
                                     <input type='hidden' id='qtdemb_<?= $produto["rep_id"] ?>' name='qtdemb_<?= $produto["rep_id"] ?>' value='<?= $produto['pro_qtdemb'] ?>'></input>
+                                    <input type='hidden' id='estorig_<?= $produto["rep_id"] ?>' name='estorig_<?= $produto["rep_id"] ?>' value='<?= $produto['estoque_origem'] ?>'></input>
                                     <?= $produto['pro_codpro'] ?>
                                 </td>
                                 <td class='text-start'><?= $produto['pro_despro'] ?></td>

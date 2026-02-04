@@ -464,6 +464,31 @@ class Buscas extends BaseController
         return $this->response->setJSON($ret);
     }
 
+    public function buscaProdutoDeposito()
+    {
+        $ret = [];
+
+        if ($_REQUEST['busca']) {
+            $produtos = (new ProdutProdutoModel())->getProdutoEstoque(false, $_REQUEST['busca']);
+
+            if (empty($produtos)) {
+                $o = new \stdClass();
+                $o->id = '-1';
+                $o->text = 'Produto não encontrado...';
+                $ret[] = $o;
+            } else {
+                foreach ($produtos as $p) {
+                    $o = new \stdClass();
+                    $o->id   = $p->pro_id;
+                    $o->text = $p->pro_desinf;
+                    $ret[] = $o;
+                }
+            }
+        }
+
+        echo json_encode($ret);
+    }
+
     public function buscaIngredienteClasse()
     {
         $ret = [];
@@ -686,26 +711,25 @@ class Buscas extends BaseController
     public function buscaAcoesPorTipo()
     {
         $ret = [];
-    
+
         $busca = $_REQUEST['busca'] ?? null;
-    
+
         if ($busca) {
-    
+
             // Model correto para SUBTIPO
             $subtipoModel = new OcorreModOcorrenciaModel();
-    
+
             // Método coerente com o que está buscando
             $lst = $subtipoModel->getSubtipoPorTipo($busca);
-    
+
             if (empty($lst)) {
-    
+
                 $o = new \stdClass();
                 $o->id   = -1;
                 $o->text = 'Nenhum Subtipo encontrado';
                 $ret[] = $o;
-    
             } else {
-    
+
                 foreach ($lst as $l) {
                     $o = new \stdClass();
                     $o->id   = $l->sut_id;     // ID do Subtipo
@@ -714,7 +738,7 @@ class Buscas extends BaseController
                 }
             }
         }
-    
+
         echo json_encode($ret);
         exit;
     }

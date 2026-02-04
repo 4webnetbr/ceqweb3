@@ -52,24 +52,6 @@ class EntRequisicao extends Entity
         $simnao['S'] = 'Sim';
         $simnao['N'] = 'Não';
 
-        // PRODUTO
-        $config['Leitura'] = $show;
-        $config['Obrigatorio'] = false;
-        $config['Label'] = 'Produto';
-        $config['DispForm'] = 'col-12';
-        $config['Largura'] = 60;
-
-        $ret['pro_id'] = criaSelectRelativo(
-            'pro_sap_produto',
-            'pro_id',
-            'pro_despro',
-            $dados->pro_id ?? '',
-            1,
-            'est_requisicao_produto',
-            [],
-            $config
-        );
-
         // $ret['pro_id'] = EntProdutos::campoSelectProduto($dados->pro_id ?? '', $show, 'pro_produto');
         // $ret['tmo_id'] = EntTipoMovimentacao::campoSelectTipoMovi($dados->tmo_id ?? '', $show, 'oco_tpo_acao');
 
@@ -152,7 +134,7 @@ class EntRequisicao extends Entity
         $config['Label'] = 'Depósito de Origem';
         $config['Leitura'] = true;
         $config['Largura'] = 60;
-
+        $config['FunChan'] = '';
         // DEPÓSITO ORIGEM
         // debug($dados->req_deporigem, true);
         $ret['req_deporigem'] = criaSelectRelativo(
@@ -251,6 +233,27 @@ class EntRequisicao extends Entity
         $obsv->classep        = 'mb2';
         $obsv->dispForm       = 'col-12';
         $ret['req_observacao']      = $obsv->crInput();
+
+        // PRODUTO
+        $config['Leitura'] = $show;
+        $config['Obrigatorio'] = false;
+        $config['Label'] = 'Produto';
+        $config['DispForm'] = 'col-12';
+        $config['Largura'] = 60;
+        $config['Pai'] = 'req_deporigem';
+        $config['Urlbusca'] = base_url('buscas/buscaProdutoDeposito');
+
+        $ret['pro_id'] = criaSelectRelativo(
+            '',
+            '',
+            '',
+            $dados->pro_id ?? '',
+            2,
+            'est_requisicao_produto',
+            [],
+            $config,
+            'pro_id'
+        );
 
         // Botão de carregamento de produtos
         $btca            = new MyCampo();

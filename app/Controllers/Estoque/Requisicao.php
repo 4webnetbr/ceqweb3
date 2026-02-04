@@ -674,6 +674,7 @@ class Requisicao extends BaseController
 
         // AGRUPAR PRODUTOS POR CLASSE
         $classesTemp = [];
+        $produtoAnterior = [];
         // debug($estoquePadrao);
         foreach ($listaProdutos as $prod) {
             $codPro  = $prod->pro_codpro;
@@ -701,14 +702,16 @@ class Requisicao extends BaseController
             $prodArr['pro_mediaconsumo'] = $mediaconsumo;
             $prodArr['pro_primeiro']     = 1; // sempre é o primeiro lote do produtos
 
-            if (!empty($produtoFinal)) {
+            if (!empty($produtoAnterior)) {
                 // debug($produtoFinal['pro_consumo_proximo']);
                 // SE O PRODUTO ANTERIOR ERA O MESMO DO ATUAL EFICARIA NEGATIVO DESCONTANDO O CONSUMO, 
                 // DESCONTA O RESTANTE DO CONSUMO DO PRODUTO ATUAL
-                if ($produtoFinal['pro_codpro'] == $codPro) {
+                if ($produtoAnterior['pro_codpro'] == $codPro) {
                     // debug($codPro);
-                    $prodArr['pro_primeiro']        = 1; // não é mais o primeiiro lote do produto
-                    $prodArr['pro_consumo_proximo'] = $produtoFinal['pro_consumo_proximo'];
+                    // debug('Códipro ' . $codPro);
+                    $prodArr['pro_primeiro']        = 2; // não é mais o primeiiro lote do produto
+                    $prodArr['pro_consumo_proximo']         = $produtoAnterior['pro_consumo_proximo'];
+                    // debug('Primeiro ' . $prodArr['pro_primeiro']);
                 }
             }
 
@@ -722,6 +725,7 @@ class Requisicao extends BaseController
             );
 
             if (!empty($produtoFinal)) {
+                $produtoAnterior = $produtoFinal;
                 // debug($produtoFinal['pro_consumo']);
                 // debug('Produto Anterior');
                 // debug($produtoFinal['pro_consumo_proximo']);
@@ -849,17 +853,28 @@ class Requisicao extends BaseController
             }
 
             // === Base de consumo ===
-            $produto->pro_consumo = ($prod['pro_meddias'] > 0)
-                ? $produto->pro_consumo_medio
-                : $produto->pro_consumo_diaant;
-
-            if ($prod['pro_primeiro'] > 1) { // SÓ BUSCA O CONSUMO SE FOR O PRIMEIRO LOTE DO PRODUTO
-                // debug($prod['pro_consumo_proximo']);
-                $produto->pro_consumo = $prod['pro_consumo_proximo'];
+            if ($prod['pro_primeiro'] === 1) {
+                $produto->pro_consumo = ($prod['pro_meddias'] > 0)
+                    ? $produto->pro_consumo_medio
+                    : $produto->pro_consumo_diaant;
+                $produto->pro_consumo_proximo = 0;
+            } else {
+                // debug('Não sou o Primeiro ' . $codPro);
+                $produto->pro_consumo = $prod['pro_consumo'];
+                $produto->pro_consumo_proximo = $prod['pro_consumo_proximo'];
             }
             // === Ajuste no estoque de destino (condicional) ===
             if ($prod['pre_gestaoestoque'] === 'S' && $prod['pre_estdataatual'] === 'N') {
-                $estdestino = $produto->lotedes->pro_estdestino - $produto->pro_consumo;
+                // debug('<br>Códpro ' . $codPro);
+                // debug('Consumo Próximo ' . $produto->pro_consumo_proximo);
+                // debug('Primeiro ' . $prod['pro_primeiro']);
+                if ($prod['pro_primeiro'] === 1) {
+                    $estdestino = $produto->lotedes->pro_estdestino - $produto->pro_consumo;
+                } else {
+                    $estdestino = $produto->lotedes->pro_estdestino - $produto->pro_consumo_proximo;
+                }
+                // debug('EstDestino ' . $estdestino);
+
                 if ($estdestino < 0) {
                     $produto->pro_consumo_proximo = abs($estdestino); // transforma em positivo
                     $produto->lotedes->pro_estdestino = 0;
@@ -916,13 +931,6 @@ class Requisicao extends BaseController
                             max($minimo, $sugestaoBruta) // Nunca menor que o mínimo
                         )
                     );
-
-                    // $produto->pro_sugestao = max($produto->pro_minimo, $sugestaoBruta);
-                    // $produto->pro_sugestao = min($produto->pro_sugestao, $produto->pro_maximo);
-                    // $produto->pro_sugestao = max(0, $produto->pro_sugestao);
-                    // debug('Sugest Fim 1 ' . $produto->pro_sugestao);
-                    // debug('Sugest Fim 2 ' . $produto->pro_sugestao);
-                    // debug('Sugest Fim 3 ' . $produto->pro_sugestao);
                 }
             } else {
                 // === Sem gestão de estoque: usar sugestão bruta diretamente
@@ -935,6 +943,7 @@ class Requisicao extends BaseController
 
             $produto->pro_sugestao = min($proEstDispon, $produto->pro_sugestao);
             $produto->pro_requisicao = $produtoreq['rep_quantia'] ?? 0;
+        } else {
         }
 
         return $produto->toArray();
@@ -969,7 +978,7 @@ class Requisicao extends BaseController
 
         for ($i = 0; $i < $vezes; $i++) {
             if ($i > 0) {
-                $hoje->modify('+1 day');
+                // $hoje->modify('+1 day');
                 $dataEntrega->modify('+1 day');
             }
             $dadosReq = [

@@ -212,40 +212,40 @@ class AteRequisicao extends BaseController
             $estoqueIndexado[$itemEstoque->pro_id] = $itemEstoque;
         }
 
-        $estoqueOrigem  = $this->busca->buscaEstoqueDeposito($requisicao->req_deporigem);
-        $estoqueOrigemIndexado = [];
+        // $estoqueOrigem  = $this->busca->buscaEstoqueDeposito($requisicao->req_deporigem);
+        // $estoqueOrigemIndexado = [];
 
-        foreach ($estoqueOrigem as $itemOrigem) {
-            // debug($itemOrigem, true);
-            if (($itemOrigem->quantidadeEstoque ?? 0) <= 0) {
-                continue; // ignora itens sem estoque
-            }
+        // foreach ($estoqueOrigem as $itemOrigem) {
+        //     // debug($itemOrigem, true);
+        //     if (($itemOrigem->quantidadeEstoque ?? 0) <= 0) {
+        //         continue; // ignora itens sem estoque
+        //     }
 
-            $pro_id = $itemOrigem->codigoProduto;
-            $lote   = $itemOrigem->codigoLote ?? 'SEM_LOTE';
+        //     $pro_id = $itemOrigem->codigoProduto;
+        //     $lote   = $itemOrigem->codigoLote ?? 'SEM_LOTE';
 
-            $estoqueOrigemIndexado[$pro_id][$lote] = $itemOrigem;
-        }
+        //     $estoqueOrigemIndexado[$pro_id][$lote] = $itemOrigem;
+        // }
         // debug($estoqueOrigemIndexado);
 
         $semsaldo = false;
-        foreach ($produtos as $produto) {
-            $pro_id = $produto->pro_codpro;
-            $lote   = $produto->lot_lote ?? 'SEM_LOTE'; // caso lote venha da requisição
-            // debug($pro_id);
-            // debug($lote);
+        // foreach ($produtos as $produto) {
+        //     $pro_id = $produto->pro_codpro;
+        //     $lote   = $produto->lot_lote ?? 'SEM_LOTE'; // caso lote venha da requisição
+        //     // debug($pro_id);
+        //     // debug($lote);
 
-            $qtdRequisitada = $produto->rep_quantia;
+        //     $qtdRequisitada = $produto->rep_quantia;
 
-            $disponivel = $estoqueOrigemIndexado[$pro_id][$lote]->quantidadeEstoque ?? 0;
-            // debug($disponivel);
-            if ($disponivel < $qtdRequisitada) {
-                // debug($disponivel);
-                // debug($qtdRequisitada);
-                // Sem saldo suficiente
-                $semsaldo = true;
-            }
-        }
+        //     $disponivel = $estoqueOrigemIndexado[$pro_id][$lote]->quantidadeEstoque ?? 0;
+        //     // debug($disponivel);
+        //     if ($disponivel < $qtdRequisitada) {
+        //         // debug($disponivel);
+        //         // debug($qtdRequisitada);
+        //         // Sem saldo suficiente
+        //         $semsaldo = true;
+        //     }
+        // }
 
         if ($semsaldo) {
             $ret['erro'] = true;
@@ -255,6 +255,7 @@ class AteRequisicao extends BaseController
         } else {
             // Resultado final com todos os produtos
             $resultado = [];
+
 
             foreach ($produtosIndexado as $pro_id => $produto) {
                 if (isset($estoqueIndexado[$pro_id])) {
@@ -269,6 +270,19 @@ class AteRequisicao extends BaseController
 
             for ($p = 0; $p < count($resultado); $p++) {
                 $prod = (object)$resultado[$p];
+                $estoqueOrigem  = $this->busca->buscaEstoqueDeposito($requisicao->req_deporigem, $prod->pro_codpro);
+                // debug($estoqueOrigem);
+                $estoqueEncontrado = 0;
+
+                foreach ($estoqueOrigem as $item) {
+                    if ($item->codigoLote === $prod->lot_lote) {
+                        $estoqueEncontrado = (int)$item->quantidadeEstoque;
+                        break; // encontrou o lote, não precisa continuar
+                    }
+                }
+
+                $prod->estoque_origem = $estoqueEncontrado;
+                // debug($prod);
 
                 if (!isset($prod->pre_cbfabricante)) {
                     $resultado[$p]['pre_cbfabricante'] = 'N';
@@ -306,8 +320,9 @@ class AteRequisicao extends BaseController
                 $resultado[$p]['saldo'] =
                     intval($resultado[$p]['rep_quantia']) -
                     (intval($prod->rpa_cancelada) + intval($prod->rpa_atendida));
+                $resultado[$p]['estoque_origem']  = $prod->estoque_origem;
             }
-
+            // debug('fim', true);
             // $secao[1] = 'Produtos';
             $campos[0][count($campos[0])] =
                 view('partials/pw_produtos_requisicao', ['produtos' => $resultado]); // mesma estrutura do add

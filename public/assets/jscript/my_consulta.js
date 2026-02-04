@@ -670,14 +670,24 @@ function acertaSaldoReq(obj) {
 
   var qtde = parseInt(jQuery("#qt_" + idBase).text());
 
+  var esto = parseInt(jQuery("#estorig_" + idBase).val());
   var aten = parseInt(jQuery("#rpa_atendida_" + idBase).val());
   var canc = parseInt(jQuery("#rpa_cancelada_" + idBase).val());
 
-  saldo = qtde - canc - aten;
-  if (canc > 0) {
-    // recalcula a quantidade de caixas
-    qtaten = qtde - canc;
+  if (aten > esto) {
+    // se a quantidade atendida for maior que o Estoque na Origem
+    jQuery("#rpa_atendida_" + idBase).val(0);
+    aten = 0;
+    boxAlert(37, true);
   }
+  if (canc > 0) {
+    // se teve cancelada, recalcula qte caixa
+    qtemb = parseInt(jQuery("#qtdemb_" + idBase).val());
+    neces = qtde - canc;
+    qtcx = Math.ceil(parseFloat(neces / qtemb));
+    jQuery("#cx_" + idBase).text(qtcx);
+  }
+  saldo = qtde - canc - aten;
   jQuery("#sl_" + idBase).text(saldo);
 
   fundo = "";
