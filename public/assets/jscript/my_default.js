@@ -433,7 +433,7 @@ function showToast(message, isAlert = false) {
   const timeout = setTimeout(() => {
     toast.classList.remove("toast-animar");
     toast.addEventListener("transitionend", () => toast.remove());
-  }, 4000);
+  }, 8000);
 
   closeBtn.addEventListener("click", () => {
     clearTimeout(timeout);

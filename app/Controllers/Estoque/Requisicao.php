@@ -84,6 +84,7 @@ class Requisicao extends BaseController
         $campos = montaColunasCampos($this->data, 'req_id');
         // Busca requisições (AGORA retorna Entity)
         $dados_requis = $this->requisicao->getRequisicaoLista(false);
+        // debug(count($dados_requis));
         // Filtra por perfil
         $dados_requis = filtrarPorPerfil($dados_requis);
         // debug(count($dados_requis), true);
@@ -238,8 +239,9 @@ class Requisicao extends BaseController
         $tipos_mov = filtrarPorPerfil($tipos_mov);
         if (count($tipos_mov) == 0) {
             $ret['erro'] = true;
-            $ret['msg']  = 14; // ou código personalizado, se preferir
-            echo json_encode($ret);
+            $ret['msg']  = 36; // ou código personalizado, se preferir
+            session()->setFlashdata('msg', 36);
+            return redirect()->to(site_url($this->data['controler']));
         } else {
             // unset($requisicao->req_id);
             $requisicao->req_data = date('Y-m-d H:i:s');
@@ -247,7 +249,7 @@ class Requisicao extends BaseController
 
             // Montar campos como no add()
             // debug($requisicao, true);
-            $ent = new EntRequisicao((array) $requisicao);
+            $ent = new EntRequisicao((array) $requisicao, true);
             $fields = $ent->campos;
 
             $secao[0] = 'Dados Gerais';
@@ -463,7 +465,7 @@ class Requisicao extends BaseController
 
         // debug((array) $requis);
         // Montar campos como no add()
-        $ent    = new EntRequisicao((array) $requis[0]);
+        $ent    = new EntRequisicao((array) $requis[0], true);
 
         $fields = $ent->campos;
 
@@ -525,15 +527,27 @@ class Requisicao extends BaseController
     {
         $ret = [];
 
-        try {
-            // Checa uso do status em outros bancos
-            $this->verificarUsoEmRelacionamentos('est_requisicao', 'req_id', (int) $id);
+        $requis = $this->requisicao->getRequisicao($id);
 
-            // Soft delete
-            $this->requisicaoproduto->delete($id);
-            $ret['erro'] = false;
-            session()->setFlashdata('msg', 'Requisição Excluída com Sucesso');
-        } catch (\Exception $e) {
+        if (!$requis) {
+            return view('errors/vw_semregistro', [
+                'mensagem' => 'Requisição não encontrada'
+            ]);
+        }
+        $status = $requis[0]->stt_id;
+
+        if ($status == 6) {
+            try {
+                // Soft delete
+                $this->requisicao->delete($id);
+                $ret['erro'] = false;
+                $ret['msg']  = 'Requisição Excluída com Sucesso';
+                session()->setFlashdata('msg', 'Requisição Excluída com Sucesso');
+            } catch (\Exception $e) {
+                $ret['erro'] = true;
+                $ret['msg']  = 3;
+            }
+        } else {
             $ret['erro'] = true;
             $ret['msg']  = 3;
         }
@@ -693,7 +707,7 @@ class Requisicao extends BaseController
                 // DESCONTA O RESTANTE DO CONSUMO DO PRODUTO ATUAL
                 if ($produtoFinal['pro_codpro'] == $codPro) {
                     // debug($codPro);
-                    $prodArr['pro_primeiro']        = 2; // não é mais o primeiiro lote do produto
+                    $prodArr['pro_primeiro']        = 1; // não é mais o primeiiro lote do produto
                     $prodArr['pro_consumo_proximo'] = $produtoFinal['pro_consumo_proximo'];
                 }
             }
@@ -949,212 +963,220 @@ class Requisicao extends BaseController
             }
         }
         $hoje = new DateTime();
+        $dataEntrega = DateTime::createFromFormat('Y-m-d', $postado['req_dataentrega']);
+        $repete = $postado['req_repetedias'];
+        $vezes = max(1, (int)$repete); // garante pelo menos uma execução
 
-        $dadosReq = [
-            'req_data'            => $hoje->format('Y-m-d H:i:s'),
-            'req_dataentrega'     => $postado['req_dataentrega'],
-            'tmo_id'              => $postado['tmo_id'],
-            'req_deporigem'       => $postado['req_deporigem'],
-            'req_depdestino'      => $postado['req_depdestino'],
-            'req_consdiaanterior' => $postado['req_consdiaanterior'],
-            'req_medconsumodias'  => $postado['req_medconsumodias'],
-            'req_meddias'         => $postado['req_meddias'] ?? null,
-            'req_repetedias'      => 0,
-            'req_percseguranca'   => $postado['req_percseguranca'],
-            'req_observacao'      => $postado['req_observacao'],
-            'stt_id'              => $status
-        ];
+        for ($i = 0; $i < $vezes; $i++) {
+            if ($i > 0) {
+                $hoje->modify('+1 day');
+                $dataEntrega->modify('+1 day');
+            }
+            $dadosReq = [
+                'req_data'            => $hoje->format('Y-m-d H:i:s'),
+                'req_dataentrega'     => $dataEntrega->format('Y-m-d'),
+                'tmo_id'              => $postado['tmo_id'],
+                'req_deporigem'       => $postado['req_deporigem'],
+                'req_depdestino'      => $postado['req_depdestino'],
+                'req_consdiaanterior' => $postado['req_consdiaanterior'],
+                'req_medconsumodias'  => $postado['req_medconsumodias'],
+                'req_meddias'         => $postado['req_meddias'] ?? null,
+                'req_repetedias'      => 0,
+                'req_percseguranca'   => $postado['req_percseguranca'],
+                'req_observacao'      => $postado['req_observacao'],
+                'stt_id'              => $status
+            ];
 
-        if ($postado['req_id'] != "") {
-            $salvaReq = $this->requisicao->update($postado['req_id'], $dadosReq);
-            $req_id   = $postado['req_id'];
-            $this->requisicaoproduto->excluir($req_id);
-        } else {
-            $salvaReq = $this->requisicao->insert($dadosReq);
-            $req_id   = $this->requisicao->getInsertID();
-        }
+            if ($postado['req_id'] != "") {
+                $salvaReq = $this->requisicao->update($postado['req_id'], $dadosReq);
+                $req_id   = $postado['req_id'];
+                $this->requisicaoproduto->excluir($req_id);
+            } else {
+                $salvaReq = $this->requisicao->insert($dadosReq);
+                $req_id   = $this->requisicao->getInsertID();
+            }
 
-        if ($salvaReq) {
+            if ($salvaReq) {
 
-            $dadosReqPad = [];
-            $repPad = [];
+                $dadosReqPad = [];
+                $repPad = [];
 
-            foreach ($requisicoes as $item) {
+                foreach ($requisicoes as $item) {
 
-                if ($status == 4) {
+                    if ($status == 4) {
 
-                    $prefixos = ['saldo_origem', 'saldo_padrao', 'saldo_destino'];
-                    $resultados = [];
+                        $prefixos = ['saldo_origem', 'saldo_padrao', 'saldo_destino'];
+                        $resultados = [];
 
-                    foreach ($prefixos as $prefixo) {
-                        foreach ($item as $chave => $valor) {
-                            if (strpos($chave, $prefixo) === 0) {
-                                $resultados[$prefixo] = $valor;
-                                break;
+                        foreach ($prefixos as $prefixo) {
+                            foreach ($item as $chave => $valor) {
+                                if (strpos($chave, $prefixo) === 0) {
+                                    $resultados[$prefixo] = $valor;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if ($resultados['saldo_origem'] < $item['requisicao']) {
+
+                            if ($postado['req_deppadrao'] != '') {
+
+                                $tmos = $this->tipomovimentacao
+                                    ->getTipoMovimentacaoDepositos(
+                                        $postado['req_deppadrao'],
+                                        $postado['req_deporigem']
+                                    )[0];
+
+                                if ($tmos) {
+                                    $tmo_id = $tmos->tmo_id;
+                                } else {
+                                    $ret['erro'] = true;
+                                    $ret['msg'] = "Não existe Tipo de Movimentação: {$postado['req_deppadrao']} X {$postado['req_deporigem']}";
+                                    $db->transRollback();
+                                    echo json_encode($ret);
+                                    return;
+                                }
+
+                                $dadosReqPad = [
+                                    'req_data'            => $hoje->format('Y-m-d H:i:s'),
+                                    'req_dataentrega'     => $dataEntrega->format('Y-m-d'),
+                                    'tmo_id'              => $tmo_id,
+                                    'req_deporigem'       => $postado['req_deppadrao'],
+                                    'req_depdestino'      => $postado['req_deporigem'],
+                                    'req_consdiaanterior' => $postado['req_consdiaanterior'],
+                                    'req_medconsumodias'  => $postado['req_medconsumodias'],
+                                    'req_meddias'         => $postado['req_meddias'] ?? null,
+                                    'req_repetedias'      => 0,
+                                    'req_percseguranca'   => $postado['req_percseguranca'],
+                                    'req_observacao'      => $postado['req_observacao'],
+                                    'stt_id'              => $status
+                                ];
+
+                                $produto = $this->produtos->getProdutoCod($item['cod_erp'])[0];
+
+                                if (trim($item['lote']) != 'Sem Lote') {
+                                    $lote = $this->lote->getLoteCodproLote($item['cod_erp'], $item['lote'])[0];
+                                } else {
+                                    $lote = (object) ['lot_id' => null];
+                                }
+
+                                if (!$produto || !$lote) {
+                                    $ret['erro'] = true;
+                                    $ret['msg'] = "Produto ou lote não encontrado para o código: {$item['cod_erp']} ou lote: {$item['lote']}";
+                                    $db->transRollback();
+                                    echo json_encode($ret);
+                                    return;
+                                }
+
+                                $diferenca = $item['requisicao'] - $resultados['saldo_origem'];
+
+                                $repPad[] = [
+                                    'pro_id'            => $produto->pro_id,
+                                    'lot_id'            => $lote->lot_id,
+                                    'rep_multiplicador' => $item['multiplica'],
+                                    'rep_seguranca'     => $item['seguranca'],
+                                    'rep_quantia'       => $diferenca
+                                ];
+                            } else {
+                                $ret['erro'] = true;
+                                $ret['msg'] = 'Saldo da Origem insuficiente para a requisição.';
+                                $db->transRollback();
+                                echo json_encode($ret);
+                                return;
                             }
                         }
                     }
 
-                    if ($resultados['saldo_origem'] < $item['requisicao']) {
+                    $produtoRaw = $this->produtos->getProdutoCod($item['cod_erp']);
 
-                        if ($postado['req_deppadrao'] != '') {
+                    if (is_array($produtoRaw)) {
 
-                            $tmos = $this->tipomovimentacao
-                                ->getTipoMovimentacaoDepositos(
-                                    $postado['req_deppadrao'],
-                                    $postado['req_deporigem']
-                                )[0];
-
-                            if ($tmos) {
-                                $tmo_id = $tmos->tmo_id;
-                            } else {
-                                $ret['erro'] = true;
-                                $ret['msg'] = "Não existe Tipo de Movimentação: {$postado['req_deppadrao']} X {$postado['req_deporigem']}";
-                                $db->transRollback();
-                                echo json_encode($ret);
-                                return;
-                            }
-
-                            $dadosReqPad = [
-                                'req_data'            => $postado['req_data'],
-                                'req_dataentrega'     => $postado['req_dataentrega'],
-                                'tmo_id'              => $tmo_id,
-                                'req_deporigem'       => $postado['req_deppadrao'],
-                                'req_depdestino'      => $postado['req_deporigem'],
-                                'req_consdiaanterior' => $postado['req_consdiaanterior'],
-                                'req_medconsumodias'  => $postado['req_medconsumodias'],
-                                'req_meddias'         => $postado['req_meddias'] ?? null,
-                                'req_repetedias'      => 0,
-                                'req_percseguranca'   => $postado['req_percseguranca'],
-                                'req_observacao'      => $postado['req_observacao'],
-                                'stt_id'              => $status
-                            ];
-
-                            $produto = $this->produtos->getProdutoCod($item['cod_erp'])[0];
-
-                            if (trim($item['lote']) != 'Sem Lote') {
-                                $lote = $this->lote->getLoteCodproLote($item['cod_erp'], $item['lote'])[0];
-                            } else {
-                                $lote = (object) ['lot_id' => null];
-                            }
-
-                            if (!$produto || !$lote) {
-                                $ret['erro'] = true;
-                                $ret['msg'] = "Produto ou lote não encontrado para o código: {$item['cod_erp']} ou lote: {$item['lote']}";
-                                $db->transRollback();
-                                echo json_encode($ret);
-                                return;
-                            }
-
-                            $diferenca = $item['requisicao'] - $resultados['saldo_origem'];
-
-                            $repPad[] = [
-                                'pro_id'            => $produto->pro_id,
-                                'lot_id'            => $lote->lot_id,
-                                'rep_multiplicador' => $item['multiplica'],
-                                'rep_seguranca'     => $item['seguranca'],
-                                'rep_quantia'       => $diferenca
-                            ];
+                        // array de registros
+                        if (isset($produtoRaw[0])) {
+                            $produto = (object) $produtoRaw[0];
                         } else {
-                            $ret['erro'] = true;
-                            $ret['msg'] = 'Saldo da Origem insuficiente para a requisição.';
-                            $db->transRollback();
-                            echo json_encode($ret);
-                            return;
+                            $produto = (object) $produtoRaw;
                         }
-                    }
-                }
+                    } elseif (is_object($produtoRaw)) {
 
-                $produtoRaw = $this->produtos->getProdutoCod($item['cod_erp']);
-
-                if (is_array($produtoRaw)) {
-
-                    // array de registros
-                    if (isset($produtoRaw[0])) {
-                        $produto = (object) $produtoRaw[0];
+                        $produto = $produtoRaw;
                     } else {
-                        $produto = (object) $produtoRaw;
+                        $produto = null;
                     }
-                } elseif (is_object($produtoRaw)) {
 
-                    $produto = $produtoRaw;
-                } else {
-                    $produto = null;
+                    if (!$produto || !isset($produto->pro_id)) {
+                        $ret['erro'] = true;
+                        $ret['msg'] = "Produto não encontrado para o código: {$item['cod_erp']}";
+                        $db->transRollback();
+                        echo json_encode($ret);
+                        return;
+                    }
+
+                    $pro_id = $produto->pro_id;
+
+                    // debug($item['lote'], true);
+                    if (trim($item['lote']) != 'Sem Lote') {
+                        $lote = $this->lote->getLoteCodproLote($item['cod_erp'], $item['lote'])[0];
+                    } else {
+                        $lote = (object) ['lot_id' => null];
+                    }
+                    if (!$produto || !$lote) {
+                        $ret['erro'] = true;
+                        $ret['msg'] = "Produto ou lote não encontrado para o código: {$item['cod_erp']} ou lote: {$item['lote']}";
+                        $db->transRollback();
+                        echo json_encode($ret);
+                        return;
+                    }
+
+                    $rep = [
+                        'req_id'            => $req_id,
+                        'pro_id'            => $pro_id,
+                        'lot_id'            => $lote->lot_id ?? null,
+                        'rep_multiplicador' => $item['multiplica'],
+                        'rep_seguranca'     => $item['seguranca'],
+                        'rep_quantia'       => $item['requisicao']
+                    ];
+
+                    if (!$this->requisicaoproduto->insert($rep)) {
+                        $ret['erro'] = true;
+                        $ret['msg']  = 'Erro ao inserir item na requisição de produto.';
+                        $db->transRollback();
+                        echo json_encode($ret);
+                        return;
+                    }
                 }
 
-                if (!$produto || !isset($produto->pro_id)) {
-                    $ret['erro'] = true;
-                    $ret['msg'] = "Produto não encontrado para o código: {$item['cod_erp']}";
-                    $db->transRollback();
-                    echo json_encode($ret);
-                    return;
-                }
+                if (count($dadosReqPad) > 0) {
 
-                $pro_id = $produto->pro_id;
+                    $salvaReqPad = $this->requisicao->insert($dadosReqPad);
 
-                // debug($item['lote'], true);
-                if (trim($item['lote']) != 'Sem Lote') {
-                    $lote = $this->lote->getLoteCodproLote($item['cod_erp'], $item['lote'])[0];
-                } else {
-                    $lote = (object) ['lot_id' => null];
-                }
-                if (!$produto || !$lote) {
-                    $ret['erro'] = true;
-                    $ret['msg'] = "Produto ou lote não encontrado para o código: {$item['cod_erp']} ou lote: {$item['lote']}";
-                    $db->transRollback();
-                    echo json_encode($ret);
-                    return;
-                }
+                    if ($salvaReqPad) {
 
-                $rep = [
-                    'req_id'            => $req_id,
-                    'pro_id'            => $pro_id,
-                    'lot_id'            => $lote->lot_id ?? null,
-                    'rep_multiplicador' => $item['multiplica'],
-                    'rep_seguranca'     => $item['seguranca'],
-                    'rep_quantia'       => $item['requisicao']
-                ];
+                        $req_idPad = $this->requisicao->getInsertID();
 
-                if (!$this->requisicaoproduto->insert($rep)) {
-                    $ret['erro'] = true;
-                    $ret['msg']  = 'Erro ao inserir item na requisição de produto.';
-                    $db->transRollback();
-                    echo json_encode($ret);
-                    return;
-                }
-            }
+                        for ($rp = 0; $rp < count($repPad); $rp++) {
+                            $repPad[$rp]['req_id'] = $req_idPad;
 
-            if (count($dadosReqPad) > 0) {
-
-                $salvaReqPad = $this->requisicao->insert($dadosReqPad);
-
-                if ($salvaReqPad) {
-
-                    $req_idPad = $this->requisicao->getInsertID();
-
-                    for ($rp = 0; $rp < count($repPad); $rp++) {
-                        $repPad[$rp]['req_id'] = $req_idPad;
-
-                        if (!$this->requisicaoproduto->insert($repPad[$rp])) {
-                            $ret['erro'] = true;
-                            $ret['msg'] = 'Erro ao inserir item na requisição de produto.';
-                            $db->transRollback();
-                            echo json_encode($ret);
-                            return;
+                            if (!$this->requisicaoproduto->insert($repPad[$rp])) {
+                                $ret['erro'] = true;
+                                $ret['msg'] = 'Erro ao inserir item na requisição de produto.';
+                                $db->transRollback();
+                                echo json_encode($ret);
+                                return;
+                            }
                         }
+                    } else {
+                        $ret['erro'] = true;
+                        $ret['msg'] = 'Não foi possível criar a Requisição para o depósito padrão.';
+                        $db->transRollback();
+                        echo json_encode($ret);
+                        return;
                     }
-                } else {
-                    $ret['erro'] = true;
-                    $ret['msg'] = 'Não foi possível criar a Requisição para o depósito padrão.';
-                    $db->transRollback();
-                    echo json_encode($ret);
-                    return;
                 }
             }
+
+            $db->transComplete();
         }
-
-        $db->transComplete();
-
         $ret['msg'] = 'Requisição gravada com sucesso!';
         $ret['url'] = site_url($this->data['controler']);
         session()->setFlashdata('msg', $ret['msg']);

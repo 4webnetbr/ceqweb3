@@ -1118,8 +1118,8 @@ class MyCampo
                     $this->field['min']              = $this->minimo;
                     $this->field['max']              = $this->maximo;
                     $this->field['step']             = $this->step;
-                    $this->field['oninput']          = "this.value = this.value.slice(0, $leng)";
-                    $this->field['onkeyup']          = 'mascara(this, \'mnum\'); this.value = this.value.slice(0, ' . $leng . '); ';
+                    $this->field['oninput']          = "this.value = acertaMaximo(this, $leng)";
+                    $this->field['onkeyup']          = 'mascara(this, \'mnum\'); this.value = acertaMaximo(this, ' . $leng . '); ';
                     $this->field['onchange']         = "mascara(this, 'mnum')";
                     $this->field['pattern']          = '^[1-9][0-9]{0,' . $leng . '}$';
                     $this->field['style']            = 'text-align: right';
@@ -1139,9 +1139,9 @@ class MyCampo
                     $this->field['max']     = $this->maximo;
                     $this->field['step']    = $this->step;
                     $this->field['onfocus']  = 'entrar_moeda(this)';
-                    $this->field['oninput']  = "this.value = this.value.slice(0, $leng)";
-                    $this->field['onkeyup']  = 'mascara(this, \'mnum\'); this.value = this.value.slice(0, ' . $leng . '); ';
-                    $this->field['onchange'] = "this.value = this.value.slice(0, $leng);";
+                    // $this->field['oninput']  = "this.value = acertaMaximo(this, $leng)";
+                    $this->field['onkeyup']  = 'mascara(this, \'mnum\'); this.value = acertaMaximo(this, ' . $leng . '); ';
+                    // $this->field['onchange'] = "this.value = acertaMaximo(this, $leng);";
                     $this->field['pattern'] = '^[1-9][0-9]{0,' . $leng . '}$';
                     $this->field['style']   = 'text-align: right';
                     $this->field['class']   = $this->field['class'] . ' form-number';

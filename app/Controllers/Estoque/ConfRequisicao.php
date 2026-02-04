@@ -111,16 +111,16 @@ class ConfRequisicao extends BaseController
 
                 // Gerar a ação do botão
                 $btprn = '';
-                if (trim($req->stt_impressao) === 'S') {
-                    $bt_prn = new MyCampo();
-                    $bt_prn->id = $bt_prn->nome = 'bt_print';
-                    $bt_prn->classep  = 'btn btn-outline-dark btn-sm border-0 mx-0 fs-0';
-                    $bt_prn->i_cone   = "<i class='fa-solid fa-print'></i>";
-                    $bt_prn->label    = '';
-                    $bt_prn->place    = 'Imprimir Requisição';
-                    $bt_prn->funcChan = "openPDFModal('{$url_imp}','Imprimir Requisição')";
-                    $btprn = $bt_prn->crBotao();
-                }
+                // if (trim($req->stt_impressao) === 'S') {
+                //     $bt_prn = new MyCampo();
+                //     $bt_prn->id = $bt_prn->nome = 'bt_print';
+                //     $bt_prn->classep  = 'btn btn-outline-dark btn-sm border-0 mx-0 fs-0';
+                //     $bt_prn->i_cone   = "<i class='fa-solid fa-print'></i>";
+                //     $bt_prn->label    = '';
+                //     $bt_prn->place    = 'Imprimir Requisição';
+                //     $bt_prn->funcChan = "openPDFModal('{$url_imp}','Imprimir Requisição')";
+                //     $btprn = $bt_prn->crBotao();
+                // }
                 $req->acao_person = [
                     $btcon,
                     $btprn
@@ -129,6 +129,7 @@ class ConfRequisicao extends BaseController
         }
 
         $this->data['edicao'] = false;
+        $this->data['consulta'] = false;
 
         $requis = [
             'data' => montaListaColunasEnt($this->data, 'req_id', $dados_requis, $campos[1]),
@@ -434,14 +435,18 @@ class ConfRequisicao extends BaseController
                 ];
                 // debug($sql_save);
                 // debug($val, true);
-                if (!$this->requisicaoate->update($val->rpaid, $sql_save)) {
+                $db      = \Config\Database::connect();
+                $atualizar = $this->requisicaoate->update($val->rpaid, $sql_save);
+                $lastSql = $this->requisicaoate->getLastQuery();
+                // debug($lastSql, true);
+
+                if (!$atualizar) {
                     $ret['erro'] = true;
                     $ret['msg']  = 'Erro ao gravar a Conferência.';
                     $this->requisicaoate->transRollback();
                     echo json_encode($ret);
                     return;
                 } else {
-                    debug($this->requisicaoate->getLastQuery());
 
                     $idmov = $val->tmo_id;
                     $conf  = $val->rpa_conferida;
@@ -469,14 +474,14 @@ class ConfRequisicao extends BaseController
 
                 if ($salvareq) {
                     $this->requisicaoate->transCommit();
-                    // $this->requisicao->transCommit();
-
+                    $this->requisicao->transCommit();
                     $ret['msg'] = 'Conferência gravada com sucesso!';
                     $ret['url'] = site_url($this->data['controler']);
                     session()->setFlashdata('msg', $ret['msg']);
                 } else {
                     $ret['erro'] = true;
                     $ret['msg']  = 'Erro ao gravar a Conferência.';
+                    $this->requisicao->transRollback();
                     $this->requisicaoate->transRollback();
                 }
             }

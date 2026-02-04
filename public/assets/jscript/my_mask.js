@@ -213,3 +213,11 @@ function converteFloatMoeda(valor) {
 
   return valor;
 }
+
+function acertaMaximo(obj, tamanho) {
+  let valor = obj.value.slice(0, tamanho);
+  let numero = parseInt(valor);
+  let maximo = parseInt(obj.max);
+
+  return Math.min(numero, maximo);
+}

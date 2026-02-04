@@ -426,6 +426,7 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
     $fields = array_column($lista, 'lis_campo');
     $exclusao = $data_lis['exclusao'] ?? true;
     $edicao = $data_lis['edicao'] ?? true;
+    $consulta = $data_lis['consulta'] ?? true;
 
     array_unshift($fields, $chave);
     array_push($fields, 'acao');
@@ -467,7 +468,7 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
         $nome_valor = $ent->{$nome};
 
         if ((strlen($data_lis['permissao']) <= 3 && strpbrk($data_lis['permissao'], 'C')) ||
-            (strpbrk($data_lis['permissao'], 'C') && !$podeeditar)
+            (strpbrk($data_lis['permissao'], 'C') && !$podeeditar) && $consulta
         ) {
             $url_con = $data_lis['controler'] . '/show/' . $id_valor;
             $bt_con = new MyCampo();

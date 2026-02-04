@@ -79,7 +79,6 @@ class EstoquRequisicaoModel extends Model
         }
         // $perfil = session()->get('usu_perfil_id');
         // $builder->like('prf_id', $perfil);
-
         $builder->orderBy('req_data');
         return $builder->get()->getResult();
     }

@@ -240,7 +240,7 @@ class EntRequisicao extends Entity
         $pseg->minimo         = 0;
         $pseg->step           = 1;
         $pseg->maximo         = 100;
-        $pseg->size           = 2;
+        $pseg->size           = 3;
         $pseg->classep        = 'mb2';
         $pseg->dispForm       = 'col-3';
         $ret['req_percseguranca']      = $pseg->crInput();
