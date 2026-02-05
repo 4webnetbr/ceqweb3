@@ -47,9 +47,10 @@ function gerarCampoNumeroPadrao(
   min = 0,
   step = 1,
   index = "",
+  classeDiv,
 ) {
   return `
-        <div class="input-group input-group-sm d-inline-flex align-items-center" style="max-width: 20ch;min-width: 15ch;font-size:10px">
+        <div class="input-group input-group-sm d-inline-flex align-items-center ${classeDiv}" style="max-width: 20ch;min-width: 15ch;font-size:10px">
             <div class="input-group-text input-group-addon down-num pe-auto" data-refer="${id}">
                 <i class="fas fa-minus"></i>
             </div>
@@ -112,8 +113,10 @@ function criarLinhaProduto(
 
   // <td class="text-end"><span class="float-start">${iconeToggle}${iconeDuplic}</span>${codpro}</td>
   // <td class="text-start p-0"><div class="float-end">${codpro}</div><div class="float-start">${iconeToggle}${iconeDuplic}</div></td>
+  classoculta = isDuplicado ? "d-none" : "";
+
   return `
-        <tr class="linha-produto ${isDuplicado ? "d-none" : ""}" 
+        <tr class="linha-produto ${classoculta}" 
             data-classe="${dadosDep.classe}" 
             data-index="${index}" 
             data-codpro="${codpro}"
@@ -144,20 +147,22 @@ function criarLinhaProduto(
             }${prod.pro_consumo}</td>
             <td class="text-end">${gerarCampoNumeroPadrao(
               `pro_multiplica_${index}`,
-              "multiplica",
+              "multiplica ",
               prod.pro_multiplica,
               1,
               1,
               index,
+              classoculta,
             )}</td>
             <td class="text-end">
                 ${gerarCampoNumeroPadrao(
                   `pro_pctseguranca_${index}`,
-                  "seguranca",
+                  "seguranca ",
                   prod.pro_pctseguranca,
                   0,
                   1,
                   index,
+                  classoculta,
                 )}
                 <span class="text-end d-none" id="seg_${index}">${
                   prod.pro_seguranca
@@ -181,12 +186,16 @@ function criarLinhaProduto(
 function montarTabelaProdutos(classe, rt, dadosDep) {
   const text = [];
   const isFirst = rt === 0;
+  let temReq = 0;
 
   // Contador de códigos duplicados
   const codigosRepetidos = {};
   classe.prod.forEach((prod) => {
     codigosRepetidos[prod.pro_codpro] =
       (codigosRepetidos[prod.pro_codpro] || 0) + 1;
+    if (prod.pro_requisicao > 0) {
+      temReq++;
+    }
   });
 
   // Set para controlar se já renderizou o código
@@ -195,7 +204,7 @@ function montarTabelaProdutos(classe, rt, dadosDep) {
   text.push(`<div class="accordion-item" data-cla_id="${classe.id}">`);
   text.push(`<h2 class="accordion-header">`);
   text.push(
-    `<button class="accordion-button bg-gray-padrao collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsecl${rt}" aria-expanded="${isFirst}" aria-controls="collapsecl${rt}">${classe.nome}</button>`,
+    `<button class="accordion-button bg-gray-padrao collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsecl${rt}" aria-expanded="${isFirst}" aria-controls="collapsecl${rt}">${classe.nome + " " + (temReq > 0 ? " (" + temReq + " iten(s) requisitado)" : "")}</button>`,
   );
   text.push(`</h2>`);
   text.push(
@@ -336,7 +345,26 @@ async function carregarProdutos(url, aba, obj) {
       max,
       saldoDestino,
       saldoDisponivel,
+      indice,
     ) {
+      let posicao = 0; // sou único
+      let match = indice.match(/^(.*?)(\d+)$/);
+
+      let inicio = match[1]; // "cl7_pr"
+      let ind = parseInt(match[2]); // "14"
+      // verificar se o produto da linha atual é o mesmo da linha anterior ou da próxima linha
+      const trAnte = jQuery(`tr[data-index="${inicio + (ind - 1)}"]`);
+      const codproAnte = trAnte.attr("data-codpro");
+      const trAtual = jQuery(`tr[data-index="${indice}"]`);
+      const codproAtual = trAtual.attr("data-codpro");
+      const trProxi = jQuery(`tr[data-index="${inicio + (ind + 1)}"]`);
+      const codproProxi = trProxi.attr("data-codpro");
+      if (codproAnte == codproAtual) {
+        posicao = 2; // sou igual ao anterior
+      } else if (codproAtual == codproProxi) {
+        posicao = 1; // sou igual ao próximo
+      }
+
       let sug = base * multiplicador;
       vsegura = Math.ceil(sug * (seguranca / 100));
       sug = sug + vsegura;
@@ -349,8 +377,30 @@ async function carregarProdutos(url, aba, obj) {
         sug = Math.min(sug, restanteMax);
       }
 
+      // if (sug > saldoDisponivel) {
       // Limitar ao saldo disponível
+      dif = Math.max(0, sug - saldoDisponivel);
       sug = Math.min(sug, saldoDisponivel);
+      if (posicao > 0) {
+        if (posicao == 1) {
+          // atualizarSugestao(inicio + (ind + 1), dif);
+          saldoDestino = 0;
+          saldoDisponivel =
+            parseInt(trProxi.attr("data-saldo-disponivel")) || 0;
+
+          const novaSug = calcularSugestao(
+            dif,
+            1,
+            seguranca,
+            max,
+            saldoDestino,
+            saldoDisponivel,
+            inicio + (ind + 1),
+          );
+          atualizarSugestao(inicio + (ind + 1), novaSug);
+        }
+      }
+      // }
 
       // Se sugestão é negativa ou zero, retorna zero
       return Math.max(0, sug);
@@ -414,6 +464,7 @@ async function carregarProdutos(url, aba, obj) {
         max,
         saldoDestino,
         saldoDisponivel,
+        index,
       );
 
       atualizarSugestao(index, novaSug);
@@ -465,6 +516,7 @@ async function carregarProdutos(url, aba, obj) {
         max,
         saldoDestino,
         saldoDisponivel,
+        index,
       );
 
       // const novaSug = calcularSugestao(consumo, multiplicador, min, max, saldoDestino, saldoDisponivel);
@@ -495,17 +547,36 @@ async function carregarProdutos(url, aba, obj) {
       }
 
       const index = input.attr("data-index");
+      let posicao = 0; // sou único
+      let indexMultip = index;
+
+      let match = index.match(/^(.*?)(\d+)$/);
+
+      let inicio = match[1]; // "cl7_pr"
+      let ind = parseInt(match[2]); // "14"
+
+      // verificar se o produto da linha atual é o mesmo da linha anterior ou da próxima linha
+      let trAnte = jQuery(`tr[data-index="${inicio + (ind - 1)}"]`);
+      const codproAnte = trAnte.attr("data-codpro");
+      const trAtual = jQuery(`tr[data-index="${index}"]`);
+      const codproAtual = trAtual.attr("data-codpro");
+      if (codproAnte == codproAtual) {
+        indexMultip = inicio + (ind - 1);
+      } else {
+        trAnte = trAtual;
+      }
+
       const multiplicador =
-        parseInt(jQuery(`#pro_multiplica_${index}`).val()) || 1;
+        parseInt(jQuery(`#pro_multiplica_${indexMultip}`).val()) || 1;
       const valAtual = Math.round(parseInt(input.val()) || 0);
       if (valAtual != 0) {
-        const tr = jQuery(`tr[data-index="${index}"]`);
+        // const tr = jQuery(`tr[data-index="${indexMultip}"]`);
 
-        const codigo = tr.attr("data-codpro");
-        let minOriginal = parseInt(tr.attr("data-min")) || 0;
+        const codigo = trAtual.attr("data-codpro");
+        let minOriginal = parseInt(trAnte.attr("data-min")) || 0;
         const saldoDisponivelAtual =
-          parseInt(tr.attr("data-saldo-disponivel")) || 0;
-        let maxOriginal = parseInt(tr.attr("data-max")) || 0;
+          parseInt(trAtual.attr("data-saldo-disponivel")) || 0;
+        let maxOriginal = parseInt(trAnte.attr("data-max")) || 0;
         let maxAntesOri = maxOriginal;
 
         maxOriginal = maxOriginal * multiplicador;
@@ -516,7 +587,7 @@ async function carregarProdutos(url, aba, obj) {
         const desconsideraMaximo = minOriginal === 0 && maxOriginal === 0;
 
         // if (!desconsideraMaximo) {
-        const codproAtual = tr.attr("data-codpro");
+        const codproAtual = trAtual.attr("data-codpro");
         let saldoDestinoAtual = 0;
 
         jQuery("tr").each(function () {
@@ -674,13 +745,17 @@ async function enviarRequisicoes(tipo = 0, event) {
   const requisicoes = [];
   const form = document.getElementById("form1");
   const jqForm = jQuery(form);
+  let repeteDias = parseInt(jQuery("#req_repetedias").val()) || 0;
 
   if (tipo === 1) {
     jqForm.find('input[name="req_status"]').remove();
     jqForm.append(`<input type="hidden" name="req_status" value="${tipo}">`);
+  } else {
+    // se foi clicado no SALVAR
+    // repeteDias = 0;
+    // jQuery("#req_repetedias").val(repeteDias);
   }
 
-  const repeteDias = parseInt(jQuery("#req_repetedias").val()) || 0;
   const linhasProduto = jQuery("tr.linha-produto");
 
   for (let i = 0; i < linhasProduto.length; i++) {
@@ -708,16 +783,6 @@ async function enviarRequisicoes(tipo = 0, event) {
         const th = tr.closest("table").find("thead th").eq(i);
         const nomeColuna = normalizarNomeColuna(th.text());
 
-        // if (["multiplica", "seguranca", "requisicao"].includes(nomeColuna))
-        //   return;
-
-        // const texto = jQuery(this)
-        //   .clone()
-        //   .children()
-        //   .remove()
-        //   .end()
-        //   .text()
-        //   .trim();
         const texto = jQuery(this)
           .clone()
           .children()

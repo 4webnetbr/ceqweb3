@@ -118,7 +118,7 @@ class EntRequisicao extends Entity
         // Quantidade de dias de repetição automática da requisição
         $mudi                 = new MyCampo('est_requisicao', 'req_repetedias', false);
         $mudi->valor          = (isset($dados->req_repetedias)) ? $dados->req_repetedias : 0;
-        $mudi->leitura        = $show;
+        $mudi->leitura        = false;
         $mudi->minimo         = 0;
         $mudi->step           = 1;
         $mudi->maximo         = 10;

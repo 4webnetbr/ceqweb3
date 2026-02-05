@@ -77,9 +77,9 @@
                         for ($cl = 0; $cl < (sizeof($campos_se_lin) - 2); $cl++) {
                             $quebra = $campos_se_lin[$cl];
                             if ($quebra == 'vazio2') {
-                                echo "<div class='row col-6 col-lg-6 float-start d-inline-block g-1 align-items-center mb-5' style='height:33px'></div>";
+                                echo "<div class='row col-6 col-lg-6 float-start d-inline-block g-1 align-items-center mb-5' style='height:56px'></div>";
                             } else if ($quebra == 'vazio3') {
-                                echo "<div class='row col-4 col-lg-4 float-start d-inline-block g-1 align-items-center mb-5' style='height:33px'></div>";
+                                echo "<div class='row col-4 col-lg-4 float-start d-inline-block g-1 align-items-center mb-5' style='height:56px'></div>";
                             } else {
                                 // debug($campos_se_lin[$cl]);
                                 echo $campos_se_lin[$cl];
@@ -116,13 +116,13 @@
                             if ($count % 2) {
                                 $clear = 'clear: left;';
                             }
-                            echo "<div id='vazio2' class='row col-6 col-lg-6 float-start d-block mb-3' style='height:33px; $clear'></div>";
+                            echo "<div id='vazio2' class='row col-6 col-lg-6 float-start d-block mb-3' style='height:56px; $clear'></div>";
                         } else if ($quebra == 'vazio3') {
                             $clear = 'clear: right;';
                             if ($count % 3) {
                                 $clear = 'clear: left;';
                             }
-                            echo "<div id='vazio3' class='row col-4 col-lg-4 float-start d-block mb-5' style='height:33px; $clear'></div>";
+                            echo "<div id='vazio3' class='row col-4 col-lg-4 float-start d-block mb-5' style='height:56px; $clear'></div>";
                         } else {
                             echo $campos_se[$c];
                         }

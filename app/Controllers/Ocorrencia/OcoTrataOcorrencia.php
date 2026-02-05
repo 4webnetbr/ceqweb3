@@ -2,6 +2,7 @@
 
 namespace App\Controllers\Ocorrencia;
 
+use App\Libraries\MyCampo;
 use App\Entities\Ocorrencia\EntOcoTratativa;
 use App\Entities\Ocorrencia\EntOcoOcorrencia;
 use App\Controllers\BaseController;
@@ -116,6 +117,18 @@ class OcoTrataOcorrencia extends BaseController
             $dados->usu_nome = $log[$id]['usua_alterou'];
         }
     
+        $acoes = $this->ocorrencia->getAcoesFinalizar($id);
+    
+        if ($acoes) {
+            // usa a primeira linha (tem o.* + ação)
+            $dados = $acoes[0];
+    
+            // mantém o usuário do log
+            if (isset($log[$id]['usua_alterou'])) {
+                $dados->usu_nome = $log[$id]['usua_alterou'];
+            }
+        }
+    
         $entity = new EntOcoTratativa($dados, true);
         $fields = $entity->campos;
     
@@ -131,14 +144,27 @@ class OcoTrataOcorrencia extends BaseController
         $campos[0][] = $fields['pro_despro'];
         $campos[0][] = $fields['oco_qtd'];
     
-        $acoes = $this->ocorrencia->getAcoesFinalizar($id);
+        if (isset($fields['oco_justi'])) {
+            $campos[0][] = $fields['oco_justi'];
+        }
+        if (isset($fields['tmo_id'])) {
+            $campos[0][] = $fields['tmo_id'];
+        }
+        if (isset($fields['stt_id'])) {
+            $campos[0][] = $fields['stt_id'];
+        }
+        if (isset($fields['tel_id'])) {
+            $campos[0][] = $fields['tel_id'];
+        }
     
-        foreach ($acoes as $acao) {
-            $acao->somente_leitura = true; 
-            
-            $camposAcao = $entity->defCamposAcao($acao);
-            foreach ($camposAcao as $campo) {
-                $campos[0][] = $campo;
+        if (!empty($acoes)) {
+            foreach ($acoes as $acao) {
+                $acao->somente_leitura = true;
+    
+                $camposAcao = $entity->defCamposAcao($acao);
+                foreach ($camposAcao as $campo) {
+                    $campos[0][] = $campo;
+                }
             }
         }
     
@@ -155,9 +181,6 @@ class OcoTrataOcorrencia extends BaseController
     }
 
 
-
-
-
     public function finalizar($id)
     {
         $acoes = $this->ocorrencia->getAcoesFinalizar($id);
@@ -165,6 +188,7 @@ class OcoTrataOcorrencia extends BaseController
         if (!$acoes) {
             throw new \Exception("Ocorrência não encontrada");
         }
+        $base = $acoes[0];
     
         $log = buscaLogTabela('oco_ocorrencia', [$id]);
     
@@ -181,6 +205,7 @@ class OcoTrataOcorrencia extends BaseController
         $entity = new EntOcoTratativa($base, true);
         $fields = $entity->campos;
     
+        // Campos fixos
         $campos[0][] = $fields['tpo_id'];
         $campos[0][] = $fields['usu_nome'];
         $campos[0][] = $fields['oco_descricao'];
@@ -188,7 +213,35 @@ class OcoTrataOcorrencia extends BaseController
         $campos[0][] = $fields['lot_lote'];
         $campos[0][] = $fields['pro_despro'];
         $campos[0][] = $fields['oco_qtd'];
-    
+
+        if (isset($fields['oco_justi'])) {
+            $campos[0][] = $fields['oco_justi'];
+        }
+        if (isset($fields['tmo_id'])) {
+            $campos[0][] = $fields['tmo_id'];
+        }
+        if (isset($fields['stt_id'])) {
+            $campos[0][] = $fields['stt_id'];
+        }
+        if (isset($fields['tel_id'])) {
+            $campos[0][] = $fields['tel_id'];
+        }
+
+        $hidOcoId = new MyCampo('oco_ocorrencia', 'oco_id');
+        $hidOcoId->valor = $base->oco_id;
+        $hidOcoId->tipo  = 'hidden';
+        $hidOcoId->size  = 1;
+        
+        
+        $hidFinalizar = new MyCampo('oco_ocorrencia', 'finalizar');
+        $hidFinalizar->valor = 1;
+        $hidFinalizar->tipo  = 'hidden';
+        $hidFinalizar->size  = 1;
+        
+        $campos[0][] = $hidOcoId->crInput();
+        $campos[0][] = $hidFinalizar->crInput();
+        
+            
         foreach ($acoes as $acao) {
             $camposAcao = $entity->defCamposAcao($acao);
             foreach ($camposAcao as $campo) {
@@ -200,32 +253,72 @@ class OcoTrataOcorrencia extends BaseController
         $this->data['campos']      = $campos;
         $this->data['destino']     = 'store';
         $this->data['desc_metodo'] = 'Finalização da';
+        $this->data['forca_alteracao'] = true;
     
         echo view('vw_edicao', $this->data);
     }
 
+
+
     public function store()
     {
-        $ret = [];
-        // Recupera os dados enviados pelo formulário
         $postado = $this->request->getPost();
-        // debug($postado);
-        // Cria a entity de Ocorrência
-        $entity  = new EntOcoOcorrencia($postado);
-        // debug($entity, true);
 
-        if (!$this->ocorrencia->save($entity)) {
-            $ret = [
-                'erro' => true,
-                'msg'  => implode('<br>', $this->ocorrencia->errors())
-            ];
-        } else {
-            session()->setFlashdata('msg', 'Ocorrência gravada com sucesso!');
-            $ret = [
+        $oco = $this->ocorrencia->find($postado['oco_id']);
+        if (!$oco) {
+            throw new \Exception('Ocorrência não encontrada');
+        }
+        
+        try {
+            if (empty($postado['oco_id'])) {
+                throw new \Exception('ID da ocorrência não informado para finalização');
+            }
+        
+            $acao = $this->ocorrencia->getAcaoConfigurada(
+                (int) $oco->tpo_id,
+                $oco->sut_id
+            );
+        
+            // confirmação obrigatória
+            if (
+                $acao &&
+                (int)$acao->tpa_id === 3 &&
+                empty($postado['confirmado'])
+            ) {
+                return $this->response->setJSON([
+                    'erro' => true,
+                    'msg'  => 6,
+                ]);
+            }
+        
+            // FINALIZA
+            $postado['stt_id']       = 30;
+            $postado['usu_fina']     = session()->get('usu_nome');
+            $postado['oco_data_fim'] = date('Y-m-d H:i:s');
+        
+            unset(
+                $postado['sut_id'],
+                $postado['tpa_id'],
+                $postado['tmo_id'],
+                $postado['tel_id']
+            );
+        
+            $entity = new EntOcoOcorrencia($postado);
+        
+            if (!$this->ocorrencia->save($entity)) {
+                throw new \Exception(implode('<br>', $this->ocorrencia->errors()));
+            }
+        
+            return $this->response->setJSON([
                 'erro' => false,
                 'url'  => site_url($this->data['controler'])
-            ];
+            ]);
+        
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'erro' => true,
+                'msg'  => $e->getMessage()
+            ]);
         }
-        return json_encode($ret);
     }
 }

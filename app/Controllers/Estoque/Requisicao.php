@@ -253,21 +253,21 @@ class Requisicao extends BaseController
             $fields = $ent->campos;
 
             $secao[0] = 'Dados Gerais';
-            $campos[0][0] = $fields['req_id'];
-            $campos[0][count($campos[0])] = $fields['req_data'];
-            $campos[0][count($campos[0])] = $fields['req_dataentrega'];
-            $campos[0][count($campos[0])] = $fields['tmo_id'];
-            $campos[0][count($campos[0])] = $fields['req_repetedias'];
-            $campos[0][count($campos[0])] = $fields['req_deporigem'];
-            $campos[0][count($campos[0])] = $fields['req_deppadrao'];
-            $campos[0][count($campos[0])] = $fields['req_depdestino'];
-            $campos[0][count($campos[0])] = $fields['req_consdiaanterior'];
-            $campos[0][count($campos[0])] = $fields['req_medconsumodias'];
-            $campos[0][count($campos[0])] = $fields['req_meddias'];
-            $campos[0][count($campos[0])] = $fields['req_percseguranca'];
-            $campos[0][count($campos[0])] = $fields['pro_id'];
-            $campos[0][count($campos[0])] = $fields['req_observacao'];
-            $campos[0][count($campos[0])] = $fields['bt_carregar'];
+            $campos[0][] = $fields['req_id'];
+            $campos[0][] = $fields['req_data'];
+            $campos[0][] = $fields['req_dataentrega'];
+            $campos[0][] = $fields['tmo_id'];
+            $campos[0][] = $fields['req_repetedias'];
+            $campos[0][] = $fields['req_deporigem'];
+            $campos[0][] = $fields['req_deppadrao'];
+            $campos[0][] = $fields['req_depdestino'];
+            $campos[0][] = $fields['req_consdiaanterior'];
+            $campos[0][] = $fields['req_medconsumodias'];
+            $campos[0][] = $fields['req_meddias'];
+            $campos[0][] = $fields['req_percseguranca'];
+            // $campos[0][] = $fields['pro_id'];
+            $campos[0][] = $fields['req_observacao'];
+            $campos[0][] = $fields['bt_carregar'];
 
             $secao[1] = 'Produtos';
             $campos[1][0] = ''; // mesma estrutura do add()
@@ -327,22 +327,22 @@ class Requisicao extends BaseController
         $fields = $ent->campos;
 
         $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['req_id'];
-        $campos[0][count($campos[0])] = $fields['req_data'];
-        $campos[0][count($campos[0])] = $fields['req_dataentrega'];
-        $campos[0][count($campos[0])] = $fields['tmo_id'];
-        $campos[0][count($campos[0])] = $fields['req_repetedias'];
-        $campos[0][count($campos[0])] = $fields['req_consdiaanterior'];
-        $campos[0][count($campos[0])] = $fields['req_percseguranca'];
+        $campos[0][] = $fields['req_id'];
+        $campos[0][] = $fields['req_data'];
+        $campos[0][] = $fields['req_dataentrega'];
+        $campos[0][] = $fields['tmo_id'];
+        $campos[0][] = "vazio2";
+        $campos[0][] = $fields['req_consdiaanterior'];
+        $campos[0][] = $fields['req_percseguranca'];
 
         if ($requisicao->req_consdiaanterior == 'N') {
-            $campos[0][count($campos[0])] = $fields['req_medconsumodias'];
-            $campos[0][count($campos[0])] = $fields['req_meddias'];
+            $campos[0][] = $fields['req_medconsumodias'];
+            $campos[0][] = $fields['req_meddias'];
         }
 
-        $campos[0][count($campos[0])] = $fields['usu_nome'];
-        $campos[0][count($campos[0])] = $fields['stt_nome'];
-        $campos[0][count($campos[0])] = $fields['req_observacao'];
+        $campos[0][] = $fields['usu_nome'];
+        $campos[0][] = $fields['stt_nome'];
+        $campos[0][] = $fields['req_observacao'];
 
         $produtosreq = $this->requisicao->getRequisicaoProdutos($id);
 
@@ -470,21 +470,21 @@ class Requisicao extends BaseController
         $fields = $ent->campos;
 
         $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['req_id'];
-        $campos[0][count($campos[0])] = $fields['req_data'];
-        $campos[0][count($campos[0])] = $fields['req_dataentrega'];
-        $campos[0][count($campos[0])] = $fields['tmo_id'];
-        $campos[0][count($campos[0])] = $fields['req_repetedias'];
-        $campos[0][count($campos[0])] = $fields['req_deporigem'];
-        $campos[0][count($campos[0])] = $fields['req_deppadrao'];
-        $campos[0][count($campos[0])] = $fields['req_depdestino'];
-        $campos[0][count($campos[0])] = $fields['req_consdiaanterior'];
-        $campos[0][count($campos[0])] = $fields['req_medconsumodias'];
-        $campos[0][count($campos[0])] = $fields['req_meddias'];
-        $campos[0][count($campos[0])] = $fields['req_percseguranca'];
-        $campos[0][count($campos[0])] = $fields['pro_id'];
-        $campos[0][count($campos[0])] = $fields['req_observacao'];
-        $campos[0][count($campos[0])] = $fields['bt_carregar'];
+        $campos[0][] = $fields['req_id'];
+        $campos[0][] = $fields['req_data'];
+        $campos[0][] = $fields['req_dataentrega'];
+        $campos[0][] = $fields['tmo_id'];
+        $campos[0][] = $fields['req_repetedias'];
+        $campos[0][] = $fields['req_deporigem'];
+        $campos[0][] = $fields['req_deppadrao'];
+        $campos[0][] = $fields['req_depdestino'];
+        $campos[0][] = $fields['req_consdiaanterior'];
+        $campos[0][] = $fields['req_medconsumodias'];
+        $campos[0][] = $fields['req_meddias'];
+        $campos[0][] = $fields['req_percseguranca'];
+        // $campos[0][] = $fields['pro_id'];
+        $campos[0][] = $fields['req_observacao'];
+        $campos[0][] = $fields['bt_carregar'];
 
         $secao[1] = 'Produtos';
         $campos[1][0] = ''; // mesma estrutura do add()
@@ -974,8 +974,12 @@ class Requisicao extends BaseController
         $hoje = new DateTime();
         $dataEntrega = DateTime::createFromFormat('Y-m-d', $postado['req_dataentrega']);
         $repete = $postado['req_repetedias'];
+        // debug($repete);
         $vezes = max(1, (int)$repete); // garante pelo menos uma execução
-
+        if ($status != 4) {
+            $vezes = 1;
+        }
+        // debug($vezes, true);
         for ($i = 0; $i < $vezes; $i++) {
             if ($i > 0) {
                 // $hoje->modify('+1 day');
@@ -996,7 +1000,7 @@ class Requisicao extends BaseController
                 'stt_id'              => $status
             ];
 
-            if ($postado['req_id'] != "") {
+            if ($postado['req_id'] != "" && $i == 0) {
                 $salvaReq = $this->requisicao->update($postado['req_id'], $dadosReq);
                 $req_id   = $postado['req_id'];
                 $this->requisicaoproduto->excluir($req_id);
@@ -1184,9 +1188,10 @@ class Requisicao extends BaseController
                 }
             }
 
+            $db->transCommit();
             $db->transComplete();
         }
-        $ret['msg'] = 'Requisição gravada com sucesso!';
+        $ret['msg'] = "$vezes Requisição(ões) gravada(s) com sucesso!";
         $ret['url'] = site_url($this->data['controler']);
         session()->setFlashdata('msg', $ret['msg']);
 

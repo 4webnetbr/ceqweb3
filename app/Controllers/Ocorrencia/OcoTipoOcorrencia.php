@@ -324,6 +324,7 @@ class OcoTipoOcorrencia extends BaseController
     public function ativinativ($id, $tipo)
     {
         $ret = [];
+    
         try {
             if ($tipo == 1) {
                 // ATIVAR
@@ -332,21 +333,15 @@ class OcoTipoOcorrencia extends BaseController
                 ];
             } else {
                 // INATIVAR
-                // só verifica subtipo
-                $existeSubtipo = $this->tipoocorrencia->db
-                    ->table('oco_subt_ocorrencia')
-                    ->where('tpo_id', (int) $id)
-                    ->where('sut_ativo', 'A')
-                    ->countAllResults();
-    
-                if ($existeSubtipo > 0) {
-                    throw new \Exception('MSG_14'); // Tipo possui subtipo ativo
+                if ($this->tipoocorrencia->getSubtipoAtivo((int) $id)) {
+                    throw new \Exception('MSG_14'); // possui subtipo ativo
                 }
     
                 $dad_atin = [
                     'tpo_ativo' => 'I'
                 ];
             }
+    
             $this->tipoocorrencia->update($id, $dad_atin);
     
             $ret['erro'] = false;
@@ -356,10 +351,10 @@ class OcoTipoOcorrencia extends BaseController
     
         } catch (\Exception $e) {
             $ret['erro'] = true;
-            $ret['msg']  = 14; // código da mensagem
+            $ret['msg']  = 14;
         }
     
-        echo json_encode($ret);
+        return $this->response->setJSON($ret);
     }
 
 
