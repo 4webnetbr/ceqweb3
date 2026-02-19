@@ -28,6 +28,7 @@ function buscaTipoMovimentacao(orig, depori, depdes, deppad) {
           .next()
           .addClass("disabled");
       }
+      jQuery("#" + depori).trigger("change");
       if (retornoAjax.depdes != null) {
         jQuery("#" + depdes)
           .closest(".dropdown")
@@ -36,6 +37,7 @@ function buscaTipoMovimentacao(orig, depori, depdes, deppad) {
           .next()
           .addClass("disabled");
       }
+      jQuery("#" + depdes).trigger("change");
     }
   }
 }
@@ -204,7 +206,7 @@ function montarTabelaProdutos(classe, rt, dadosDep) {
   text.push(`<div class="accordion-item" data-cla_id="${classe.id}">`);
   text.push(`<h2 class="accordion-header">`);
   text.push(
-    `<button class="accordion-button bg-gray-padrao collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsecl${rt}" aria-expanded="${isFirst}" aria-controls="collapsecl${rt}">${classe.nome + " " + (temReq > 0 ? " (" + temReq + " iten(s) requisitado)" : "")}</button>`,
+    `<button class="accordion-button bg-gray-padrao collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsecl${rt}" aria-expanded="${isFirst}" aria-controls="collapsecl${rt}"><div class='col-10 text-start'>${classe.nome + "</div> " + (temReq > 0 ? "<div class='float-end col-1 text-white text-end border border-3 border-danger rounded-pill bg-danger text-center'>" + temReq + "</div>" : "")}</button>`,
   );
   text.push(`</h2>`);
   text.push(
@@ -283,7 +285,7 @@ async function carregarProdutos(url, aba, obj) {
   const mediaconsumo = jQuery('input[name="req_medconsumodias"]:checked').val();
   const seguranca = jQuery("#req_percseguranca").val();
   const meddias = jQuery("#req_meddias").val();
-  const proid = jQuery("#pro_id").val();
+  const proid = jQuery("#pro_id\\[\\]").val();
 
   if (!deporigem || !depdestino) {
     boxAlert(
@@ -539,7 +541,7 @@ async function carregarProdutos(url, aba, obj) {
       });
     });
 
-    jQuery(".requisicao").on("change", function () {
+    jQuery(".requisicao").on("change", async function () {
       const input = jQuery(this);
       if (input.attr("data-ignore-validation")) {
         input.removeAttr("data-ignore-validation");
@@ -554,13 +556,21 @@ async function carregarProdutos(url, aba, obj) {
 
       let inicio = match[1]; // "cl7_pr"
       let ind = parseInt(match[2]); // "14"
-
       // verificar se o produto da linha atual é o mesmo da linha anterior ou da próxima linha
       let trAnte = jQuery(`tr[data-index="${inicio + (ind - 1)}"]`);
       const codproAnte = trAnte.attr("data-codpro");
       const trAtual = jQuery(`tr[data-index="${index}"]`);
       const codproAtual = trAtual.attr("data-codpro");
       if (codproAnte == codproAtual) {
+        saldoAnte = trAnte.attr("data-saldo-disponivel");
+        solicAnte = jQuery("#requisicao_" + index).val();
+        if (saldoAnte > solicAnte) {
+          conf = await boxAlert(39, false, "", false, 1, true);
+          if (!conf) {
+            jQuery(this).val(0);
+            return;
+          }
+        }
         indexMultip = inicio + (ind - 1);
       } else {
         trAnte = trAtual;
@@ -769,8 +779,8 @@ async function enviarRequisicoes(tipo = 0, event) {
       if (repeteDias > 0) {
         const saldoNecessario = valorRequisicao * (repeteDias + 1);
         if (saldoNecessario > saldoDisponivel) {
-          event.preventDefault();
-          event.stopPropagation();
+          // event.preventDefault();
+          // event.stopPropagation();
           await boxAlert(35, true, "", true, 1, false);
           if (tipo === 1) return;
           return false;
@@ -845,22 +855,159 @@ async function enviarAteRequisicoes(event) {
 
   for (let tr of trs) {
     if (tr.id != "" && tr.id != undefined) {
-      const index = parseInt(tr.id);
-      const saldo = parseInt(jQuery("#sl_" + index).html());
-      const qtde = parseInt(jQuery("#qt_" + index).html());
-      const canc = jQuery("#rpa_cancelada_" + index).val();
+      const idBase = parseInt(tr.id);
 
-      if (saldo > 0 && saldo != qtde) {
+      var lf = jQuery("#fab_" + idBase).text();
+      var ctafab = jQuery("#ctafb_" + idBase).val();
+      var lp = jQuery("#lot_" + idBase).text();
+      var ctalot = jQuery("#ctalt_" + idBase).val();
+      var ctamis = jQuery("#ctami_" + idBase).val();
+      var qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
+      var qtde = jQuery("#qt_" + idBase).text();
+      var aten = jQuery("#rpa_atendida_" + idBase).val();
+      var canc = jQuery("#rpa_cancelada_" + idBase).val();
+      var saldo = jQuery("#sl_" + idBase).text();
+      fabok = false;
+      lotof = false;
+      misok = true;
+
+      if (lf == "SN") {
+        if (parseInt(ctafab) >= parseInt(qtcaixa)) {
+          fabok = true;
+        } else if (parseInt(ctafab) > 0) {
+          fabok = false;
+        }
+      } else if (lf == "NN") {
+        fabok = true;
+      } else if (lf == "SS") {
+        if (parseInt(ctafab) == parseInt(qtde) - parseInt(canc)) {
+          fabok = true;
+        } else if (parseInt(ctafab) > 0) {
+          fabok = false;
+        }
+      }
+      if (lp == "SN") {
+        if (parseInt(ctalot) >= parseInt(qtcaixa)) {
+          lotok = true;
+        } else if (parseInt(ctalot) > 0) {
+          lotok = false;
+        }
+      } else if (lp == "NN") {
+        if (parseInt(aten) == parseInt(qtde) - parseInt(canc)) {
+          lotok = true;
+        }
+      } else if (lp == "SS") {
+        if (parseInt(ctalot) == parseInt(qtde) - parseInt(canc)) {
+          lotok = true;
+        } else if (parseInt(ctalot) > 0) {
+          lotok = false;
+        }
+      }
+      if (aten > 0 && (parseInt(saldo) > 0 || !lotok || !fabok)) {
         event.preventDefault();
         event.stopPropagation();
-
-        const resposta = await boxAlert(33, false, "", false, 1, true);
-
-        return resposta; // Interrompe o processamento
+        if (parseInt(saldo) === 0 && !fabok) {
+          resposta = await boxAlert(38, true, "", false, 1, false);
+          return false;
+        } else {
+          resposta = await boxAlert(33, false, "", false, 1, true);
+          return resposta; // Interrompe o processamento
+        }
       }
     }
   }
+  return true;
+}
 
+async function enviarConfRequisicoes(event) {
+  const trs = jQuery("tr").toArray();
+
+  for (let tr of trs) {
+    if (tr.id != "" && tr.id != undefined) {
+      const idBase = parseInt(tr.id);
+
+      var lf = jQuery("#fab_" + idBase).text();
+      var ctafab = jQuery("#ctafb_" + idBase).val();
+      var lp = jQuery("#lot_" + idBase).text();
+      var ctalot = jQuery("#ctalt_" + idBase).val();
+      var lm = jQuery("#mis_" + idBase).text();
+      var ctamis = jQuery("#ctami_" + idBase).val();
+      var qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
+      var qtde = jQuery("#qt_" + idBase).text();
+      var conf = jQuery("#rpa_conferida_" + idBase).val();
+      var canc = jQuery("#rpa_cancelada_" + idBase).val();
+      var saldo = jQuery("#sl_" + idBase).text();
+      fabok = false;
+      lotof = false;
+      misok = false;
+
+      if (lf == "SN") {
+        if (parseInt(ctafab) >= parseInt(qtcaixa)) {
+          fabok = true;
+        } else if (parseInt(ctafab) > 0) {
+          fabok = false;
+        }
+      } else if (lf == "NN") {
+        fabok = true;
+      } else if (lf == "SS") {
+        if (parseInt(ctafab) == parseInt(qtde)) {
+          fabok = true;
+        } else if (parseInt(ctafab) > 0) {
+          fabok = false;
+        }
+      }
+      if (lp == "SN") {
+        if (parseInt(ctalot) >= parseInt(qtcaixa)) {
+          lotok = true;
+        } else if (parseInt(ctalot) > 0) {
+          lotok = false;
+        }
+      } else if (lp == "NN") {
+        lotok = true;
+      } else if (lp == "SS") {
+        if (parseInt(ctalot) == parseInt(qtde)) {
+          lotok = true;
+        } else if (parseInt(ctalot) > 0) {
+          lotok = false;
+        }
+      }
+      if (lm == "SN") {
+        if (parseInt(ctamis) >= parseInt(qtcaixa)) {
+          misok = true;
+        } else if (parseInt(ctamis) > 0) {
+          misok = false;
+        }
+      } else if (lp == "NN") {
+        misok = true;
+      } else if (lp == "SS") {
+        if (parseInt(ctamis) == parseInt(qtde)) {
+          misok = true;
+        } else if (parseInt(ctamis) > 0) {
+          misok = false;
+        }
+      }
+      if (
+        parseInt(conf) > 0 &&
+        (parseInt(saldo) == 0 || !lotok || !fabok || !misok)
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+        resposta = await boxAlert(38, true, "", false, 1, false);
+        return false;
+      } else if (
+        parseInt(conf) > 0 &&
+        parseInt(saldo) > 0 &&
+        lotok &&
+        fabok &&
+        misok
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+        resposta = await boxAlert(9, false, "", false, 1, true);
+        return resposta;
+      }
+    }
+  }
   return true;
 }
 

@@ -109,14 +109,18 @@ class ProdutLoteModel extends Model
     public function getLoteSearch($termo)
     {
         $array = ['lot_lote' => $termo . '%'];
+        $array2 = ['lot_codbar' => $termo . '%'];
         $db = db_connect('dbProduto');
         $builder = $db->table('vw_pro_sap_lote_relac');
 
         // Utiliza a VIEW de lotes
         $builder->select('*');
-        $builder->like($array);
+        $builder->like('lot_lote', $termo);
+        $builder->orLike('lot_codbar', $termo);
 
-        return $builder->get()->getResult();
+        // debug($builder->getCompiledSelect());
+        $ret = $builder->get()->getResult();
+        return $ret;
     }
 
     public function getLoteCodproLote($codpro, $lote)
@@ -131,9 +135,14 @@ class ProdutLoteModel extends Model
         if ($codpro) {
             $builder->where('lot_codpro', $codpro);
         }
-        $builder->like($array);
+
+        $builder->groupStart();
+        $builder->like('lot_lote', $lote);
+        $builder->orLike('lot_codbar', $lote);
+        $builder->groupEnd();
 
         $ret = $builder->get()->getResult();
+        // debug($builder->getCompiledSelect());
 
         return $ret;
     }
@@ -161,5 +170,22 @@ class ProdutLoteModel extends Model
         $builder->whereIn('lot_lote', $termo);
 
         return $builder->get()->getResult();
+    }
+
+    public function getBuscaLote($lot_id)
+    {
+        if (empty($lot_id)) {
+            return '';
+        }
+        $dbProduto = db_connect('dbProduto');
+
+        $lote = $dbProduto
+            ->table('pro_sap_lote')
+            ->select('lot_lote')
+            ->where('lot_id', $lot_id)
+            ->get()
+            ->getRow();
+
+        return $lote->lot_lote ?? '';
     }
 }

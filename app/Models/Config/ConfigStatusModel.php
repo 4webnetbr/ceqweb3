@@ -155,4 +155,14 @@ class ConfigStatusModel extends Model
             ->first()
             ->stt_ordem ?? 0) + 1;
     }
+
+    public function getEtiqueta(int $tipo = 1): string
+    {
+        return fmtEtiquetaCor(
+            $this->cor_valorrgb ?? '',
+            $this->stt_nome ?? '',
+            $tipo
+        );
+    }
+
 }

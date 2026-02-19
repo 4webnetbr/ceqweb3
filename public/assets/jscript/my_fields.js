@@ -658,14 +658,28 @@ function acertaDependente() {
     }
   });
 
+  // Aplica no carregamento
   jQuery("select.selectpicker[multiple]").each(function () {
-    atualizarTextoSelectpicker(this); // Aplica no carregamento
-
-    // Continua reagindo a mudanças
-    jQuery(this).on("changed.bs.select", function () {
-      atualizarTextoSelectpicker(this);
-    });
+    atualizarTextoSelectpicker(this);
   });
+
+  // Evento delegado (funciona mesmo se for dinâmico)
+  jQuery(document).on(
+    "changed.bs.select",
+    "select.selectpicker[multiple]",
+    function () {
+      atualizarTextoSelectpicker(this);
+    },
+  );
+
+  // jQuery("select.selectpicker[multiple]").each(function () {
+  //     atualizarTextoSelectpicker(this); // Aplica no carregamento
+
+  //     // Continua reagindo a mudanças
+  //     jQuery(this).on("changed.bs.select", function () {
+  //       atualizarTextoSelectpicker(this);
+  //     });
+  //   });
 
   function atualizarTextoSelectpicker(select) {
     var selectedOptions = jQuery(select).find("option:selected");
@@ -998,7 +1012,6 @@ function exclui_campo(objdest, obj) {
   jQuery(obj).closest(".row").remove();
   // indice = parseInt(obj.getAttribute('data-index'));
   // jQuery(obj).parents().eq(2).remove()
-  jQuery("#form1").attr("data-alter", true);
   acerta_botoes_rep(objdest);
 }
 
@@ -1534,12 +1547,17 @@ function altera_index(obj, ind_a, ind_n) {
  *
  */
 function acerta_botoes_rep(repete, pos = -1) {
-  repetepos = repete;
+  if (repete.startsWith("acoes")) {
+    return;
+  }
+
+  let repetepos = repete;
   if (pos >= 0) {
     repetepos += "\\[" + pos + "\\]";
   }
-  visiveis = jQuery("#rep_" + repetepos + " .bt-repete").length;
-  ultimo = visiveis - 1;
+
+  let visiveis = jQuery("#rep_" + repetepos + " .bt-repete").length;
+  let ultimo = visiveis - 1;
 
   jQuery("#rep_" + repetepos + " .bt-repete").removeClass("d-none");
   jQuery("#rep_" + repetepos + " .bt-exclui").removeClass("d-none");
@@ -1548,18 +1566,19 @@ function acerta_botoes_rep(repete, pos = -1) {
   jQuery("#rep_" + repetepos + " .bt-repete").addClass("d-none");
 
   if (visiveis == 1) {
-    // quando tem só 1, não pode excluir
     jQuery("#rep_" + repetepos + " .bt-exclui").addClass("d-none");
     jQuery("#rep_" + repetepos + " .bt-up").addClass("d-none");
     jQuery("#rep_" + repetepos + " .bt-down").addClass("d-none");
   }
-  // o botão de Adicionar só aparece no último
+
   jQuery(jQuery("#rep_" + repetepos + " .bt-repete")[ultimo]).removeClass(
     "d-none",
   );
   jQuery(jQuery("#rep_" + repetepos + " .bt-up")[0]).addClass("d-none");
   jQuery(jQuery("#rep_" + repetepos + " .bt-down")[ultimo]).addClass("d-none");
 }
+
+/**
 
 /**
  * testa_dep
@@ -1583,110 +1602,6 @@ function testa_dep(id_dep) {
  * @param {url} url_busca - URL de busca de dependentes
  * @param {integer} selec - Dependente pré-selecionado
  */
-// function busca_dependente(obj, id_dep, url_busca, selec) {
-//   id_dep = id_dep.replace(/[\[\]]/g, (match) => "\\" + match);
-//   // id_dep = id_dep.replace("[", "\\[");
-//   // id_dep = id_dep.replace("]", "\\]");
-//   if (selec == "") {
-//     if (jQuery("#" + id_dep).data("valor")) {
-//       selec = jQuery("#" + id_dep).getAttribute("data-valor");
-//     } else {
-//       selec = jQuery("#" + id_dep).val();
-//     }
-//   }
-//   if (parseInt(jQuery(obj).val()) != -1) {
-//     var nodes = document.getElementById(id_dep);
-//     var jqObj = jQuery(nodes);
-
-//     var datarr = new Array();
-//     datarr[0] = {};
-//     datarr[0].id_dep = jQuery(obj).val();
-
-//     dados = { busca: jQuery(obj).val() };
-//     retornoAjax = false;
-//     executaAjax(url_busca, "json", dados);
-//     if (retornoAjax) {
-//       console.log(retornoAjax);
-//       arr_ret = [];
-//       jQuery.each(retornoAjax, function (key, value) {
-//         arr_ret[key] = value;
-//       });
-//       arr_ret.sort(function (a, b) {
-//         return a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0;
-//       });
-//       console.log(arr_ret);
-
-//       jQuery('[name="' + id_dep + '"]')
-//         .children("option")
-//         .remove();
-//       jQuery.each(retornoAjax, function (key, value) {
-//         if (Array.isArray(selec)) {
-//           if (jQuery.inArray(value.id, selec) !== -1) {
-//             jQuery('[name="' + id_dep + '"]').append(
-//               jQuery("<option selected></option>")
-//                 .attr("value", value.id)
-//                 .text(value.text)
-//             );
-//           } else if (jQuery.inArray(value.id, selec) === -10) {
-//             // DIVISOR
-//             jQuery('[name="' + id_dep + '"]').append(
-//               jQuery("<option class='divider' data-divider='true'></option>")
-//                 .attr("value", value.id)
-//                 .text("")
-//             );
-//           } else {
-//             jQuery('[name="' + id_dep + '"]').append(
-//               jQuery("<option></option>")
-//                 .attr("value", value.id)
-//                 .text(value.text)
-//             );
-//           }
-//         } else {
-//           if (value.id == selec) {
-//             jQuery('[name="' + id_dep + '"]').append(
-//               jQuery("<option selected></option>")
-//                 .attr("value", value.id)
-//                 .text(value.text)
-//             );
-//           } else if (value.id === -10) {
-//             // DIVISOR
-//             jQuery('[name="' + id_dep + '"]').append(
-//               jQuery("<option class='divider' data-divider='true'></option>")
-//                 .attr("value", value.id)
-//                 .text("")
-//             );
-//           } else {
-//             jQuery('[name="' + id_dep + '"]').append(
-//               jQuery("<option></option>")
-//                 .attr("value", value.id)
-//                 .text(value.text)
-//             );
-//           }
-//         }
-//       });
-//       jQuery('[name="' + id_dep + '"]').selectpicker("destroy");
-//       jQuery('[name="' + id_dep + '"]').selectpicker("deselectAll");
-//       // jQuery.each(retorno, function (key, value) {
-//       //     if (value.id == selec || selec.indexOf(value.id) >= 0) {
-//       aSelec = selec;
-//       if (typeof selec === "string" && selec.indexOf(",") > 0) {
-//         aSelec = selec.split(",");
-//       }
-//       jQuery('[id="' + id_dep + '"]').selectpicker("val", aSelec);
-//       jQuery('[id="' + id_dep + '"]').selectpicker("refresh");
-//     }
-//   } else {
-//     var nodes = document.getElementById(id_dep);
-//     var jqObj = jQuery(nodes);
-//     jQuery(jqObj).children("option").remove();
-//     jQuery(jqObj).append(
-//       jQuery("<option></option>")
-//         .attr("value", -1)
-//         .text(nodes.getAttribute("placeholder"))
-//     );
-//   }
-// }
-
 function busca_dependente(obj, id_dep, url_busca, selec) {
   const escapedIdDep = id_dep.replace(/[\[\]]/g, "\\$&");
   const $select = jQuery("#" + escapedIdDep);
@@ -1747,13 +1662,16 @@ function busca_dependente(obj, id_dep, url_busca, selec) {
 
     $select.append($option);
   });
-
+  // $select.selectpicker("refresh");
   $select.addClass("selectpicker");
-  // Define seleção e atualiza visual do selectpicker
   $select.selectpicker("val", aSelec);
+  // acertaDependente();
+
+  // Define seleção e atualiza visual do selectpicker
+  // $select.selectpicker("val", aSelec);
 
   // Fecha o dropdown programaticamente
-  $select.parent().find(".dropdown-toggle").dropdown("toggle"); // se aberto, fecha
+  // $select.parent().find(".dropdown-toggle").dropdown("toggle"); // se aberto, fecha
 }
 
 /**
@@ -1940,18 +1858,6 @@ function busca_atributos(tipo, opcao, etiqueta, icone) {
       jQuery("#" + etiqueta).val(retornoAjax[0].text);
       jQuery("#" + icone).val(retornoAjax[0].icone);
     }
-    // jQuery.ajax({
-    //     type: "POST",
-    //     headers: { 'X-Requested-With': 'XMLHttpRequest' },
-    //     url: url,
-    //     async: true,
-    //     dataType: 'json',
-    //     data: { 'busca': opc },
-    //     success: function (data) {
-    //         jQuery("#" + etiqueta).val(data[0].text);
-    //         jQuery("#" + icone).val(data[0].icone);
-    //     }
-    // });
   }
 }
 
@@ -2249,54 +2155,6 @@ function formata_campo(objtipo, campo_alvo) {
     }
     jQuery("[id='" + campo_alvo + "']").focus();
   }
-  // jQuery.ajax({
-  //     type: "POST",
-  //     headers: { 'X-Requested-With': 'XMLHttpRequest' },
-  //     url: url,
-  //     async: true,
-  //     dataType: 'json',
-  //     data: { 'busca': tipo },
-  //     success: function (data) {
-  //         if (data[0].text == 'celu' || data[0].text == 'whats') {
-  //             jQuery("[id='" + campo_alvo + "']").prop('type', 'tel');
-  //             jQuery("[id='" + campo_alvo + "']").prop('pattern', /^\(\d{2}\) \d{4,5}\-\d{4}$/);
-  //             jQuery("[id='" + campo_alvo + "']").prop('style', 'text-align: left');
-  //             jQuery("[id='" + campo_alvo + "']").prop('placeholder', 'Informe Celular');
-  //             jQuery("[id='" + campo_alvo + "']").prop('aria-describedby', 'ad_' + campo_alvo);
-  //             jQuery("[id='" + campo_alvo + "']").prop('data-original-title', 'Informe um Celular válido! (99) 99999-9999');
-  //             jQuery("[id='" + campo_alvo + "']").prop('title', 'Informe um Celular válido! (99) 99999-9999');
-  //             jQuery("[id='" + campo_alvo + "']").keyup(function () {
-  //                 mascara(this, 'mcel2');
-  //             });
-  //         } else if (data[0].text == 'fone') {
-  //             jQuery("[id='" + campo_alvo + "']").prop('type', 'tel');
-  //             jQuery("[id='" + campo_alvo + "']").prop('pattern', /^\(\d{2}\) \d{4}\-\d{4}$/);
-  //             jQuery("[id='" + campo_alvo + "']").prop('style', 'text-align: left');
-  //             jQuery("[id='" + campo_alvo + "']").prop('placeholder', 'Informe Fone');
-  //             jQuery("[id='" + campo_alvo + "']").prop('aria-describedby', 'ad_' + campo_alvo);
-  //             jQuery("[id='" + campo_alvo + "']").prop('data-original-title', 'Informe um Fone válido! (99) 9999-9999');
-  //             jQuery("[id='" + campo_alvo + "']").prop('title', 'Informe um Fone válido! (99) 9999-9999');
-  //             jQuery("[id='" + campo_alvo + "']").attr('onkeyup', mascara(this, 'mtel'));
-  //         } else if (data[0].text == 'email') {
-  //             jQuery("[id='" + campo_alvo + "']").prop('type', 'email');
-  //             jQuery("[id='" + campo_alvo + "']").prop('pattern', /^[\w\.=-]+@[\w\.-]+\.[\w]{2,3}$/);
-  //             jQuery("[id='" + campo_alvo + "']").prop('style', 'text-align: left');
-  //             jQuery("[id='" + campo_alvo + "']").prop('aria-describedby', 'ad_' + campo_alvo);
-  //             jQuery("[id='" + campo_alvo + "']").prop('placeholder', 'Informe E-mail');
-  //             jQuery("[id='" + campo_alvo + "']").prop('data-original-title', 'Informe um E-mail válido!');
-  //             jQuery("[id='" + campo_alvo + "']").prop('title', 'Informe um E-mail válido!');
-  //         } else if (data[0].text == 'url' || data[0].text == 'site') {
-  //             jQuery("[id='" + campo_alvo + "']").prop('type', 'url');
-  //             jQuery("[id='" + campo_alvo + "']").prop('pattern', /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/);
-  //             jQuery("[id='" + campo_alvo + "']").prop('style', 'text-align: left');
-  //             jQuery("[id='" + campo_alvo + "']").prop('aria-describedby', 'ad_' + campo_alvo);
-  //             jQuery("[id='" + campo_alvo + "']").prop('placeholder', 'Informe url');
-  //             jQuery("[id='" + campo_alvo + "']").prop('data-original-title', 'Informe uma url válida!');
-  //             jQuery("[id='" + campo_alvo + "']").prop('title', 'Informe uma url válida!');
-  //         }
-  //         jQuery("[id='" + campo_alvo + "']").focus();
-  //     }
-  // });
 }
 
 function acertaObrigatorio(obj, aCampos) {
@@ -2383,8 +2241,6 @@ function mudaObrigatorio(obj, regra, fields) {
     nomecampo = obj;
   }
   nomecampo = escIdColchetes(nomecampo);
-  // nomecampo = nomecampo.replaceAll("[", "\\[");
-  // nomecampo = nomecampo.replaceAll("]", "\\]");
   if (obj.tagName == "SELECT") {
     valor = jQuery('select[name="' + nomecampo + '"]').val();
   } else {
@@ -2400,25 +2256,16 @@ function mudaObrigatorio(obj, regra, fields) {
     } else {
       campos = escIdColchetes(campos);
       jQuery("#" + campos).attr("required", "required");
-      // jQuery('#' + campos).attr('readonly', false);
-      // jQuery('#' + campos).attr('disabled', false);
     }
   } else {
     if (jQuery.type(campos) == "array") {
       for (v = 0; v < campos.length; v++) {
         campos[v] = escIdColchetes(campos[v]);
         jQuery("#" + campos[v]).attr("required", false);
-        // jQuery('#' + campos[v]).attr('disabled', 'disabled');
-        // jQuery('#' + campos[v]).attr('readonly', true);
-        // if (jQuery('#' + campos[v].tagName == "select")) {
-        //     jQuery('#' + campos[v]).selectpicker('destroy');
-        // }
       }
     } else {
       campos = escIdColchetes(campos);
       jQuery("#" + campos).attr("required", false);
-      // jQuery('#' + campos).attr('disabled', 'disabled');
-      // jQuery('#' + campos).attr('readonly', true);
     }
   }
 }
@@ -2450,25 +2297,50 @@ function verificaTipoAcao(obj) {
   if (retornoAjax) {
     acao = retornoAjax.acao;
     let ind = parseInt(obj.getAttribute("data-index"));
+    let dvTela = escIdColchetes("#divtela\\[" + ind + "\\]");
+    jQuery(dvTela).not(".d-none").addClass("d-none");
+    mudaObrigatorioElemDiv(dvTela, false);
 
-    jQuery("#divtela\\[" + ind + "\\]")
-      .not(".d-none")
-      .addClass("d-none");
-    jQuery("#divmovi\\[" + ind + "\\]")
-      .not(".d-none")
-      .addClass("d-none");
-    jQuery("#divstat\\[" + ind + "\\]")
-      .not(".d-none")
-      .addClass("d-none");
+    let dvMovi = escIdColchetes("#divmovi\\[" + ind + "\\]");
+    jQuery(dvMovi).not(".d-none").addClass("d-none");
+    mudaObrigatorioElemDiv(dvMovi, false);
+
+    let dvStat = escIdColchetes("#divstat\\[" + ind + "\\]");
+    jQuery(dvStat).not(".d-none").addClass("d-none");
+    mudaObrigatorioElemDiv(dvStat, false);
+
     if (acao == 2) {
       // LISTAR TELAS
-      jQuery("#divtela\\[" + ind + "\\]").removeClass("d-none");
+      jQuery(dvTela).removeClass("d-none");
+      mudaObrigatorioElemDiv(dvTela, true);
     } else if (acao == 3) {
       // Listar Movimentações
-      jQuery("#divmovi\\[" + ind + "\\]").removeClass("d-none");
+      jQuery(dvMovi).removeClass("d-none");
+      mudaObrigatorioElemDiv(dvMovi, true);
+      // mudaObrigatorio(obj, "3", "tmo_id_acao");
     } else if (acao == 4) {
       // Listar Status
-      jQuery("#divstat\\[" + ind + "\\]").removeClass("d-none");
+      jQuery(dvStat).removeClass("d-none");
+      mudaObrigatorioElemDiv(dvStat, true);
+      // mudaObrigatorio(obj, "4", "stt_id_acao");
     }
   }
+}
+
+function mudaObrigatorioElemDiv(div, obriga) {
+  // Garantir valor booleano
+  obriga = obriga === true;
+
+  var $div = $(div);
+
+  if (!$div.length) {
+    return; // simplesmente sai sem erro
+  }
+
+  // Seleciona todos os campos válidos
+  var $campos = $div
+    .find("input, select, textarea")
+    .not("input[type='search']"); // ignora search
+
+  $campos.prop("required", obriga);
 }

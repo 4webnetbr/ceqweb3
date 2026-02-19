@@ -14,6 +14,7 @@ class EstoquRequisicaoModel extends Model
     protected $view             = 'vw_est_requisicao_lista_relac';
     protected $viewlista        = 'vw_est_requisicao_lista_relac';
     protected $viewoutra        = 'vw_est_requisicao_produto_relac';
+    protected $viewatend        = 'vw_est_requisicao_produto_atendimento_relac';
     protected $primaryKey       = 'req_id';
     protected $useAutoIncremodt = true;
 
@@ -97,13 +98,17 @@ class EstoquRequisicaoModel extends Model
         return $ret;
     }
 
-    public function getRequisicaoProdutos($req_id = false)
+    public function getRequisicaoProdutos($req_id = false, $tipo = '')
     {
         $db = db_connect('dbEstoque');
-        $builder = $db->table($this->viewoutra);
+        $builder = $db->table($this->viewatend);
         $builder->select('*');
         if ($req_id) {
             $builder->where('req_id', $req_id);
+        }
+        if ($tipo == 'conferencia') {
+            $builder->where('rep_quantia = rpa_atendida + rpa_cancelada', null, false);
+            $builder->where('rpa_conferida', 0);
         }
         // debug($builder->getCompiledSelect(), true);
         $ret = $builder->get()->getResult();

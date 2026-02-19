@@ -49,8 +49,12 @@ if (!isset($show)) {
                     </thead>
                     <tbody style="max-height: 45vh; overflow-y: auto;">
                         <?php foreach ($produtos as $produto):
+                            // debug($produto, true);
                             $corlegenda = 'bg-white';
                             $corleglote = 'border-secondary';
+                            if (intval($produto->rpa_cancelada) > 0) {
+                                $corlegenda = 'bg-danger';
+                            }
                         ?>
                             <tr id='<?= $produto->rep_id ?>'>
                                 <?

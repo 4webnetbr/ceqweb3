@@ -217,6 +217,7 @@ class Produto extends BaseController
             $campos[2] = [];
 
             $dados_est_produto = $this->produtos->getProdutoEstoque($id);
+            // debug($dados_est_produto, true);
 
             if (count($dados_est_produto) === 0) {
                 $dados_est_produto[] = $dados;
@@ -297,7 +298,7 @@ class Produto extends BaseController
         $this->data['displ']        = $displ;
         $this->data['destino']      = 'store';
         $this->data['script']       = $script;
-        $this->data['desc_edicao']  = $dados->pro_despro;
+        $this->data['desc_edicao']  = $dados->pro_codpro . " - " . $dados->pro_despro . " - " . fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
         $this->data['log']          = buscaLog('pro_produto', $id);
         return view('vw_edicao', $this->data);
     }
@@ -633,6 +634,7 @@ class Produto extends BaseController
                     $depCodDep = is_array($postado['dep_codDep'])
                         ? $postado['dep_codDep']
                         : [$postado['dep_codDep']];
+                    // debug($depCodDep);
 
                     $this->common->deleteReg(
                         "dbProduto",
@@ -641,6 +643,15 @@ class Produto extends BaseController
                     );
 
                     foreach ($depCodDep as $key => $dep) {
+                        $pre_cbfabricante = $postado['pre_cbfabricante'][$key] ?? null;
+                        $pre_undfabricante = ($pre_cbfabricante === 'N') ? 'N' : ($postado['pre_undfabricante'][$key] ?? null);
+
+                        $pre_cblote = $postado['pre_cblote'][$key] ?? null;
+                        $pre_undlote = ($pre_cblote === 'N') ? 'N' : ($postado['pre_undlote'][$key] ?? null);
+
+                        $pre_cbmisturador = $postado['pre_cbmisturador'][$key] ?? null;
+                        $pre_undmisturador = ($pre_cbmisturador === 'N') ? 'N' : ($postado['pre_undmisturador'][$key] ?? null);
+
                         $sql_dep = [
                             'pro_id'            => $pro_id,
                             'dep_codDep'        => $dep,
@@ -650,22 +661,24 @@ class Produto extends BaseController
                             'pre_porcmaximo'    => $postado['pre_porcmaximo'][$key] ?? null,
                             'pre_maximo'        => $postado['pre_maximo'][$key] ?? null,
                             'pre_sugerida'      => $postado['pre_sugerida'][$key] ?? null,
-                            'pre_cbfabricante'  => $postado['pre_cbfabricante'][$key] ?? null,
-                            'pre_undfabricante' => $postado['pre_undfabricante'][$key] ?? null,
-                            'pre_cblote'        => $postado['pre_cblote'][$key] ?? null,
-                            'pre_undlote'       => $postado['pre_undlote'][$key] ?? null,
-                            'pre_cbmisturador'  => $postado['pre_cbmisturador'][$key] ?? null,
-                            'pre_undmisturador' => $postado['pre_undmisturador'][$key] ?? null,
+                            'pre_cbfabricante'   => $pre_cbfabricante,
+                            'pre_undfabricante'  => $pre_undfabricante,
+                            'pre_cblote'         => $pre_cblote,
+                            'pre_undlote'        => $pre_undlote,
+                            'pre_cbmisturador'         => $pre_cbmisturador,
+                            'pre_undmisturador'        => $pre_undmisturador,
                             'pre_estdataatual'  => $postado['pre_estdataatual'][$key] ?? null,
                             'pre_gestaoestoque' => $postado['pre_gestaoestoque'][$key] ?? null,
                         ];
-
+                        // debug($sql_dep);
                         $dep_id = $this->common->insertReg('dbProduto', 'pro_est_produto', $sql_dep);
+                        // debug($dep_id);
 
                         if (!$dep_id) {
                             $ret['erro'] = true;
                             $ret['msg']  = 'Erro ao salvar depósitos do produto.';
-                            debug($ret, true);
+                            // debug($ret, true);
+                            echo json_encode($ret);
                         }
                     }
                 }

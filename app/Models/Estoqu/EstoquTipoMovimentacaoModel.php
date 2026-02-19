@@ -32,6 +32,7 @@ class EstoquTipoMovimentacaoModel extends Model
         'tmo_ativo',
         'tmo_excluido',
         'tmo_estoquepadrao',
+        'tmo_requisicao',
 
     ];
 
@@ -93,7 +94,7 @@ class EstoquTipoMovimentacaoModel extends Model
             ->get()
             ->getResult();
     }
-    
+
     public function getTipoMovimentacaoDepositos($dorig, $ddest)
     {
         $db = db_connect('dbEstoque');
@@ -102,7 +103,7 @@ class EstoquTipoMovimentacaoModel extends Model
         $builder->where('dep_codorigem', $dorig);
         $builder->where('dep_coddestino', $ddest);
         $builder->orderBy('tmo_ativo, tmo_nome');
-        return $builder->get()->getResult(); 
+        return $builder->get()->getResult();
     }
 
     public function getTipoMovimentacaoSearch($termo)
@@ -113,7 +114,7 @@ class EstoquTipoMovimentacaoModel extends Model
         $builder->select('*');
         $builder->like($array);
 
-        return $builder->get()->getResult(); 
+        return $builder->get()->getResult();
     }
 
     public function getTipoMovimentacaoMovimentos($tmo_id = false)
@@ -124,7 +125,7 @@ class EstoquTipoMovimentacaoModel extends Model
         if ($tmo_id) {
             $builder->where('tmo_id', $tmo_id);
         }
-        return $builder->get()->getResult(); 
+        return $builder->get()->getResult();
     }
 
     public function getTipoMovimentacaoPermissao($tmo_id = false)
@@ -135,12 +136,12 @@ class EstoquTipoMovimentacaoModel extends Model
         if ($tmo_id) {
             $builder->where('tmo_id', $tmo_id);
         }
-        return $builder->get()->getResult(); 
+        return $builder->get()->getResult();
     }
 
     public function getTipoMovimentacaoTemPermissao($tmo_id = false, $prf_id = false)
     {
-        if(!$tmo_id || !$prf_id){
+        if (!$tmo_id || !$prf_id) {
             return false;
         }
         $db = db_connect('dbEstoque');
@@ -148,7 +149,7 @@ class EstoquTipoMovimentacaoModel extends Model
         $builder->select('*');
         $builder->where('tmo_id', $tmo_id);
         $builder->where('prf_id', $prf_id);
-        return $builder->get()->getResult(); 
+        return $builder->get()->getResult();
     }
 
     public function getTipoMovimentacao($tmo_id = false)
@@ -156,13 +157,12 @@ class EstoquTipoMovimentacaoModel extends Model
         $db = db_connect('dbEstoque');
         $builder = $db->table('vw_est_tipo_movimentacao_relac_lista');
         $builder->select('*');
-    
+
         if ($tmo_id) {
             $builder->where('tmo_id', $tmo_id);
         }
         $builder->orderBy('tmo_ativo, tmo_nome');
-    
-        return $builder->get()->getResult(); 
-    }
 
+        return $builder->get()->getResult();
+    }
 }

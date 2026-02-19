@@ -42,6 +42,7 @@ if (!function_exists('api_request')) {
             }
 
             $body = $response->getBody();
+            // debug($body, true);
             return json_decode($body, true);
         } catch (\Throwable $e) {
             log_message('error', 'Erro ao consumir API: ' . $e->getMessage());

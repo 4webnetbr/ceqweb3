@@ -141,6 +141,9 @@ class AteRequisicao extends BaseController
         // debug($dados_requis, true);
         $this->data['edicao'] = false;
 
+        // MOSTRA CONSULTA EM TODOS OS STATUS
+        $this->data['allconsulta'] = true;
+
         $requis = [
             'data' => montaListaColunasEnt($this->data, 'req_id', $dados_requis, $campos[1]),
         ];
@@ -195,6 +198,7 @@ class AteRequisicao extends BaseController
             fn($p) => $p->pro_id,
             $produtos
         ));
+        // debug($pro_ids);
 
         $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $requisicao->req_deporigem);
         // debug($produtos, false);
@@ -212,40 +216,8 @@ class AteRequisicao extends BaseController
             $estoqueIndexado[$itemEstoque->pro_id] = $itemEstoque;
         }
 
-        // $estoqueOrigem  = $this->busca->buscaEstoqueDeposito($requisicao->req_deporigem);
-        // $estoqueOrigemIndexado = [];
-
-        // foreach ($estoqueOrigem as $itemOrigem) {
-        //     // debug($itemOrigem, true);
-        //     if (($itemOrigem->quantidadeEstoque ?? 0) <= 0) {
-        //         continue; // ignora itens sem estoque
-        //     }
-
-        //     $pro_id = $itemOrigem->codigoProduto;
-        //     $lote   = $itemOrigem->codigoLote ?? 'SEM_LOTE';
-
-        //     $estoqueOrigemIndexado[$pro_id][$lote] = $itemOrigem;
-        // }
-        // debug($estoqueOrigemIndexado);
 
         $semsaldo = false;
-        // foreach ($produtos as $produto) {
-        //     $pro_id = $produto->pro_codpro;
-        //     $lote   = $produto->lot_lote ?? 'SEM_LOTE'; // caso lote venha da requisição
-        //     // debug($pro_id);
-        //     // debug($lote);
-
-        //     $qtdRequisitada = $produto->rep_quantia;
-
-        //     $disponivel = $estoqueOrigemIndexado[$pro_id][$lote]->quantidadeEstoque ?? 0;
-        //     // debug($disponivel);
-        //     if ($disponivel < $qtdRequisitada) {
-        //         // debug($disponivel);
-        //         // debug($qtdRequisitada);
-        //         // Sem saldo suficiente
-        //         $semsaldo = true;
-        //     }
-        // }
 
         if ($semsaldo) {
             $ret['erro'] = true;
@@ -255,7 +227,6 @@ class AteRequisicao extends BaseController
         } else {
             // Resultado final com todos os produtos
             $resultado = [];
-
 
             foreach ($produtosIndexado as $pro_id => $produto) {
                 if (isset($estoqueIndexado[$pro_id])) {
@@ -275,16 +246,18 @@ class AteRequisicao extends BaseController
                 $estoqueEncontrado = 0;
 
                 foreach ($estoqueOrigem as $item) {
-                    if ($item->codigoLote === $prod->lot_lote) {
-                        $estoqueEncontrado = (int)$item->quantidadeEstoque;
+                    if (isset($item->codigoLote) && $item->codigoLote === $prod->lot_lote) {
+                        $estoqueEncontrado = (int) str_replace('.', '', (string) $item->quantidadeEstoque);
                         break; // encontrou o lote, não precisa continuar
+                    } else if (!isset($item->codigoLote)) {
+                        $estoqueEncontrado = 1000000000;
                     }
                 }
 
                 $prod->estoque_origem = $estoqueEncontrado;
-                // debug($prod);
 
                 if (!isset($prod->pre_cbfabricante)) {
+                    // debug($prod);
                     $resultado[$p]['pre_cbfabricante'] = 'N';
                     $resultado[$p]['pre_undfabricante'] = 'N';
                     $resultado[$p]['pre_cblote'] = 'N';
@@ -329,8 +302,8 @@ class AteRequisicao extends BaseController
 
             $scripti = "<SCRIPT>jQuery('#lot_codbar').focus();</SCRIPT>";
 
-            $this->data['title']       = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
-            $this->data['desc_metodo'] = ' Atendimento de ';
+            $this->data['desc_edicao']       = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+            $this->data['desc_metodo'] = ' ';
             $this->data['secoes']      = $secao;
             $this->data['campos']      = $campos;
             $this->data['destino']     = 'store';

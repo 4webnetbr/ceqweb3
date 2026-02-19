@@ -87,7 +87,7 @@ class OcorreTrataOcorrenciaModel extends Model
         return $row->stt_id ?? null;
     }
 
-    public function getById($id)
+    public function getOcorrencia($id)
     {
         return $this->db->table('oco_ocorrencia') 
             ->where('oco_id', $id)

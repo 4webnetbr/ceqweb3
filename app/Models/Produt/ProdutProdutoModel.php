@@ -217,7 +217,7 @@ class ProdutProdutoModel extends Model
     public function getProdutoEstoque($pro_id = false, $deposito = false)
     {
         $db = db_connect('dbProduto');
-        $builder = $db->table('pro_est_produto');
+        $builder = $db->table('vw_pro_est_ceq_relac');
 
         $builder->select('*');
 
@@ -228,10 +228,13 @@ class ProdutProdutoModel extends Model
         }
 
         if ($deposito) {
-            $builder->where('dep_codDep', $deposito);
+            $builder->like('dep_codDep', $deposito);
         }
+        // debug($builder->getCompiledSelect());
+        // $cs = $builder->getCompiledSelect();
+        $ret = $builder->get()->getResult();
 
-        return $builder->get()->getResult();
+        return $ret;
     }
 
     public function getProdutoEstoqueCeqweb($pro_id = false, $deposito = false)
@@ -248,9 +251,9 @@ class ProdutProdutoModel extends Model
         }
 
         if ($deposito) {
-            $builder->where('dep_codDep', $deposito);
+            $builder->like('prc_deposito', $deposito);
         }
-
+        $builder->groupBy('pro_codpro');
         return $builder->get()->getResult();
     }
 
@@ -262,12 +265,17 @@ class ProdutProdutoModel extends Model
 
         $db = db_connect('dbProduto');
         $builder = $db->table('pro_sap_produto');
+        $familiasArray = array_map(
+            static fn(string $item): string => trim($item),
+            explode(',', $familia)
+        );
 
         $builder->select('*')
             ->where('ori_codOri', $origem)
-            ->where('fam_codFam', $familia)
+            ->whereIn('fam_codFam', $familiasArray)
             ->where('cla_id', $classe);
 
+        // debug($builder->getCompiledSelect());
         return $builder->get()->getResult();
     }
 
@@ -296,18 +304,19 @@ class ProdutProdutoModel extends Model
     public function getProdutoRequisicao($deposito = false, $produto = false)
     {
         $db = db_connect('dbProduto');
-        $builder = $db->table('vw_classe_produto_lote_semlote_info');
+        $builder = $db->table('vw_classe_produto_lote_semlote_info2');
 
         $builder->select('*');
 
         if ($deposito) {
-            $builder->groupStart()
-                ->where('pre_codDep', $deposito)
-                ->orWhere('prc_deposito', $deposito)
-                ->groupEnd();
+            // $builder->groupStart()
+            //     ->where('pre_codDep', $deposito)
+            //     ->orWhere('prc_deposito', $deposito)
+            //     ->groupEnd();
+            $builder->like('prc_deposito', $deposito);
         }
         if ($produto) {
-            $builder->where('pro_id', $produto);
+            $builder->whereIn('pro_id', $produto);
         }
         $builder->orderBy('cla_ordem, pro_despro, pro_codpro, lot_validade');
         // debug($builder->getCompiledSelect());

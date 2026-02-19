@@ -233,7 +233,7 @@ class CriaPdf2025 extends BaseController
     public function PrintOcorrencia($oco_id)
     {
         // Busca dados da ocorrência (ajuste o model se o nome for outro)
-        $ocorrencias = $this->ocorrencia->getListaOcorrenciaPdf($oco_id);
+        $ocorrencias = $this->ocorrencia->getOcorrenciaPdf($oco_id);
     
         if (!$ocorrencias) {
             echo json_encode(['erro' => 'Ocorrência não encontrada']);
@@ -267,19 +267,8 @@ class CriaPdf2025 extends BaseController
         $this->pdf->EtiqTexto('Produto: ', $oco->pro_despro ?? '', 'Arial', 10, 6, 15, 0, 1, 'L');
         $this->pdf->SetX(15);
         $this->pdf->EtiqTexto('Lote: ', $oco->lot_lote ?? '', 'Arial', 10, 6, 15, 0, 1, 'L');
-    
         $this->pdf->SetX(90);
-        $this->pdf->EtiqTexto(
-            'Data: ',
-            substr(data_br($oco->oco_data), 0, 16),
-            'Arial',
-            10,
-            6,
-            16,
-            0,
-            1,
-            'L'
-        );
+        $this->pdf->EtiqTexto('Data: ', substr(data_br($oco->oco_data), 0, 16), 'Arial', 10, 6, 16, 0, 1, 'L');
     
         // Descrição
         $posy = 47;
@@ -288,23 +277,11 @@ class CriaPdf2025 extends BaseController
         
         // Label em negrito
         $this->pdf->SetFont('Arial', 'B', 10);
-        $this->pdf->MultiCell(
-            190,
-            5,
-            utf8_decode("Descrição:"),
-            0,
-            'L'
-        );
+        $this->pdf->MultiCell(190, 5, utf8_decode("Descrição:"), 0, 'L');
         
         // Texto normal
         $this->pdf->SetFont('Arial', '', 10);
-        $this->pdf->MultiCell(
-            190,
-            5,
-            utf8_decode($oco->oco_descricao ?? ''),
-            0,
-            'L'
-        );
+        $this->pdf->MultiCell(190, 5, utf8_decode($oco->oco_descricao ?? ''), 0, 'L');
     
         $this->pdf->AliasNbPages();
     

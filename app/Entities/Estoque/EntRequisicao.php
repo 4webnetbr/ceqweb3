@@ -53,7 +53,6 @@ class EntRequisicao extends Entity
         $simnao['N'] = 'Não';
 
         // $ret['pro_id'] = EntProdutos::campoSelectProduto($dados->pro_id ?? '', $show, 'pro_produto');
-        // $ret['tmo_id'] = EntTipoMovimentacao::campoSelectTipoMovi($dados->tmo_id ?? '', $show, 'oco_tpo_acao');
 
         // ID da requisição
         $id           =  new MyCampo('est_requisicao', 'req_id', false);
@@ -84,6 +83,9 @@ class EntRequisicao extends Entity
         $entr                 = new MyCampo('est_requisicao', 'req_dataentrega', false);
         $entr->valor          = (isset($dados->req_dataentrega)) ? $dados->req_dataentrega : '';
         $entr->leitura        = $show;
+        if ($tipo && $tipo == 'copy') {
+            $entr->leitura        = false;
+        }
         $entr->datamin         = $data->format('Y-m-d');
         $entr->obrigatorio    = true;
         $entr->dispForm       = 'col-6';
@@ -104,6 +106,7 @@ class EntRequisicao extends Entity
         // MOVIMENTAÇÃO
         $perfilId = session()->get('usu_perfil_id');
 
+        $fil['tmo_requisicao'] = 'S';
         $ret['tmo_id'] = criaSelectRelativo(
             'vw_est_tipo_movimentacao_relac_lista',
             'tmo_id',
@@ -111,7 +114,7 @@ class EntRequisicao extends Entity
             $dados->tmo_id ?? '',
             1,
             'est_requisicao',
-            [],
+            $fil,
             $config
         );
 
@@ -235,20 +238,20 @@ class EntRequisicao extends Entity
         $ret['req_observacao']      = $obsv->crInput();
 
         // PRODUTO
-        $config['Leitura'] = $show;
-        $config['Obrigatorio'] = false;
-        $config['Label'] = 'Produto';
-        $config['DispForm'] = 'col-12';
-        $config['Largura'] = 60;
-        $config['Pai'] = 'req_deporigem';
-        $config['Urlbusca'] = base_url('buscas/buscaProdutoDeposito');
+        $config['Leitura']      = $show;
+        $config['Obrigatorio']  = false;
+        $config['Label']        = 'Produto';
+        $config['DispForm']     = 'col-12';
+        $config['Largura']      = 60;
+        $config['Pai']          = 'req_depdestino';
+        $config['Urlbusca']     = base_url('buscas/buscaProdutoDeposito');
 
         $ret['pro_id'] = criaSelectRelativo(
             '',
             '',
             '',
-            $dados->pro_id ?? '',
-            2,
+            '',
+            4,
             'est_requisicao_produto',
             [],
             $config,
@@ -270,9 +273,9 @@ class EntRequisicao extends Entity
         $codb->leitura        = false;
         $codb->classep        = 'mb2';
         $codb->dispForm       = 'col-6';
-        $codb->tamanho        = '30';
-        $codb->largura        = '30';
-        $codb->size           = '30';
+        $codb->tamanho        = 50;
+        $codb->largura        = 50;
+        $codb->size           = 50;
         $codb->funcBlur       = 'validaCodBar(this)';
         if ($tipo && $tipo == 'conf') {
             $codb->funcBlur       = 'validaCodBarConf(this)';
@@ -339,7 +342,7 @@ class EntRequisicao extends Entity
         $aten->label          = '';
         $aten->size           = 4;
         $aten->leitura        = true;
-        if ($dados->pre_cbfabricante == 'N' && $dados->pre_undfabricante == 'N') {
+        if ($dados->pre_cbfabricante == 'N' && $dados->pre_undfabricante == 'N' && $dados->pre_cblote == 'N' && $dados->pre_undlote == 'N') {
             $aten->leitura        = false;
         }
         if (intval($dados->rep_quantia) == (intval($dados->rpa_atendida) + intval($dados->rpa_cancelada))) {
@@ -389,12 +392,12 @@ class EntRequisicao extends Entity
         $conf->maximo         = intval($dados->rpa_atendida);
         $conf->funcChan       = 'acertaSaldoConf(this)';
         $conf->largura        = 20;
-        if ($dados->pre_cbfabricante == 'N' && $dados->pre_undfabricante == 'N') {
+        if ($dados->pre_cbfabricante == 'N' && $dados->pre_undfabricante == 'N' && $dados->pre_cblote == 'N' && $dados->pre_undlote == 'N' && $dados->pre_cbmisturador == 'N' && $dados->pre_undmisturador == 'N') {
             $conf->leitura        = false;
         }
-        if (intval($dados->rep_quantia) == intval($dados->rpa_conferida)) {
-            $conf->leitura        = true;
-        }
+        // if (intval($dados->rpa_atendida) == intval($dados->rpa_conferida)) {
+        //     $conf->leitura        = true;
+        // }
         $ret['rpa_conferida']      = $conf->crInput();
         return $ret;
     }

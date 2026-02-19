@@ -450,7 +450,7 @@ class Buscas extends BaseController
         // debug($busca);
         if (!empty($busca)) {
             $lotesm = new ProdutLoteModel();
-            $lote   = $lotesm->getLoteCodproLote(false, $busca);
+            $lote   = $lotesm->getLoteSearch($busca);
 
             if (empty($lote)) {
                 $ret->lotid = '-1';
@@ -470,7 +470,7 @@ class Buscas extends BaseController
 
         if ($_REQUEST['busca']) {
             $produtos = (new ProdutProdutoModel())->getProdutoEstoque(false, $_REQUEST['busca']);
-
+            // debug($produtos, true);
             if (empty($produtos)) {
                 $o = new \stdClass();
                 $o->id = '-1';
@@ -480,10 +480,11 @@ class Buscas extends BaseController
                 foreach ($produtos as $p) {
                     $o = new \stdClass();
                     $o->id   = $p->pro_id;
-                    $o->text = $p->pro_desinf;
+                    $o->text = $p->pro_coddes;
                     $ret[] = $o;
                 }
             }
+            // debug($ret);
         }
 
         echo json_encode($ret);
@@ -720,7 +721,7 @@ class Buscas extends BaseController
             $subtipoModel = new OcorreModOcorrenciaModel();
 
             // Método coerente com o que está buscando
-            $lst = $subtipoModel->getSubtipoPorTipo($busca);
+            $lst = $subtipoModel->getSubtipoPorTipos($busca);
 
             if (empty($lst)) {
 
@@ -758,8 +759,8 @@ class Buscas extends BaseController
             } else {
                 foreach ($lst as $l) {
                     $o = new \stdClass();
-                    $o->id   = $l->moc_id;
-                    $o->text = $l->moc_nome;
+                    $o->id   = $l->sut_id;
+                    $o->text = $l->sut_nome;
                     $ret[] = $o;
                 }
             }

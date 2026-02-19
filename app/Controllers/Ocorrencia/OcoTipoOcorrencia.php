@@ -185,13 +185,20 @@ class OcoTipoOcorrencia extends BaseController
      */
     public function edit($id)
     {
-        
+        $show = false;
+        try {
+            // Checa uso do tipo em outros bancos
+            $this->verificarUsoEmRelacionamentos('oco_tipo_ocorrencia', 'tpo_id', (int) $id);
+        } catch (\Exception $e) {
+            $show = true;
+        }
+
         // BUSCA DADOS 
         $dados_TipoOcorrencia = $this->tipoocorrencia->getTipoOcorrencia($id);
         // debug($dados_TipoOcorrencia);
 
         // ENTITY
-        $entity = new EntOcoTipoOcorre((array) $dados_TipoOcorrencia[0]);
+        $entity = new EntOcoTipoOcorre((array) $dados_TipoOcorrencia[0], $show);
         // debug($entity, true);
 
         // CAMPOS GERAIS
@@ -207,21 +214,26 @@ class OcoTipoOcorrencia extends BaseController
         $displ[1] = 'tabela';
 
         // Busca telas aplicáveis vinculadas
-        $dados_TelasAplicaveis = $this->tipoocorrencia->getTOTelasAplicaveis($id);
+        $dados_TelasAplicaveis = $this->tipoocorrencia->getTOTelasAplicaveis($id, $show);
 
         if (count($dados_TelasAplicaveis) > 0) {
             for ($c = 0; $c < count($dados_TelasAplicaveis); $c++) {
 
-                $fields = $entity->defCamposTelasAplicaveis($dados_TelasAplicaveis[$c], $c);
+                $fields = $entity->defCamposTelasAplicaveis($dados_TelasAplicaveis[$c], $c, $show);
 
                 $campos[1][$c][] = $fields['mod_id'];
                 $campos[1][$c][] = $fields['tel_id'];
                 $campos[1][$c][] = $fields['tof_campo'];
-                $campos[1][$c][] = $fields['bt_addta'];
-                $campos[1][$c][] = $fields['bt_delta'];
+                if ($show) {
+                    $campos[1][$c][] = $fields['bt_addta'];
+                    $campos[1][$c][] = '';
+                } else {
+                    $campos[1][$c][] = $fields['bt_addta'];
+                    $campos[1][$c][] = $fields['bt_delta'];
+                }
             }
         } else {
-            $fields = $entity->defCamposTelasAplicaveis(false, 0);
+            $fields = $entity->defCamposTelasAplicaveis(false, 0, true);
 
             $campos[1][0][] = $fields['mod_id'];
             $campos[1][0][] = $fields['tel_id'];
@@ -240,7 +252,7 @@ class OcoTipoOcorrencia extends BaseController
         if (count($dados_Acao) > 0) {
             for ($c = 0; $c < count($dados_Acao); $c++) {
 
-                $fields = $entity->defCamposAcao($dados_Acao[$c], $c);
+                $fields = $entity->defCamposAcao($dados_Acao[$c], $c, $show);
 
                 $campos[2][$c][] = $fields['tpa_id'];
                 // debug(array_keys($dados_Acao[$c]), true);
@@ -254,11 +266,16 @@ class OcoTipoOcorrencia extends BaseController
                 $dnone = ($dados_Acao[$c]['stt_id'] != 0) ? '' : 'd-none';
                 $campos[2][$c][] = "<div id='divstat[$c]' class='$dnone row col-6'>" . $fields['stt_id'] . "</div>";
 
-                $campos[2][$c][] = $fields['bt_addtp'];
-                $campos[2][$c][] = $fields['bt_deltp'];
+                if ($show) {
+                    $campos[2][$c][] = '';
+                    $campos[2][$c][] = '';
+                } else {
+                    $campos[2][$c][] = $fields['bt_addtp'];
+                    $campos[2][$c][] = $fields['bt_deltp'];
+                }
             }
         } else {
-            $fields = $entity->defCamposAcao(false, 0);
+            $fields = $entity->defCamposAcao(false, 0, true);
 
             $campos[2][0][] = $fields['tpa_id'];
             $campos[2][0][] = "<div id='divmovi[0]' class='d-none row col-6'>" . $fields['tmo_id'] . "</div>";
@@ -279,6 +296,10 @@ class OcoTipoOcorrencia extends BaseController
         $this->data['campos']  = $campos;
         $this->data['displ']   = $displ;
         $this->data['destino'] = 'store';
+        $this->data['script'] = "<script>
+                                acerta_botoes_rep('telas_aplicaveis');
+                                acerta_botoes_rep('acoes');
+                                </script>";
 
         echo view('vw_edicao', $this->data);
     }
@@ -293,38 +314,38 @@ class OcoTipoOcorrencia extends BaseController
     public function delete($id)
     {
         $ret = [];
-    
+
         try {
             // verifica somente subtipo
             $existeSubtipo = $this->tipoocorrencia->db
                 ->table('oco_subt_ocorrencia')
                 ->where('tpo_id', (int) $id)
                 ->countAllResults();
-    
+
             if ($existeSubtipo > 0) {
                 throw new \Exception('MSG_3'); // possui subtipo vinculado
             }
-    
+
             // Soft delete
             $this->tipoocorrencia->delete($id);
-    
+
             $ret['erro'] = false;
             $ret['msg']  = 'Tipo de Ocorrência excluída com sucesso!';
             session()->setFlashdata('msg', $ret['msg']);
-    
         } catch (\Exception $e) {
             $ret['erro'] = true;
             $ret['msg']  = 3;
         }
-    
+
         echo json_encode($ret);
     }
 
 
     public function ativinativ($id, $tipo)
     {
+        // debug([$id, $tipo], true);
         $ret = [];
-    
+
         try {
             if ($tipo == 1) {
                 // ATIVAR
@@ -336,24 +357,23 @@ class OcoTipoOcorrencia extends BaseController
                 if ($this->tipoocorrencia->getSubtipoAtivo((int) $id)) {
                     throw new \Exception('MSG_14'); // possui subtipo ativo
                 }
-    
+
                 $dad_atin = [
                     'tpo_ativo' => 'I'
                 ];
             }
-    
+
             $this->tipoocorrencia->update($id, $dad_atin);
-    
+
             $ret['erro'] = false;
             $ret['msg']  = 'Tipo de Ocorrência alterado com sucesso';
             session()->setFlashdata('msg', $ret['msg']);
             cache()->clean();
-    
         } catch (\Exception $e) {
             $ret['erro'] = true;
             $ret['msg']  = 14;
         }
-    
+
         return $this->response->setJSON($ret);
     }
 
@@ -411,18 +431,6 @@ class OcoTipoOcorrencia extends BaseController
             $db->transBegin();
 
             // não permitir edição se já houver subtipo vinculado
-            if (!empty($postado['tpo_id'])) {
-            
-                if ($this->tipoocorrencia->SubVinculado((int) $postado['tpo_id'])) {
-                    $db->transRollback();
-            
-                    return $this->response->setJSON([
-                        'erro' => true,
-                        'msg'  => 15 // Alteração não permitida
-                    ]);
-                }
-            }
-            
             // Verifica unicidade
             $exists = $this->common->verificaUnico(
                 $this->tipoocorrencia,
@@ -452,34 +460,34 @@ class OcoTipoOcorrencia extends BaseController
                 $this->common->deleteReg($grupo, 'oco_tipo_ocorrencia_classe',   "tpo_id = {$tpo_id}");
                 $this->common->deleteReg($grupo, 'oco_tipo_ocorrencia_tela',     "tpo_id = {$tpo_id}");
                 $this->common->deleteReg($grupo, 'oco_tipo_ocorrencia_campos',   "tpo_id = {$tpo_id}");
-                $this->common->deleteReg($grupo, 'oco_tipo_ocorrencia_permissao',"tpo_id = {$tpo_id}");
+                $this->common->deleteReg($grupo, 'oco_tipo_ocorrencia_permissao', "tpo_id = {$tpo_id}");
             }
 
             // Ações
             if (!empty($postado['tpa_id'])) {
                 $acoes = [];
-            
+
                 foreach ($postado['tpa_id'] as $i => $tpa_id) {
-                    
-            
+
+
                     if (!$tpa_id) continue;
-            
+
                     $mod_id = (!isset($postado['mod_id_acao'][$i]) || $postado['mod_id_acao'][$i] <= 0)
                         ? null
                         : (int) $postado['mod_id_acao'][$i];
-                    
+
                     $tel_id = (!isset($postado['tel_id_acao'][$i]) || $postado['tel_id_acao'][$i] <= 0)
                         ? null
                         : (int) $postado['tel_id_acao'][$i];
-                    
+
                     $stt_id = (!isset($postado['stt_id_acao'][$i]) || $postado['stt_id_acao'][$i] <= 0)
                         ? null
                         : (int) $postado['stt_id_acao'][$i];
-                    
+
                     $tmo_id = (!isset($postado['tmo_id_acao'][$i]) || $postado['tmo_id_acao'][$i] <= 0)
                         ? null
                         : (int) $postado['tmo_id_acao'][$i];
-            
+
                     $acoes[] = [
                         'tpo_id' => $tpo_id,
                         'tpa_id' => $tpa_id,
@@ -489,8 +497,8 @@ class OcoTipoOcorrencia extends BaseController
                         'tmo_id' => $tmo_id,
                     ];
                 }
-            
-                $this->common->insertRegBatch('dbOcorrencia','oco_tipo_ocorrencia_acao',$acoes);
+
+                $this->common->insertRegBatch('dbOcorrencia', 'oco_tipo_ocorrencia_acao', $acoes);
             }
 
             // Classes
@@ -515,7 +523,7 @@ class OcoTipoOcorrencia extends BaseController
                     }
                 }
                 if (!empty($telas)) {
-                    $this->common->insertRegBatch($grupo,'oco_tipo_ocorrencia_tela', $telas);
+                    $this->common->insertRegBatch($grupo, 'oco_tipo_ocorrencia_tela', $telas);
                 }
             }
 
@@ -563,14 +571,14 @@ class OcoTipoOcorrencia extends BaseController
             ]);
         } catch (\Exception $e) {
             $db->transRollback();
-        
+
             if ($e->getMessage() === 'MSG_8') {
                 return $this->response->setJSON([
                     'erro' => true,
                     'msg'  => 8
                 ]);
             }
-        
+
             return $this->response->setJSON([
                 'erro' => true,
                 'msg'  => 'Erro ao gravar o Tipo de Ocorrência:<br><br>' . $e->getMessage()

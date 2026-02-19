@@ -729,15 +729,20 @@ function fmtEtiquetaCorBst($cor, $label = '')
  * @param mixed $cor
  * @return string
  */
-function fmtEtiquetaCor($cor, $label = '')
+function fmtEtiquetaCor($cor, $label = '', $tipo = 0)
 {
     if ($label == '') {
         $label = $cor;
     }
+    $py = 'py-1';
+    if ($tipo == 1) {
+        $py = '';
+    }
     $cortexto = getContrastYIQ(substr($cor, 1, strlen($cor)));
-    $ret = "<span style='background-color:$cor;color:$cortexto;border:1px solid $cortexto' class='px-3 py-1 d-inline-block rounded rounded-4 text-center text-nowrap '>$label</span>";
+    $ret = "<span style='background-color:$cor;color:$cortexto;border:1px solid $cortexto' class='px-3 $py d-inline-block rounded-pill text-center text-nowrap '>$label</span>";
     return $ret;
 }
+
 function getContrast50($hexcolor)
 {
     return (hexdec($hexcolor) > 0xffffff / 2) ? 'black' : 'white';

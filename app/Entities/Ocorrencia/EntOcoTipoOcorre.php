@@ -58,7 +58,8 @@ class EntOcoTipoOcorre extends Entity
 
         $config = [];
         $config['Obrigatorio'] = false;
-        
+        $config['Leitura'] = $show;
+
         $ret['cla_id'] = criaSelectRelativo(
             'pro_classe',
             'cla_id',
@@ -81,6 +82,7 @@ class EntOcoTipoOcorre extends Entity
         // modulo
         $config = [];
         $config['Label']       = 'Modulo';
+        $config['Leitura'] = $show;
         $config['Largura']     = 40;
         $config['DispForm']    = 'col-4';
         $config['Ordem']       = $pos;
@@ -159,7 +161,7 @@ class EntOcoTipoOcorre extends Entity
         return $ret;
     }
 
-    public function defCamposAcao($dados = false, $pos = 0)
+    public function defCamposAcao($dados = false, $pos = 0, $show = false)
     {
         $dados = (array) $dados;
         $ret = [];
@@ -167,6 +169,7 @@ class EntOcoTipoOcorre extends Entity
         // tipo de ação
         $config = [];
         $config['Label']    = 'Tipo de Ação';
+        $config['Leitura']  = $show;
         $config['DispForm'] = 'col-6';
         $config['Largura']  = 50;
         $config['Ordem']    = $pos;
@@ -187,7 +190,7 @@ class EntOcoTipoOcorre extends Entity
         $config['FunChan']     = '';
         $config['Label']       = 'Tipo de Movimentação';
         $config['DispForm']    = 'col-12';
-        $config['Obrigatorio'] = false;
+        $config['Obrigatorio'] = true;
 
         $ret['tmo_id'] = criaSelectRelativo(
             'est_tipo_movimentacao',
@@ -216,13 +219,13 @@ class EntOcoTipoOcorre extends Entity
             'oco_tipo_ocorrencia',
             [],
             $config,
-            "mod_id_acao[$pos]"  
+            "mod_id_acao[$pos]"
         );
 
         // tela
         $config['Label']       = 'Tela';
         $config['Pai']         = "mod_id_acao[$pos]";
-        $config['Obrigatorio'] = false;
+        // $config['Obrigatorio'] = false;
         $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
 
         $ret['tel_id'] = criaSelectRelativo(
@@ -241,7 +244,7 @@ class EntOcoTipoOcorre extends Entity
         $config['DispForm'] = 'col-12';
         $config['Label']    = 'Status';
         $config['Largura']  = 50;
-        $config['Obrigatorio'] = false;
+        // $config['Obrigatorio'] = false;
 
         $ret['stt_id'] = criaSelectRelativo(
             'vw_cfg_status_relac',

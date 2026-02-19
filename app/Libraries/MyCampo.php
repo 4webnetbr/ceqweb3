@@ -250,6 +250,15 @@ class MyCampo
     }
 
     /**
+     * Define o Hint (ajuda) do campo.
+     */
+    public function setHint(string $hint): self
+    {
+        $this->hint = $hint;
+        return $this;
+    }
+
+    /**
      * Define o valor do campo.
      */
     public function setValor(mixed $valor): self

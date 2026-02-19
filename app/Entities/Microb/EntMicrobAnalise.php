@@ -84,8 +84,8 @@ class EntMicrobAnalise extends Entity
         $config = [];
         $config['Label']   = 'Fabricante';
         $config['Leitura'] = true;
-        $config['DispForm'] = 'col-8'; 
-        
+        $config['DispForm'] = 'col-8';
+
         $ret['fab_codFab'] = criaSelectRelativo(
             'pro_sap_fabricante',
             'fab_codFab',
@@ -298,7 +298,7 @@ class EntMicrobAnalise extends Entity
         $lib->valor = $lib->selecionado = $liberar;
         $lib->leitura  = $show;
         $lib->opcoes   = $simnao;
-        $lib->funcChan = "reprovar(this,'ana_reprovar');reprovar(this,'ana_liberarsemmicro');mostraOcultaCampo('ana_liberar','S','tmo_id');mostraOcultaCampo('ana_liberar','N','tmo_id_rep');mudaObrigatorio(this,'S','tmo_id')";
+        $lib->funcChan = "reprovar(this,'ana_reprovar');reprovar(this,'ana_liberarsemmicro');mostraOcultaCampo('ana_liberar','S','tmo_id');mudaObrigatorio(this,'S','tmo_id')";
         $lib->dispForm = '2col';
         $ret['ana_liberar'] = $lib->cr2opcoes();
 
@@ -315,50 +315,53 @@ class EntMicrobAnalise extends Entity
         $rep->leitura  = $show;
         $rep->opcoes   = $simnao;
         $rep->dispForm = '2col';
-        $rep->funcChan = "reprovar(this,'ana_liberar');reprovar(this,'ana_liberarsemmicro');mostraOcultaCampo('ana_reprovar','S','tmo_id_rep');mostraOcultaCampo('ana_reprovar','N','tmo_id');mudaObrigatorio(this,'S','tmo_id_rep')";
+        $rep->funcChan = "reprovar(this,'ana_liberar');reprovar(this,'ana_liberarsemmicro');mostraOcultaCampo('ana_reprovar','S','tmo_id_rep');mudaObrigatorio(this,'S','tmo_id_rep')";
         $ret['ana_reprovar'] = $rep->cr2opcoes();
 
 
         // Movimentação (Liberação)
-        if ($liberar === 'S') {
+        $ret['tmo_id'] = '';
+        // if ($liberar === 'S') {
 
-            $config = [];
-            $config['Label']    = 'Movimentação (Liberação)';
-            $config['DispForm'] = 'col-6';
-            $config['Leitura']  = $show;
-        
-            $ret['tmo_id'] = criaSelectRelativo(
-                'est_tipo_movimentacao',
-                'tmo_id',
-                'tmo_nome',
-                $dados->tmo_id ?? '',
-                1,
-                'pro_mic_analise',
-                [],
-                $config
-            );
-        }
-        
+        $config = [];
+        $config['Label']    = 'Movimentação (Liberação)';
+        $config['DispForm'] = 'col-6';
+        $config['Leitura']  = $show;
+
+        $ret['tmo_id'] = criaSelectRelativo(
+            'est_tipo_movimentacao',
+            'tmo_id',
+            'tmo_nome',
+            $dados->tmo_id ?? '',
+            1,
+            'pro_mic_analise',
+            [],
+            $config
+        );
+        // }
+
 
         // Movimentação (Reprovação)
-        if ($reprovar === 'S') {
+        $ret['tmo_id_rep'] = '';
+        // if ($reprovar === 'S') {
 
-            $config = [];
-            $config['Label']    = 'Movimentação (Reprovação)';
-            $config['DispForm'] = 'col-6';
-            $config['Leitura']  = $show;
-        
-            $ret['tmo_id_rep'] = criaSelectRelativo(
-                'est_tipo_movimentacao',
-                'tmo_id',
-                'tmo_nome',
-                $dados->tmo_id_rep ?? '',
-                1,
-                'pro_mic_analise',
-                [],
-                $config
-            );
-        }
+        $config = [];
+        $config['Label']    = 'Movimentação (Reprovação)';
+        $config['DispForm'] = 'col-6';
+        $config['Leitura']  = $show;
+
+        $ret['tmo_id_rep'] = criaSelectRelativo(
+            'est_tipo_movimentacao',
+            'tmo_id',
+            'tmo_nome',
+            $dados->tmo_id_rep ?? '',
+            1,
+            'pro_mic_analise',
+            [],
+            $config,
+            'tmo_id_rep'
+        );
+        // }q
         return $ret;
     }
 }

@@ -80,7 +80,7 @@ class OcoTrataOcorrencia extends BaseController
     public function edit($id)
     {
         
-        $dados = $this->trataocorrencia->getById($id);
+        $dados = $this->trataocorrencia->getOcorrencia($id);
 
         if (!$dados) {
             throw new \Exception("Ocorrência não encontrada");

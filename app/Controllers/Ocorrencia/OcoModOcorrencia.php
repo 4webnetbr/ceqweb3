@@ -62,9 +62,9 @@ class OcoModOcorrencia extends BaseController
     public function lista()
     {
         ini_set('display_errors', 1);
-    error_reporting(E_ALL);
+        error_reporting(E_ALL);
 
-    header('Content-Type: application/json');
+        header('Content-Type: application/json');
         // Monta as colunas da listagem com base na configuração da tela
         $campos = montaColunasCampos($this->data, 'sut_id');
         $dados_mdocor = $this->modocorrencia->getModOcorrencia();
@@ -94,30 +94,17 @@ class OcoModOcorrencia extends BaseController
         $campos[0][] = $fields['sut_nome'];
         $campos[0][] = $fields['tpo_id'];
 
-        // Telas Aplicaveis
+
+        // Telas Aplicáveis
         $secao[1] = 'Telas Aplicaveis';
         $displ[1] = 'tabela';
-
-        // campos
-        $fields1 = $entity->defCamposTelasAplicaveis();
-        $campos[1][0]   = [];
-        $campos[1][0][] = $fields1['mod_id'];
-        $campos[1][0][] = $fields1['tel_id'];
-        $campos[1][0][] = $fields1['tof_campo'];      
-        $campos[1][0][] = '';        
-        $campos[1][0][] = $fields1['bt_delta'];
+        $campos[1] = [];
 
         // ações
         $secao[2] = 'Ações';
         $displ[2] = 'tabela';
 
-        $fields2 = $entity->defCamposAcao();
-        $campos[2][0][] = $fields2['tpa_id'];
-        $campos[2][0][] = "<div id='divmovi[0]' class='d-none row col-6'>" . $fields2['tmo_id'] . "</div>";
-        $campos[2][0][] = "<div id='divtela[0]' class='d-none row col-6'>" . $fields2['mod_id'] . $fields2['tel_id'] . "</div>";
-        $campos[2][0][] = "<div id='divstat[0]' class='d-none row col-6'>" . $fields2['stt_id'] . "</div>";
-        $campos[2][0][] = '';
-        $campos[2][0][] = $fields2['bt_deltp'];
+        $campos[2] = [];
 
         // Define dados da tela
         $this->data['secoes']  = $secao;
@@ -143,11 +130,7 @@ class OcoModOcorrencia extends BaseController
         for ($t = 0; $t < sizeof($ttelas); $t++) {
             $total = sizeof($ttelas);
             // debug($ttelas[$t]);
-            $fields = $entity->defCamposTelasAplicaveis(
-                $ttelas[$t],
-                $ind,
-                $total
-            );
+            $fields = $entity->defCamposTelasAplicaveis($ttelas[$t], $ind, $total);
             $campo[$t][0] = $fields['mod_id'];
             $campo[$t][1] = $fields['tel_id'];
             $campo[$t][2] = $fields['tof_campo'];
@@ -167,6 +150,7 @@ class OcoModOcorrencia extends BaseController
     public function addCampoTp($tpo_id, $ind)
     {
 
+        $campo = [];
         $tipoAcaoModel  = new OcorreTipoOcorrenciaModel();
         $tacao          = $tipoAcaoModel->getTOAcao($tpo_id);
         $entity = new EntOcoModOcorrencia();
@@ -200,12 +184,22 @@ class OcoModOcorrencia extends BaseController
      */
     public function edit($id)
     {
-        // Busca os dados do Modelo de Ocorrência pelo ID
-        $dados_ModOcorrencia = $this->modocorrencia->getModOcorrencia($id);
+        $show = false;
+        try {
+            // Checa uso do tipo em outros bancos
+            $this->verificarUsoEmRelacionamentos('oco_subt_ocorrencia', 'sut_id', (int) $id);
+        } catch (\Exception $e) {
+            $show = true;
+        }
 
+        // Busca os dados do Modelo de Ocorrência pelo ID
+        $dados_ModOcorrencia = (array) $this->modocorrencia->getModOcorrencia($id)[0];
+
+        // debug($dados_ModOcorrencia, true);
         // Cria a entity com os dados retornados
-        $entity = new EntOcoModOcorrencia((array) $dados_ModOcorrencia[0]);
-        $fields = $entity->campos;
+        $entity = new EntOcoModOcorrencia($dados_ModOcorrencia);
+
+        $fields = $entity->defCampos($show);
 
         // Dados Gerais
         $secao[0]   = 'Dados Gerais';
@@ -217,24 +211,24 @@ class OcoModOcorrencia extends BaseController
         $secao[1] = 'Telas Aplicaveis';
         $displ[1] = 'tabela';
 
-        $registro = $dados_ModOcorrencia[0];
-        $sut_id   = (int) $registro->sut_id;
+        $sut_id   = (int) $dados_ModOcorrencia['sut_id'];
 
         $campos[1] = [];
-        
+
         $dados_TelasAplicaveis = $this->modocorrencia->getTOTelasAplicaveis($sut_id);
-        
+
         // debug($dados_TelasAplicaveis, true);
         if (count($dados_TelasAplicaveis) > 0) {
             $total = count($dados_TelasAplicaveis);
-        
+
             for ($c = 0; $c < $total; $c++) {
                 $fields = $entity->defCamposTelasAplicaveis(
                     $dados_TelasAplicaveis[$c],
                     $c,
-                    $total
+                    $total,
+                    $show
                 );
-        
+
                 $campos[1][$c][] = $fields['mod_id'];
                 $campos[1][$c][] = $fields['tel_id'];
                 $campos[1][$c][] = $fields['tof_campo'];
@@ -248,39 +242,39 @@ class OcoModOcorrencia extends BaseController
         $displ[2]   = 'tabela';
         $campos[2]  = [];
         $dados_Acao = $this->modocorrencia->getTOAcao($id);
-        
+
         if (!empty($dados_Acao)) {
             $total = count($dados_Acao);
-        
+
             foreach ($dados_Acao as $c => $acao) {
-        
+
                 $fields = $entity->defCamposAcao(
                     $acao,
                     $c,
                     $total,
                     'edit'
                 );
-        
+
                 $clsMovi = $clsTela = $clsStat = 'd-none';
 
                 switch ((int) $acao->tpa_id) {
                     case 3: // Gerar Movimentação
                         $clsMovi = '';
-                    break;
-                
+                        break;
+
                     case 4: // Abrir Tela
                         $clsTela = '';
-                    break;
-                
+                        break;
+
                     case 7: // Alterar Status
                         $clsStat = '';
-                    break;
+                        break;
                 }
-        
+
                 $campos[2][$c][] = $fields['tpa_id'];
-                $campos[2][$c][] ="<div id='divmovi[$c]' class='{$clsMovi} row col-6'>{$fields['tmo_id']}</div>";     
-                $campos[2][$c][] ="<div id='divtela[$c]' class='{$clsTela} row col-6'>{$fields['mod_id']}{$fields['tel_id']}</div>";
-                $campos[2][$c][] ="<div id='divstat[$c]' class='{$clsStat} row col-6'>{$fields['stt_id']}</div>";
+                $campos[2][$c][] = "<div id='divmovi[$c]' class='{$clsMovi} row col-6'>{$fields['tmo_id']}</div>";
+                $campos[2][$c][] = "<div id='divtela[$c]' class='{$clsTela} row col-6'>{$fields['mod_id']}{$fields['tel_id']}</div>";
+                $campos[2][$c][] = "<div id='divstat[$c]' class='{$clsStat} row col-6'>{$fields['stt_id']}</div>";
                 $campos[2][$c][] = '';
                 $campos[2][$c][] = $fields['bt_deltp'];
             }
@@ -289,6 +283,7 @@ class OcoModOcorrencia extends BaseController
         // Define dados finais da tela
         $this->data['secoes']  = $secao;
         $this->data['campos']  = $campos;
+        $this->data['desc_edicao']   = $dados_ModOcorrencia['sut_nome'];
         $this->data['displ']   = $displ;
         $this->data['destino'] = 'store';
         echo view('vw_edicao', $this->data);
@@ -305,67 +300,73 @@ class OcoModOcorrencia extends BaseController
     public function delete($id)
     {
         $ret = [];
-    
+
         try {
             // bloqueia se existir ocorrência vinculada
             if ($this->modocorrencia->getUsoGestao((int)$id)) {
                 throw new \Exception('MSG_3');
             }
-    
+
             // Soft delete do subtipo
             $this->modocorrencia->delete($id);
-    
+
             $ret['erro'] = false;
             $ret['msg']  = 'Subtipo de Ocorrência excluída com sucesso!';
             session()->setFlashdata('msg', $ret['msg']);
-    
         } catch (\Exception $e) {
             $ret['erro'] = true;
             $ret['msg']  = 3;
         }
-    
+
         echo json_encode($ret);
     }
-    
+
     public function ativinativ($id, $tipo)
     {
+        // debug([$id, $tipo], true);
+        $ret = [];
+
         try {
-    
-           if ($tipo != 1 && $this->modocorrencia->getUsoGestao($id)) {
-                return $this->response->setJSON([
-                    'erro' => true,
-                    'msg'  => 14
-                ]);
+            if ($tipo == 1) {
+                // ATIVAR
+                $dad_atin = [
+                    'sut_ativo' => 'A'
+                ];
+            } else {
+                // INATIVAR
+                if ($this->modocorrencia->getUsoGestao((int) $id)) {
+                    throw new \Exception('MSG_14'); // possui ocorrência vinculada
+                }
+
+                $dad_atin = [
+                    'sut_ativo' => 'I'
+                ];
             }
-    
-            $this->modocorrencia->update($id, [
-                'sut_ativo' => ($tipo == 1 ? 'A' : 'I')
-            ]);
-    
-            return $this->response->setJSON([
-                'erro' => false,
-                'msg'  => 'Subtipo de ocorrência alterada com sucesso'
-            ]);
-    
+
+            $this->modocorrencia->update($id, $dad_atin);
+
+            $ret['erro'] = false;
+            $ret['msg']  = 'Subtipo de ocorrência alterado com sucesso';
+            session()->setFlashdata('msg', $ret['msg']);
+            cache()->clean();
         } catch (\Exception $e) {
-    
-            return $this->response->setJSON([
-                'erro' => true,
-                'msg'  => 14
-            ]);
+            $ret['erro'] = true;
+            $ret['msg']  = 14;
         }
+
+        return $this->response->setJSON($ret);
     }
 
 
     /**
      * Gravação
      * store
-    
      * @return void
      */
     public function store()
     {
         $postado = $this->request->getPost();
+        // debug($postado, true);
         $db = \Config\Database::connect();
         $ret = [];
         $grupo = 'dbOcorrencia';
@@ -374,62 +375,49 @@ class OcoModOcorrencia extends BaseController
             $db->transBegin();
 
             // Verifica unicidade
-            $exists = $this->common->verificaUnico(
-                $this->modocorrencia,
-                'sut_nome',
-                $postado['sut_nome'],
-                'sut_id',
-                $postado['sut_id']
-            );
-
+            $exists = $this->common->verificaUnico($this->modocorrencia, 'sut_nome', $postado['sut_nome'], 'sut_id', $postado['sut_id']);
             if ($exists > 0) {
                 throw new \Exception('MSG_8');
+            }
+
+            if (isset($postado['sut_id']) && (int)$postado['sut_id'] === 0) {
+                unset($postado['sut_id']);
             }
 
             // Salvar Tipo de Ocorrência (principal)
             if (!$this->modocorrencia->save($postado)) {
                 throw new \Exception(implode('<br>', $this->modocorrencia->errors()));
             }
+            // debug($postado);
 
             // Recupera ID do tipo (novo ou existente)
-            $sut_id = $this->modocorrencia->getInsertID();
-            if (!$sut_id && isset($postado['sut_id'])) {
+            if (!isset($postado['sut_id']) || empty($postado['sut_id'])) {
+                $sut_id = $this->modocorrencia->getInsertID();
+            } else {
                 $sut_id = $postado['sut_id'];
-            }
-
-            // Se for update, apaga os registros relacionados
-            if (!empty($sut_id)) {
+                // Se for update, apaga os registros relacionados
                 $this->common->deleteReg($grupo, 'oco_subt_ocorrencia_acao',   "sut_id = {$sut_id}");
                 // $this->common->deleteReg($grupo, 'oco_moc_classe', "sut_id = {$sut_id}");
                 $this->common->deleteReg($grupo, 'oco_subt_ocorrencia_tela',   "sut_id = {$sut_id}");
                 $this->common->deleteReg($grupo, 'oco_subt_ocorrencia_campos', "sut_id = {$sut_id}");
                 // $this->common->deleteReg($grupo, 'oco_moc_permissao', "sut_id = {$sut_id}");
             }
+            // debug($sut_id);
 
             // Ações
             if (!empty($postado['tpa_id'])) {
+                // debug($postado, true);
                 $acoes = [];
-            
+
                 foreach ($postado['tpa_id'] as $i => $tpa_id) {
-            
+
                     if (!$tpa_id) continue;
-            
-                    $mod_id = (!isset($postado['mod_id_tpa'][$i]) || $postado['mod_id_tpa'][$i] <= 0)
-                        ? null
-                        : (int) $postado['mod_id_tpa'][$i];
-                    
-                    $tel_id = (!isset($postado['tel_id_tpa'][$i]) || $postado['tel_id_tpa'][$i] <= 0)
-                        ? null
-                        : (int) $postado['tel_id_tpa'][$i];
-                    
-                    $stt_id = (!isset($postado['stt_id_tpa'][$i]) || $postado['stt_id_tpa'][$i] <= 0)
-                        ? null
-                        : (int) $postado['stt_id_tpa'][$i];
-                    
-                    $tmo_id = (!isset($postado['tmo_id_tpa'][$i]) || $postado['tmo_id_tpa'][$i] <= 0)
-                        ? null
-                        : (int) $postado['tmo_id_tpa'][$i];
-            
+
+                    $mod_id = $postado['mod_id_tpa'][$i];
+                    $tel_id = $postado['tel_id_tpa'][$i];
+                    $stt_id = $postado['stt_id_tpa'][$i];
+                    $tmo_id = $postado['tmo_id_tpa'][$i];
+
                     $acoes[] = [
                         'sut_id' => $sut_id,
                         'tpa_id' => $tpa_id,
@@ -439,6 +427,7 @@ class OcoModOcorrencia extends BaseController
                         'tmo_id' => $tmo_id,
                     ];
                 }
+                // debug($acoes, true);
                 $this->common->insertRegBatch($grupo, 'oco_subt_ocorrencia_acao', $acoes);
             }
 
@@ -455,22 +444,22 @@ class OcoModOcorrencia extends BaseController
                     }
                 }
                 if (!empty($telas)) {
-                    $this->common->insertRegBatch($grupo,'oco_subt_ocorrencia_tela', $telas);
+                    $this->common->insertRegBatch($grupo, 'oco_subt_ocorrencia_tela', $telas);
                 }
             }
 
             // Inserir campos (relacionados às telas)
             if (!empty($postado['tof_campo'])) {
                 $campos = [];
-            
+
                 foreach ($postado['tof_campo'] as $pos => $camposTela) {
-            
+
                     if (empty($postado['tel_id'][$pos])) {
                         continue;
                     }
-            
+
                     $tel_id = $postado['tel_id'][$pos];
-            
+
                     foreach ($camposTela as $tof_campo) {
                         if (!empty($tof_campo)) {
                             $campos[] = [
@@ -481,7 +470,7 @@ class OcoModOcorrencia extends BaseController
                         }
                     }
                 }
-            
+
                 if (!empty($campos)) {
                     $this->common->insertRegBatch($grupo, 'oco_subt_ocorrencia_campos', $campos);
                 }
@@ -495,10 +484,10 @@ class OcoModOcorrencia extends BaseController
             $ret['url']  = site_url($this->data['controler']);
         } catch (\Exception $e) {
             $db->transRollback();
-        
+
             if ($e->getMessage() === 'MSG_8') {
                 $ret['erro'] = true;
-                $ret['msg']  = 8; 
+                $ret['msg']  = 8;
             } else {
                 $ret['erro'] = true;
                 $ret['msg']  = 'Erro ao gravar o Subtipo de Ocorrência :<br><br>' . $e->getMessage();

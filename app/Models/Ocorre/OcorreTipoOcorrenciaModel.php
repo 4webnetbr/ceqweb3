@@ -65,30 +65,40 @@ class OcorreTipoOcorrenciaModel extends Model
     }
 
 
-    public function getTipoOcorrencia($tpo_id = false, $tel_id = false, bool $somenteAtivos = false)
+    public function getTipoOcorrencia($tpo_id = false, $tel_id = false, bool $somenteAtivos = false) 
     {
-        $db = db_connect('dbOcorrencia');
-        $builder = $db->table('vw_oco_tpo_ocorrencia_relac');
-        $builder->select('*');
-
+        $perfilId = session()->get('usu_perfil_id'); 
+        $db       = db_connect('dbOcorrencia');
+        $builder  = $db->table('vw_oco_tpo_ocorrencia_relac');
+        $builder->select('vw_oco_tpo_ocorrencia_relac.*');
+    
+        // JOIN de permissão por TIPO
+        // $builder->join(
+        //     'oco_tipo_ocorrencia_permissao tp',
+        //     'tp.tpo_id = vw_oco_tpo_ocorrencia_relac.tpo_id',
+        //     'inner'
+        // );
+        // $builder->where('tp.prf_id', $perfilId);
+    
+        // filtros existentes
         if ($somenteAtivos) {
             $builder->groupStart()
                 ->where('tpo_ativo', 'A');
-
             if ($tpo_id) {
-                $builder->orWhere('tpo_id', $tpo_id);
+                $builder->orWhere('vw_oco_tpo_ocorrencia_relac.tpo_id', $tpo_id);
             }
             $builder->groupEnd();
         } elseif ($tpo_id) {
-            $builder->where('tpo_id', $tpo_id);
+            $builder->where('vw_oco_tpo_ocorrencia_relac.tpo_id', $tpo_id);
         }
+    
         if ($tel_id) {
             $builder->where('tel_id', $tel_id);
         }
-
+    
         $builder->orderBy("CASE WHEN tpo_ativo = 'A' THEN 0 ELSE 1 END");
         $builder->orderBy('tpo_nome');
-
+    
         return $builder->get()->getResult();
     }
 
@@ -123,26 +133,13 @@ class OcorreTipoOcorrenciaModel extends Model
         return $builder->get()->getResult();
     }
 
-    public function getTipoOcorrenciaSearch($termo)
+    public function getSubtipoAtivo(int $tpo_id): bool
     {
-        $array = ['tpo_nome' => $termo . '%'];
-        $db = db_connect('dbOcorrencia');
-        $builder = $db->table('vw_oco_tpo_ocorrencia_relac');
-
-        // Aplica filtros e ordenação
-        $builder->select('*');
-        $builder->like($array);
-        $builder->orderBy('tpo_ativo, tpo_nome');
-
-        return $builder->get()->getResult();
-    }
-
-    public function SubVinculado(int $tpo_id): bool
-    {
-        $db = db_connect('dbOcorrencia');
+        $db = db_connect('dbOcorrencia'); 
     
         return $db->table('oco_subt_ocorrencia')
             ->where('tpo_id', $tpo_id)
+            ->where('sut_ativo', 'A')
             ->countAllResults() > 0;
     }
     

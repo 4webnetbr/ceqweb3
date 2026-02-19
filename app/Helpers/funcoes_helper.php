@@ -732,13 +732,20 @@ function fmtEtiquetaCorBst($cor, $label = '')
  * @param mixed $cor
  * @return string
  */
-function fmtEtiquetaCor($cor, $label = '')
+function fmtEtiquetaCor($cor, $label = '', $tipo = 0)
 {
     if ($label == '') {
         $label = $cor;
     }
+    $py = 'py-1';
+    $mw = 'min-width:20ch;';
+    if ($tipo == 1) {
+        // sem pad vertical e sem min-width pra caber em qualquer espaço
+        $py = '';
+        $mw = '';
+    }
     $cortexto = getContrastYIQ(substr($cor, 1, strlen($cor)));
-    $ret = "<span style='background-color:$cor;color:$cortexto;border:1px solid $cortexto;min-width:20ch' class='px-3 py-1 d-inline-block rounded rounded-4 text-center text-nowrap '>$label</span>";
+    $ret = "<span style='background-color:$cor;color:$cortexto;border:1px solid $cortexto;$mw' class='px-3 $py d-inline-block rounded-pill text-center text-nowrap '>$label</span>";
     return $ret;
 }
 function getContrast50($hexcolor)
@@ -904,9 +911,12 @@ function criaSelectRelativo(
         // Continua com os campos desejados
         $builder->select([$campoChave, $campoNome]);
 
-        if (!empty($filtros) && array_is_list($filtros)) {
+        // debug($filtros);
+
+        if (!empty($filtros)) {
             // só aplica where se a chave existir na tabela
             $campoFiltro = array_key_first($filtros);
+            // debug($campoFiltro);
             if ($db->fieldExists($campoFiltro, "$schema.$nomeTabela")) {
                 $builder->where($filtros);
             }
@@ -915,7 +925,7 @@ function criaSelectRelativo(
         $builder->orderBy($campoNome);
         // Busca os dados (chave e nome)
         $dados = $builder->get()->getResultArray();
-        // debug($db->getLastQuery());
+        // debug($db->getLastQuery(), true);
 
         // $dados = filtrarPorPerfil($dados);
         $opcoes = array_column($dados, $campoNome, $campoChave);
@@ -947,6 +957,16 @@ function criaSelectRelativo(
         $valorStr = $valor ?? '-1';
         $valorArr = [$valor ?? '-1'];
     }
+    if (count($opcoes) <= 2 && count($opcoes) > 0) {
+        // debug($opcoes, true);
+        if (count($opcoes) == 2) {
+            $valorStr = array_keys($opcoes)[1];
+            $valorArr = [$valorStr];
+        } else {
+            $valorStr = array_keys($opcoes)[0];
+            $valorArr = [$valorStr];
+        }
+    }
 
     $campo->setValor($valorStr);
     $campo->setSelecionado($valorArr);
@@ -960,6 +980,7 @@ function criaSelectRelativo(
     $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
     $configCampo['Obrigatorio'] = $configCampo['Obrigatorio'] ?? true;
     $configCampo['Largura']     = $configCampo['Largura'] ?? 40;
+    $configCampo['Hint']        = $configCampo['Label'] ?? 40;
 
 
     // Aplica outras configurações dinamicamente

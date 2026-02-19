@@ -111,9 +111,14 @@ jQuery(document).ready(function () {
         desBloqueiaTela();
         return; // para aqui e não executa mais nada
       }
-    }
-    if (controller.toLowerCase() === "aterequisicao") {
+    } else if (controller.toLowerCase() === "aterequisicao") {
       submeter = await enviarAteRequisicoes(event);
+      if (!submeter) {
+        desBloqueiaTela();
+        return; // para aqui e não executa mais nada
+      }
+    } else if (controller.toLowerCase() === "confrequisicao") {
+      submeter = await enviarConfRequisicoes(event);
       if (!submeter) {
         desBloqueiaTela();
         return; // para aqui e não executa mais nada
@@ -214,9 +219,9 @@ jQuery(document).ready(function () {
           jQuery(this).val(valor);
         });
         var disabled = form.find(":input:disabled").removeAttr("disabled");
-        if (jQuery(".selectpicker").length > 0) {
-          jQuery(".selectpicker").selectpicker("refresh");
-        }
+        // if (jQuery(".selectpicker").length > 0) {
+        //   jQuery(".selectpicker").selectpicker("refresh");
+        // }
 
         var dadosForm = new FormData(this);
 
@@ -433,7 +438,7 @@ function showToast(message, isAlert = false) {
   const timeout = setTimeout(() => {
     toast.classList.remove("toast-animar");
     toast.addEventListener("transitionend", () => toast.remove());
-  }, 8000);
+  }, 6000);
 
   closeBtn.addEventListener("click", () => {
     clearTimeout(timeout);
@@ -1552,6 +1557,7 @@ function executaAjax(urldest, tipo = "json", dados = {}, funcao = "") {
       msgerro = jqXHR.responseText;
     }
     boxAlert(msgerro, true, "", false, 3, false);
+    desBloqueiaTela();
   });
   return retornoAjax;
 }

@@ -164,6 +164,7 @@ class ProdutClasseModel extends Model
         return $builder->get()->getResultArray();
     }
 
+
     public function getClassificacaoClasse($origem, $familia)
     {
         $db = db_connect('dbProduto');

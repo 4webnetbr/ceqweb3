@@ -183,8 +183,8 @@ class EntCfgEtiqueta extends Entity
         $etc_caract->leitura     = $show;
         $etc_caract->ordem       = $pos;
         $etc_caract->largura     = 14;
-        $etc_caract->size        = 2;
-        $etc_caract->maximo      = 3;
+        $etc_caract->size        = 3;
+        $etc_caract->maximo      = 100;
         $etc_caract->dispForm    = "col-3";
         $etc_caract->funcChan    = "prevEtiqueta('" . $base_url . "')";
         $ret['etc_caracteres']  = $etc_caract->crInput();
@@ -193,9 +193,9 @@ class EntCfgEtiqueta extends Entity
         $etc_linhas->valor      = (isset($dados['etc_linhas'])) ? $dados['etc_linhas'] : '1';
         $etc_linhas->minimo        = 1;
         $etc_linhas->step        = 1;
-        $etc_linhas->size        = 1;
-        $etc_linhas->maximo      = 5;
-        $etc_linhas->maxLength   = 1;
+        $etc_linhas->size        = 3;
+        $etc_linhas->maximo      = 100;
+        // $etc_linhas->maxLength   = 1;
         $etc_linhas->largura        = 14;
         $etc_linhas->obrigatorio = true;
         $etc_linhas->leitura    = $show;

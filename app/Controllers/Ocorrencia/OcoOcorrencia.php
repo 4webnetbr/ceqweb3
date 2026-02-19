@@ -4,11 +4,12 @@ namespace App\Controllers\Ocorrencia;
 
 use App\Libraries\MyCampo;
 use App\Models\CommonModel;
-use App\Controllers\BaseController;
-use App\Entities\Ocorrencia\EntOcoTratativa;
-use App\Traits\ForeignKeyUsageChecker;
-use App\Models\Ocorre\OcorreOcorrenciaModel;
 use App\Entities\Ocorrencia\EntOcoOcorrencia;
+use App\Entities\Ocorrencia\EntOcoTratativa;
+use App\Controllers\BaseController;
+use App\Traits\ForeignKeyUsageChecker;
+use App\Models\Config\ConfigStatusModel;
+use App\Models\Ocorre\OcorreOcorrenciaModel;
 use App\Models\Ocorre\OcorreModOcorrenciaModel;
 use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
 
@@ -64,32 +65,36 @@ class OcoOcorrencia extends BaseController
         $log = buscaLogTabela('oco_ocorrencia', $oco_ids_assoc);
         $base_url = base_url('OcoTrataOcorrencia');
 
+
         foreach ($dados as $nov) {
 
             $usuLog = $log[$nov->oco_id]['usua_alterou'] ?? '';
-        
+
             // Gerado por (sempre)
             $nov->usu_nome = $usuLog;
-        
+
             // Finalizado por (somente se FINALIZADA)
             if ((int)$nov->stt_id === 30) {
                 $nov->usu_fina = $usuLog;
             } else {
                 $nov->usu_fina = '';
             }
-        
+
             $nov->acao_person = [];
-        
+
+
             // Botão imprimir
-            $url_imp = base_url('/CriaPdf2025/PrintOcorrencia/' . $nov->oco_id);
-            $nov->acao_person[] = "
-                <button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0'
-                    title='Imprimir Ocorrência'
-                    onclick='openPDFModal(\"{$url_imp}\",\"Imprimir Ocorrência\")'>
-                    <i class='fa-solid fa-print'></i>
-                </button>
-            ";
-        
+            if (trim($nov->stt_nome ?? '') !== 'Pendente') {
+                $url_imp = base_url('/CriaPdf2025/PrintOcorrencia/' . $nov->oco_id);
+                $nov->acao_person[] = "
+                     <button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0'
+                         title='Imprimir Ocorrência'
+                         onclick='openPDFModal(\"{$url_imp}\",\"Imprimir Ocorrência\")'>
+                         <i class='fa-solid fa-print'></i>
+                     </button>
+                 ";
+            }
+
             // Botão finalizar se pendente
             if (trim($nov->stt_nome ?? '') === 'Pendente') {
                 $url_finalizar = $base_url . '/finalizar/' . $nov->oco_id;
@@ -102,19 +107,12 @@ class OcoOcorrencia extends BaseController
                 ";
             }
         }
-            // debug($dados, true);
-            $ret = new \stdClass();
-            $this->data['show'] = false;
-            $ret->data = montaListaColunasEnt($this->data, 'oco_id', $dados, $campos[1]);
-            
-            // BOTÃO EXCLUIR — controlado pelo STATUS
-            if (trim($ret->stt_exclusao ?? 'N') === 'S') {
-                $ret->exclusao = false;
-            }    
-            // BOTÃO EDITAR — controlado pelo STATUS
-            if (trim($ret->stt_edicao ?? 'N') === 'S') {
-                $ret->edicao = false;
-            }
+        // debug($dados, true);
+        $ret = new \stdClass();
+        // $this->data['permissao'] = 'C';
+        $this->data['allconsulta'] = true;
+        $ret->data = montaListaColunasEnt($this->data, 'oco_id', $dados, $campos[1]);
+
         return $this->response->setJSON($ret);
     }
 
@@ -126,7 +124,9 @@ class OcoOcorrencia extends BaseController
         $oco = new EntOcoOcorrencia();
         $fields = $oco->campos;
         // Dados Gerais
-        $this->data['secoes']  = ['Dados Gerais'];
+        $this->data['title']       = 'Ocorrência';
+        // $this->data['desc_metodo'] = 'Nova ';
+        $this->data['secoes']      = ['Dados Gerais'];
 
         // define os campos
         $this->data['campos']  = [[
@@ -147,11 +147,100 @@ class OcoOcorrencia extends BaseController
         echo view('vw_edicao', $this->data);
     }
 
+    public function show($id)
+    {
+        $dados = $this->ocorrencia->find($id);
+
+        $statModel = new ConfigStatusModel();
+        $status   = $statModel->getStatus($dados->stt_id);
+        $etiqueta = '';
+        if ($status) {
+            $etiqueta = fmtEtiquetaCor($status->cor_valorrgb ?? '', $status->stt_nome ?? '', 1);
+        }
+
+        if (!$dados) {
+            session()->setFlashdata('erromsg', 'Ocorrência não encontrada.');
+            return redirect()->to(site_url($this->data['controler']));
+        }
+
+        $log = buscaLogTabela('oco_ocorrencia', [$id]);
+        if (isset($log[$id]['usua_alterou'])) {
+            $dados->usu_nome = $log[$id]['usua_alterou'];
+        }
+
+        $acoes = $this->ocorrencia->getAcoesFinalizar($id);
+
+        if ($acoes) {
+            // usa a primeira linha (tem o.* + ação)
+            $dados = $acoes[0];
+
+            // mantém o usuário do log
+            if (isset($log[$id]['usua_alterou'])) {
+                $dados->usu_nome = $log[$id]['usua_alterou'];
+            }
+        }
+        // debug($dados);
+        $entity = new EntOcoTratativa($dados, true);
+        $fields = $entity->campos;
+
+        $secao[0] = 'Dados da Ocorrência';
+        $campos[0] = [];
+
+        // Campos fixos
+        $campos[0][] = $fields['tpo_id'];
+        $campos[0][] = $fields['sut_id'];
+        $campos[0][] = $fields['usu_nome'];
+        $campos[0][] = $fields['oco_descricao'];
+        $campos[0][] = $fields['oco_data'];
+        $campos[0][] = $fields['lot_lote'];
+        $campos[0][] = $fields['pro_despro'];
+        $campos[0][] = $fields['oco_qtd'];
+
+        if (isset($fields['oco_justi'])) {
+            $campos[0][] = $fields['oco_justi'];
+        }
+        if (isset($fields['tmo_id'])) {
+            $campos[0][] = $fields['tmo_id'];
+        }
+        if (isset($fields['stt_id'])) {
+            $campos[0][] = $fields['stt_id'];
+        }
+        if (isset($fields['tel_id'])) {
+            $campos[0][] = $fields['tel_id'];
+        }
+
+        // ações
+        if (!empty($acoes)) {
+            $acoesResultado = [];
+            foreach ($acoes as $acao) {
+                $acao->somente_leitura = true;
+                // debug($acao);
+                $camposAcao = $entity->defCamposAcao($acao);
+                $acoesResultado[] = $camposAcao;
+            }
+
+            $campos[0][] = view('partials/pw_acoes_ocorrencia', ['acoes'  => $acoesResultado, 'oco_id' => $id]);
+        }
+
+
+        $this->data['show']        = true;
+        $this->data['title']       = 'Ocorrência';
+        $this->data['desc_edicao'] = ' Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' - ' .  $etiqueta;
+
+        $this->data['secoes']  = $secao;
+        $this->data['campos']  = $campos;
+        $this->data['metodo']  = 'show';
+        $this->data['destino'] = '';
+
+        echo view('vw_edicao', $this->data);
+    }
+
+
 
     public function edit($id)
     {
         // Busca a ocorrência pelo ID
-        $dados = $this->ocorrencia->getById($id);
+        $dados = $this->ocorrencia->getOcorrencia($id);
 
         // Valida se a ocorrência existe
         if (!$dados) {
@@ -159,6 +248,7 @@ class OcoOcorrencia extends BaseController
         }
 
         // Instancia a entity
+        // debug($dados, true);
         $oco    = new EntOcoOcorrencia((array) $dados, true);
         $fields = $oco->campos;
 
@@ -180,7 +270,9 @@ class OcoOcorrencia extends BaseController
         ]];
 
         $this->data['destino'] = "store";
-        $this->data['edicao']  = true;
+        // $this->data['edicao']  = true;
+        $this->data['title']       = 'Ocorrência';
+        $this->data['desc_edicao'] = ' Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT);
 
         echo view('vw_edicao', $this->data);
     }
@@ -243,6 +335,7 @@ class OcoOcorrencia extends BaseController
 
         // Instancia a entity
         $dados['lot_lote'] = $lotlote;
+        $dados['req_id']   = $reqId;
         $oco = new EntOcoOcorrencia($dados, true);
 
         // Dados Gerais
@@ -267,6 +360,10 @@ class OcoOcorrencia extends BaseController
                                     var elemento = document.getElementById('lot_lote');
                                     buscaLoteProduto(elemento,'" . base_url('/buscas/buscaProdutoporLote') . "')
                                 </script>";
+        $this->data['hidden'][] = [
+            'name'  => 'req_id',
+            'value' => $reqId
+        ];
 
         // Renderiza a view
         echo view('vw_edicao_modal', $this->data);
@@ -305,53 +402,42 @@ class OcoOcorrencia extends BaseController
     public function delete($id)
     {
         try {
-            // Busca a ocorrência
+
             $oco = $this->ocorrencia->find($id);
-    
+
             if (!$oco) {
-                throw new \Exception('Registro não encontrado');
+                throw new \Exception('Ocorrência não encontrada');
             }
-    
-            //só pode excluir se estiver PENDENTE
-            if ((int)$oco->stt_id !== 28) {
-                throw new \Exception('ID_3');
+
+            // Se tem req_id, foi gerada por outra tela
+            if (!empty($oco->req_id)) {
+                return $this->response->setJSON([
+                    'erro' => true,
+                    'msg'  => 3
+                ]);
             }
-            // não pode ter vínculo com tela/processo
-            if (!empty($oco->tel_id)) {
-                throw new \Exception('ID_3');
-            }
-            // Checa uso do registro em outros relacionamentos 
-            $this->verificarUsoEmRelacionamentos(
-                'oco_ocorrencia',
-                'oco_id',
-                (int) $id
-            );
-            // Soft delete
+
             $this->ocorrencia->delete($id);
-    
-            $ret['erro'] = false;
-            $ret['msg']  = 'Ocorrência excluída com sucesso!';
-            session()->setFlashdata('msg', $ret['msg']);
-    
+
+            return $this->response->setJSON([
+                'erro' => false,
+                'msg'  => 'Ocorrência Excluída com Sucesso'
+            ]);
         } catch (\Exception $e) {
-    
-            $ret['erro'] = true;
-    
-            // Mensagem padrão 
-            if ($e->getMessage() === 'ID_3') {
-                $ret['msg'] = 3;
-            } else {
-                $ret['msg'] = $e->getMessage();
-            }
+
+            return $this->response->setJSON([
+                'erro' => true,
+                'msg'  => $e->getMessage()
+            ]);
         }
-        echo json_encode($ret);
     }
+
 
 
     public function finalizar($id)
     {
         // Fluxo semelhante ao edit, porém com destino de finalização
-        $result = $this->ocorrencia->getById($id);
+        $result = $this->ocorrencia->getOcorrencia($id);
         $dados  = $result[0] ?? null;
 
         if (!$dados) {
@@ -398,13 +484,13 @@ class OcoOcorrencia extends BaseController
         $this->data['secoes']       = $secao;
         $this->data['campos']       = $campos;
         $this->data['destino']      = "store";
-        $this->data['desc_metodo']  = 'Finalização da ';
+        $this->data['desc_metodo']  = '';
         $this->data['forca_submit'] = true;
         $this->data['hidden'][] = [
             'name'  => 'finalizar',
             'value' => 1
         ];
-        
+
 
         echo view('vw_edicao', $this->data);
     }
@@ -412,16 +498,17 @@ class OcoOcorrencia extends BaseController
     public function store()
     {
         $postado = $this->request->getPost();
-    
+        // debug($postado, true);
+
         try {
             if (empty($postado['oco_id'])) {
                 unset($postado['oco_id']);
             }
-    
+
             // SUBTIPO / STATUS
-            $subtipoNenhuma = $this->ocorrencia
-                ->getSubtipoPorTipo((int) $postado['tpo_id']);
-    
+            $model = new OcorreModOcorrenciaModel();
+            $subtipoNenhuma = $model->getSubPorTipo((int)$postado['tpo_id']);
+
             if ($subtipoNenhuma !== null) {
                 $postado['sut_id'] = $subtipoNenhuma;
                 $postado['stt_id'] = 29; // Finalização automática
@@ -431,19 +518,20 @@ class OcoOcorrencia extends BaseController
                 }
                 $postado['stt_id'] = 28; // Pendente
             }
-    
+
             // BUSCA AÇÃO PELO MODEL
-            $acao = $this->ocorrencia->getAcaoConfigurada(
+            $acao = (new OcorreModOcorrenciaModel())
+                ->getAcaoConfigurada(
                 (int) $postado['tpo_id'],
                 $postado['sut_id']
             );
-    
+
             // INJETA NA OCORRENCIA
             if ($acao) {
                 $postado['tpa_id'] = $acao->tpa_id ?? null;
                 $postado['tmo_id'] = $acao->tmo_id ?? null;
                 $postado['tel_id'] = $acao->tel_id ?? null;
-    
+
                 // Se a ação existir MAS for "Nenhuma", força Finalização automática
                 if ((int) ($postado['tpa_id'] ?? 0) === 8) {
                     // AÇÃO = NENHUMA
@@ -453,17 +541,21 @@ class OcoOcorrencia extends BaseController
                     $postado['stt_id'] = 28; // Pendente (ou regra futura)
                 }
             }
-    
+            // cria data se não veio do form
+            if (empty($postado['oco_data'])) {
+                $postado['oco_data'] = date('Y-m-d H:i:s');
+            }
+
             // cria a entity
             $entity = new EntOcoOcorrencia($postado);
             // debug($entity->stt_id);
-    
+
             if (!$this->ocorrencia->save($entity)) {
                 throw new \Exception(implode('<br>', $this->ocorrencia->errors()));
             }
-    
+
             session()->setFlashdata('msg', 'Ocorrência gravada com sucesso!');
-    
+
             return $this->response->setJSON([
                 'erro' => false,
                 'url'  => site_url($this->data['controler'])

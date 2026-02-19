@@ -13,6 +13,16 @@
 
 <?= $this->section('content');
 ?>
+
+<?php if (!empty($forca_alteracao)) : ?>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("form1")?.setAttribute("data-alter", "true");
+            document.getElementById("form_modal")?.setAttribute("data-alter", "true");
+        });
+    </script>
+<?php endif; ?>
+
 <div id='content' class='container page-content bg-light m-0'>
     <!-- <div id='content' class='vh-auto page-content dashboard dashboard-app dashboard-content '> -->
     <form id="form1" data-alter method="post" action="<?= site_url($controler . "/" . $destino) ?>"
@@ -124,6 +134,7 @@
                             }
                             echo "<div id='vazio3' class='row col-4 col-lg-4 float-start d-block mb-5' style='height:56px; $clear'></div>";
                         } else {
+                            // debug($campos_se[$c]);
                             echo $campos_se[$c];
                         }
                         $count++;

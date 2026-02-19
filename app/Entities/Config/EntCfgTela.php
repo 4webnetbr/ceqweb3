@@ -220,7 +220,7 @@ class EntCfgTela extends Entity
         return $ret;
     }
 
-    public function defCamposLista($dados, $show = false, $pos = 0, $view)
+    public function defCamposLista($dados, $show = false, $pos = 0, $view = false)
     {
         $dados = (array) $dados;
         $ret = [];

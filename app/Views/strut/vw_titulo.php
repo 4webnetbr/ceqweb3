@@ -40,7 +40,7 @@ if (strlen($ajuda) > 5) {
 // }
 ?>
 <div id='title' class='title col-12 px-lg-4 px-1 bg-danger-subtle float-start d-inline flex-nowrap' style="overflow-x: auto;overflow-y: hidden;font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;">
-  <div class='titulo col-lg-5 col-7 float-start  d-inline flex-nowrap text-nowrap' style="overflow-x: auto;overflow-y: hidden;font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;">
+  <div class='titulo col-lg-6 col-7 float-start  d-inline flex-nowrap text-nowrap' style="overflow-x: auto;overflow-y: hidden;font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;">
     <div class='d-block float-start col-1' style='font-size: calc(1.275rem + 1.1vw);margin-top: -.3rem;'>
       <?= $icone; ?>
     </div>
@@ -57,7 +57,7 @@ if (strlen($ajuda) > 5) {
     <?
     } ?>
   </div>
-  <div class="titulo col-lg-6 col-4 float-start d-inline flex-nowrap text-nowrap p-0" style="overflow-x: auto;overflow-y: hidden;font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;">
+  <div class="titulo col-lg-5 col-4 float-start d-inline flex-nowrap text-nowrap p-0" style="overflow-x: auto;overflow-y: hidden;font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;">
     <!-- <div class='titulo col-lg-6 col-4 float-start text-right'> -->
     <?
     // VERIFICA O MÉTODO E AS PERMISSÕES PARA MOSTRAR OS BOTÕES
@@ -103,11 +103,11 @@ if (strlen($ajuda) > 5) {
     }
     ?>
   </div>
-  <div class='titulo col-lg-1 col-1 float-end text-nowrap d-inline flex-nowrap' style="overflow-x: auto;overflow-y: hidden;font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;">
+  <div class='titulo col-lg-1 col-1 float-end text-nowrap d-inline flex-nowrap px-0 h-100 py-2' style="overflow-x: auto;overflow-y: hidden;font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;">
     <!-- <div class="align-items-center py-1 text-center float-end" style=""> -->
-    <span id="badgenotif" class="badgenotif badge rounded-circle bg-danger d-none fs-7">
+    <span id="badgenotif" class="badgenotif badge rounded-pill bg-danger d-none fs-7">
     </span>
-    <button id="bt_notifica" class="btn btn-outline-light border-1 float-end position-relative collapsed px-2 py-1"
+    <button id="bt_notifica" class="btn btn-outline-light rounded-circle float-end position-relative collapsed px-2 py-1"
       data-bs-toggle="collapse"
       data-bs-target="#show_notifica"
       aria-expanded="false">
@@ -116,7 +116,7 @@ if (strlen($ajuda) > 5) {
     </button>
     <?
     if ($mostra_ajuda) { ?>
-      <button id="bt_ajuda" class="btn btn-outline-info border-1 float-end position-relative me-2 collapsed px-2 py-1"
+      <button id="bt_ajuda" class="btn btn-outline-info rounded-circle float-end position-relative me-2 collapsed px-2 py-1"
         data-bs-toggle="collapse"
         data-bs-target="#show_ajuda"
         aria-expanded="false">

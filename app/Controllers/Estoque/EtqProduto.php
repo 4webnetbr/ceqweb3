@@ -100,6 +100,7 @@ class EtqProduto extends BaseController
         }
         // debug($dados_requis, true);
         $this->data['edicao'] = false;
+        $this->data['consulta'] = false;
         $requis = [
             'data' => montaListaColunasEnt($this->data, 'req_id', $dados_requis, $campos[1]),
         ];
@@ -135,8 +136,28 @@ class EtqProduto extends BaseController
         // $campos[0][count($campos[0])] = $fields['lot_codbar'];
 
         $produtosreq = $this->requisicao->getRequisicaoProdutos($id);
+        // debug($produtosreq, true);
 
-        $colunas = ['Cód ERP', 'Descrição', 'Fabricante', 'Lote', 'Qtde.Requerida', 'Qtde.Imprimir', 'Coloração Etiqueta', 'Imprimir'];
+        $colunas = [
+            'Cód ERP',
+            'Descrição',
+            'Fabricante',
+            'Lote',
+            'Qtde.Requerida',
+            'Qtde.Imprimir',
+            'Coloração Etiqueta',
+            'Imprimir'
+        ];
+        $alinha = [
+            'center',
+            'start',
+            'start',
+            'start',
+            'end',
+            'end',
+            'center',
+            'center',
+        ];
         $produtos = [];
         $produtos[0] = $id;
         if (count($produtosreq) > 0) {
@@ -166,15 +187,16 @@ class EtqProduto extends BaseController
         $data = [
             'show' => true,
             'colunas' => $colunas,
+            'alinha' => $alinha,
             'produtos' => $produtos
         ];
 
         $campos[0][count($campos[0])] = view('partials/pw_show_produtos_req', $data); // mesma estrutura do add()
 
         $this->data['icone']   = "<i class='fas fa-tag'></i>"; // ou 'update' se você for criar
-        $this->data['desc_metodo']   = ''; // ou 'update' se você for criar
-        $this->data['title']   = 'Impressão de Etiquetas de Produtos'; // ou 'update' se você for criar
-        $this->data['desc_edicao']  = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['desc_metodo']   = ' '; // ou 'update' se você for criar
+        // $this->data['title']   = 'Impressão de Etiquetas de Produtos'; // ou 'update' se você for criar
+        $this->data['desc_edicao']  = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['secoes']    = $secao;
         $this->data['campos']    = $campos;
         $this->data['destino']   = ''; // ou 'update' se você for criar

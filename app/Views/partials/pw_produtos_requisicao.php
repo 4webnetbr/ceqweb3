@@ -44,7 +44,7 @@ if (!isset($show)) {
                             <th>Saldo</th>
                             <?
                             if (!$show) { ?>
-                                <th>OCR</th>
+                                <th>OC.A</th>
                             <? } ?>
                         </tr>
                     </thead>
@@ -75,8 +75,8 @@ if (!isset($show)) {
                                     <input type='hidden' id='cblot_<?= $produto["rep_id"] ?>' name='cblot_<?= $produto["rep_id"] ?>' value='<?= $produto["pre_cblote"] ?>'></input>
                                     <input type='hidden' id='undlot_<?= $produto["rep_id"] ?>' name='undlot_<?= $produto["rep_id"] ?>' value='<?= $produto["pre_undlote"] ?>'></input>
                                     <input type='hidden' id='cfreq_<?= $produto["rep_id"] ?>' name='cfreq_<?= $produto["rep_id"] ?>' value='<?= $produto["prc_conf_req"] ?>'></input>
-                                    <input type='hidden' id='ctalt_<?= $produto["rep_id"] ?>' name='ctalt_<?= $produto["rep_id"] ?>' value='0'></input>
-                                    <input type='hidden' id='ctafb_<?= $produto["rep_id"] ?>' name='ctafb_<?= $produto["rep_id"] ?>' value='0'></input>
+                                    <input type='hidden' id='ctalt_<?= $produto["rep_id"] ?>' name='ctalt_<?= $produto["rep_id"] ?>' value='<?= intval($produto["saldo"]) === 0 ? esc($produto["rpa_atendida_val"]) : 0 ?>'></input>
+                                    <input type='hidden' id='ctafb_<?= $produto["rep_id"] ?>' name='ctafb_<?= $produto["rep_id"] ?>' value='<?= intval($produto["saldo"]) === 0 ? esc($produto["rpa_atendida_val"]) : 0 ?>'></input>
                                     <input type='hidden' id='proid_<?= $produto["rep_id"] ?>' name='proid_<?= $produto["rep_id"] ?>' value='<?= $produto['pro_id'] ?>'></input>
                                     <input type='hidden' id='lotid_<?= $produto["rep_id"] ?>' name='lotid_<?= $produto["rep_id"] ?>' value='<?= $produto['lot_id'] ?>'></input>
                                     <input type='hidden' id='lotlote_<?= $produto["rep_id"] ?>' name='lotlote_<?= $produto["rep_id"] ?>' value='<?= $produto['lot_lote'] ?>'></input>

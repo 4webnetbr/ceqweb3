@@ -23,28 +23,25 @@ class EntOcoModOcorrencia extends Entity
 
     public array $campos = [];
 
-    public function __construct(object|array|null $data = null)
+    public function __construct(?array $data = null, bool $show = false)
     {
-        if (is_array($data)) {
-            $data = (object) $data;
-        }
-        parent::__construct((array) ($data ?? []));
-        $this->campos = $this->defCampos($data ?? new \stdClass());
+        parent::__construct($data);
+        $this->campos = $this->defCampos($show);
     }
 
-    public function defCampos($dados = false, $pos = 0, $show = true)
+    public function defCampos($show = true)
     {
-        if (!$dados || !is_object($dados)) {
-            $dados = (object) [];
-        }
+        $dados = $this->toArray();
+
         $ret = [];
 
         $mid            = new MyCampo('oco_subt_ocorrencia', 'sut_id');
-        $mid->valor     = (isset($dados->sut_id)) ? $dados->sut_id : '';
+        $mid->valor     = $dados['sut_id'] ?? '';
         $ret['sut_id']   = $mid->crOculto();
 
+        // debug($dados);
         $nome            =  new MyCampo('oco_subt_ocorrencia', 'sut_nome');
-        $nome->valor     = (isset($dados->sut_nome)) ? $dados->sut_nome : '';
+        $nome->valor     = $dados['sut_nome'] ?? '';
         $nome->obrigatorio = true;
         $nome->leitura   = false;
         $nome->largura   = 80;
@@ -55,33 +52,27 @@ class EntOcoModOcorrencia extends Entity
         $config = [];
         $config['DispForm'] = 'col-6';
         $config['Largura']  = 50;
-        $config['Leitura']  = isset($dados->sut_id);
+        $config['Leitura']  = $show;
         $config['FunChan']  =  'carregaTelaAcaoTipo(this); carregaAcaoTipo(this);';
+
+        // debug($config, true);
 
         $ret['tpo_id'] = criaSelectRelativo(
             'oco_tipo_ocorrencia',
             'tpo_id',
             'tpo_nome',
-            $dados->tpo_id ?? '',
+            $dados['tpo_id'] ?? '',
             1,
             'oco_subt_ocorrencia',
             [],
             $config
         );
 
-        $simnao['A'] = 'Ativo';
-        $simnao['I'] = 'Inativo';
-
-        $teste          = new MyCampo('oco_subt_ocorrencia', 'moc_ativo');
-        $teste->valor   = (isset($dados->moc_ativo)) ? $dados->moc_ativo : 'A';
-        $teste->leitura = $show;
-        $teste->opcoes  = $simnao;
-        $ret['moc_ativo'] = $teste->cr2opcoes();
 
         return $ret;
     }
 
-    public function defCamposTelasAplicaveis($dados = false, $pos = 0,  $total = 1)
+    public function defCamposTelasAplicaveis($dados = false, $pos = 0, $show)
     {
         $dados = (array) $dados;
 
@@ -210,7 +201,7 @@ class EntOcoModOcorrencia extends Entity
         );
 
         // modulo
-        $config['Label']    = 'Módulo';        
+        $config['Label']    = 'Módulo';
         $config['DispForm'] = 'col-6';
         $config['Largura']  = 30;
         $ret['mod_id'] = criaSelectRelativo(
@@ -226,7 +217,7 @@ class EntOcoModOcorrencia extends Entity
         );
 
         // tela
-        $config['Label']    = 'Tela'; 
+        $config['Label']    = 'Tela';
         $config['Pai']      = 'mod_id';
         $config['Urlbusca'] = base_url('buscas/busca_tela_modulo');
 
@@ -242,7 +233,7 @@ class EntOcoModOcorrencia extends Entity
             'tel_id_tpa'
         );
 
-        $config['Label']    = 'Status';         
+        $config['Label']    = 'Status';
         $config['DispForm'] = 'col-12';
         $config['Largura']  = 50;
         $ret['stt_id'] = criaSelectRelativo(

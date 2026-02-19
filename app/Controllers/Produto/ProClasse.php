@@ -2,11 +2,13 @@
 
 namespace App\Controllers\Produto;
 
-use App\Controllers\BaseController;
 use App\Libraries\MyCampo;
-use App\Traits\ForeignKeyUsageChecker;
-use App\Entities\Produto\EntProdutClasse;
 use App\Models\CommonModel;
+use App\Controllers\BaseController;
+use function PHPUnit\Framework\isNan;
+use App\Entities\Produto\EntProClasse;
+use App\Traits\ForeignKeyUsageChecker;
+
 use App\Models\Produt\ProdutClasseModel;
 use App\Models\Produt\ProdutProdutoModel;
 
@@ -29,7 +31,7 @@ class ProClasse extends BaseController
     {
         $this->data      = session()->getFlashdata('dados_tela');
         $this->permissao = $this->data['permissao'];
-        $this->classes   = new ProdutClasseModel();
+        $this->classes    = new ProdutClasseModel();
         $this->common    = new CommonModel();
 
         if ($this->data['erromsg'] != '') {
@@ -59,7 +61,7 @@ class ProClasse extends BaseController
         $order->place    = 'Ordenar as Classes';
         $order->funcChan = 'redireciona(\'ProClasse/ordenar/\')';
         $order->classep  = 'btn-outline-info bt-manut btn-sm mb-2 float-end add';
-        $this->bt_order  = $order->crBotao();
+        $this->bt_order = $order->crBotao();
         $this->data['botao'] = $this->bt_order;
 
         $this->data['colunas'] = montaColunasLista($this->data, 'cla_id');
@@ -76,15 +78,14 @@ class ProClasse extends BaseController
     {
         $campos = montaColunasCampos($this->data, 'cla_id');
         $dados_classe = $this->classes->getClasse();
+        // debug($dados_classe, true);
         $this->data['exclusao'] = false;
+        $classe = [
+            'data' => montaListaColunasEnt($this->data, 'cla_id', $dados_classe, $campos[1]),
+        ];
+        cache()->save('classe', $classe, 60000);
 
-        $ret = new \stdClass();
-        $ret->data = montaListaColunasEnt($this->data, 'cla_id', $dados_classe, $campos[1]);
-
-        $ret->exclusao = false;
-        cache()->save('classe', $ret, 60000);
-
-        return $this->response->setJSON($ret);
+        echo json_encode($classe);
     }
 
     /**
@@ -95,25 +96,13 @@ class ProClasse extends BaseController
      */
     public function ordenar()
     {
-        // Busca a lista de classes já ordenadas
-        $lst_classes = $this->classes->getClasseOrdem();
-        $lst_classes = array_map(fn($row) => (array) $row, $lst_classes);
-        $data        = new \stdClass();
+        $lst_classes     =  $this->classes->getClasseOrdem();
+        // debug($lst_status, true);
+        $this->data['desc_metodo'] = 'Ordenação de ';
+        $this->data['lst_classe']    = $lst_classes;
+        $this->data['destino']    = 'storeOrd';
 
-        // Objeto para envio de dados à view
-        $data->controler        = $this->data['controler'];
-        $data->metodo           = 'ordenar';
-        $data->it_menu          = $this->data['it_menu'] ?? null;
-        $data->icone            = null;
-        $data->regras_cadastro  = false;
-        $data->identificador    = null;
-
-        // Descrição exibida na tela
-        $data->desc_metodo = 'Ordenação de ';
-        $data->lst_classe  = $lst_classes;
-        $data->destino     = 'storeOrd';
-
-        echo view('vw_classe_ordenar', (array) $data);
+        echo view('vw_classe_ordenar', $this->data);
     }
 
     /**
@@ -124,76 +113,53 @@ class ProClasse extends BaseController
      */
     public function add()
     {
+        $entProClasse = new EntProClasse();
 
-        $entity = new EntProdutClasse();
-        $fieldsGerais = $entity->campos;
-        $fieldsClass  = $entity->defCamposClassif();
-        $fieldsMicro  = $entity->defCamposMicro();
+        $this->data['secoes']  = ['Dados Gerais', 'Classificação', 'Microbiológico'];
+        $this->data['campos']  = [
+            [
+                $entProClasse->campos['cla_id'],
+                $entProClasse->campos['cla_nome'],
+                $entProClasse->campos['cla_requisicao'],
+                $entProClasse->campos['cla_insvis'],
+                $entProClasse->campos['cla_insvisconf'],
+                $entProClasse->campos['cla_formula'],
+                $entProClasse->campos['cla_estdataatual'],
+                $entProClasse->campos['cla_gestaoestoque'],
+                $entProClasse->campos['cla_dash_consumo'],
+                $entProClasse->campos['cla_deposito'],
+            ],
+        ];
+        $fields = $entProClasse->defCamposClassif();
+        $campos1[0][] = $fields['pcl_id'];
+        $campos1[0][] = $fields['ori_codOri'];
+        $campos1[0][] = $fields['fam_codFam'];
+        $campos1[0][] = $fields['bt_add'];
+        $campos1[0][] = $fields['bt_del'];
 
-        $secoes = new \stdClass();
-        $secoes->dados_gerais   = 'Dados Gerais';
-        $secoes->classificacao  = 'Classificação';
-        $secoes->microbiologico = 'Microbiológico';
+        $this->data['campos'][1]  = $campos1;
+        $this->data['displ'][1]  = 'tabela';
 
-        $displ = new \stdClass();
-        $displ->classificacao = 'tabela';
 
-        $campos = new \stdClass();
+        $fields2 = $entProClasse->defCamposMicro();
+        $campos2[] = $fields2['cla_micro'];
+        $campos2[] = $fields2['cla_metodanalise'];
+        $campos2[] = $fields2['cla_cabecalho'];
+        $campos2[] = $fields2['cla_rodape'];
 
-        // Dados Gerais 
-        $campos->dados_gerais = [];
-        $campos->dados_gerais[] = $fieldsGerais['cla_id'];
-        $campos->dados_gerais[] = $fieldsGerais['cla_nome'];
-        $campos->dados_gerais[] = $fieldsGerais['cla_requisicao'];
-        $campos->dados_gerais[] = $fieldsGerais['cla_insvis'];
-        $campos->dados_gerais[] = "<div class='col-1'></div>" . $fieldsGerais['cla_insvisconf'];
-        $campos->dados_gerais[] = $fieldsGerais['cla_formula'];
-        $campos->dados_gerais[] = $fieldsGerais['cla_estdataatual'];
-        $campos->dados_gerais[] = $fieldsGerais['cla_gestaoestoque'];
-        $campos->dados_gerais[] = $fieldsGerais['cla_dash_consumo'];
-        $campos->dados_gerais[] = $fieldsGerais['cla_deposito'];
+        $this->data['campos'][2]  = $campos2;
 
-        // Classificação 
-        $campos->classificacao = [];
+        $this->data['destino'] = 'store';
 
-        $linhaClass = [];
-        $linhaClass[] = $fieldsClass['pcl_id'];
-        $linhaClass[] = $fieldsClass['ori_codOri'];
-        $linhaClass[] = $fieldsClass['fam_codFam'];
-        // debug(['fam_codFam' => $fieldsClass['fam_codFam']], true);
-        $linhaClass[] = $fieldsClass['bt_add'];
-        $linhaClass[] = $fieldsClass['bt_del'];
-        $campos->classificacao[] = $linhaClass;
 
-        // Microbiológico 
-        $campos->microbiologico = [];
-        $campos->microbiologico[] = $fieldsMicro['cla_micro'];
-        $campos->microbiologico[] = $fieldsMicro['cla_metodanalise'];
-        $campos->microbiologico[] = $fieldsMicro['cla_cabecalho'];
-        $campos->microbiologico[] = $fieldsMicro['cla_rodape'];
-
-        $data = new \stdClass();
-        $data->secoes = array_values((array) $secoes);
-        $data->campos = array_values((array) $campos);
-        $data->displ = ['', 'tabela', ''];
-
-        $data->destino         = 'store';
-        $data->controler       = $this->data['controler'];
-        $data->metodo          = 'add';
-        $data->regras_cadastro = false;
-        $data->icone           = null;
-        $data->identificador   = null;
-        $data->it_menu         = $this->data['it_menu'] ?? null;
-        
-        $data->script          = "<script>
-                                     acerta_botoes_rep('classificacao');
-                                     mostraOcultaCampo('cla_insvis','S','cla_insvisconf');
-                                     mostraOcultaCampo('cla_micro','S','cla_metodanalise,cla_cabecalho,cla_rodape');
-                                 </script>";
-
-        echo view('vw_edicao', (array) $data);
+        $this->data['script'] = "<script>
+                                    acerta_botoes_rep('classificacao');
+                                    mostraOcultaCampo('cla_insvis','S','cla_insvisconf');
+                                    mostraOcultaCampo('cla_micro','S','cla_metodanalise,cla_cabecalho,cla_rodape');
+                                </script>";
+        $this->data['destino']    = 'store';
+        echo view('vw_edicao', $this->data);
     }
-
 
     /**
      * Consulta
@@ -216,115 +182,88 @@ class ProClasse extends BaseController
      */
     public function edit($id, $show = false)
     {
-        // Busca os dados da classe pelo ID
-        $dados_classes = $this->classes->find($id);
-        $entity = new EntProdutClasse($dados_classes->toArray(), $show);
+        $dados_classes = $this->classes->getClasse($id);
+        debug($dados_classes, true);
+        // $fields = $this->classes->defCampos($dados_classes, $show);
+        $entProClasse = new EntProClasse((array) $dados_classes);
+        $fields = $entProClasse->defCampos((array) $dados_classes, $show);
 
-        // Campos gerais da classe
-        $fieldsGerais = $entity->campos;
-        $fieldsMicro  = $entity->defCamposMicro($show);
+        $secao[0] = 'Dados Gerais';
+        $campos[0] = [];
+        $campos[0][count($campos[0])] = $fields['cla_id'];
+        $campos[0][count($campos[0])] = $fields['cla_nome'];
+        $campos[0][count($campos[0])] = $fields['cla_requisicao'];
+        $campos[0][count($campos[0])] = $fields['cla_insvis'];
+        $campos[0][count($campos[0])] = $fields['cla_gestaoestoque'];
+        $campos[0][count($campos[0])] = $fields['cla_formula'];
+        $campos[0][count($campos[0])] = $fields['cla_insvisconf'];
+        $campos[0][count($campos[0])] = $fields['cla_estdataatual'];
+        $campos[0][count($campos[0])] = $fields['cla_dash_consumo'];
+        $campos[0][count($campos[0])] = $fields['cla_deposito'];
+        // $campos[0][count($campos[0])] = 'vazio2';
+        // $campos[0][count($campos[0])] = 'vazio2';
 
-        // SEÇÕES
-        $secoes = new \stdClass();
-        $secoes->dados_gerais   = 'Dados Gerais';
-        $secoes->classificacao  = 'Classificação';
-        $secoes->microbiologico = 'Microbiológico';
-
-        $displ = ['', 'tabela', ''];
-        $campos = new \stdClass();
-
-        // Dados Gerais 
-        $campos->dados_gerais = [
-            $fieldsGerais['cla_id'],
-            $fieldsGerais['cla_nome'],
-            $fieldsGerais['cla_requisicao'],
-            $fieldsGerais['cla_insvis'],
-            "<div class='col-1'></div>" . $fieldsGerais['cla_insvisconf'],
-            $fieldsGerais['cla_formula'],
-            $fieldsGerais['cla_estdataatual'],
-            $fieldsGerais['cla_gestaoestoque'],
-            $fieldsGerais['cla_dash_consumo'],
-            $fieldsGerais['cla_deposito'],
-        ];
-
-        // Classificação
-        $campos->classificacao = [];
-        $dados_classif = $this->classes->getClasseClassificacao($id);
-
-        if (count($dados_classif) > 0) {
-            // Percorre classificações existentes
-            foreach ($dados_classif as $pos => $row) {
-
-                $entityClass = new EntProdutClasse((array) $row);
-                $fields = $entityClass->defCamposClassif($pos, $show);
-
-                $campos->classificacao[] = [
-                    $fields['pcl_id'],
-                    $fields['ori_codOri'],
-                    $fields['fam_codFam'],
-                    $show ? '' : $fields['bt_add'],
-                    $show ? '' : $fields['bt_del'],
-                ];
+        $secao[1] = 'Classificação';
+        $displ[1] = 'tabela';
+        $dados_classes_classif = $this->classes->getClasseClassificacao($id);
+        // debug($dados_classes_classif,true);
+        if (count($dados_classes_classif) > 0) {
+            for ($c = 0; $c < count($dados_classes_classif); $c++) {
+                $fields = $entProClasse->defCamposClassif($dados_classes_classif[$c], $c, $show);
+                $campos[1][$c][0] = $fields['pcl_id'];
+                $campos[1][$c][count($campos[1][$c])] = $fields['ori_codOri'];
+                $campos[1][$c][count($campos[1][$c])] = $fields['fam_codFam'];
+                if (!$show) {
+                    $campos[1][$c][count($campos[1][$c])] = $fields['bt_add'];
+                    $campos[1][$c][count($campos[1][$c])] = $fields['bt_del'];
+                } else {
+                    $campos[1][$c][count($campos[1][$c])] = '';
+                    $campos[1][$c][count($campos[1][$c])] = '';
+                }
             }
         } else {
-            // Caso não existam classificações cadastradas
-            $entityClass = new EntProdutClasse();
-            $fields = $entityClass->defCamposClassif(0, $show);
-
-            $campos->classificacao[] = [
-                $fields['pcl_id'],
-                $fields['ori_codOri'],
-                $fields['fam_codFam'],
-                $show ? '' : $fields['bt_add'],
-                $show ? '' : $fields['bt_del'],
-            ];
+            $fields = $entProClasse->defCamposClassif();
+            $campos[1][0] = [];
+            $campos[1][0][count($campos[1][0])] = $fields['pcl_id'];
+            $campos[1][0][count($campos[1][0])] = $fields['ori_codOri'];
+            $campos[1][0][count($campos[1][0])] = $fields['fam_codFam'];
+            if (!$show) {
+                $campos[1][0][count($campos[1][0])] = $fields['bt_add'];
+                $campos[1][0][count($campos[1][0])] = $fields['bt_del'];
+            } else {
+                $campos[1][0][count($campos[1][0])] = '';
+                $campos[1][0][count($campos[1][0])] = '';
+            }
         }
+        // debug($campos[1]);
+        $fields = $entProClasse->defCamposMicro((array) $dados_classes, $show);
+        $secao[2] = 'Microbiológico';
+        $campos[2] = [];
+        $campos[2][count($campos[2])] = $fields['cla_micro'];
+        $campos[2][count($campos[2])] = $fields['cla_metodanalise'];
+        $campos[2][count($campos[2])] = $fields['cla_cabecalho'];
+        $campos[2][count($campos[2])] = $fields['cla_rodape'];
 
-        //Microbiológico 
-        $campos->microbiologico = [
-            $fieldsMicro['cla_micro'],
-            $fieldsMicro['cla_metodanalise'],
-            $fieldsMicro['cla_cabecalho'],
-            $fieldsMicro['cla_rodape'],
-        ];
+        $this->data['secoes']     = $secao;
+        $this->data['campos']     = $campos;
+        $this->data['displ']      = $displ;
+        $this->data['destino']    = 'store';
 
-        // DATA PARA VIEW 
-        $data = new \stdClass();
-
-        $data->secoes = array_values((array) $secoes);
-        $data->campos = array_values((array) $campos);
-        $data->displ  = $displ;
-
-        // Configurações da tela
-        $data->destino         = 'store';
-        $data->controler       = $this->data['controler'];
-        $data->metodo          = $show ? 'show' : 'edit';
-        $data->regras_cadastro = false;
-        $data->icone           = null;
-        $data->identificador   = $id;
-        $data->it_menu         = $this->data['it_menu'] ?? null;
-
-        $data->desc_edicao = $dados_classes->cla_nome ?? '';
-        $data->log = buscaLog('pro_classe', $id);
-
-
+        $this->data['script'] = "<script>
+                                    acerta_botoes_rep('classificacao');
+                                    mostraOcultaCampo('cla_insvis','S','cla_insvisconf');
+                                    mostraOcultaCampo('cla_micro','S','cla_metodanalise,cla_cabecalho,cla_rodape');
+                                </script>";
         $this->data['desc_edicao'] = $dados_classes->cla_nome;
-        $data->log = buscaLog('pro_classe', $id);
 
-        $data->script = "<script>
-                             acerta_botoes_rep('classificacao');
-                             mostraOcultaCampo('cla_insvis','S','cla_insvisconf');
-                             mostraOcultaCampo('cla_micro','S','cla_metodanalise,cla_cabecalho,cla_rodape');
-                         </script>";
-        
+        // BUSCAR DADOS DO LOG
+        $this->data['log'] = buscaLog('pro_classe', $id);
 
-        echo view('vw_edicao', (array) $data);
+        echo view('vw_edicao', $this->data);
     }
 
     public function ativinativ($id, $tipo)
     {
-
-
         $ret = [];
         try {
             if ($tipo == 1) {
@@ -337,11 +276,11 @@ class ProClasse extends BaseController
                 ];
                 $this->verificarUsoEmRelacionamentos('pro_classe', 'cla_id', (int) $id);
             }
-            $this->classes->update($id, $dad_atin);
+
+            $this->status->update($id, $dad_atin);
             $ret['erro'] = false;
             session()->setFlashdata('msg', 'Classe de Produto Alterada com Sucesso');
-            $ret['msg']  = 'Classe de Produto Alterada com Sucesso';
-            cache()->clean();
+            $ret['msg'] = 'Classe de Produto Alterada com Sucesso';
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
             $ret['erro'] = true;
             // $ret['msg']  = 'Não foi possível Alterar o Status, Verifique!<br><br>';
@@ -350,9 +289,37 @@ class ProClasse extends BaseController
             $ret['erro'] = true;
             $ret['msg']  = 14; // ou código personalizado, se preferir
         }
+
         echo json_encode($ret);
     }
 
+    /**
+     * Exclusão
+     * delete
+     *
+     * @param mixed $id 
+     * @return void
+     */
+    public function delete($id)
+    {
+        $ret = [];
+
+        try {
+            // Checa uso do status em outros bancos
+            $this->verificarUsoEmRelacionamentos('pro_classe', 'cla_id', (int) $id);
+
+            // Soft delete
+            $this->classes->delete($id);
+            $ret['erro'] = false;
+            session()->setFlashdata('msg', 'Classe de Produto excluída com sucesso!');
+            $ret['msg']  = 'Classe de Produto excluída com Sucesso!';
+        } catch (\Exception $e) {
+            $ret['erro'] = true;
+            $ret['msg']  = 3;
+        }
+
+        echo json_encode($ret);
+    }
 
     /**
      * Summary of addCampo
@@ -361,12 +328,9 @@ class ProClasse extends BaseController
      */
     public function addCampo($ind)
     {
-        $show = false;
-
-        $entityClass = new EntProdutClasse([], $show);
-        $fields = $entityClass->defCamposClassif($ind, $show);
-
-        $campo = [];
+        $entProClasse = new EntProClasse();
+        
+        $fields = $entProClasse->defCamposClassif(false, $ind);
         $campo[0] = $fields['pcl_id'];
         $campo[1] = $fields['ori_codOri'];
         $campo[2] = $fields['fam_codFam'];
@@ -379,11 +343,8 @@ class ProClasse extends BaseController
 
     public function storeOrd()
     {
-        // Recupera dados enviados pelo formulário
         $req = $this->request->getPost();
         $ord = 1;
-
-        // Percorre os IDs recebidos e atualiza a ordem
         foreach ($req as $key => $value) {
             $updt = [
                 'cla_ordem' => $ord
@@ -405,241 +366,123 @@ class ProClasse extends BaseController
      *
      * @return void
      */
-     public function store()
+    public function store()
     {
         $postado = $this->request->getPost();
-        $ret     = ['erro' => false];
-        $erros   = [];
-    
-        $pcl_id     = $postado['pcl_id']     ?? [];
-        $ori_codOri = $postado['ori_codOri'] ?? [];
-        $fam_codFam = $postado['fam_codFam'] ?? [];
-    
-        // Garante que são arrays
-        if (!is_array($pcl_id))     $pcl_id = [];
-        if (!is_array($ori_codOri)) $ori_codOri = [];
-        if (!is_array($fam_codFam)) $fam_codFam = [];
-    
-        // Remove do payload da classe
-        unset($postado['pcl_id'], $postado['ori_codOri'], $postado['fam_codFam']);
-    
-        // cla_id pode vir como array
-        if (isset($postado['cla_id']) && is_array($postado['cla_id'])) {
-            $postado['cla_id'] = $postado['cla_id'][0] ?? null;
-        }
-    
-        // Nome pode vir como array em alguns casos
-        if (isset($postado['cla_nome']) && is_array($postado['cla_nome'])) {
-            $postado['cla_nome'] = $postado['cla_nome'][0] ?? '';
-        }
-    
-        // Select simples (criaSelectRelativo costuma mandar array)
-        if (isset($postado['cla_dash_consumo']) && is_array($postado['cla_dash_consumo'])) {
-            $postado['cla_dash_consumo'] = $postado['cla_dash_consumo'][0] ?? '';
-        }
-    
-        // Radios Sim/Não (cr2opcoes)
-        $camposSimNao = [
-            'cla_requisicao',
-            'cla_insvis',
-            'cla_insvisconf',
-            'cla_micro',
-            'cla_metodanalise',
-            'cla_formula',
-            'cla_estdataatual',
-            'cla_gestaoestoque',
-        ];
-        foreach ($camposSimNao as $campo) {
-            if (isset($postado[$campo]) && is_array($postado[$campo])) {
-                $postado[$campo] = $postado[$campo][0] ?? 'N';
-            }
-        }
-    
-        // Multiple
-        if (isset($postado['cla_deposito']) && is_array($postado['cla_deposito'])) {
-            $postado['cla_deposito'] = implode(
-            ', ',
-            array_filter(is_array($postado['cla_deposito'][0] ?? null)
-                ? $postado['cla_deposito'][0]
-                : $postado['cla_deposito'])
-        );
-        }
-    
-        $update = !empty($postado['cla_id']);
-    
-        if (!$update) {
+        // debug($postado, true);
+        $ret['erro'] = false;
+        $erros = [];
+
+        $update = false;
+        // Verifica se é uma inclusão ou atualização
+        if (empty($postado['cla_id'])) {
+            // Gera próxima ordem
             $ultima = $this->classes->getUltimaOrdemClasse();
-    
-            // compatível com retorno array ou objeto
-            $ultimaValor = 0;
-            if (is_array($ultima) && isset($ultima[0])) {
-                $ultimaValor = is_array($ultima[0]) ? ($ultima[0]['ultima'] ?? 0) : ($ultima[0]->ultima ?? 0);
-            }
-    
-            $postado['cla_ordem'] = (int)$ultimaValor + 1;
+            $postado['cla_ordem'] = (int) ($ultima[0]['ultima'] ?? 0) + 1;
+        } else {
+            $update = true;
         }
-    
-        if ($update) {
-            $cla_id = (int)$postado['cla_id'];
-    
-            // Banco
-            $classif_db = $this->classes->getClasseClassificacao($cla_id);
-            $db_norm = [];
-    
-            if (is_array($classif_db)) {
-                foreach ($classif_db as $c) {
-                    // compatível com array/obj
-                    $ori = is_array($c) ? ($c['ori_codOri'] ?? '') : ($c->ori_codOri ?? '');
-                    $fam = is_array($c) ? ($c['fam_codFam'] ?? '') : ($c->fam_codFam ?? '');
-                    if ($ori !== '' && $fam !== '') {
-                        $db_norm[] = $ori . '|' . $fam;
+        // Trata o campo 'cla_deposito' como string separada por vírgula
+        if (!empty($postado['cla_deposito']) && is_array($postado['cla_deposito'])) {
+            $deposito = $this->request->getPost('cla_deposito');
+
+            $postado['cla_deposito'] = implode(', ',
+                                                array_map(
+                                                    fn(array $item): string => $item[0] ?? '',
+                                                    $deposito
+                                                )
+                                            );
+            // $postado['cla_deposito'] = implode(', ', array_filter($postado['cla_deposito']));
+        }
+        $famCodFam = $this->request->getPost('fam_codFam');
+
+        $famCodFam = array_merge(...$famCodFam);
+
+        $postado['fam_codFam'] = $famCodFam;
+
+        // debug($postado, true);
+
+        $ent = new EntProClasse();
+        $ent->fill($postado);
+
+
+        $exists = $this->common->verificaUnico($this->classes, 'cla_nome', $postado['cla_nome'], 'cla_id', $postado['cla_id']);
+        if (intval($exists) > 0) {
+            $ret['erro'] = true;
+            $ret['msg'] = 8;
+            $erros = [8];
+        } else {
+            $this->classes->transBegin();
+
+            try {
+                // debug($ent, true);
+                $salva = $this->classes->save($ent);
+                // debug($this->status->getLastQuery(), true);
+
+                if (!$salva) {
+                    $ret['erro'] = true;
+                    $ret['msg']  = implode('<br>', $this->classes->errors());
+                    // return;
+                } else {
+                    if ($postado['cla_id'] == '') {
+                        $postado['cla_id'] = $this->classes->getInsertId();
+                    }
+                    $cla_id = $postado['cla_id'];
+                    $data_atu = date('Y-m-d H:i');
+
+                    // GRAVAÇãO DOS Movimentos
+                    $ordem = 0;
+                    foreach ($postado['pcl_id'] as $key => $value) {
+                        if (
+                            $postado['ori_codOri'][$key] != '' &&
+                            $postado['fam_codFam'][$key] != ''
+                        ) {
+                            $sql_pcl = [
+                                'pcl_id' => $postado['pcl_id'][$key],
+                                'cla_id' => $cla_id,
+                                'ori_codOri' => $postado['ori_codOri'][$key],
+                                'fam_codFam' => $postado['fam_codFam'][$key],
+                                'pcl_atualizado' => $data_atu,
+                                'pcl_ordem'     => $ordem
+                            ];
+                            $ordem++;
+                            if ($postado['pcl_id'][$key] == '') {
+                                $pcl_id = $this->common->insertReg('dbProduto', 'pro_classe_classificacao', $sql_pcl);
+                            } else {
+                                $pcl_id = $this->common->updateReg('dbProduto', 'pro_classe_classificacao', "pcl_id = " . $postado['pcl_id'][$key], $sql_pcl);
+                            }
+                            if (!$pcl_id) {
+                                $ret['erro'] = true;
+                                $erros = ['Não foi possível gravar as Classificações da Classe, Verifique!'];
+                            }
+                        }
+                    }
+                    if (!$ret['erro']) {
+                        $this->common->deleteReg("dbProduto", "pro_classe_classificacao", "cla_id = " . $cla_id . " AND pcl_atualizado != '" . $data_atu . "'");
                     }
                 }
-            }
-    
-            // Tela (mantém ordem)
-            $post_norm = [];
-
-            foreach ($ori_codOri as $k => $ori) {
-            
-                $fams = $fam_codFam[$k] ?? [];
-                if (!is_array($fams)) {
-                    $fams = [$fams];
+                if (!$ret['erro']) {
+                    $this->classes->transCommit();
+                    session()->setFlashdata('msg', 'Classe de Produtos gravada com sucesso!');
+                    $ret['erro'] = false;
+                    $ret['url'] = site_url($this->data['controler']);
                 }
-            
-                foreach ($fams as $fam) {
-            
-                    while (is_array($ori)) {
-                        $ori = reset($ori);
-                    }
-                    $ori = (string) $ori;
-            
-                    while (is_array($fam)) {
-                        $fam = reset($fam);
-                    }
-                    $fam = (string) $fam;
-            
-                    if ($ori !== '' && $fam !== '') {
-                        $post_norm[] = $ori . '|' . $fam;
-                    }
-                }
-            }
 
-    
-            // Se houve qualquer alteração (inclui/exclui/edita/reordena)
-            if ($db_norm !== $post_norm) {
-                $produtos = new ProdutProdutoModel();
-                $existe   = $produtos->getProdutoClasse($cla_id);
-    
-                if (is_array($existe) && count($existe) > 0) {
-                    echo json_encode([
-                        'erro' => true,
-                        'msg'  => 15
-                    ]);
-                    return;
-                }
-            }
-        }
-    
-        $exists = $this->common->verificaUnico(
-            $this->classes,
-            'cla_nome',
-            $postado['cla_nome'] ?? '',
-            'cla_id',
-            $postado['cla_id'] ?? null
-        );
-    
-        if ($exists > 0) {
-            echo json_encode(['erro' => true, 'msg' => 8]);
-            return;
-        }
-
-        unset($postado['fam_codFam']);
-        $salva = $update
-            ? $this->classes->update($postado['cla_id'], $postado)
-            : $this->classes->insert($postado);
-    
-        if (!$salva) {
-            echo json_encode(['erro' => true, 'msg' => $this->classes->errors()]);
-            return;
-        }
-    
-        $cla_id   = $update ? (int)$postado['cla_id'] : (int)$this->classes->getInsertID();
-        $data_atu = date('Y-m-d H:i:s');
-    
-        $ordem = 0;
-    
-        foreach ($ori_codOri as $k => $ori) {
-
-         // origem
-         if (is_array($ori)) {
-             $ori = reset($ori);
-         }
-         $ori = (string) $ori;
-     
-         // famílias (MULTIPLE)
-         $fams = $fam_codFam[$k] ?? [];
-         if (!is_array($fams)) {
-             $fams = [$fams];
-         }
-     
-         foreach ($ori_codOri as $ori) {
-
-            if (is_array($ori)) {
-                $ori = reset($ori);
-            }
-            $ori = (string)$ori;
-        
-            foreach ($fam_codFam as $fam) {
-        
-                if (is_array($fam)) {
-                    $fam = reset($fam);
-                }
-                $fam = (string)$fam;
-        
-                if ($ori !== '' && $fam !== '') {
-        
-                    $sql_pcl = [
-                        'cla_id'         => $cla_id,
-                        'ori_codOri'     => $ori,
-                        'fam_codFam'     => $fam,
-                        'pcl_atualizado' => $data_atu,
-                        'pcl_ordem'      => $ordem++
-                    ];
-        
-                    $ok = $this->common->insertReg(
-                        'dbProduto',
-                        'pro_classe_classificacao',
-                        $sql_pcl
-                    );
-        
-                    if (!$ok) {
-                        echo json_encode(['erro' => true, 'msg' => 15]);
-                        return;
+            } catch (\Throwable $e) {
+                $this->classes->transRollback();
+                $ret = [
+                    'erro' => true,
+                    'msg'  => $e->getMessage() ?: 'Erro ao salvar Classe.'
+                ];
+                foreach ($erros as $erro) {
+                    $ret['msg'] .= $erro . '<br>';
+                    if (is_numeric($erro)) {
+                        $ret['msg'] = $erro;
                     }
                 }
             }
         }
-        }
-    
-        // limpa as antigas
-        $this->common->deleteReg(
-            'dbProduto',
-            'pro_classe_classificacao',
-            "cla_id = {$cla_id} AND pcl_atualizado != '{$data_atu}'"
-        );
-    
+        echo json_encode($ret);
         cache()->clean();
-        
-        $msg = 'Classe de Produto gravada com sucesso!';
-        session()->setFlashdata('msg', $msg);
-        
-        echo json_encode([
-            'erro' => false,
-            'msg'  => $msg,
-            'url'  => site_url($this->data['controler'])
-        ]);
-        return;
     }
 }
-

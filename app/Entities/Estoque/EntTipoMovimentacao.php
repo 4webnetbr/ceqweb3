@@ -52,7 +52,7 @@ class EntTipoMovimentacao extends Entity
         // Nome do tipo de movimentação
         $nome                 = new MyCampo('est_tipo_movimentacao', 'tmo_nome', false);
         $nome->valor          = (isset($dados['tmo_nome'])) ? $dados['tmo_nome'] : '';
-        $nome->leitura        = $show;
+        // $nome->leitura        = $show;
         $nome->obrigatorio    = true;
         $nome->dispForm       = 'col-12';
         $ret['tmo_nome']      = $nome->crInput();
@@ -73,14 +73,6 @@ class EntTipoMovimentacao extends Entity
         $tacu->dispForm       = 'col-6';
         $ret['tmo_acumulador']      = $tacu->crSelect();
 
-        // Indica se o tipo exige conferência
-        $conf                 = new MyCampo('est_tipo_movimentacao', 'tmo_conferencia', false);
-        $conf->valor          = (isset($dados['tmo_conferencia'])) ? $dados['tmo_conferencia'] : 'N';
-        $conf->leitura        = $show;
-        $conf->opcoes         = $simnao;
-        $conf->selecionado    = $conf->valor;
-        $conf->dispForm       = 'col-6';
-        $ret['tmo_conferencia'] = $conf->cr2opcoes();
 
         // Transação ERP 
         $config = [];
@@ -128,10 +120,19 @@ class EntTipoMovimentacao extends Entity
             'tmo_transacao_erp_saida'
         );
 
+        // Indica se o tipo exige conferência
+        $conf                 = new MyCampo('est_tipo_movimentacao', 'tmo_conferencia', false);
+        $conf->valor          = (isset($dados['tmo_conferencia'])) ? $dados['tmo_conferencia'] : 'N';
+        // $conf->leitura        = $show;
+        $conf->opcoes         = $simnao;
+        $conf->selecionado    = $conf->valor;
+        $conf->dispForm       = 'col-6';
+        $ret['tmo_conferencia'] = $conf->cr2opcoes();
+
         // Atendimento automático da movimentação
         $atea                 = new MyCampo('est_tipo_movimentacao', 'tmo_atendeautomatico', false);
         $atea->valor          = (isset($dados['tmo_atendeautomatico'])) ? $dados['tmo_atendeautomatico'] : 'N';
-        $atea->leitura        = $show;
+        // $atea->leitura        = $show;
         $atea->selecionado    = $atea->valor;
         $atea->opcoes         = $simnao;
         $atea->dispForm       = 'col-6';
@@ -140,7 +141,7 @@ class EntTipoMovimentacao extends Entity
         // Permite movimentação sem controle de estoque
         $seme                 = new MyCampo('est_tipo_movimentacao', 'tmo_semestoque', false);
         $seme->valor          = (isset($dados['tmo_semestoque'])) ? $dados['tmo_semestoque'] : 'N';
-        $seme->leitura        = $show;
+        // $seme->leitura        = $show;
         $seme->selecionado    = $seme->valor;
         $seme->opcoes         = $simnao;
         $seme->dispForm       = 'col-6';
@@ -150,7 +151,7 @@ class EntTipoMovimentacao extends Entity
         $entf               = new MyCampo('est_tipo_movimentacao', 'tmo_entrefiliais', false);
         $entf->valor        = (isset($dados['tmo_entrefiliais'])) ? $dados['tmo_entrefiliais'] : 'N';
         $entf->funcChan     = "acertaObrigatorioTransacoesERP()";
-        $entf->leitura      = $show;
+        // $entf->leitura      = $show;
         $entf->selecionado  = $entf->valor;
         $entf->opcoes       = $simnao;
         $entf->funcChan     = "acertaObrigatorioTransacoesERP()";
@@ -160,11 +161,20 @@ class EntTipoMovimentacao extends Entity
         // Define se o tipo usa estoque padrão
         $padf               = new MyCampo('est_tipo_movimentacao', 'tmo_estoquepadrao', false);
         $padf->valor        = (isset($dados['tmo_estoquepadrao'])) ? $dados['tmo_estoquepadrao'] : 'N';
-        $padf->leitura      = $show;
+        // $padf->leitura      = $show;
         $padf->selecionado  = $padf->valor;
         $padf->opcoes       = $simnao;
         $padf->dispForm     = "col-6";
         $ret['tmo_estoquepadrao'] = $padf->cr2opcoes();
+
+        // Indica se o tipo estará disponível na Requisição
+        $requ                 = new MyCampo('est_tipo_movimentacao', 'tmo_requisicao', false);
+        $requ->valor          = (isset($dados['tmo_requisicao'])) ? $dados['tmo_requisicao'] : 'N';
+        // $requ->leitura        = $show;
+        $requ->opcoes         = $simnao;
+        $requ->selecionado    = $requ->valor;
+        $requ->dispForm       = 'col-6';
+        $ret['tmo_requisicao'] = $requ->cr2opcoes();
 
         // Retorna os campos do tipo de movimentação
         return (object) $ret;
@@ -192,6 +202,7 @@ class EntTipoMovimentacao extends Entity
         $config['DispForm'] = 'col-6';
         $config['Largura']  = 50;
         $config['Ordem']    = $pos;
+        $config['Leitura']    = $show;
 
         $ret['tmm_deposito_origem'] = criaSelectRelativo(
             'est_sap_deposito',
@@ -206,10 +217,11 @@ class EntTipoMovimentacao extends Entity
         );
 
         // Deposito e Destino
-        $config['Label'] = 'Deposito e Destino';
+        $config['Label'] = 'Deposito de Destino';
         $config['Ordem']     = $pos;
         $config['Pai']       = "tmm_deposito_origem[$pos]";
         $config['Urlbusca']  = base_url('buscas/busca_dep_destino');
+        $config['Obrigatorio']    = false;
 
         $ret['tmm_deposito_destino'] = criaSelectRelativo(
             'est_sap_deposito',
@@ -258,7 +270,7 @@ class EntTipoMovimentacao extends Entity
         // Lista de perfis disponíveis no sistema
         $config = [];
         $config['Largura']      = 50;
-        $config['Leitura']      = $show;
+        // $config['Leitura']      = $show;
         $config['Obrigatorio']  = true;
         $config['Selecionado']  = $dados->prf_id ?? [];
 
@@ -266,7 +278,7 @@ class EntTipoMovimentacao extends Entity
             'cfg_perfil',
             'prf_id',
             'prf_nome',
-             $dados->prf_id ?? [],
+            $dados->prf_id ?? [],
             3,
             'est_tipo_movimentacao_permissao',
             [],

@@ -93,6 +93,8 @@ class TipoMovimentacao extends BaseController
         $campos[0][]  = $fields->tmo_entrefiliais;
         $campos[0][]  = 'vazio2';
         $campos[0][]  = $fields->tmo_estoquepadrao;
+        $campos[0][]  = 'vazio2';
+        $campos[0][]  = $fields->tmo_requisicao;
 
         $secao[1] = 'Movimentações';
         $displ[1] = 'tabela';
@@ -165,22 +167,31 @@ class TipoMovimentacao extends BaseController
 
         $entity = new EntTipoMovimentacao((array) $dados_tmov);
 
+
+        try {
+            // Checa uso do tipo em outros bancos
+            $this->verificarUsoEmRelacionamentos('est_tipo_movimentacao', 'tmo_id', (int) $dados_tmmm[$c]->tmo_id);
+        } catch (\Exception $e) {
+            $show = true;
+        }
         // se precisar respeitar $show:
         $fields = $entity->defCampos($show);
 
         $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields->tmo_id;
-        $campos[0][count($campos[0])] = $fields->tmo_nome;
-        $campos[0][count($campos[0])] = $fields->tmo_acumulador;
-        $campos[0][count($campos[0])] = $fields->tmo_conferencia;
-        $campos[0][count($campos[0])] = $fields->tmo_transacao_erp;
-        $campos[0][count($campos[0])] = $fields->tmo_semestoque;
-        $campos[0][count($campos[0])] = $fields->tmo_transacao_erp_entrada;
-        $campos[0][count($campos[0])] = $fields->tmo_atendeautomatico;
-        $campos[0][count($campos[0])] = $fields->tmo_transacao_erp_saida;
-        $campos[0][count($campos[0])] = $fields->tmo_entrefiliais;
-        $campos[0][count($campos[0])] = 'vazio2';
-        $campos[0][count($campos[0])] = $fields->tmo_estoquepadrao;
+        $campos[0][] = $fields->tmo_id;
+        $campos[0][] = $fields->tmo_nome;
+        $campos[0][] = $fields->tmo_acumulador;
+        $campos[0][] = $fields->tmo_conferencia;
+        $campos[0][] = $fields->tmo_transacao_erp;
+        $campos[0][] = $fields->tmo_semestoque;
+        $campos[0][] = $fields->tmo_transacao_erp_entrada;
+        $campos[0][] = $fields->tmo_atendeautomatico;
+        $campos[0][] = $fields->tmo_transacao_erp_saida;
+        $campos[0][] = $fields->tmo_entrefiliais;
+        $campos[0][] = 'vazio2';
+        $campos[0][] = $fields->tmo_estoquepadrao;
+        $campos[0][] = 'vazio2';
+        $campos[0][] = $fields->tmo_requisicao;
 
         $secao[1] = 'Movimentações';
         $displ[1] = 'tabela';
@@ -188,19 +199,20 @@ class TipoMovimentacao extends BaseController
 
         if (count($dados_tmmm) > 0) {
             for ($c = 0; $c < count($dados_tmmm); $c++) {
+                // debug($dados_tmmm[$c]);
                 $fields = $entity->defCamposMov((object) $dados_tmmm[$c], $c, $show);
 
                 $campos[1][$c][0] = $fields->tmm_id;
                 $campos[1][$c][count($campos[1][$c])] = $fields->tmm_deposito_origem;
                 $campos[1][$c][count($campos[1][$c])] = $fields->tmm_deposito_destino;
 
-                if (!$show) {
-                    $campos[1][$c][count($campos[1][$c])] = $fields->bt_add;
-                    $campos[1][$c][count($campos[1][$c])] = $fields->bt_del;
-                } else {
-                    $campos[1][$c][count($campos[1][$c])] = '';
-                    $campos[1][$c][count($campos[1][$c])] = '';
-                }
+                // if (!$show) {
+                $campos[1][$c][count($campos[1][$c])] = $fields->bt_add;
+                $campos[1][$c][count($campos[1][$c])] = $fields->bt_del;
+                // } else {
+                // $campos[1][$c][count($campos[1][$c])] = '';
+                // $campos[1][$c][count($campos[1][$c])] = '';
+                // }
             }
         } else {
             $fields = $entity->defCamposMov(null, 0, $show);
@@ -209,13 +221,13 @@ class TipoMovimentacao extends BaseController
             $campos[1][0][count($campos[1][0])] = $fields->tmm_deposito_origem;
             $campos[1][0][count($campos[1][0])] = $fields->tmm_deposito_destino;
 
-            if (!$show) {
-                $campos[1][0][count($campos[1][0])] = $fields->bt_add;
-                $campos[1][0][count($campos[1][0])] = $fields->bt_del;
-            } else {
-                $campos[1][0][count($campos[1][0])] = '';
-                $campos[1][0][count($campos[1][0])] = '';
-            }
+            // if (!$show) {
+            $campos[1][0][count($campos[1][0])] = $fields->bt_add;
+            $campos[1][0][count($campos[1][0])] = $fields->bt_del;
+            // } else {
+            // $campos[1][0][count($campos[1][0])] = '';
+            // $campos[1][0][count($campos[1][0])] = '';
+            // }
         }
 
         $secao[2] = 'Permissões';
@@ -330,6 +342,7 @@ class TipoMovimentacao extends BaseController
                 'tmo_nome'                  => $postado['tmo_nome'],
                 'tmo_acumulador'            => $postado['tmo_acumulador'],
                 'tmo_conferencia'           => $postado['tmo_conferencia'],
+                'tmo_requisicao'            => $postado['tmo_requisicao'],
                 'tmo_semestoque'            => $postado['tmo_semestoque'],
                 'tmo_transacao_erp'         => $postado['tmo_transacao_erp'],
                 'tmo_atendeautomatico'      => $postado['tmo_atendeautomatico'],

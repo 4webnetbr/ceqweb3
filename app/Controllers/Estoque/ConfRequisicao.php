@@ -12,6 +12,7 @@ use App\Models\Produt\ProdutProdutoModel;
 use App\Models\Estoqu\EstoquDepositoModel;
 use App\Entities\Estoque\EntConfRequisicao;
 use App\Models\Estoqu\EstoquRequisicaoModel;
+use App\Entities\Ocorrencia\EntOcoOcorrencia;
 use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
 
@@ -79,7 +80,7 @@ class ConfRequisicao extends BaseController
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
 
-        $dados_requis = $this->requisicao->getRequisicaoLista(false, [18, 21]);
+        $dados_requis = $this->requisicao->getRequisicaoLista(false, [18, 21, 24]);
         $dados_requis = filtrarPorPerfil($dados_requis);
 
         $req_ids_assoc = array_map(
@@ -102,7 +103,7 @@ class ConfRequisicao extends BaseController
 
                 $bt_con = new MyCampo();
                 $bt_con->id = $bt_con->nome = 'bt_confere';
-                $bt_con->classep  = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0';
+                $bt_con->classep  = 'btn btn-outline-success btn-sm border-0 mx-0 fs-0';
                 $bt_con->i_cone   = "<i class='fas fa-check'></i>";
                 $bt_con->label    = '';
                 $bt_con->place    = 'Conferência';
@@ -111,16 +112,6 @@ class ConfRequisicao extends BaseController
 
                 // Gerar a ação do botão
                 $btprn = '';
-                // if (trim($req->stt_impressao) === 'S') {
-                //     $bt_prn = new MyCampo();
-                //     $bt_prn->id = $bt_prn->nome = 'bt_print';
-                //     $bt_prn->classep  = 'btn btn-outline-dark btn-sm border-0 mx-0 fs-0';
-                //     $bt_prn->i_cone   = "<i class='fa-solid fa-print'></i>";
-                //     $bt_prn->label    = '';
-                //     $bt_prn->place    = 'Imprimir Requisição';
-                //     $bt_prn->funcChan = "openPDFModal('{$url_imp}','Imprimir Requisição')";
-                //     $btprn = $bt_prn->crBotao();
-                // }
                 $req->acao_person = [
                     $btcon,
                     $btprn
@@ -129,8 +120,9 @@ class ConfRequisicao extends BaseController
         }
 
         $this->data['edicao'] = false;
-        $this->data['consulta'] = false;
+        $this->data['allconsulta'] = true;
 
+        // debug($dados_requis, true);
         $requis = [
             'data' => montaListaColunasEnt($this->data, 'req_id', $dados_requis, $campos[1]),
         ];
@@ -179,22 +171,20 @@ class ConfRequisicao extends BaseController
         $campos[0][] = "<div class='col-6'>.</div>";
         $campos[0][] = $fields['lot_codbar'];
 
-        $produtos = $this->requisicao->getRequisicaoProdutos($id);
+        $produtos = $this->requisicao->getRequisicaoProdutos($id, 'conferencia');
         // debug($produtos, true);
+        // array_column mudando para o OBJ
+        $pro_ids = array_unique(array_map(
+            fn($p) => $p->pro_id,
+            $produtos
+        ));
 
-        $filtrado = array_filter($produtos, function ($item) {
-            return ($item->rpa_atendida + $item->rpa_cancelada) == $item->rep_quantia;
-        });
 
-        $produtos = $filtrado;
-
-        $pro_ids = array_unique(
-            array_map(fn($p) => $p->pro_id, $produtos)
-        );
 
         $dados_est_produto = $this->produtos
             ->getProdutoEstoqueCeqweb($pro_ids, $requisicao->req_depdestino);
 
+        // debug($dados_est_produto, true);
         // debug($dados_est_produto);
 
         // Transformar $produtos em um array indexado por pro_id
@@ -203,6 +193,7 @@ class ConfRequisicao extends BaseController
             $produtosIndexado[$param->pro_id] = $param;
         }
 
+        // debug(count($produtosIndexado));
         // Array para o resultado final
         $resultado = [];
 
@@ -226,6 +217,7 @@ class ConfRequisicao extends BaseController
 
         // debug($resultado, true);
 
+        // debug(count($resultado));
         for ($p = 0; $p < count($resultado); $p++) {
             $prod = $resultado[$p];
             $val_cancelada  = $prod->rpa_cancelada  ?? 0;
@@ -249,7 +241,7 @@ class ConfRequisicao extends BaseController
                 $prod->pre_cblote = 'N';
                 $prod->pre_undlote = 'N';
             }
-
+            // debug($prod, true);
             $bt_oco = new MyCampo();
             $bt_oco->id = $bt_oco->nome = 'bt_ocorre';
             $bt_oco->classep  = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0';
@@ -339,8 +331,8 @@ class ConfRequisicao extends BaseController
         $campos[0][count($campos[0])] =
             view('partials/pw_produtos_conferencia', ['produtos' => $resultado]);
 
-        $this->data['title'] = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
-        $this->data['desc_metodo'] = ' Conferência de ';
+        $this->data['desc_edicao']       = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['desc_metodo'] = ' ';
         $this->data['secoes'] = $secao;
         $this->data['campos'] = $campos;
         $this->data['destino'] = 'store';
@@ -372,14 +364,14 @@ class ConfRequisicao extends BaseController
     public function store()
     {
         $postado = $this->request->getPost();
-        // debug($postado, true);
+        // debug($postado);
 
         $dadosAgrupados = [];
 
         foreach ($postado as $key => $value) {
             if (preg_match('/^repid_(\d+)$/', $key, $matches)) {
                 $id = $matches[1]; // Ex: 88, 89
-
+                // debug($id);
                 // OBJETO
                 $dadosTemp = new \stdClass();
                 $dadosTemp->repid = $value;
@@ -388,6 +380,7 @@ class ConfRequisicao extends BaseController
                 foreach ($postado as $campo => $val) {
                     if (str_ends_with($campo, "_$id") && $campo !== "repid_$id") {
                         $nomeCampo = substr($campo, 0, -strlen("_$id"));
+                        // debug($nomeCampo);
                         $dadosTemp->$nomeCampo = $val;
                     }
                     if ($campo === "req_id") {
@@ -407,7 +400,7 @@ class ConfRequisicao extends BaseController
                 $atendida   = (int)($dadosTemp->rpa_atendida ?? 0);
                 $conferida  = (int)($dadosTemp->rpa_conferida ?? 0);
 
-                if ($atendida === $conferida) {
+                if ($conferida > 0) {
                     $dadosAgrupados[$id] = $dadosTemp;
                 }
             }
@@ -428,7 +421,29 @@ class ConfRequisicao extends BaseController
             $movs = [];
 
             foreach ($dadosAgrupados as $campo => $val) {
+                debug($val, true);
+                if ($val->rpa_conferida < $val->rpa_atendida) {
+                    // GERA OCORRENCIA
+                    $oco = [
+                        'pro_id'   => $val->proid,
+                        'lot_id'   => $val->proid,
+                        'tpo_id'   => 'integer',
+                        'sut_id'   => 'integer',
+                        'tpa_id'   => 'integer',
+                        'oco_qtd'  => 'integer',
+                        'stt_id'   => 'integer',
+                        'tmo_id'   => 'integer',
+                        'req_id'   => 'integer',
 
+                    ];
+                    // $entity = new EntOcoOcorrencia($postado);
+                    // debug($entity->stt_id);
+
+                    // if (!$this->ocorrencia->save($entity)) {
+                    // throw new \Exception(implode('<br>', $this->ocorrencia->errors()));
+                    // }
+
+                }
                 $sql_save = [
                     'rpa_conferida' => $val->rpa_conferida,
                     'rpa_data_conferencia' => date('Y-m-d H:i:s'),
@@ -485,8 +500,7 @@ class ConfRequisicao extends BaseController
                     $this->requisicaoate->transRollback();
                 }
             }
-
-            echo json_encode($ret);
         }
+        echo json_encode($ret);
     }
 }

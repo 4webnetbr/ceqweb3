@@ -379,6 +379,7 @@ class CfgEtiqueta extends BaseController
             $this->etiqueta->update($id, $dad_atin);
             $ret['erro'] = false;
             session()->setFlashdata('msg', 'Etiqueta Alterada com Sucesso');
+            $ret['msg']  = 'Etiqueta Alterada com Sucesso';
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
             $ret['erro'] = true;
             // $ret['msg']  = 'Não foi possível Alterar o Status, Verifique!<br><br>';

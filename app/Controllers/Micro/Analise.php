@@ -394,32 +394,19 @@ class Analise extends BaseController
             $campos[2][] = $fields3['tmo_id_rep'] ?? '';
         }
 
+        // mostraOcultaCampo('ana_liberar','N','tmo_id_rep');
+        // mostraOcultaCampo('ana_reprovar','N','tmo_id');
         $script = <<<SCRIPT
             <script>
                 mostraOcultaCampo('cla_metodanalise', 'N', 'ana_descmetodo');
                 mostraOcultaCampo('cla_metodanalise', 'S', 'ana_lotemb');
-            </script>
-            SCRIPT;
-
-        if ($dados->ana_liberar === 'S') {
-            $script .= <<<SCRIPT
-             <script>
-                 mostraOcultaCampo('ana_liberar','S','tmo_id');
-                 mostraOcultaCampo('ana_liberar','N','tmo_id_rep');
-                 mudaObrigatorio('ana_liberar','S','tmo_id');
-             </script>
-             SCRIPT;
-        }
-
-        if ($dados->ana_reprovar === 'S') {
-            $script .= <<<SCRIPT
-            <script>
+                
+                mostraOcultaCampo('ana_liberar','S','tmo_id');
+                mudaObrigatorio('ana_liberar','S','tmo_id');
                 mostraOcultaCampo('ana_reprovar','S','tmo_id_rep');
-                mostraOcultaCampo('ana_reprovar','N','tmo_id');
                 mudaObrigatorio('ana_reprovar','S','tmo_id_rep');
             </script>
             SCRIPT;
-        }
 
         $this->data['secoes']      = $secao;
         $this->data['campos']      = $campos;

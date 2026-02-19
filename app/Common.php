@@ -427,6 +427,7 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
     $exclusao = $data_lis['exclusao'] ?? true;
     $edicao = $data_lis['edicao'] ?? true;
     $consulta = $data_lis['consulta'] ?? true;
+    $allconsulta = $data_lis['allconsulta'] ?? false;
 
     array_unshift($fields, $chave);
     array_push($fields, 'acao');
@@ -467,8 +468,15 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
         $id_valor = $ent->{$chave};
         $nome_valor = $ent->{$nome};
 
-        if ((strlen($data_lis['permissao']) <= 3 && strpbrk($data_lis['permissao'], 'C')) ||
-            (strpbrk($data_lis['permissao'], 'C') && !$podeeditar) && $consulta
+        if (
+            $allconsulta ||
+            (
+                $consulta &&
+                (
+                    (strlen($data_lis['permissao']) <= 3 && strpbrk($data_lis['permissao'], 'C')) ||
+                    (strpbrk($data_lis['permissao'], 'C') && !$podeeditar)
+                )
+            )
         ) {
             $url_con = $data_lis['controler'] . '/show/' . $id_valor;
             $bt_con = new MyCampo();
@@ -488,7 +496,7 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
             $bt_edt->i_cone = "<i class='fas fa-edit'></i>";
             $bt_edt->place = "Alterar";
             $bt_edt->funcChan = "redireciona('{$url_edi}',event)";
-            $edit = $bt_edt->crBotao();
+            $edit .= $bt_edt->crBotao();
         }
 
         if ($temativo && $podeinativar && strpbrk($data_lis['permissao'], 'X')) {

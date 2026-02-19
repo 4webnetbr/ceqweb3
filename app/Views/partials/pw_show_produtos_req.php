@@ -1,10 +1,10 @@
 <style>
-  .tabela-pequena {
-    font-size: 10px;
-  }
+    .tabela-pequena {
+        font-size: 10px;
+    }
 </style>
 <?
-if(!isset($show)){
+if (!isset($show)) {
     $show = false;
 }
 ?>
@@ -12,8 +12,8 @@ if(!isset($show)){
     <div class="accordion-item">
         <h2 class="accordion-header border border-bottom-1" id="headprod<?= $produtos[0] ?>">
             <button class="accordion-button" type="button" data-bs-toggle="collapse"
-              data-bs-target="#collapseprod<?= $produtos[0] ?>" aria-expanded="false"
-              aria-controls="collapseprod<?= $produtos[0] ?>" data-proid="<?= $produtos[0] ?>">
+                data-bs-target="#collapseprod<?= $produtos[0] ?>" aria-expanded="false"
+                aria-controls="collapseprod<?= $produtos[0] ?>" data-proid="<?= $produtos[0] ?>">
                 <div class='col-12 text-center'>Produtos</div>
             </button>
         </h2>
@@ -23,8 +23,8 @@ if(!isset($show)){
                     <thead class="table-light">
                         <tr>
                             <?
-                            for ($c=0; $c < count($colunas) ; $c++) { ?>
-                                <th><?=$colunas[$c];?></th>
+                            for ($c = 0; $c < count($colunas); $c++) { ?>
+                                <th><?= $colunas[$c]; ?></th>
                             <?
                             }
                             ?>
@@ -32,26 +32,26 @@ if(!isset($show)){
                     </thead>
                     <tbody style="max-height: 45vh; overflow-y: auto;">
                         <?
-                        if(count($produtos) > 1){
-                            for ($p=1; $p < count($produtos) ; $p++) { 
+                        if (count($produtos) > 1) {
+                            for ($p = 1; $p < count($produtos); $p++) {
                                 $prodt = $produtos[$p];
-                            ?>
-                                <tr id='<?=$prodt[0]?>'>
+                        ?>
+                                <tr id='<?= $prodt[0] ?>'>
                                     <?
-                                    for ($pp=1; $pp <= count($colunas) ; $pp++) { ?>
-                                        <td><?=$prodt[$pp];?></td>
+                                    for ($pp = 1; $pp <= count($colunas); $pp++) { ?>
+                                        <td class='px-2 text-<?= $alinha[$pp - 1]; ?>'><?= $prodt[$pp]; ?></td>
                                     <?
-                                    }?>
+                                    } ?>
                                 </tr>
-                                <?
+                            <?
                             };
-                        } else {?>
+                        } else { ?>
                             <tr>
-                            <?
-                            for ($c=0; $c < count($colunas) ; $c++) { ?>
-                                <td></td>
-                            <?
-                            }?>
+                                <?
+                                for ($c = 0; $c < count($colunas); $c++) { ?>
+                                    <td></td>
+                                <?
+                                } ?>
                             </tr>
                         <?
                         }

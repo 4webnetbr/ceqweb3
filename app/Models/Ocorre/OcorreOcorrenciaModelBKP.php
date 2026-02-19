@@ -105,7 +105,7 @@ class OcorreOcorrenciaModel extends Model
     }
 
 
-    public function getById($id)
+    public function getOcorrencia($id)
     {
         $dados = $this->db->table($this->view)
             ->where('oco_id', $id)

@@ -18,11 +18,11 @@ class OcorreModOcorrenciaModel extends Model
     protected $useSoftDeletes   = false;
 
     protected $allowedFields    = [
-                'sut_id',
-                'sut_nome',
-                'sut_ativo',
-                'sut_excluido',
-                'tpo_id',
+        'sut_id',
+        'sut_nome',
+        'sut_ativo',
+        'sut_excluido',
+        'tpo_id',
     ];
 
     protected $validationRules = [
@@ -68,18 +68,29 @@ class OcorreModOcorrenciaModel extends Model
 
     public function getModOcorrencia($sut_id = false)
     {
-        // Conecta ao banco de Ocorrência
         $db = db_connect('dbOcorrencia');
-        $builder = $db->table('vw_oco_subt_ocorrencia_relac');
-        $builder->select('*');
-
-        // Filtra por modelo específico, se informado
+    
+        $builder = $db->table('vw_oco_subt_ocorrencia_relac v');
+        $builder->select('v.*');
+    
+        $perfilId = session()->get('usu_perfil_id');
+    
+        $builder->join(
+            'oco_tipo_ocorrencia_permissao tp',
+            'tp.tpo_id = v.tpo_id',
+            'inner'
+        );
+    
+        $builder->where('tp.prf_id', $perfilId);
+    
         if ($sut_id) {
-            $builder->where('sut_id', $sut_id);
+            $builder->where('v.sut_id', $sut_id);
         }
-        $builder->orderBy('sut_ativo, sut_nome');
-
-         // Ordena por status e nome do modelo
+    
+        $builder->groupBy('v.sut_id');
+    
+        $builder->orderBy('v.sut_ativo, v.sut_nome');
+    
         return $builder->get()->getResult();
     }
 
@@ -99,7 +110,7 @@ class OcorreModOcorrenciaModel extends Model
         $db = db_connect('dbOcorrencia');
         $builder = $db->table('vw_oco_subt_ocorrencia_relac');
         $builder->select('*');
-    
+
         // Filtra pelo tipo de ocorrência, se informado
         if ($tpo_id !== null) {
             $builder->where('tpo_id', $tpo_id);
@@ -138,34 +149,6 @@ class OcorreModOcorrenciaModel extends Model
 
         return $builder->get()->getResult();
     }
-    
-
-    public function getMocIdByTpa(int $tpa_id): ?int
-    {
-        $db = db_connect('dbOcorrencia');
-    
-        // Busca o modelo vinculado à ação
-        return $db->table('oco_moc_acao')
-            ->select('sut_nome')
-            ->where('tpa_id', $tpa_id)
-            ->get()
-            ->getRow('sut_nome');
-    }
-
-    public function getTipoOcorrenciaSearch($termo)
-    {
-        $array = ['sut_nome' => $termo . '%'];
-    
-        $db = db_connect('dbOcorrencia');
-        $builder = $db->table('vw_oco_moc_ocorrencia_relac');
-    
-        // Aplica filtros e ordenação
-        $builder->select('*');
-        $builder->like($array);
-        $builder->orderBy('sut_ativo, sut_nome');
-    
-        return $builder->get()->getResult();
-    }
 
     public function getUsoGestao(int $sut_id): bool
     {
@@ -175,11 +158,38 @@ class OcorreModOcorrenciaModel extends Model
             ->countAllResults() > 0;
     }
 
-    public function getSubtipoPorTipo(int $tpo_id)
+    public function getSubtipoPorTipos(int $tpo_id)
     {
         return $this->where('tpo_id', $tpo_id)
-                    ->orderBy('sut_nome')
-                    ->findAll();
+            ->orderBy('sut_nome')
+            ->findAll();
+    }
+
+    public function getSubPorTipo(int $tpo_id): ?int
+    {
+        $db = db_connect('dbOcorrencia');
+    
+        $builder = $db->table('oco_subt_ocorrencia');
+        $builder->select('sut_id');
+        $builder->where('tpo_id', $tpo_id);
+        $builder->where('sut_nome', 'Nenhuma');
+    
+        $row = $builder->get()->getRow();
+    
+        return $row ? $row->sut_id : null;
+    }
+
+     public function getSubTipo(int $tpo_id): ?int
+    {
+        $row = $this->db
+            ->table('oco_subt_ocorrencia')
+            ->select('sut_id')
+            ->where('tpo_id', $tpo_id)
+            ->where('sut_nome', 'Nenhuma')
+            ->get()
+            ->getRow();
+    
+        return $row?->sut_id;
     }
 
     public function getAcoesByTipoOcorrencia($tpo_id)
@@ -193,40 +203,6 @@ class OcorreModOcorrenciaModel extends Model
             ->getResult();
     }
 
-    public function getStatusByTpoTpa($tpo_id, $tpa_id)
-    {
-        // Busca o status associado
-        $row = $this->db->table('oco_tipo_ocorrencia_acao')
-            ->select('stt_id')
-            ->where('tpo_id', $tpo_id)
-            ->where('tpa_id', $tpa_id)
-            ->get()
-            ->getRowArray();
-        return $row['stt_id'];
-    }
-    
-    public function getStatus()
-    {
-        // Busca status cadastrados no sistema
-        return $this->db->table('config_ceqweb_db.cfg_status')
-            ->select('stt_id, stt_nome')
-            ->orderBy('stt_nome', 'ASC')
-            ->get()
-            ->getResult();
-    }
-
-    public function buscarPorTipo(int $tpo_id): array
-    {
-        // Busca modelos ativos vinculados ao tipo
-        return $this->db
-            ->table('ocorrencia_db.vw_oco_subt_ocorrencia_relac')
-            ->select('sut_nome, sut_nome')
-            ->where('tpo_id', $tpo_id)
-            ->where('sut_ativo', 'A')
-            ->orderBy('sut_nome')
-            ->get()
-            ->getResult();
-    }
 
     public function getTelaByTpoTpa(int $tpo_id, int $tpa_id): ?int
     {
@@ -237,8 +213,18 @@ class OcorreModOcorrenciaModel extends Model
             ->where('tpa_id', $tpa_id)
             ->get()
             ->getRow();
-    
+
         return $row?->tel_id;
+    }
+    public function getAcaoConfigurada(int $sut_id)
+    {
+        $db = db_connect('dbOcorrencia');
+    
+        $builder = $db->table('oco_subt_ocorrencia_acao');
+        $builder->select('*');
+        $builder->where('sut_id', $sut_id);
+    
+        return $builder->get()->getRow();
     }
 
     public function getTelas()
@@ -251,7 +237,7 @@ class OcorreModOcorrenciaModel extends Model
             ->getResult();
     }
 
-    public function getMovimentacaoByTpoTpa(int $tpo_id, int $tpa_id): ?int
+    public function getMovimentacao(int $tpo_id, int $tpa_id): ?int
     {
         // Busca a movimentação associada
         $row = $this->db->table('oco_tipo_ocorrencia_acao')
@@ -260,7 +246,7 @@ class OcorreModOcorrenciaModel extends Model
             ->where('tpa_id', $tpa_id)
             ->get()
             ->getRow();
-    
+
         // Retorna o ID da movimentação    
         return $row?->tmo_id;
     }

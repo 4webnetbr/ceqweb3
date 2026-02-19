@@ -5,17 +5,18 @@ namespace App\Controllers\Estoque;
 use DateTime;
 use App\Libraries\MyCampo;
 use App\DTOs\ProdutoMontado;
-use App\Traits\ForeignKeyUsageChecker;
 use App\Controllers\BuscasSapiens;
 use App\Controllers\BaseController;
 use App\Models\Produt\ProdutLoteModel;
+use App\Traits\ForeignKeyUsageChecker;
+use App\Entities\Estoque\EntRequisicao;
 use App\Models\Produt\ProdutClasseModel;
 use App\Models\Produt\ProdutProdutoModel;
 use App\Models\Estoqu\EstoquDepositoModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
-use App\Entities\Estoque\EntRequisicao;
+use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
 
 class Requisicao extends BaseController
 {
@@ -25,6 +26,7 @@ class Requisicao extends BaseController
     public $permissao = '';
     public $requisicao;
     public $requisicaoproduto;
+    public $reqprodutoate;
     public $classes;
     public $produtos;
     public $tipomovimentacao;
@@ -49,6 +51,7 @@ class Requisicao extends BaseController
         $this->deposito            = new EstoquDepositoModel();
         $this->lote                = new ProdutLoteModel();
         $this->tipomovimentacao    = new EstoquTipoMovimentacaoModel();
+        $this->reqprodutoate        = new EstoquRequisicaoProdutoAtendimentoModel();
 
         if ($this->data['erromsg'] != '') {
             $this->__erro();
@@ -155,6 +158,8 @@ class Requisicao extends BaseController
             }
         }
 
+        // MOSTRA CONSULTA EM TODOS OS STATUS
+        $this->data['allconsulta'] = true;
         // Retorno para DataTables
         $requis = ['data' => montaListaColunasEnt($this->data, 'req_id', $dados_requis, $campos[1])];
 
@@ -249,7 +254,7 @@ class Requisicao extends BaseController
 
             // Montar campos como no add()
             // debug($requisicao, true);
-            $ent = new EntRequisicao((array) $requisicao, true);
+            $ent = new EntRequisicao((array) $requisicao, true, 'copy');
             $fields = $ent->campos;
 
             $secao[0] = 'Dados Gerais';
@@ -286,8 +291,9 @@ class Requisicao extends BaseController
             $this->data['botao'] = $this->bt_envia;
 
             $this->data['metodo']        = ' ';
-            $this->data['title']         = '';
-            $this->data['desc_metodo']   = ' Cópia da Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+            // $this->data['title']         = '';
+            $this->data['desc_metodo']   = ' Cópia de ';
+            $this->data['desc_edicao']   = ' Req Original: ' . str_pad($id, 6, '0', STR_PAD_LEFT);
             $this->data['secoes']        = $secao;
             $this->data['campos']        = $campos;
             $this->data['destino']       = 'store'; // ou 'update' se você for criar
@@ -345,42 +351,12 @@ class Requisicao extends BaseController
         $campos[0][] = $fields['req_observacao'];
 
         $produtosreq = $this->requisicao->getRequisicaoProdutos($id);
+        // debug($produtosreq);
 
         $pro_ids = array_unique(array_map(
             fn($p) => $p->pro_id,
             $produtosreq
         ));
-
-        $dados_est_produto = $this->produtos->getProdutoEstoque(
-            $pro_ids,
-            $requisicao->req_depdestino
-        );
-
-        // Indexa produtos da requisição
-        $produtosIndexado = [];
-        foreach ($produtosreq as $param) {
-            $produtosIndexado[$param->pro_id][] = $param;
-        }
-
-        $resultado = [];
-
-        if (count($dados_est_produto) > 0) {
-            foreach ($dados_est_produto as $itemEstoque) {
-                $pro_id = $itemEstoque->pro_id;
-
-                if (isset($produtosIndexado[$pro_id])) {
-                    foreach ($produtosIndexado[$pro_id] as $param) {
-                        $resultado[] = array_merge(
-                            (array) $itemEstoque,
-                            (array) $param
-                        );
-                    }
-                } else {
-                    $resultado[] = (array) $itemEstoque;
-                }
-            }
-            $produtosreq = $resultado;
-        }
 
         $colunas = [
             'Cód ERP',
@@ -394,7 +370,23 @@ class Requisicao extends BaseController
             'Requisição',
             'Cancelada',
             'Atendida',
-            'Saldo'
+            'Saldo',
+            'Conferida',
+        ];
+        $alinha = [
+            'center',
+            'start',
+            'start',
+            'start',
+            'center',
+            'end',
+            'end',
+            'end',
+            'end',
+            'end',
+            'end',
+            'end',
+            'end',
         ];
 
         $produtos = [];
@@ -402,9 +394,10 @@ class Requisicao extends BaseController
 
         if (count($produtosreq) > 0) {
             for ($p = 0; $p < count($produtosreq); $p++) {
-                $prod = $produtosreq[$p];
+                // $prod = $produtosreq[$p];
 
                 $prod = (object) $produtosreq[$p];
+                // debug($prod, true);
 
                 $produto = [];
                 $produto[0] = $prod->rep_id ?? null;
@@ -420,6 +413,7 @@ class Requisicao extends BaseController
                 $produto[]  = $prod->rpa_cancelada ?? null;
                 $produto[]  = $prod->rpa_atendida ?? null;
                 $produto[] = ($prod->rep_quantia ?? 0) - (($prod->rpa_atendida ?? 0) + ($prod->rpa_cancelada ?? 0));
+                $produto[]  = $prod->rpa_conferida ?? null;
 
                 $produtos[] = $produto;
             }
@@ -428,15 +422,14 @@ class Requisicao extends BaseController
         $data = [
             'show'     => true,
             'colunas'  => $colunas,
+            'alinha'   => $alinha,
             'produtos' => $produtos
         ];
 
         $campos[0][count($campos[0])] =
             view('partials/pw_show_produtos_req', $data);
 
-        $this->data['metodo']      = ' ';
-        $this->data['title']       = '';
-        $this->data['desc_metodo'] = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['secoes']      = $secao;
         $this->data['campos']      = $campos;
         $this->data['destino']     = '';
@@ -502,7 +495,8 @@ class Requisicao extends BaseController
 
         $this->data['botao'] = $this->bt_envia;
 
-        $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        // $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['secoes']    = $secao;
         $this->data['campos']    = $campos;
         $this->data['destino']   = 'store'; // ou 'update' se você for criar
@@ -567,7 +561,12 @@ class Requisicao extends BaseController
         // debug($req, true);
         // === Parâmetros recebidos ===
         $reqid         = trim($req->reqid ?? '');
-        $proid         = trim($req->proid ?? '');
+        $proid         = $req->proid ?? '';
+        // if (is_array($proid)) {
+        //     $proid = implode(',', array_map('trim', $proid));
+        // } else {
+        //     $proid = trim($proid);
+        // }
         $deporigem     = trim($req->deporigem ?? '');
         $depdestino    = trim($req->depdestino ?? '');
         $tipomovim     = trim($req->tipomovim ?? '');
@@ -587,6 +586,7 @@ class Requisicao extends BaseController
             foreach ($prodreq as $p) {
                 $produtosIndexado[$p['pro_codpro']][$p['lot_lote']] = $p;
             }
+            // debug($produtosIndexado, true);
         }
 
         // RETORNO BASE
@@ -607,18 +607,22 @@ class Requisicao extends BaseController
 
         envia_msg_ws($this->data['controler'], "Carregando produtos", 'MsgServer', session()->get('usu_id'), 1);
 
+        // debug($proid, true);
         $listaProdutos = $this->produtos->getProdutoRequisicao(
             $depdestino,
-            $proid !== '-1' ? $proid : false
+            $proid ?? false
         );
         // debug($listaProdutos, true);
 
         // ESTOQUES
         envia_msg_ws($this->data['controler'], "Buscando estoque de origem", 'MsgServer', session()->get('usu_id'), 1);
-        $estoqueOrigem  = $this->indexarEstoque($this->busca->buscaEstoqueDeposito($deporigem) ?? []);
+        $estorig = (array) $this->busca->buscaEstoqueDeposito($deporigem) ?? [];
+        // debug((arrasy) $estorig, true);
+        $estoqueOrigem  = $this->indexarEstoque($estorig);
 
         envia_msg_ws($this->data['controler'], "Buscando estoque de destino", 'MsgServer', session()->get('usu_id'), 1);
-        $estoqueDestino = $this->indexarEstoque($this->busca->buscaEstoqueDeposito($depdestino) ?? []);
+        $estdest = (array) $this->busca->buscaEstoqueDeposito($depdestino) ?? [];
+        $estoqueDestino = $this->indexarEstoque($estdest);
         $estoquePadrao  = [];
 
         // debug($tipomov);
@@ -682,7 +686,8 @@ class Requisicao extends BaseController
             $claId   = $prod->cla_id;
             $claNome = $prod->cla_nome;
 
-            $produtoreq = $produtosIndexado[$codPro][$lotePro] ?? [];
+            $keyLote = $lotePro === 'Sem Lote' ? '' : $lotePro;
+            $produtoreq = $produtosIndexado[$codPro][$keyLote] ?? [];
 
             $ori = $estoqueOrigem[$codPro][$lotePro] ?? [];
             $des = $estoqueDestino[$codPro][$lotePro] ?? [];
@@ -975,9 +980,11 @@ class Requisicao extends BaseController
         $dataEntrega = DateTime::createFromFormat('Y-m-d', $postado['req_dataentrega']);
         $repete = $postado['req_repetedias'];
         // debug($repete);
-        $vezes = max(1, (int)$repete); // garante pelo menos uma execução
+        $vezes = max(1, (int)$repete + 1); // garante pelo menos uma execução
         if ($status != 4) {
             $vezes = 1;
+        } else {
+            $repete = 0;
         }
         // debug($vezes, true);
         for ($i = 0; $i < $vezes; $i++) {
@@ -994,7 +1001,7 @@ class Requisicao extends BaseController
                 'req_consdiaanterior' => $postado['req_consdiaanterior'],
                 'req_medconsumodias'  => $postado['req_medconsumodias'],
                 'req_meddias'         => $postado['req_meddias'] ?? null,
-                'req_repetedias'      => 0,
+                'req_repetedias'      => $repete,
                 'req_percseguranca'   => $postado['req_percseguranca'],
                 'req_observacao'      => $postado['req_observacao'],
                 'stt_id'              => $status
@@ -1190,6 +1197,55 @@ class Requisicao extends BaseController
 
             $db->transCommit();
             $db->transComplete();
+        }
+        // verifica se é atendimento automaticp
+        if ($status == 4) {
+            $tipomov = $this->tipomovimentacao->getTipoMovimentacao($postado['tmo_id'])[0];
+            // debug($tipomov, true);
+            if ($tipomov->tmo_conferencia == 'N') {
+                $dadosReq = [
+                    'stt_id' => 5
+                ];
+                $db->transBegin();
+                $this->requisicao->update($req_id, $dadosReq);
+                $produtosreq = $this->requisicao->getRequisicaoProdutos($req_id);
+                foreach ($produtosreq as $val) {
+                    $sql_save = [
+                        'rep_id'        => $val->rep_id,
+                        'pro_id'        => $val->pro_id,
+                        'rpa_cancelada' => 0,
+                        'rpa_atendida'  => $val->rep_quantia,
+                        'rpa_conferida'  => $val->rep_quantia,
+                        'rpa_data'      => date('Y-m-d H:i:s'),
+                        'rpa_data_conferencia'      => date('Y-m-d H:i:s'),
+                    ];
+
+                    $salva = $this->reqprodutoate->insert($sql_save);
+                }
+                $db->transCommit();
+                // TODO CRIAR MOVIMENTAÇÃO DE ESTOQUE
+
+            } else if ($tipomov->tmo_atendeautomatico == 'S') {
+                // ATENDE AUTOMÁTICO, STATUS = 18 = ATENDIDA
+                $dadosReq = [
+                    'stt_id' => 18
+                ];
+                $db->transBegin();
+                $this->requisicao->update($req_id, $dadosReq);
+                $produtosreq = $this->requisicao->getRequisicaoProdutos($req_id);
+                foreach ($produtosreq as $val) {
+                    $sql_save = [
+                        'rep_id'        => $val->rep_id,
+                        'pro_id'        => $val->pro_id,
+                        'rpa_cancelada' => 0,
+                        'rpa_atendida'  => $val->rep_quantia,
+                        'rpa_data'      => date('Y-m-d H:i:s'),
+                    ];
+
+                    $salva = $this->reqprodutoate->insert($sql_save);
+                }
+                $db->transCommit();
+            }
         }
         $ret['msg'] = "$vezes Requisição(ões) gravada(s) com sucesso!";
         $ret['url'] = site_url($this->data['controler']);

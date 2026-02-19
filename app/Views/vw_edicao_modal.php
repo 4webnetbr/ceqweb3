@@ -56,6 +56,11 @@
             echo "</div>";
         }
         ?>
+        <?php if (!empty($hidden)) : ?>
+            <?php foreach ($hidden as $h) : ?>
+                <input type="hidden" name="<?= $h['name'] ?>" value="<?= esc($h['value']) ?>">
+            <?php endforeach; ?>
+        <?php endif; ?>
     </form>
 </div>
 

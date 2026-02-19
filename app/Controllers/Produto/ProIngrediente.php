@@ -117,36 +117,6 @@ class ProIngrediente extends BaseController
 
     public function ativinativ($id, $tipo)
     {
-        // Define o status do ingrediente (Ativo/Inativo)
-        // if ($tipo == 1) {
-        //     $dad_atin = [
-        //         'ing_ativo' => 'A'
-        //     ];
-        // } else {
-        //     $dad_atin = [
-        //         'ing_ativo' => 'I'
-        //     ];
-        // }
-        // $ret = [];
-
-        // // Verifica se existem produtos vinculados a este ingrediente
-        // $produtos = new ProdutProdutoModel();
-        // $existepro = $produtos->getProdutoComIngrediente($id);
-        // if (count($existepro)) {
-        //     $ret['erro'] = true;
-        //     $ret['msg']  = 14;
-        // } else {
-        //     try {
-        //         // Atualiza o status do ingrediente
-        //         $this->ingrediente->update($id, $dad_atin);
-        //         $ret['erro'] = false;
-        //         session()->setFlashdata('msg', 'Ingrediente Alterado com Sucesso');
-        //     } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
-        //         $ret['erro'] = true;
-        //         $ret['msg']  = 'Não foi possível Alterar o Ingrediente, Verifique!<br><br>';
-        //     }
-        // }
-        // echo json_encode($ret);
 
         $ret = [];
         try {

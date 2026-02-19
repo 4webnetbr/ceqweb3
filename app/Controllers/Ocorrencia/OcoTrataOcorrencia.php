@@ -6,7 +6,10 @@ use App\Libraries\MyCampo;
 use App\Entities\Ocorrencia\EntOcoTratativa;
 use App\Entities\Ocorrencia\EntOcoOcorrencia;
 use App\Controllers\BaseController;
+use App\Models\Config\ConfigStatusModel;
 use App\Models\Ocorre\OcorreOcorrenciaModel;
+use App\Models\Ocorre\OcorreModOcorrenciaModel;
+use App\Models\Produt\ProdutProdutoModel;
 
 class OcoTrataOcorrencia extends BaseController
 {
@@ -51,7 +54,7 @@ class OcoTrataOcorrencia extends BaseController
     {
         // Monta definição dos campos da listagem
         $campos   = montaColunasCampos($this->data, 'oco_id');
-        $dados    = $this->ocorrencia->getListaCompleta();
+        $dados    = $this->ocorrencia->getListaCompleta(false, [28]);
 
         // Caso não existam registros
         if (!$dados) {
@@ -61,9 +64,9 @@ class OcoTrataOcorrencia extends BaseController
         $oco_ids    = array_map(fn($o) => $o->oco_id, $dados);
         $logGeracao = buscaLogTabela('oco_ocorrencia', $oco_ids);
 
-        $this->data['permissao'] = 'C';
         $this->data['exclusao'] = false;   // não tem exclusão
         $this->data['edicao']   = false;   // não tem edição
+        $this->data['allconsulta']   = true;   // não tem edição
 
         $base_url = base_url($this->data['controler']);
 
@@ -105,115 +108,67 @@ class OcoTrataOcorrencia extends BaseController
 
     public function show($id)
     {
-        $dados = $this->ocorrencia->find($id);
-    
-        if (!$dados) {
-            session()->setFlashdata('erromsg', 'Ocorrência não encontrada.');
-            return redirect()->to(site_url($this->data['controler']));
-        }
-    
-        $log = buscaLogTabela('oco_ocorrencia', [$id]);
-        if (isset($log[$id]['usua_alterou'])) {
-            $dados->usu_nome = $log[$id]['usua_alterou'];
-        }
-    
-        $acoes = $this->ocorrencia->getAcoesFinalizar($id);
-    
-        if ($acoes) {
-            // usa a primeira linha (tem o.* + ação)
-            $dados = $acoes[0];
-    
-            // mantém o usuário do log
-            if (isset($log[$id]['usua_alterou'])) {
-                $dados->usu_nome = $log[$id]['usua_alterou'];
-            }
-        }
-    
-        $entity = new EntOcoTratativa($dados, true);
-        $fields = $entity->campos;
-    
-        $secao[0] = 'Dados da Ocorrência';
-        $campos[0] = [];
-    
-        // Campos fixos
-        $campos[0][] = $fields['tpo_id'];
-        $campos[0][] = $fields['usu_nome'];
-        $campos[0][] = $fields['oco_descricao'];
-        $campos[0][] = $fields['oco_data'];
-        $campos[0][] = $fields['lot_lote'];
-        $campos[0][] = $fields['pro_despro'];
-        $campos[0][] = $fields['oco_qtd'];
-    
-        if (isset($fields['oco_justi'])) {
-            $campos[0][] = $fields['oco_justi'];
-        }
-        if (isset($fields['tmo_id'])) {
-            $campos[0][] = $fields['tmo_id'];
-        }
-        if (isset($fields['stt_id'])) {
-            $campos[0][] = $fields['stt_id'];
-        }
-        if (isset($fields['tel_id'])) {
-            $campos[0][] = $fields['tel_id'];
-        }
-    
-        if (!empty($acoes)) {
-            foreach ($acoes as $acao) {
-                $acao->somente_leitura = true;
-    
-                $camposAcao = $entity->defCamposAcao($acao);
-                foreach ($camposAcao as $campo) {
-                    $campos[0][] = $campo;
-                }
-            }
-        }
-    
-        $this->data['show']        = true;
-        $this->data['title']       = 'Ocorrência';
-        $this->data['desc_metodo'] = ' Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT);
-    
-        $this->data['secoes']  = $secao;
-        $this->data['campos']  = $campos;
-        $this->data['metodo']  = 'show';
-        $this->data['destino'] = '';
-    
-        echo view('vw_edicao', $this->data);
+        return redirect()->to('/OcoOcorrencia/show/' . $id);
     }
 
 
     public function finalizar($id)
     {
-        $acoes = $this->ocorrencia->getAcoesFinalizar($id);
-    
-        if (!$acoes) {
-            throw new \Exception("Ocorrência não encontrada");
+        $dados = $this->ocorrencia->getOcorrencia($id);
+
+        $statModel = new ConfigStatusModel();
+        $status   = $statModel->getStatus($dados->stt_id);
+        $etiqueta = '';
+        if ($status) {
+            $etiqueta = fmtEtiquetaCor($status->cor_valorrgb ?? '', $status->stt_nome ?? '', 1);
         }
-        $base = $acoes[0];
+        
+        if (!$dados) {
+            throw new \Exception('Ocorrência não encontrada');
+        }
+        // $sttPrincipal = $dados->stt_id ?? null;
+    
     
         $log = buscaLogTabela('oco_ocorrencia', [$id]);
+        $usuLog = $log[$id]['usua_alterou'] ?? null;
     
-        $secao[0] = 'Finalizar a Tratativa';
-        $campos[0] = [];
+        // ações 
+        $acoes = $this->ocorrencia->getAcoesFinalizar($id);
     
-        // Campos fixos (usa a primeira linha)
-        $base = $acoes[0];
-    
-        if (isset($log[$id]['usua_alterou'])) {
-            $base->usu_nome = $log[$id]['usua_alterou'];
+        //  DADOS DO TOPO 
+        if (!empty($acoes)) {
+            $dados = clone $acoes[0]; // não altera $acoes[0]
+        } else {
+            $dados = $dados;
         }
     
-        $entity = new EntOcoTratativa($base, true);
-        $fields = $entity->campos;
+        // mantém usuário do log
+        if ($usuLog) {
+            $dados->usu_nome = $usuLog;
+        }
+        // $dados->stt_id = $sttPrincipal;
     
-        // Campos fixos
+        $entity = new EntOcoTratativa($dados, true);
+        $fields = $entity->campos;
+
+        $secao[0] = 'Dados da Ocorrência';
+        $campos[0] = [];
+
+        $campos[0][] = $fields['oco_id'];
         $campos[0][] = $fields['tpo_id'];
+        $campos[0][] = $fields['sut_id'];
         $campos[0][] = $fields['usu_nome'];
         $campos[0][] = $fields['oco_descricao'];
         $campos[0][] = $fields['oco_data'];
+        // status do TOPO, no defCampos!
+        if (isset($fields['stt_nome'])) {
+            $campos[0][] = $fields['stt_nome'];
+        }
         $campos[0][] = $fields['lot_lote'];
         $campos[0][] = $fields['pro_despro'];
         $campos[0][] = $fields['oco_qtd'];
-
+        // $campos[0][] = $fields['tpa_id'];
+    
         if (isset($fields['oco_justi'])) {
             $campos[0][] = $fields['oco_justi'];
         }
@@ -227,94 +182,170 @@ class OcoTrataOcorrencia extends BaseController
             $campos[0][] = $fields['tel_id'];
         }
 
-        $hidOcoId = new MyCampo('oco_ocorrencia', 'oco_id');
-        $hidOcoId->valor = $base->oco_id;
-        $hidOcoId->tipo  = 'hidden';
-        $hidOcoId->size  = 1;
+        //  debug($fields, true);
         
-        
-        $hidFinalizar = new MyCampo('oco_ocorrencia', 'finalizar');
-        $hidFinalizar->valor = 1;
-        $hidFinalizar->tipo  = 'hidden';
-        $hidFinalizar->size  = 1;
-        
-        $campos[0][] = $hidOcoId->crInput();
-        $campos[0][] = $hidFinalizar->crInput();
-        
-            
-        foreach ($acoes as $acao) {
-            $camposAcao = $entity->defCamposAcao($acao);
-            foreach ($camposAcao as $campo) {
-                $campos[0][] = $campo;
+        // BLOCO DAS AÇÕES 
+        if (!empty($acoes)) {
+    
+            $acoesResultado = [];
+    
+            foreach ($acoes as $acao) {
+                $acao->somente_leitura = false;
+                $camposAcao = $entity->defCamposAcao($acao);
+                $acoesResultado[] = $camposAcao;
             }
+    
+            $campos[0][] = view(
+                'partials/pw_acoes_ocorrencia',
+                [
+                    'acoes'  => $acoesResultado,
+                    'oco_id' => $id
+                ]
+            );
         }
+        
     
-        $this->data['secoes']      = $secao;
-        $this->data['campos']      = $campos;
-        $this->data['destino']     = 'store';
-        $this->data['desc_metodo'] = 'Finalização da';
-        $this->data['forca_alteracao'] = true;
+        // CONFIG VIEW
+        $this->data['show']        = true;
+        $this->data['title']       = 'Ocorrência';
+        $this->data['desc_edicao'] = ' Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' - ' . $etiqueta;
+        
+        $this->data['secoes']       = $secao;
+        $this->data['campos']       = $campos;
+        $this->data['destino']      = "store";
+        $this->data['desc_metodo']  = '';
+        $this->data['forca_submit'] = true;
     
+        $this->data['hidden'][] = [
+            'name'  => 'finalizar',
+            'value' => 1
+        ];
+            
         echo view('vw_edicao', $this->data);
     }
 
-
+    
 
     public function store()
     {
+        // debug('ENTROU NO STORE');
         $postado = $this->request->getPost();
-
-        $oco = $this->ocorrencia->find($postado['oco_id']);
-        if (!$oco) {
-            throw new \Exception('Ocorrência não encontrada');
-        }
-        
+        // debug($postado);
+        // debug($this->request->getPost(), true);
+    
         try {
-            if (empty($postado['oco_id'])) {
+    
+            $ocoId = $this->request->getPost('oco_id');
+
+            if (empty($ocoId)) {
                 throw new \Exception('ID da ocorrência não informado para finalização');
             }
-        
-            $acao = $this->ocorrencia->getAcaoConfigurada(
+            
+            $oco = $this->ocorrencia->find($ocoId);
+            
+            if (!$oco) {
+                throw new \Exception('Ocorrência não encontrada');
+            }
+    
+            // confirmação obrigatória
+            $acao = (new OcorreModOcorrenciaModel())
+            ->getAcaoConfigurada(
                 (int) $oco->tpo_id,
                 $oco->sut_id
             );
-        
-            // confirmação obrigatória
-            if (
-                $acao &&
-                (int)$acao->tpa_id === 3 &&
-                empty($postado['confirmado'])
-            ) {
+                    
+            if (!$acao) {
+                throw new \Exception('Ação não configurada para este tipo/subtipo');
+            }
+            
+            if ($acao && (int)$acao->tpa_id === 3) {
                 return $this->response->setJSON([
                     'erro' => true,
-                    'msg'  => 6,
+                    'msg'  => 6
                 ]);
             }
-        
-            // FINALIZA
-            $postado['stt_id']       = 30;
+            
+            // ADIÇÃO: DECISÃO STT e TMO
+            $movs    = [];
+            $novoStt = null;
+            
+            
+            
+            // MOVIMENTAÇÃO
+            if ((int)$acao->tpa_id === 3) {
+            
+                if (!empty($postado['tmo_id']) && (int)($postado['oco_qtd'] ?? 0) > 0) {
+                    $movs[] = [
+                        'id'  => (int)$postado['tmo_id'],
+                        'qt'  => (int)$postado['oco_qtd'],
+                        'msg' => 'Ação da tratativa'
+                    ];
+                }
+            }
+            
+            // ALTERAR STATUS
+            if ((int)$acao->tpa_id === 7) {
+            
+                if (empty($acao->stt_id)) {
+                    throw new \Exception('Ação "Alterar Status" sem status configurado');
+                }
+            
+                $novoStt = (int)$acao->stt_id;
+            
+                // PRODUTO
+                $produtoModel = new ProdutProdutoModel();
+                $produtoModel->update($oco->pro_id, [
+                    'stt_id' => $novoStt
+                ]);
+            
+                // OCORRÊNCIA = SEMPRE FINALIZADA
+                $this->ocorrencia->update($oco->oco_id, [
+                    'stt_id'       => 30,
+                    'usu_fina'     => session()->get('usu_nome'),
+                    'oco_data_fim' => date('Y-m-d H:i:s')
+                ]);
+            
+                $novoStt = null;
+            }
+
+            // Gera movimentos se existirem
+            if (!empty($movs)) {
+                cache()->clean();
+                $movim = geraMovimentoSOAP($movs, $postado, $this->data);
+            
+                if ($movim['status'] == 'Erro') {
+                    $ret['erro'] = true;
+                    $ret['msg']  = $movim['mensagem'];
+                }
+            }
+    
+            // FINALIZA 
+            $postado['stt_id']       = $novoStt ?? 30;
             $postado['usu_fina']     = session()->get('usu_nome');
             $postado['oco_data_fim'] = date('Y-m-d H:i:s');
-        
+    
             unset(
                 $postado['sut_id'],
                 $postado['tpa_id'],
                 $postado['tmo_id'],
                 $postado['tel_id']
             );
-        
+    
             $entity = new EntOcoOcorrencia($postado);
-        
+    
             if (!$this->ocorrencia->save($entity)) {
                 throw new \Exception(implode('<br>', $this->ocorrencia->errors()));
             }
-        
+
+            session()->setFlashdata('msg', 'Ocorrência gravada com sucesso!');
+    
             return $this->response->setJSON([
                 'erro' => false,
                 'url'  => site_url($this->data['controler'])
             ]);
-        
+    
         } catch (\Exception $e) {
+    
             return $this->response->setJSON([
                 'erro' => true,
                 'msg'  => $e->getMessage()
