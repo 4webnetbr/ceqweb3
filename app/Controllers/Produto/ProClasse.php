@@ -183,7 +183,7 @@ class ProClasse extends BaseController
     public function edit($id, $show = false)
     {
         $dados_classes = $this->classes->getClasse($id);
-        debug($dados_classes, true);
+        // debug($dados_classes, true);
         // $fields = $this->classes->defCampos($dados_classes, $show);
         $entProClasse = new EntProClasse((array) $dados_classes);
         $fields = $entProClasse->defCampos((array) $dados_classes, $show);
