@@ -9,22 +9,22 @@ use App\Models\Produt\ProdutProdutoModel;
 class EntProClasse extends Entity
 {
     protected $attributes = [
-        'cla_id'            => null, 
-        'cla_nome'          => null, 
-        'cla_requisicao'    => null, 
-        'cla_insvis'        => null, 
-        'cla_insvisconf'    => null, 
-        'cla_formula'       => null, 
-        'cla_micro'         => null, 
-        'cla_metodanalise'  => null, 
-        'cla_ativo'         => null, 
+        'cla_id'            => null,
+        'cla_nome'          => null,
+        'cla_requisicao'    => null,
+        'cla_insvis'        => null,
+        'cla_insvisconf'    => null,
+        'cla_formula'       => null,
+        'cla_micro'         => null,
+        'cla_metodanalise'  => null,
+        'cla_ativo'         => 'A',
         'cla_ordem'         => null,
-        'cla_estdataatual'  => null, 
-        'cla_dash_consumo'  => null, 
-        'cla_gestaoestoque' => null, 
-        'cla_cabecalho'     => null, 
-        'cla_rodape'        => null, 
-        'cla_deposito'      => null, 
+        'cla_estdataatual'  => null,
+        'cla_dash_consumo'  => null,
+        'cla_gestaoestoque' => null,
+        'cla_cabecalho'     => null,
+        'cla_rodape'        => null,
+        'cla_deposito'      => null,
     ];
 
     protected $dates = ['cla_excluido'];
@@ -34,12 +34,12 @@ class EntProClasse extends Entity
     public function __construct(?array $data = null, bool $show = false)
     {
         parent::__construct($data);
-        // $this->campos = $this->defCampos($show);
+        $this->campos = $this->defCampos($show);
     }
 
-    public function defCampos($dados = false, bool $show = false): array
+    public function defCampos(bool $show = false): array
     {
-        // $dados = $this->toArray();
+        $dados = $this->toArray();
         // debug($dados, true);
 
         $ret = [];
@@ -127,7 +127,6 @@ class EntProClasse extends Entity
         $opc_daco['Bolsas'] = 'Bolsas';
         $opc_daco['Equipos'] = 'Equipos';
         $opc_daco['Insumos'] = 'Insumos';
-        $opc_daco['']        = 'Nenhuma';
         $daco                 = new MyCampo('pro_classe', 'cla_dash_consumo', false);
         $daco->valor          = $dados['cla_dash_consumo'] ?? '';
         $daco->selecionado    = $daco->valor;
@@ -146,10 +145,12 @@ class EntProClasse extends Entity
         $ret['cla_gestaoestoque']          = $ges->cr2opcoes();
 
         $config[] = '';
-        $config['Label']    = 'Depósito';
+        // $config['Label']    = 'Depósito';
         $config['Leitura']  = $show;
         $config['Largura']  = 50;
         $config['Dispform']  = 'col-4';
+        $config['Obrigatorio']  = false;
+
         $depositos = ! empty($dados['cla_deposito'])
             ? array_map(
                 static fn(string $item): string => trim($item),

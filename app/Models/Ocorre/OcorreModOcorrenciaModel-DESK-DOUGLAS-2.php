@@ -18,7 +18,7 @@ class OcorreModOcorrenciaModel extends Model
     protected $useSoftDeletes   = false;
 
     protected $allowedFields    = [
-        // 'sut_id',
+        'sut_id',
         'sut_nome',
         'sut_ativo',
         'sut_excluido',
@@ -169,7 +169,7 @@ class OcorreModOcorrenciaModel extends Model
     {
         $db = db_connect('dbOcorrencia');
     
-        $builder = $db->table('oco_subt_ocorrencia_acao');
+        $builder = $db->table('oco_subt_ocorrencia');
         $builder->select('sut_id');
         $builder->where('tpo_id', $tpo_id);
         $builder->where('sut_nome', 'Nenhuma');
@@ -182,7 +182,7 @@ class OcorreModOcorrenciaModel extends Model
      public function getSubTipo(int $tpo_id): ?int
     {
         $row = $this->db
-            ->table('oco_subt_ocorrencia_acao')
+            ->table('oco_subt_ocorrencia')
             ->select('sut_id')
             ->where('tpo_id', $tpo_id)
             ->where('sut_nome', 'Nenhuma')

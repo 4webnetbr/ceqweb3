@@ -617,14 +617,12 @@ class Requisicao extends BaseController
         // ESTOQUES
         envia_msg_ws($this->data['controler'], "Buscando estoque de origem", 'MsgServer', session()->get('usu_id'), 1);
         $estorig = (array) $this->busca->buscaEstoqueDeposito($deporigem) ?? [];
-        // debug($estorig, true);
+        // debug((arrasy) $estorig, true);
         $estoqueOrigem  = $this->indexarEstoque($estorig);
-        // debug($estoqueOrigem, true);
 
         envia_msg_ws($this->data['controler'], "Buscando estoque de destino", 'MsgServer', session()->get('usu_id'), 1);
         $estdest = (array) $this->busca->buscaEstoqueDeposito($depdestino) ?? [];
         $estoqueDestino = $this->indexarEstoque($estdest);
-        // debug($estoqueDestino, true);
         $estoquePadrao  = [];
 
         // debug($tipomov);
@@ -674,17 +672,13 @@ class Requisicao extends BaseController
             );
 
             if ($res) {
-                // $consumo[$tipo] = $this->indexarConsumo($res);
-                $consumo[$tipo] = array_column($res, null, 'codigo_erp');
+                $consumo[$tipo] = $this->indexarConsumo($res);
             }
-            // debug($consumo);
-            // debug($consumo['insumos']['codigo_erp'] . ' ' . $consumo['insumos']['produto_nome'] . ' ' . $consumo['insumos']['consumido'], true);
         }
 
         // AGRUPAR PRODUTOS POR CLASSE
         $classesTemp = [];
         $produtoAnterior = [];
-        $codproant = '';
         // debug($estoquePadrao);
         foreach ($listaProdutos as $prod) {
             $codPro  = $prod->pro_codpro;
@@ -713,14 +707,16 @@ class Requisicao extends BaseController
             $prodArr['pro_mediaconsumo'] = $mediaconsumo;
             $prodArr['pro_primeiro']     = 1; // sempre é o primeiro lote do produtos
 
-            // SE O PRODUTO ANTERIOR ERA O MESMO DO ATUAL E FICARIA NEGATIVO DESCONTANDO O CONSUMO, 
-            // DESCONTA O RESTANTE DO CONSUMO DO PRODUTO ATUAL
-            if ($codPro === $codproant) {
-                $prodArr['pro_primeiro']        = 2; // não é mais o primeiiro lote do produto
-                if ((int)$produtoAnterior['pro_consumo_proximo'] > 0) {
+            if (!empty($produtoAnterior)) {
+                // debug($produtoFinal['pro_consumo_proximo']);
+                // SE O PRODUTO ANTERIOR ERA O MESMO DO ATUAL EFICARIA NEGATIVO DESCONTANDO O CONSUMO, 
+                // DESCONTA O RESTANTE DO CONSUMO DO PRODUTO ATUAL
+                if ($produtoAnterior['pro_codpro'] == $codPro) {
+                    // debug($codPro);
+                    // debug('Códipro ' . $codPro);
+                    $prodArr['pro_primeiro']        = 2; // não é mais o primeiiro lote do produto
                     $prodArr['pro_consumo_proximo']         = $produtoAnterior['pro_consumo_proximo'];
-                } else {
-                    $prodArr['pro_consumo_proximo']         = 0;
+                    // debug('Primeiro ' . $prodArr['pro_primeiro']);
                 }
             }
 
@@ -733,13 +729,11 @@ class Requisicao extends BaseController
                 $produtoreq
             );
 
-            if (count($produtoFinal) > 0) {
-                // debug('achou');
-                // debug($produtoFinal);
+            if (!empty($produtoFinal)) {
                 $produtoAnterior = $produtoFinal;
-                // debug($produtoFinal['pro_codpro'] . ' ' . $produtoFinal['lot_lote'] . ' ' . $produtoFinal['pro_consumo']);
+                // debug($produtoFinal['pro_consumo']);
                 // debug('Produto Anterior');
-                $codproant = $codPro;
+                // debug($produtoFinal['pro_consumo_proximo']);
                 if (!isset($classesTemp[$claId])) {
                     $classesTemp[$claId] = (object) [
                         'id'   => $claId,
@@ -792,7 +786,6 @@ class Requisicao extends BaseController
     {
         $indexado = [];
         foreach ($consumo as $item) {
-            // debug($item);
             $codigo = $item['codigo_erp'];
             $reindexado[$codigo] = $item;
         }
@@ -801,9 +794,6 @@ class Requisicao extends BaseController
 
     private function montarProduto(array $prod, array $ori, array $des, array $padr, array $consumo, array $produtoreq): array
     {
-        // if ($prod['pre_mindiaanterior'] != 'S') {
-        //     debug($prod);
-        // }
         $produto = new ProdutoMontado($prod);
 
         // === Preencher lote de origem ===
@@ -835,31 +825,39 @@ class Requisicao extends BaseController
         $proEstOrigem = $produto->loteori->pro_estorigem;
         $proEstPadrao = $produto->lotepad->pro_estpadrao;
 
-        // debug($consumo);
         $proEstDispon = $proEstPadrao + $proEstOrigem;
-        // debug($proEstDispon);
-        if ((int)($proEstDispon) <= 0 && (int)($proEstDestin) <= 0) {
-            // se não tem saldo nem na Origem nem no Destino, pula
+
+        if (($proEstDispon + $proEstDestin) <= 0) {
             return [];
         }
 
         // === Verifica se deve calcular consumo ===
         if ($prod['pro_diaanterior'] === 'S' || $prod['pro_mediaconsumo'] === 'S') {
-            // debug($prod);
-            $dash = strtolower($prod['cla_dash_consumo']);
+            $dash = $prod['cla_dash_consumo'];
             $codPro = $prod['pro_codpro'];
+
             // === Buscar consumo ===
-            if ($prod['pre_gestaoestoque'] === 'S' && !empty($dash)) {
-                // debug($consumo[$dash][$codPro]);
-                $produto->pro_consumo_medio  = $consumo[$dash][$codPro]['media'] ?? 0;
-                $produto->pro_consumo_diaant = $consumo[$dash][$codPro]['consumido'] ?? 0;
+            if ($prod['pre_gestaoestoque'] === 'S') {
+                switch ($dash) {
+                    case 'Insumos':
+                        $produto->pro_consumo_medio  = $consumo['insumos'][$codPro]['media'] ?? 0;
+                        $produto->pro_consumo_diaant = $consumo['insumos'][$codPro]['consumido'] ?? 0;
+                        break;
+                    case 'Equipos':
+                        $produto->pro_consumo_medio  = $consumo['equipos'][$codPro]['media'] ?? 0;
+                        $produto->pro_consumo_diaant = $consumo['equipos'][$codPro]['consumido'] ?? 0;
+                        break;
+                    case 'Bolsas':
+                        $produto->pro_consumo_medio  = $consumo['bolsas'][$codPro]['media'] ?? 0;
+                        $produto->pro_consumo_diaant = $consumo['bolsas'][$codPro]['consumido'] ?? 0;
+                        break;
+                }
             } else {
                 $produto->pro_consumo_medio  = 0;
                 $produto->pro_consumo_diaant = 0;
             }
 
             // === Base de consumo ===
-            // debug($prod);
             if ($prod['pro_primeiro'] === 1) {
                 $produto->pro_consumo = ($prod['pro_meddias'] > 0)
                     ? $produto->pro_consumo_medio
@@ -890,7 +888,6 @@ class Requisicao extends BaseController
                     $produto->pro_consumo_proximo = 0;
                 }
             }
-            // debug($produto->pro_consumo);
 
             // === Segurança e sugestão bruta (sempre calculadas) ===
             $produto->pro_seguranca = ceil($produto->pro_consumo * ($prod['pct_seguranca'] / 100));
@@ -904,9 +901,6 @@ class Requisicao extends BaseController
                 $produto->pro_consumo = ($prod['pre_mindiaanterior'] === 'S')
                     ? $produto->pro_consumo
                     : $prod['pre_sugerida'];
-                // if ($prod['pre_mindiaanterior'] != 'S') {
-                //     debug($prod);
-                // }
 
                 $produto->pro_seguranca = ceil(floatval($produto->pro_consumo * ($prod['pct_seguranca'] / 100)));
 

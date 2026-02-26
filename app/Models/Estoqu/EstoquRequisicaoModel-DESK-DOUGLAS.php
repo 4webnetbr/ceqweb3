@@ -135,23 +135,4 @@ class EstoquRequisicaoModel extends Model
         $builder->where('pro_id', $produto);
         return $builder->get()->getResult();
     }
-
-    public function getRequisicaoConferencia($req_id = false, $status = false)
-    {
-        $db = db_connect('dbEstoque');
-        $builder = $db->table($this->viewlista);
-        $builder->select('*');
-        if ($req_id) {
-            $builder->where('req_id', $req_id);
-        }
-        if ($status) {
-            $builder->whereIn('stt_id', $status);
-        }
-        // só lista as requisições cujo Tipo de Movimentação Exige Conferencia
-        $builder->where('tmo_conferencia', 'S');
-        // $perfil = session()->get('usu_perfil_id');
-        // $builder->like('prf_id', $perfil);
-        $builder->orderBy('req_data');
-        return $builder->get()->getResult();
-    }
 }

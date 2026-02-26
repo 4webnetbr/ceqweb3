@@ -649,8 +649,8 @@ async function carregarProdutos(url, aba, obj) {
             novoValor = Math.min(novoValor, restantePermitido);
             // }
 
-            novoValor = Math.max(min, novoValor);
             novoValor = Math.min(novoValor, saldoDisponivelAtual);
+            novoValor = Math.max(min, novoValor);
 
             if (novoValor !== valAtual) {
               input.val(novoValor);
@@ -903,10 +903,7 @@ async function enviarAteRequisicoes(event) {
           lotok = false;
         }
       }
-      if (
-        (aten > 0 || ctafab > 0 || ctalot > 0 || canc > 0) &&
-        (parseInt(saldo) > 0 || !lotok || !fabok)
-      ) {
+      if (aten > 0 && (parseInt(saldo) > 0 || !lotok || !fabok)) {
         event.preventDefault();
         event.stopPropagation();
         if (parseInt(saldo) === 0 && !fabok) {
@@ -928,100 +925,86 @@ async function enviarConfRequisicoes(event) {
   for (let tr of trs) {
     if (tr.id != "" && tr.id != undefined) {
       const idBase = parseInt(tr.id);
-      var conf = jQuery("#rpa_conferida_" + idBase).val();
-      var ctafab = jQuery("#ctafb_" + idBase).val();
-      var ctalot = jQuery("#ctalt_" + idBase).val();
-      var ctamis = jQuery("#ctami_" + idBase).val();
-      if (parseInt(conf) > 0 || parseInt(ctamis) > 0 || parseInt(ctafab) > 0) {
-        var lf = jQuery("#fab_" + idBase).text();
-        var lp = jQuery("#lot_" + idBase).text();
-        var lm = jQuery("#mis_" + idBase).text();
-        var qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
-        var qtde = jQuery("#qt_" + idBase).text();
-        var canc = jQuery("#rpa_cancelada_" + idBase).val();
-        var saldo = jQuery("#sl_" + idBase).text();
-        fabok = false;
-        lotof = false;
-        misok = false;
 
-        if (lf == "SN") {
-          if (parseInt(ctafab) >= parseInt(qtcaixa)) {
-            fabok = true;
-          } else if (parseInt(ctafab) > 0) {
-            fabok = false;
-          }
-        } else if (lf == "NN") {
+      var lf = jQuery("#fab_" + idBase).text();
+      var ctafab = jQuery("#ctafb_" + idBase).val();
+      var lp = jQuery("#lot_" + idBase).text();
+      var ctalot = jQuery("#ctalt_" + idBase).val();
+      var lm = jQuery("#mis_" + idBase).text();
+      var ctamis = jQuery("#ctami_" + idBase).val();
+      var qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
+      var qtde = jQuery("#qt_" + idBase).text();
+      var conf = jQuery("#rpa_conferida_" + idBase).val();
+      var canc = jQuery("#rpa_cancelada_" + idBase).val();
+      var saldo = jQuery("#sl_" + idBase).text();
+      fabok = false;
+      lotof = false;
+      misok = false;
+
+      if (lf == "SN") {
+        if (parseInt(ctafab) >= parseInt(qtcaixa)) {
           fabok = true;
-        } else if (lf == "SS") {
-          if (parseInt(ctafab) == parseInt(qtde)) {
-            fabok = true;
-          } else if (parseInt(ctafab) > 0) {
-            fabok = false;
-          }
+        } else if (parseInt(ctafab) > 0) {
+          fabok = false;
         }
-        if (lp == "SN") {
-          if (parseInt(ctalot) >= parseInt(qtcaixa)) {
-            lotok = true;
-          } else if (parseInt(ctalot) > 0) {
-            lotok = false;
-          }
-        } else if (lp == "NN") {
+      } else if (lf == "NN") {
+        fabok = true;
+      } else if (lf == "SS") {
+        if (parseInt(ctafab) == parseInt(qtde)) {
+          fabok = true;
+        } else if (parseInt(ctafab) > 0) {
+          fabok = false;
+        }
+      }
+      if (lp == "SN") {
+        if (parseInt(ctalot) >= parseInt(qtcaixa)) {
           lotok = true;
-        } else if (lp == "SS") {
-          if (parseInt(ctalot) == parseInt(qtde)) {
-            lotok = true;
-          } else if (parseInt(ctalot) > 0) {
-            lotok = false;
-          }
+        } else if (parseInt(ctalot) > 0) {
+          lotok = false;
         }
-        if (lm == "SN") {
-          if (parseInt(ctamis) >= parseInt(qtcaixa)) {
-            misok = true;
-          } else if (parseInt(ctamis) > 0) {
-            misok = false;
-          }
-        } else if (lp == "NN") {
+      } else if (lp == "NN") {
+        lotok = true;
+      } else if (lp == "SS") {
+        if (parseInt(ctalot) == parseInt(qtde)) {
+          lotok = true;
+        } else if (parseInt(ctalot) > 0) {
+          lotok = false;
+        }
+      }
+      if (lm == "SN") {
+        if (parseInt(ctamis) >= parseInt(qtcaixa)) {
           misok = true;
-        } else if (lp == "SS") {
-          if (parseInt(ctamis) == parseInt(qtde)) {
-            misok = true;
-          } else if (parseInt(ctamis) > 0) {
-            misok = false;
-          }
+        } else if (parseInt(ctamis) > 0) {
+          misok = false;
+        }
+      } else if (lp == "NN") {
+        misok = true;
+      } else if (lp == "SS") {
+        if (parseInt(ctamis) == parseInt(qtde)) {
+          misok = true;
+        } else if (parseInt(ctamis) > 0) {
+          misok = false;
         }
       }
-      msg = 0;
-      //NÃO SCANIEI NENHUM PRODUTO E SCANIEI OU FABRICANTE OU MISTURADOR
       if (
-        parseInt(conf) == 0 &&
-        (parseInt(ctafab) > 0 || parseInt(ctamis) > 0)
+        parseInt(conf) > 0 &&
+        (parseInt(saldo) == 0 || !lotok || !fabok || !misok)
       ) {
-        msg = 38;
-      }
-      if (parseInt(conf) > 0) {
-        // SCANIEI PELO MENOS 1 PRODUTO
-        if (
-          parseInt(saldo) > 0 &&
-          parseInt(ctafab) > 0 &&
-          parseInt(ctamis) > 0
-        ) {
-          msg = 9;
-        } else if (
-          parseInt(saldo) == 0 &&
-          ((!fabok && parseInt(ctafab) > 0) || (!misok && parseInt(ctamis) > 0))
-        ) {
-          msg = 38;
-        }
-      }
-      if (msg > 0) {
         event.preventDefault();
         event.stopPropagation();
-        resposta = await boxAlert(msg);
-        if (msg == 9) {
-          return resposta;
-        } else {
-          return false;
-        }
+        resposta = await boxAlert(38, true, "", false, 1, false);
+        return false;
+      } else if (
+        parseInt(conf) > 0 &&
+        parseInt(saldo) > 0 &&
+        lotok &&
+        fabok &&
+        misok
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+        resposta = await boxAlert(9, false, "", false, 1, true);
+        return resposta;
       }
     }
   }

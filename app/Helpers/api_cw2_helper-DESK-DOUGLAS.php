@@ -20,19 +20,17 @@ if (!function_exists('api_request')) {
         array $params = [],
         string $method = 'get',
         array $headers = ['Accept' => 'application/json'],
-        int $timeout = 30,
-        int $connect_timeout = 10
+        int $timeout = 10
     ): ?array {
         $client = Services::curlrequest([
             'timeout' => $timeout,
-            'connect_timeout' => $connect_timeout,
         ]);
 
         try {
             $options = [
                 'headers' => $headers,
             ];
-            // debug($url);
+
             if (strtolower($method) === 'get') {
                 $options['query'] = $params;
                 $response = $client->get($url, $options);
@@ -42,7 +40,7 @@ if (!function_exists('api_request')) {
             } else {
                 throw new \InvalidArgumentException('Método HTTP inválido: use "get" ou "post".');
             }
-            // debug($response);
+
             $body = $response->getBody();
             // debug($body, true);
             return json_decode($body, true);

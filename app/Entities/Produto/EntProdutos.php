@@ -159,7 +159,7 @@ class EntProdutos extends Entity
             $dados['cla_id'] ?? '',
             1,
             'pro_classe',
-            [],
+            ['cla_ativo' => 'A'],
             $config,
             'cla_id'
         );

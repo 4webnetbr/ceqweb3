@@ -375,9 +375,9 @@ function validaCodBar(obj) {
         } else if (lf == "NN") {
           fabok = true;
         } else if (lf == "SS") {
-          if (parseInt(ctafab) == parseInt(qtde) - parseInt(canc)) {
+          if (parseInt(ctafab) == parseInt(qtde)) {
             fabok = true;
-          } else if (parseInt(ctafab) > parseInt(qtde) - parseInt(canc)) {
+          } else if (parseInt(ctafab) > parseInt(qtde)) {
             boxAlert(msgqterrada, false, "", true, 1, false);
             obj.value = "";
             obj.focus();
@@ -420,7 +420,7 @@ function validaCodBar(obj) {
             // jQuery("#lot_" + idBase).addClass("border-warning bg-warning");
           }
         } else if (lp == "SS") {
-          if (parseInt(ctalot) == parseInt(qtde) - parseInt(canc)) {
+          if (parseInt(ctalot) == parseInt(qtde)) {
             lotok = true;
             // jQuery("#lot_" + idBase).removeClass("border-secondary");
             // jQuery("#lot_" + idBase).removeClass("border-warning bg-warning");
@@ -493,10 +493,8 @@ function acertaCorStt(idBase, tipo = "ate") {
       fabok = true;
     } else if (parseInt(ctafab) > 0) {
       fabok = false;
-      if (parseInt(ctafab) > 0) {
-        jQuery("#fab_" + idBase).removeClass("border-secondary");
-        jQuery("#fab_" + idBase).addClass("border-warning bg-warning");
-      }
+      jQuery("#fab_" + idBase).removeClass("border-secondary");
+      jQuery("#fab_" + idBase).addClass("border-warning bg-warning");
     }
   } else if (lf == "NN") {
     fabok = true;
@@ -508,10 +506,8 @@ function acertaCorStt(idBase, tipo = "ate") {
       jQuery("#fab_" + idBase).addClass("border-success bg-success");
     } else if (parseInt(ctafab) > 0) {
       fabok = false;
-      if (parseInt(ctafab) > 0) {
-        jQuery("#fab_" + idBase).removeClass("border-secondary");
-        jQuery("#fab_" + idBase).addClass("border-warning bg-warning");
-      }
+      jQuery("#fab_" + idBase).removeClass("border-secondary");
+      jQuery("#fab_" + idBase).addClass("border-warning bg-warning");
     }
   }
   if (lp == "SN") {
@@ -522,10 +518,8 @@ function acertaCorStt(idBase, tipo = "ate") {
       lotok = true;
     } else if (parseInt(ctalot) > 0) {
       lotok = false;
-      if (parseInt(ctalot) > 0) {
-        jQuery("#lot_" + idBase).removeClass("border-secondary");
-        jQuery("#lot_" + idBase).addClass("border-warning bg-warning");
-      }
+      jQuery("#lot_" + idBase).removeClass("border-secondary");
+      jQuery("#lot_" + idBase).addClass("border-warning bg-warning");
     }
   } else if (lp == "NN") {
     if (parseInt(aten) == parseInt(qtde) - parseInt(canc)) {
@@ -539,10 +533,8 @@ function acertaCorStt(idBase, tipo = "ate") {
       jQuery("#lot_" + idBase).addClass("border-success bg-success");
     } else if (parseInt(ctalot) > 0) {
       lotok = false;
-      if (parseInt(ctalot) > 0) {
-        jQuery("#lot_" + idBase).removeClass("border-secondary");
-        jQuery("#lot_" + idBase).addClass("border-warning bg-warning");
-      }
+      jQuery("#lot_" + idBase).removeClass("border-secondary");
+      jQuery("#lot_" + idBase).addClass("border-warning bg-warning");
     }
   }
   if (tipo == "conf") {
@@ -558,10 +550,8 @@ function acertaCorStt(idBase, tipo = "ate") {
         misok = true;
       } else {
         misok = false;
-        if (parseInt(ctamis) > 0) {
-          jQuery("#mis_" + idBase).removeClass("border-secondary");
-          jQuery("#mis_" + idBase).addClass("border-warning bg-warning");
-        }
+        jQuery("#mis_" + idBase).removeClass("border-secondary");
+        jQuery("#mis_" + idBase).addClass("border-warning bg-warning");
       }
     } else if (lm == "SS") {
       if (parseInt(ctamis) == parseInt(qtde) - parseInt(canc)) {
@@ -571,10 +561,8 @@ function acertaCorStt(idBase, tipo = "ate") {
         jQuery("#mis_" + idBase).addClass("border-success bg-success");
       } else {
         misok = false;
-        if (parseInt(ctamis) > 0) {
-          jQuery("#mis_" + idBase).removeClass("border-secondary");
-          jQuery("#mis_" + idBase).addClass("border-warning bg-warning");
-        }
+        jQuery("#mis_" + idBase).removeClass("border-secondary");
+        jQuery("#mis_" + idBase).addClass("border-warning bg-warning");
       }
     } else if (lm == "NN") {
       misok = true;
@@ -666,11 +654,9 @@ function validaCodBarConf(obj) {
         var ctafab = jQuery("#ctafb_" + idBase).val();
         // var fabok = false;
         if (lf == "SN") {
-          if (parseInt(ctafab) == parseInt(qtcaixa)) {
+          if (parseInt(ctafab) >= parseInt(qtcaixa)) {
             fabok = true;
           } else if (parseInt(ctafab) > parseInt(qtcaixa)) {
-            ctafab--;
-            jQuery("#ctafb_" + idBase).val(ctafab);
             boxAlert(msgqterrada, false, "", true, 1, false);
             obj.value = "";
             obj.focus();
@@ -681,9 +667,7 @@ function validaCodBarConf(obj) {
         } else if (lf == "SS") {
           if (parseInt(ctafab) == parseInt(qtde) - parseInt(canc)) {
             fabok = true;
-          } else if (parseInt(ctafab) > parseInt(qtde) - parseInt(canc)) {
-            ctafab--;
-            jQuery("#ctafb_" + idBase).val(ctafab);
+          } else if (parseInt(ctafab) > parseInt(qtde)) {
             boxAlert(msgqterrada, false, "", true, 1, false);
             obj.value = "";
             obj.focus();
@@ -741,11 +725,9 @@ function validaCodBarConf(obj) {
         jQuery("#ctami_" + idBase).val(ctamis);
         // lotok = false;
         if (lm == "SN") {
-          if (parseInt(ctamis) == parseInt(qtcaixa)) {
+          if (parseInt(ctamis) >= parseInt(qtcaixa)) {
             misok = true;
           } else if (parseInt(ctamis) > parseInt(qtcaixa)) {
-            ctamis--;
-            jQuery("#ctami_" + idBase).val(ctamis);
             boxAlert(msgqterrada, false, "", true, 1, false);
             obj.value = "";
             obj.focus();
@@ -912,23 +894,19 @@ function carregaAcaoTipo(obj) {
 
 async function buscaLoteProduto(obj, url) {
   lote = obj.value;
-  if (lote.trim() != "") {
-    dados = { busca: lote };
-    const retornoAjax = await executaAjaxWait(url, "json", dados);
+  dados = { busca: lote };
+  const retornoAjax = await executaAjaxWait(url, "json", dados);
 
-    // retornoAjax = false;
-    // executaAjaxWait(url, "json", dados);
+  // retornoAjax = false;
+  // executaAjaxWait(url, "json", dados);
 
-    if (retornoAjax) {
-      if (retornoAjax.lotid > 0) {
-        jQuery("#pro_id").val(retornoAjax.proid);
-        jQuery("#lot_id").val(retornoAjax.lotid);
-        jQuery("#pro_despro").val(retornoAjax.despro);
-      } else {
-        boxAlert(10, true, "", true);
-        obj.value = "";
-        jQuery(obj).focus();
-      }
+  if (retornoAjax) {
+    if (retornoAjax.lotid > 0) {
+      jQuery("#pro_id").val(retornoAjax.proid);
+      jQuery("#lot_id").val(retornoAjax.lotid);
+      jQuery("#pro_despro").val(retornoAjax.despro);
+    } else {
+      boxAlert(10, true, "", true);
     }
   }
 }

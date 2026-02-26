@@ -71,16 +71,6 @@ class EntProdutProduto extends Entity
         $dpro->dispForm    = '2col';
         $ret['pro_despro'] = $dpro->crInput();
 
-        // Origem do Produto
-        // $opc_orig          = $opcoes->getListaOpcoes('dbProduto', 'pro_sap_origem', ['ori_codDescricao', 'ori_codOri'], "ori_codOri = '" . $dados['ori_codOri'] . "'");
-        // $orig              =  new MyCampo('pro_sap_produto', 'ori_codOri');
-        // $orig->valor       = $orig->selecionado = (isset($dados['ori_codOri'])) ? $dados['ori_codOri'] : '';
-        // $orig->obrigatorio = true;
-        // $orig->leitura     = $show;
-        // $orig->opcoes      = $opc_orig;
-        // $orig->largura     = 50;
-        // $orig->dispForm    = '2col';
-        // $ret['ori_codOri'] = $orig->crSelect();
 
         // Origem do Produto
         $config = [];
@@ -108,17 +98,6 @@ class EntProdutProduto extends Entity
             $config,
             'ori_codOri'
         );
-
-        // Família do Produto
-        // $opc_fami          = $opcoes->getListaOpcoes('dbProduto', 'pro_sap_familia', ['fam_codDescricao', 'fam_codFam'], "fam_codFam = '" . $dados['fam_codFam'] . "'");
-        // $fami              =  new MyCampo('pro_sap_produto', 'fam_codFam');
-        // $fami->valor       = $fami->selecionado = (isset($dados['fam_codFam'])) ? $dados['fam_codFam'] : '';
-        // $fami->obrigatorio = true;
-        // $fami->leitura     = $show;
-        // $fami->opcoes      = $opc_fami;
-        // $fami->largura     = 50;
-        // $fami->dispForm    = '2col';
-        // $ret['fam_codFam'] = $fami->crSelect();
 
         // Família do Produto
         $config = [];
@@ -151,33 +130,13 @@ class EntProdutProduto extends Entity
         $lst_classes   = $classes->getClassificacaoClasse($dados['ori_codOri'], $dados['fam_codFam']);
 
         // Classe selecionada
-        // $cla_id        = isset($dados['cla_id']) ? [$dados['cla_id']] : [];
-        // if (count($lst_classes) == 1) {
-        //     $cla_id = [$lst_classes[0]->cla_id];
-        // }
-        // $opc_clas       = array_column($lst_classes, 'cla_nome', 'cla_id');
-
-        // $clas              =  new MyCampo('pro_sap_produto', 'cla_id');
-        // $clas->valor       = (isset($dados['cla_id'])) ? $dados['cla_id'] : '';
-        // $clas->selecionado = $cla_id;
-        // $clas->obrigatorio = false;
-        // if (count($opc_clas) > 1 || count($opc_clas) == 0) {
-        //     $clas->leitura  = false;
-        // } else {
-        //     $clas->leitura  = true;
-        // }
-        // $clas->opcoes     = $opc_clas;
-        // $clas->largura    = 50;
-        // $clas->dispForm   = '2col';
-        // $ret['cla_id']    = $clas->crSelect();
-
-        // Classe selecionada
         $opc_clas = array_column($lst_classes, 'cla_nome', 'cla_id');
         $valor = $dados['cla_id'] ?? null;
 
+        // debug($lst_classes, true);
         // se existir apenas 1 classe, seleciona automaticamente
         if (count($lst_classes) === 1) {
-            $valor = $lst_classes[0]->cla_id;
+            $valor = $lst_classes[0]['cla_id'];
         }
         $leitura = !(count($opc_clas) > 1 || count($opc_clas) == 0);
 
@@ -186,36 +145,19 @@ class EntProdutProduto extends Entity
         $config['Largura']     = 50;
         $config['Obrigatorio'] = false;
         $config['Leitura']     = $leitura;
-        $config['Opcoes']      = $opc_clas;
+        // $config['Opcoes']      = $opc_clas;
 
         $ret['cla_id'] = criaSelectRelativo(
-            'pro_classe',
+            'vw_pro_classe_relac',
             'cla_id',
             'cla_nome',
             $valor,
             1,
             'pro_sap_produto',
-            [],
+            ['ori_codOri' => $dados['ori_codOri'], 'fam_codFam' => $dados['fam_codFam']],
             $config,
             'cla_id'
         );
-
-        // Fabricante
-        // if (strlen($dados['fab_codFab']) > 0) {
-        //     $opc_fabr      = $opcoes->getListaOpcoes('dbProduto', 'pro_sap_fabricante', ['fab_apeFab', 'fab_codFab'], 'fab_codFab = ' . $dados['fab_codFab']);
-        // } else {
-        //     $opc_fabr      = [];
-        // }
-        // $fabr              =  new MyCampo('pro_sap_fabricante', 'fab_codFab');
-        // $fabr->valor       = (isset($dados['fab_codFab'])) ? $dados['fab_codFab'] : '';
-        // $fabr->selecionado = (isset($dados['fab_codFab'])) ? [$dados['fab_codFab']] : [];
-        // $fabr->obrigatorio = true;
-        // $fabr->leitura     = $show;
-        // $fabr->opcoes      = $opc_fabr;
-        // $fabr->largura     = 50;
-        // $fabr->dispForm    = '2col';
-        // $fabr->label       = 'Fabricante';
-        // $ret['fab_codFab'] = $fabr->crSelect();
 
         // Fabricante
         $config = [];
@@ -278,24 +220,6 @@ class EntProdutProduto extends Entity
         $qtem->maximo       = 9999;
         $qtem->dispForm     = '2col';
         $ret['pro_qtdemb']  = $qtem->crInput();
-
-        // Ingrediente 
-        // if (count($cla_id) > 0) {
-        //     $opc_ing            = $opcoes->getListaOpcoes('dbProduto', 'pro_ingrediente', ['ing_nome', 'ing_id'], 'cla_id = ' . $cla_id[0] . '');
-        // } else {
-        //     $opc_ing            = [];
-        // }
-        // $ingp              =  new MyCampo('pro_ing_produto', 'ing_id');
-        // $ingp->valor       = (isset($dados['ing_id'])) ? $dados['ing_id'] : '';
-        // $ingp->selecionado = [$ingp->valor];
-        // $ingp->obrigatorio = false;
-        // $ingp->leitura     = false;
-        // $ingp->opcoes      = $opc_ing;
-        // $ingp->largura     = 50;
-        // $ingp->dispForm    = '2col';
-        // $ingp->pai         = 'cla_id';
-        // $ingp->urlbusca    = base_url('buscas/buscaIngredienteClasse');
-        // $ret['ing_id'] = $ingp->crDepende();
 
         // Ingrediente 
         $config = [];

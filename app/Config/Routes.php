@@ -70,6 +70,14 @@ $routes->group('Showfile', static function ($routes) {
     $routes->get('/', 'Showfile::show', ['as' => 'showfile_show']);
     $routes->match(['get', 'post'], '(:any)', 'Showfile::show/$1', ['as' => 'showfile_show_match']);
 });
+$routes->group('Logger', static function ($routes) {
+    $routes->match(
+        ['get', 'post'],
+        '(:segment)/(:num)',
+        'Logger::index/$1/$2',
+        ['as' => 'logger_show_match']
+    );
+});
 
 // Grupo: CriaPdf2025
 $routes->group('CriaPdf2025', static function ($routes) {

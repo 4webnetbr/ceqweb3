@@ -177,7 +177,7 @@ class CfgEtiqueta extends BaseController
         $fields = $eetiq->campos;
 
         // DADOS GERAIS
-        $this->data['secoes'] = ['Dados Gerais', 'Telas Aplicáveis', 'Campos para Etiqueta'];
+        $this->data['secoes'] = ['Dados Gerais', 'Telas Aplicáveis', 'Design Etiqueta'];
         $campos[0] =
             [
                 $fields['etq_id'],

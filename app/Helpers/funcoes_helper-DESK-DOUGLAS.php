@@ -915,7 +915,7 @@ function criaSelectRelativo(
         $builder->orderBy($campoNome);
         // Busca os dados (chave e nome)
         $dados = $builder->get()->getResultArray();
-        // debug($db->getLastQuery());
+        debug($db->getLastQuery());
 
         // $dados = filtrarPorPerfil($dados);
         $opcoes = array_column($dados, $campoNome, $campoChave);
@@ -930,7 +930,7 @@ function criaSelectRelativo(
         $opcoes = [-1 => $campo->place] + $opcoes;
     }
 
-    // debug($opcoes);
+    debug($opcoes);
     // Define opções obrigatórias
     $campo->setOpcoes($opcoes);
 

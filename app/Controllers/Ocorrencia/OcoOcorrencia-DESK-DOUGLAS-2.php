@@ -2,16 +2,16 @@
 
 namespace App\Controllers\Ocorrencia;
 
-use App\Controllers\BaseController;
-use App\Entities\Ocorrencia\EntOcoOcorrencia;
-use App\Entities\Ocorrencia\EntOcoTratativa;
 use App\Libraries\MyCampo;
 use App\Models\CommonModel;
-use App\Models\Config\ConfigStatusModel;
-use App\Models\Ocorre\OcorreModOcorrenciaModel;
-use App\Models\Ocorre\OcorreOcorrenciaModel;
-use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
+use App\Entities\Ocorrencia\EntOcoOcorrencia;
+use App\Entities\Ocorrencia\EntOcoTratativa;
+use App\Controllers\BaseController;
 use App\Traits\ForeignKeyUsageChecker;
+use App\Models\Config\ConfigStatusModel;
+use App\Models\Ocorre\OcorreOcorrenciaModel;
+use App\Models\Ocorre\OcorreModOcorrenciaModel;
+use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
 
 class OcoOcorrencia extends BaseController
 {
@@ -60,7 +60,6 @@ class OcoOcorrencia extends BaseController
         $campos = montaColunasCampos($this->data, 'oco_id');
 
         $dados = $this->ocorrencia->getListaCompleta();
-        // debug($dados, true);
         $oco_ids_assoc = array_map(fn($o) => $o->oco_id, $dados);
 
         $log = buscaLogTabela('oco_ocorrencia', $oco_ids_assoc);
@@ -150,100 +149,93 @@ class OcoOcorrencia extends BaseController
 
     public function show($id)
     {
-        $dados = $this->ocorrencia->getOcorrencia($id);
-        // debug($dados, true);
+        $dados = $this->ocorrencia->find($id);
 
-        // Valida se a ocorrência existe
+        $statModel = new ConfigStatusModel();
+        $status   = $statModel->getStatus($dados->stt_id);
+        $etiqueta = '';
+        if ($status) {
+            $etiqueta = fmtEtiquetaCor($status->cor_valorrgb ?? '', $status->stt_nome ?? '', 1);
+        }
+
         if (!$dados) {
-            throw new \Exception('Ocorrência não encontrada');
+            session()->setFlashdata('erromsg', 'Ocorrência não encontrada.');
+            return redirect()->to(site_url($this->data['controler']));
         }
 
         $log = buscaLogTabela('oco_ocorrencia', [$id]);
-        $dados->usu_nome = $log[$id]['usua_alterou'] ?? null;
-        // Instancia a entity
-        // debug($dados, true);
-        $oco    = new EntOcoOcorrencia((array) $dados, true);
-        $fields = $oco->campos;
+        if (isset($log[$id]['usua_alterou'])) {
+            $dados->usu_nome = $log[$id]['usua_alterou'];
+        }
 
-        // dados gerais
-        $secao = ['Dados Gerais'];
+        $acoes = $this->ocorrencia->getAcoesFinalizar($id);
 
-        // define os campos
-        $campos[0] = [
-            $fields['oco_id'],
-            $fields['tpo_id'],
-            $fields['sut_id'],
-            $fields['oco_descricao'],
-            $fields['pro_id'],
-            $fields['lot_id'],
-            $fields['lot_lote'],
-            $fields['pro_despro'],
-            $fields['oco_qtd'],
-            $fields['oco_data'],
-            $fields['usu_nome'],
-        ];
+        if ($acoes) {
+            // usa a primeira linha (tem o.* + ação)
+            $dados = $acoes[0];
 
-        $etiqueta = fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
+            // mantém o usuário do log
+            if (isset($log[$id]['usua_alterou'])) {
+                $dados->usu_nome = $log[$id]['usua_alterou'];
+            }
+        }
+        // debug($dados);
+        $entity = new EntOcoTratativa($dados, true);
+        $fields = $entity->campos;
 
-        // $log = buscaLogTabela('oco_ocorrencia', [$id]);
-        // if (isset($log[$id]['usua_alterou'])) {
-        //     $dados->usu_nome = $log[$id]['usua_alterou'];
-        // }
+        $secao[0] = 'Dados da Ocorrência';
+        $campos[0] = [];
 
-        // $entTratativa = new EntOcoTratativa($dados, true);
-        // $campos[0][] = $fields['usu_nome'];
+        // Campos fixos
+        $campos[0][] = $fields['tpo_id'];
+        $campos[0][] = $fields['sut_id'];
+        $campos[0][] = $fields['usu_nome'];
+        $campos[0][] = $fields['oco_descricao'];
+        $campos[0][] = $fields['oco_data'];
+        $campos[0][] = $fields['lot_lote'];
+        $campos[0][] = $fields['pro_despro'];
+        $campos[0][] = $fields['oco_qtd'];
 
-        // $acoes = $this->ocorrencia->getAcoesFinalizar($id);
+        if (isset($fields['oco_justi'])) {
+            $campos[0][] = $fields['oco_justi'];
+        }
+        if (isset($fields['tmo_id'])) {
+            $campos[0][] = $fields['tmo_id'];
+        }
+        if (isset($fields['stt_id'])) {
+            $campos[0][] = $fields['stt_id'];
+        }
+        if (isset($fields['tel_id'])) {
+            $campos[0][] = $fields['tel_id'];
+        }
 
-        // if ($acoes) {
-        //     // usa a primeira linha (tem o.* + ação)
-        //     $dados = $acoes[0];
+        // ações
+        if (!empty($acoes)) {
+            $acoesResultado = [];
+            foreach ($acoes as $acao) {
+                $acao->somente_leitura = true;
+                // debug($acao);
+                $camposAcao = $entity->defCamposAcao($acao);
+                $acoesResultado[] = $camposAcao;
+            }
 
-        //     // mantém o usuário do log
-        //     if (isset($log[$id]['usua_alterou'])) {
-        //         $dados->usu_nome = $log[$id]['usua_alterou'];
-        //     }
-        // }
-        // // debug($dados);
+            $campos[0][] = view('partials/pw_acoes_ocorrencia', ['acoes'  => $acoesResultado, 'oco_id' => $id]);
+        }
 
 
-        // if (isset($fields['oco_justi'])) {
-        //     $campos[0][] = $fields['oco_justi'];
-        // }
-        // if (isset($fields['tmo_id'])) {
-        //     $campos[0][] = $fields['tmo_id'];
-        // }
-        // if (isset($fields['stt_id'])) {
-        //     $campos[0][] = $fields['stt_id'];
-        // }
-        // if (isset($fields['tel_id'])) {
-        //     $campos[0][] = $fields['tel_id'];
-        // }
-
-        // // ações
-        // if (!empty($acoes)) {
-        //     $acoesResultado = [];
-        //     foreach ($acoes as $acao) {
-        //         $acao->somente_leitura = true;
-        //         // debug($acao);
-        //         $camposAcao = $entity->defCamposAcao($acao);
-        //         $acoesResultado[] = $camposAcao;
-        //     }
-
-        //     $campos[0][] = view('partials/pw_acoes_ocorrencia', ['acoes'  => $acoesResultado, 'oco_id' => $id]);
-        // }
-
-        // $this->data['show']        = true;
+        $this->data['show']        = true;
         $this->data['title']       = 'Ocorrência';
         $this->data['desc_edicao'] = ' Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' - ' .  $etiqueta;
 
         $this->data['secoes']  = $secao;
         $this->data['campos']  = $campos;
-        // $this->data['metodo']  = 'show';
+        $this->data['metodo']  = 'show';
         $this->data['destino'] = '';
 
         echo view('vw_edicao', $this->data);
     }
+
+
 
     public function edit($id)
     {
@@ -287,13 +279,15 @@ class OcoOcorrencia extends BaseController
 
     public function addOutraTela()
     {
+        $modal = true;
+
         $request = service('request');
 
         // Lê e decodifica o JSON recebido
         $json = $request->getJSON(true); // true = como array associativo
         // Agora você pode acessar normalmente:
         $proId    = $json['pro_id'] ?? null;
-        $lotlote  = $json['lot_lote'] ?? null;
+        $lotlote    = $json['lot_lote'] ?? null;
         $reqId    = $json['req_id'] ?? null;
         $telId    = $json['tel_id'] ?? null;
 
@@ -338,21 +332,6 @@ class OcoOcorrencia extends BaseController
             ['tel_id' => $telId],
             $config
         );
-        $desc              = new MyCampo('oco_ocorrencia', 'oco_descricao');
-        $desc->valor       = (isset($dados['oco_descricao'])) ? $dados['oco_descricao'] : '';
-        $desc->obrigatorio = true;
-        $desc->dispForm    = 'col-6';
-        $descreva = $desc->crInput();
-
-        $qtd               = new MyCampo('oco_ocorrencia', 'oco_qtd');
-        $qtd->valor        = $dados['oco_qtd'] ?? 0;
-        $qtd->dispForm     = 'col-6';
-        $qtd->minimo       = 1;
-        $qtd->largura      = 10;
-        $qtd->size         = 3;
-        $qtd->maximo       = 999;
-        $qtd->obrigatorio  = true;
-        $quantia = $qtd->crInput();
 
         // Instancia a entity
         $dados['lot_lote'] = $lotlote;
@@ -371,9 +350,9 @@ class OcoOcorrencia extends BaseController
             $mod_oc,
             $oco->campos['pro_id'],
             $oco->campos['pro_despro'],
-            $quantia,
+            $oco->campos['oco_qtd'],
             $oco->campos['oco_data'],
-            $descreva,
+            $oco->campos['oco_descricao'],
         ]];
         $this->data['destino'] = 'store';
         $this->data['desc_metodo'] = 'Nova Ocorrência';
@@ -453,9 +432,67 @@ class OcoOcorrencia extends BaseController
         }
     }
 
+
+
     public function finalizar($id)
     {
-        return redirect()->to('/OcoTrataOcorrencia/finalizar/' . $id);
+        // Fluxo semelhante ao edit, porém com destino de finalização
+        $result = $this->ocorrencia->getOcorrencia($id);
+        $dados  = $result[0] ?? null;
+
+        if (!$dados) {
+            throw new \Exception("Ocorrência não encontrada");
+        }
+
+        $log = buscaLogTabela('oco_ocorrencia', [$id]);
+        $dados->usu_nome = $log[$id]['usua_alterou'] ?? $dados->usu_nome;
+
+        $tipo = $this->modelTipo->find($dados->tpo_id);
+        $dados->tpo_nome = $tipo->tpo_nome ?? '';
+
+        $entity = new EntOcoTratativa($dados, true);
+        $fields = $entity->campos;
+
+        $secao[0] = 'Finalizar a Tratativa';
+
+        $campos[0][] = $fields['oco_id'];
+        $campos[0][] = $fields['tpo_id'];
+        $campos[0][] = $fields['usu_nome'];
+        $campos[0][] = $fields['oco_descricao'];
+        $campos[0][] = $fields['oco_data'];
+        $campos[0][] = $fields['lot_lote'];
+        $campos[0][] = $fields['pro_despro'];
+        $campos[0][] = $fields['oco_qtd'];
+        $campos[0][] = $fields['tpa_id'];
+
+        if (isset($fields['oco_justi'])) {
+            $campos[0][] = $fields['oco_justi'];
+        }
+        if (isset($fields['tmo_id'])) {
+            $campos[0][] = $fields['tmo_id'];
+        }
+        if (isset($fields['stt_id'])) {
+            $campos[0][] = $fields['stt_id'];
+        }
+        if (isset($fields['tel_id'])) {
+            $campos[0][] = $fields['tel_id'];
+        }
+        if (isset($fields['tpa_id'])) {
+            $campos[0][] = $fields['tpa_id'];
+        }
+
+        $this->data['secoes']       = $secao;
+        $this->data['campos']       = $campos;
+        $this->data['destino']      = "store";
+        $this->data['desc_metodo']  = '';
+        $this->data['forca_submit'] = true;
+        $this->data['hidden'][] = [
+            'name'  => 'finalizar',
+            'value' => 1
+        ];
+
+
+        echo view('vw_edicao', $this->data);
     }
 
     public function store()
@@ -468,24 +505,41 @@ class OcoOcorrencia extends BaseController
                 unset($postado['oco_id']);
             }
 
-            // // SUBTIPO / STATUS
-            $modModel = new OcorreModOcorrenciaModel();
-            $acao = $modModel->getAcaoConfigurada(
-                (int)$postado['sut_id']
-            );
-            // debug($acao->tpa_id ?? null, true);
-            // SE A AÇÃO FOR NENHUMA, FINALIZA AUTOMATICO
-            if ($acao && (int)$acao->tpa_id === 12) { // 8 = Nenhuma
+            // SUBTIPO / STATUS
+            $model = new OcorreModOcorrenciaModel();
+            $subtipoNenhuma = $model->getSubPorTipo((int)$postado['tpo_id']);
+
+            if ($subtipoNenhuma !== null) {
+                $postado['sut_id'] = $subtipoNenhuma;
                 $postado['stt_id'] = 29; // Finalização automática
             } else {
+                if (empty($postado['sut_id']) || $postado['sut_id'] == -1) {
+                    $postado['sut_id'] = null;
+                }
                 $postado['stt_id'] = 28; // Pendente
             }
+
+            // BUSCA AÇÃO PELO MODEL
+            $acao = (new OcorreModOcorrenciaModel())
+                ->getAcaoConfigurada(
+                (int) $postado['tpo_id'],
+                $postado['sut_id']
+            );
 
             // INJETA NA OCORRENCIA
             if ($acao) {
                 $postado['tpa_id'] = $acao->tpa_id ?? null;
                 $postado['tmo_id'] = $acao->tmo_id ?? null;
                 $postado['tel_id'] = $acao->tel_id ?? null;
+
+                // Se a ação existir MAS for "Nenhuma", força Finalização automática
+                if ((int) ($postado['tpa_id'] ?? 0) === 8) {
+                    // AÇÃO = NENHUMA
+                    $postado['stt_id'] = 29; // Finalização automática
+                } else {
+                    // Qualquer outra ação
+                    $postado['stt_id'] = 28; // Pendente (ou regra futura)
+                }
             }
             // cria data se não veio do form
             if (empty($postado['oco_data'])) {

@@ -2,11 +2,11 @@
 <?= $this->section('footer'); ?>
 <div id='rodape' class='rodape col-12 footer bg-light text-center position-fixed bottom-0 border-top' style="height:1.5rem">
   <!-- inicio da div de mensagem -->
-  <div id='msgrodape' class="col-10 float-start text-center d-grid ">
+  <div id='msgrodape' class="col-10 float-start text-center d-block ">
     <?
     if (isset($log['operacao']) && $log['operacao'] != '') { ?>
       <?= $log['operacao']; ?>: <?= $log['data_alterou']; ?> por: <?= $log['usua_alterou']; ?>
-      <a href='<?= base_url('Logger/show/' . $log['tabela'] . '/' . $log['registro']); ?>'>Ver Log</a>
+      <a href='<?= base_url('Logger/' . $log['tabela'] . '/' . $log['registro']); ?>'>Ver Log</a>
     <?
     }
     ?>

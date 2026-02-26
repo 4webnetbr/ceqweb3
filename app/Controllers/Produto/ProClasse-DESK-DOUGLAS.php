@@ -114,7 +114,6 @@ class ProClasse extends BaseController
     public function add()
     {
         $entProClasse = new EntProClasse();
-        // $entProClasse->campos = $entProClasse->defCampos();
 
         $this->data['secoes']  = ['Dados Gerais', 'Classificação', 'Microbiológico'];
         $this->data['campos']  = [
@@ -187,7 +186,7 @@ class ProClasse extends BaseController
         // debug($dados_classes, true);
         // $fields = $this->classes->defCampos($dados_classes, $show);
         $entProClasse = new EntProClasse((array) $dados_classes);
-        $fields = $entProClasse->defCampos($show);
+        $fields = $entProClasse->defCampos((array) $dados_classes, $show);
 
         $secao[0] = 'Dados Gerais';
         $campos[0] = [];
@@ -278,7 +277,7 @@ class ProClasse extends BaseController
                 $this->verificarUsoEmRelacionamentos('pro_classe', 'cla_id', (int) $id);
             }
 
-            $this->classes->update($id, $dad_atin);
+            $this->status->update($id, $dad_atin);
             $ret['erro'] = false;
             session()->setFlashdata('msg', 'Classe de Produto Alterada com Sucesso');
             $ret['msg'] = 'Classe de Produto Alterada com Sucesso';
@@ -287,7 +286,6 @@ class ProClasse extends BaseController
             // $ret['msg']  = 'Não foi possível Alterar o Status, Verifique!<br><br>';
             $ret['msg']  = 14;
         } catch (\Exception $e) {
-            // $ret['msg']  = var_dump($e);
             $ret['erro'] = true;
             $ret['msg']  = 14; // ou código personalizado, se preferir
         }
@@ -331,7 +329,7 @@ class ProClasse extends BaseController
     public function addCampo($ind)
     {
         $entProClasse = new EntProClasse();
-
+        
         $fields = $entProClasse->defCamposClassif(false, $ind);
         $campo[0] = $fields['pcl_id'];
         $campo[1] = $fields['ori_codOri'];
@@ -388,28 +386,19 @@ class ProClasse extends BaseController
         if (!empty($postado['cla_deposito']) && is_array($postado['cla_deposito'])) {
             $deposito = $this->request->getPost('cla_deposito');
 
-            $postado['cla_deposito'] = implode(
-                ', ',
-                array_map(
-                    fn(array $item): string => $item[0] ?? '',
-                    $deposito
-                )
-            );
+            $postado['cla_deposito'] = implode(', ',
+                                                array_map(
+                                                    fn(array $item): string => $item[0] ?? '',
+                                                    $deposito
+                                                )
+                                            );
             // $postado['cla_deposito'] = implode(', ', array_filter($postado['cla_deposito']));
         }
+        $famCodFam = $this->request->getPost('fam_codFam');
 
-        // $postado['fam_codFam'] = array_map(
-        //     static fn(array|string $item): string => is_array($item)
-        //         ? (string) reset($item)
-        //         : (string) $item,
-        //     $postado['fam_codFam']
-        // );
+        $famCodFam = array_merge(...$famCodFam);
 
-        // $famCodFam = $this->request->getPost('fam_codFam');
-
-        // $famCodFam = array_merge(...$famCodFam);
-
-        // $postado['fam_codFam'] = $famCodFam;
+        $postado['fam_codFam'] = $famCodFam;
 
         // debug($postado, true);
 
@@ -439,7 +428,7 @@ class ProClasse extends BaseController
                         $postado['cla_id'] = $this->classes->getInsertId();
                     }
                     $cla_id = $postado['cla_id'];
-                    $data_atu = date('Y-m-d H:i:s');
+                    $data_atu = date('Y-m-d H:i');
 
                     // GRAVAÇãO DOS Movimentos
                     $ordem = 0;
@@ -448,26 +437,23 @@ class ProClasse extends BaseController
                             $postado['ori_codOri'][$key] != '' &&
                             $postado['fam_codFam'][$key] != ''
                         ) {
-                            foreach ($postado['fam_codFam'][$key] as $chave => $valor) {
-                                $sql_pcl = [
-                                    // 'pcl_id' => $postado['pcl_id'][$key],
-                                    'cla_id' => $cla_id,
-                                    'ori_codOri' => $postado['ori_codOri'][$key],
-                                    'fam_codFam' => $valor,
-                                    'pcl_atualizado' => $data_atu,
-                                    'pcl_ordem'     => $ordem
-                                ];
-                                // debug($sql_pcl);
-                                // if ($postado['pcl_id'][$key] == '') {
+                            $sql_pcl = [
+                                'pcl_id' => $postado['pcl_id'][$key],
+                                'cla_id' => $cla_id,
+                                'ori_codOri' => $postado['ori_codOri'][$key],
+                                'fam_codFam' => $postado['fam_codFam'][$key],
+                                'pcl_atualizado' => $data_atu,
+                                'pcl_ordem'     => $ordem
+                            ];
+                            $ordem++;
+                            if ($postado['pcl_id'][$key] == '') {
                                 $pcl_id = $this->common->insertReg('dbProduto', 'pro_classe_classificacao', $sql_pcl);
-                                $ordem++;
-                                // } else {
-                                // $pcl_id = $this->common->updateReg('dbProduto', 'pro_classe_classificacao', "pcl_id = " . $postado['pcl_id'][$key], $sql_pcl);
-                                // }
-                                if (!$pcl_id) {
-                                    $ret['erro'] = true;
-                                    $erros = ['Não foi possível gravar as Classificações da Classe, Verifique!'];
-                                }
+                            } else {
+                                $pcl_id = $this->common->updateReg('dbProduto', 'pro_classe_classificacao', "pcl_id = " . $postado['pcl_id'][$key], $sql_pcl);
+                            }
+                            if (!$pcl_id) {
+                                $ret['erro'] = true;
+                                $erros = ['Não foi possível gravar as Classificações da Classe, Verifique!'];
                             }
                         }
                     }
@@ -481,11 +467,12 @@ class ProClasse extends BaseController
                     $ret['erro'] = false;
                     $ret['url'] = site_url($this->data['controler']);
                 }
+
             } catch (\Throwable $e) {
                 $this->classes->transRollback();
                 $ret = [
                     'erro' => true,
-                    'msg'  => var_dump($e) ?: 'Erro ao salvar Classe.'
+                    'msg'  => $e->getMessage() ?: 'Erro ao salvar Classe.'
                 ];
                 foreach ($erros as $erro) {
                     $ret['msg'] .= $erro . '<br>';

@@ -887,7 +887,6 @@ function criaSelectRelativo(
 ): string {
     $opcoes = [];
     $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
-    // debug($configCampo);
     if ($nomeTabela != '') {
         // Detecta o DBGroup e o schema com base no nome da tabela
         $dicDados = new ConfigDicDadosModel();
@@ -908,15 +907,6 @@ function criaSelectRelativo(
             // Se existe, aplica filtro WHERE
             $builder->like('prf_id', $perfilId);
         }
-        // Verifica se existe algum campo que termina com "_ativo"
-        $campoAtivo = array_values(array_filter(
-            $fields,
-            fn(string $field): bool => str_ends_with($field, '_ativo')
-        ))[0] ?? null;
-
-        if ($campoAtivo !== null) {
-            $builder->where($campoAtivo, 'A');
-        }
 
         // Continua com os campos desejados
         $builder->select([$campoChave, $campoNome]);
@@ -935,7 +925,7 @@ function criaSelectRelativo(
         $builder->orderBy($campoNome);
         // Busca os dados (chave e nome)
         $dados = $builder->get()->getResultArray();
-        // debug($db->getLastQuery());
+        // debug($db->getLastQuery(), true);
 
         // $dados = filtrarPorPerfil($dados);
         $opcoes = array_column($dados, $campoNome, $campoChave);
@@ -946,13 +936,12 @@ function criaSelectRelativo(
     }
     // Cria o campo
     $campo = new MyCampo($entidade, $nomeCampo);
-    // debug($campo);
     if ($tipo != 2 && $tipo != 4) {
         $opcoes = [-1 => $campo->place] + $opcoes;
     }
 
-    // Define opções obrigatórias
     // debug($opcoes);
+    // Define opções obrigatórias
     $campo->setOpcoes($opcoes);
 
     // Define valor e selecionado
@@ -991,15 +980,12 @@ function criaSelectRelativo(
     $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
     $configCampo['Obrigatorio'] = $configCampo['Obrigatorio'] ?? true;
     $configCampo['Largura']     = $configCampo['Largura'] ?? 40;
-    // if (!isset($configCampo['Hint']) || empty($configCampo['Hint'])) {
-    $configCampo['Hint']        = $configCampo['Hint'] ?? $configCampo['Label'] ?? $campo->hint ?? $campo->label;
-
+    $configCampo['Hint']        = $configCampo['Label'] ?? 40;
 
 
     // Aplica outras configurações dinamicamente
     foreach ($configCampo as $metodo => $parametro) {
         $metodo = 'set' . ucfirst($metodo);
-        // debug($metodo . ' ' . $parametro);
         if (method_exists($campo, $metodo)) {
             $campo->$metodo($parametro);
         }
@@ -1031,6 +1017,16 @@ function criaSelectRelativo(
             $valorStr = $valor ?? '-1';
             $valorArr = [$valor ?? '-1'];
         }
+        // if (is_array($valor)) {
+        //     $campo->valor = implode(',', $valor);
+        //     $campo->selecionado = $valor;
+        // } elseif (is_string($valor) && $valor !== '') {
+        //     $campo->valor = $valor;
+        //     $campo->selecionado = explode(',', $valor);
+        // } else {
+        //     $campo->valor = '';
+        //     $campo->selecionado = [];
+        // }
     } else {
         // select normal
         $campo->valor = (string) $valor;

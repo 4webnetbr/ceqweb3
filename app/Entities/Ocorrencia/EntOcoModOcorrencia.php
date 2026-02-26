@@ -11,8 +11,8 @@ class EntOcoModOcorrencia extends Entity
     protected $attributes = [
         'sut_id'       => null,
         'sut_nome'     => null,
-        'moc_ativo'    => 'A',
-        'moc_excluido' => null,
+        'sut_ativo'    => 'A',
+        'sut_excluido' => null,
         'tpo_id'       => null,
     ];
 
@@ -37,7 +37,7 @@ class EntOcoModOcorrencia extends Entity
 
         $mid            = new MyCampo('oco_subt_ocorrencia', 'sut_id');
         $mid->valor     = $dados['sut_id'] ?? '';
-        $ret['sut_id']   = $mid->crOculto();
+        $ret['sut_id']  = $mid->crOculto();
 
         // debug($dados);
         $nome            =  new MyCampo('oco_subt_ocorrencia', 'sut_nome');
@@ -54,17 +54,16 @@ class EntOcoModOcorrencia extends Entity
         $config['Largura']  = 50;
         $config['Leitura']  = $show;
         $config['FunChan']  =  'carregaTelaAcaoTipo(this); carregaAcaoTipo(this);';
-
         // debug($config, true);
 
         $ret['tpo_id'] = criaSelectRelativo(
-            'oco_tipo_ocorrencia',
+            'vw_oco_tpo_ocorrencia_relac',
             'tpo_id',
             'tpo_nome',
             $dados['tpo_id'] ?? '',
             1,
             'oco_subt_ocorrencia',
-            [],
+            ['tpo_ativo' => 'A'],
             $config
         );
 
@@ -233,6 +232,7 @@ class EntOcoModOcorrencia extends Entity
             'tel_id_tpa'
         );
 
+        // status
         $config['Label']    = 'Status';
         $config['DispForm'] = 'col-12';
         $config['Largura']  = 50;

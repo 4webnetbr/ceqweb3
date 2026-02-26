@@ -59,11 +59,9 @@ class EntOcoOcorrencia extends Entity
         $reqid              = new MyCampo('oco_ocorrencia', 'req_id');
         $reqid->valor       = (isset($dados['req_id'])) ? $dados['req_id'] : '';
         $ret['req_id']      = $reqid->crOculto();
-
         // TIPO DE OCORRÊNCIA
         $config = [];
         $config['Label'] = 'Tipo de Ocorrência';
-        $config['Leitura'] = $show;
         $ret['tpo_id'] = criaSelectRelativo(
             'vw_oco_tpo_ocorrencia_relac',
             'tpo_id',
@@ -77,7 +75,7 @@ class EntOcoOcorrencia extends Entity
 
 
         // SUBTIPO
-        $config['Label']   = 'Subtipo de Ocorrência';
+        $config['Label']   = 'Subtipo';
         $config['Pai'] = 'tpo_id';
         $config['Urlbusca'] = base_url('Buscas/buscaAcoesPorTipo');
 
@@ -98,14 +96,18 @@ class EntOcoOcorrencia extends Entity
         $desc              = new MyCampo('oco_ocorrencia', 'oco_descricao');
         $desc->valor       = (isset($dados['oco_descricao'])) ? $dados['oco_descricao'] : '';
         $desc->obrigatorio = true;
-        $desc->leitura     = $show;
-        $desc->dispForm    = 'col-6';
-        $ret['oco_descricao'] = $desc->crInput();
+        $desc->label       = 'Descreva';
+        $desc->linhas      = 3;
+        $desc->colunas     = 56;
+        $desc->dispForm    = '2col';
 
+        $ret['oco_descricao'] = $desc->crTexto();
 
         $proid              = new MyCampo('oco_ocorrencia', 'pro_id');
         $proid->valor       = (isset($dados['pro_id'])) ? $dados['pro_id'] : '';
         $ret['pro_id'] = $proid->crOculto();
+
+        
 
         // LOTE
         $lotid              = new MyCampo('oco_ocorrencia', 'lot_id');
@@ -116,7 +118,9 @@ class EntOcoOcorrencia extends Entity
         $lote->valor       = (isset($dados['lot_lote'])) ? $dados['lot_lote'] : '';
         $lote->obrigatorio = true;
         $lote->leitura     = $show;
+        $lote->label       = 'Lote';
         $lote->dispForm    = 'col-6';
+        $lote->size        = 54;
         $lote->funcBlur    = "buscaLoteProduto(this,'" . base_url('/buscas/buscaProdutoporLote') . "')";
         $ret['lot_lote'] = $lote->crInput();
 
@@ -124,25 +128,29 @@ class EntOcoOcorrencia extends Entity
         // PRODUTO 
         $produto           = new MyCampo('pro_sap_produto', 'pro_despro');
         $produto->valor    = (isset($dados['pro_despro'])) ? $dados['pro_despro'] : '';
-        $produto->dispForm = 'col-6';
+        $produto->dispForm = '2col';
+        $produto->label    = ' ';
+        $produto->size     = 54;
         $produto->leitura  = true;
         $ret['pro_despro'] = $produto->crInput();
 
         // QUANTIDADE
         $qtd               = new MyCampo('oco_ocorrencia', 'oco_qtd');
         $qtd->valor        = $dados['oco_qtd'] ?? 0;
-        $qtd->dispForm     = 'col-6';
+        $qtd->label        = 'Quantidade';
+        $qtd->dispForm     = '2col';
         $qtd->minimo       = 1;
+        $qtd->step         = 1;
         $qtd->largura      = 10;
         $qtd->size         = 3;
-        $qtd->maximo       = 999;
         $qtd->obrigatorio  = true;
-        $qtd->leitura      = $show;
+
         $ret['oco_qtd'] = $qtd->crInput();
 
         // DATA 
         $data              = new MyCampo('oco_ocorrencia', 'oco_data');
         $data->valor       = $dados['oco_data'] ?? date('Y-m-d\TH:i');
+        $data->label       = 'Data da Ocorrência';
         $data->dispForm    = '2col';
         $data->leitura     = true;
         $data->largura     = 30;
@@ -150,24 +158,15 @@ class EntOcoOcorrencia extends Entity
         $ret['oco_data'] = $data->crInput();
 
 
-        // $stat                 = new MyCampo();
-        // $stat->valor          = (isset($dados['stt_nome'])) ? fmtEtiquetaCor($dados['stt_cor'], $dados['stt_nome']) : '';
-        // $stat->id = $stat->nome        = 'stt_nome';
-        // $stat->label           = 'Status';
-        // $stat->size           = 50;
-        // $stat->largura        = 50;
-        // $stat->dispForm       = 'col-4';
-        // $stat->leitura      = true;
-        // $ret['stt_nome']    = $stat->crShow();
-
-        // USUÁRIO 
-        $usu           = new MyCampo();
-        $usu->valor    = (isset($dados['usu_nome'])) ? $dados['usu_nome'] : '';
-        $usu->label    = 'Usuário';
-        $usu->dispForm = 'col-6';
-        $usu->size     = 40;
-        $usu->leitura  = true;
-        $ret['usu_nome'] = $usu->crInput();
+        $stat                 = new MyCampo();
+        $stat->valor          = (isset($dados['stt_nome'])) ? fmtEtiquetaCor($dados['stt_cor'], $dados['stt_nome']) : '';
+        $stat->id = $stat->nome        = 'stt_nome';
+        $stat->label          = 'Status';
+        $stat->size           = 50;
+        $stat->largura        = 50;
+        $stat->dispForm       = 'col-4';
+        $stat->leitura      = true;
+        $ret['stt_nome']    = $stat->crShow();
 
         return $ret;
     }

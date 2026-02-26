@@ -245,7 +245,7 @@ class OcoModOcorrencia extends BaseController
 
         if (!empty($dados_Acao)) {
             $total = count($dados_Acao);
-            // debug($dados_Acao, true);
+
             foreach ($dados_Acao as $c => $acao) {
 
                 $fields = $entity->defCamposAcao(
@@ -262,11 +262,11 @@ class OcoModOcorrencia extends BaseController
                         $clsMovi = '';
                         break;
 
-                    case 2: // Abrir Tela
+                    case 4: // Abrir Tela
                         $clsTela = '';
                         break;
 
-                    case 4: // Alterar Status
+                    case 7: // Alterar Status
                         $clsStat = '';
                         break;
                 }
@@ -380,20 +380,15 @@ class OcoModOcorrencia extends BaseController
                 throw new \Exception('MSG_8');
             }
 
+            if (isset($postado['sut_id']) && (int)$postado['sut_id'] === 0) {
+                unset($postado['sut_id']);
+            }
+
             // Salvar Tipo de Ocorrência (principal)
             if (!$this->modocorrencia->save($postado)) {
                 throw new \Exception(implode('<br>', $this->modocorrencia->errors()));
             }
-
-            if (empty($postado['sut_id'])) {
-                unset($postado['sut_id']);
-            
-                $this->modocorrencia->insert($postado);
-                $sut_id = $this->modocorrencia->getInsertID();
-            } else {
-                $sut_id = (int)$postado['sut_id'];
-                $this->modocorrencia->update($sut_id, $postado);
-            }
+            // debug($postado);
 
             // Recupera ID do tipo (novo ou existente)
             if (!isset($postado['sut_id']) || empty($postado['sut_id'])) {
@@ -402,8 +397,10 @@ class OcoModOcorrencia extends BaseController
                 $sut_id = $postado['sut_id'];
                 // Se for update, apaga os registros relacionados
                 $this->common->deleteReg($grupo, 'oco_subt_ocorrencia_acao',   "sut_id = {$sut_id}");
+                // $this->common->deleteReg($grupo, 'oco_moc_classe', "sut_id = {$sut_id}");
                 $this->common->deleteReg($grupo, 'oco_subt_ocorrencia_tela',   "sut_id = {$sut_id}");
                 $this->common->deleteReg($grupo, 'oco_subt_ocorrencia_campos', "sut_id = {$sut_id}");
+                // $this->common->deleteReg($grupo, 'oco_moc_permissao', "sut_id = {$sut_id}");
             }
             // debug($sut_id);
 

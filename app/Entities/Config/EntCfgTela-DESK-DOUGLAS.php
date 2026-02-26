@@ -84,6 +84,7 @@ class EntCfgTela extends Entity
         $arquivos = buscaArquivos($pasta, false, [
             'BaseController.php',
             'Buscas.php',
+            'Logger.php'
         ]);
         sort($arquivos);
 

@@ -98,7 +98,7 @@ class Produto extends BaseController
             $dados_produtos = (array) $dados_produtos;
         }
 
-        $entity = new EntProdutProduto($dados_produtos);
+        $entity = new EntProdutos($dados_produtos);
         $fields = $entity->campos;
 
         $this->data['secoes'] = [];
@@ -164,7 +164,6 @@ class Produto extends BaseController
         $entity = new EntProdutProduto((array) $dados);
         $fields = $entity->defCampos((array) $dados, true);
 
-        // debug($fields['cla_id']);
         $secao = ['Dados Gerais'];
         $campos = [[]];
 
@@ -309,28 +308,54 @@ class Produto extends BaseController
 
     public function ativinativ($id, $tipo)
     {
+        // if ($tipo == 1) {
+        //     $dad_atin = [
+        //         'pro_ativo' => 'A',
+        //         'stt_id'    => 3
+        //     ];
+        //     $msg = "Produto Ativado com Sucesso";
+        // } else {
+        //     $dad_atin = [
+        //         'pro_ativo' => 'I',
+        //         'stt_id'    => 20
+        //     ];
+        //     $msg = "Produto Inativado com Sucesso";
+        // }
+
+        // try {
+        //     $this->produtos->update($id, $dad_atin);
+
+        //     echo json_encode([
+        //         'erro' => false,
+        //         'msg'  => $msg
+        //     ]);
+        // } catch (\Throwable $e) {
+        //     echo json_encode([
+        //         'erro' => true,
+        //         'msg'  => 'Erro ao alterar status do produto'
+        //     ]);
+        // }
+
         $ret = [];
         try {
             if ($tipo == 1) {
                 $dad_atin = [
-                    'pro_ativo' => 'A',
-                    'stt_id'    => 3
+                    'pro_ativo' => 'A'
                 ];
-                $msg = "Produto Ativado com Sucesso";
             } else {
                 $dad_atin = [
-                    'pro_ativo' => 'I',
-                    'stt_id'    => 20
+                    'pro_ativo' => 'I'
                 ];
-                $msg = "Produto Inativado com Sucesso";
                 $this->verificarUsoEmRelacionamentos('pro_sap_produto', 'pro_id', (int) $id);
             }
             $this->produtos->update($id, $dad_atin);
             $ret['erro'] = false;
-            session()->setFlashdata('msg', $msg);
-            $ret['msg']  = $msg;
+            session()->setFlashdata('msg', 'Produto Alterado com Sucesso');
+            $ret['msg']  = 'Produto Alterado com Sucesso';
+            cache()->clean();
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
             $ret['erro'] = true;
+            // $ret['msg']  = 'Não foi possível Alterar o Status, Verifique!<br><br>';
             $ret['msg']  = 14;
         } catch (\Exception $e) {
             $ret['erro'] = true;

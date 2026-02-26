@@ -5,18 +5,17 @@ namespace App\Controllers\Estoque;
 use DateTime;
 use App\Libraries\MyCampo;
 use App\DTOs\ProdutoMontado;
+use App\Traits\ForeignKeyUsageChecker;
 use App\Controllers\BuscasSapiens;
 use App\Controllers\BaseController;
 use App\Models\Produt\ProdutLoteModel;
-use App\Traits\ForeignKeyUsageChecker;
-use App\Entities\Estoque\EntRequisicao;
 use App\Models\Produt\ProdutClasseModel;
 use App\Models\Produt\ProdutProdutoModel;
 use App\Models\Estoqu\EstoquDepositoModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
-use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
+use App\Entities\Estoque\EntRequisicao;
 
 class Requisicao extends BaseController
 {
@@ -26,7 +25,6 @@ class Requisicao extends BaseController
     public $permissao = '';
     public $requisicao;
     public $requisicaoproduto;
-    public $reqprodutoate;
     public $classes;
     public $produtos;
     public $tipomovimentacao;
@@ -51,7 +49,6 @@ class Requisicao extends BaseController
         $this->deposito            = new EstoquDepositoModel();
         $this->lote                = new ProdutLoteModel();
         $this->tipomovimentacao    = new EstoquTipoMovimentacaoModel();
-        $this->reqprodutoate        = new EstoquRequisicaoProdutoAtendimentoModel();
 
         if ($this->data['erromsg'] != '') {
             $this->__erro();
@@ -291,9 +288,8 @@ class Requisicao extends BaseController
             $this->data['botao'] = $this->bt_envia;
 
             $this->data['metodo']        = ' ';
-            // $this->data['title']         = '';
-            $this->data['desc_metodo']   = ' Cópia de ';
-            $this->data['desc_edicao']   = ' Req Original: ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+            $this->data['title']         = '';
+            $this->data['desc_metodo']   = ' Cópia da Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
             $this->data['secoes']        = $secao;
             $this->data['campos']        = $campos;
             $this->data['destino']       = 'store'; // ou 'update' se você for criar
@@ -358,6 +354,39 @@ class Requisicao extends BaseController
             $produtosreq
         ));
 
+        $dados_est_produto = $this->produtos->getProdutoEstoque(
+            $pro_ids,
+            $requisicao->req_depdestino
+        );
+        // debug($dados_est_produto, true);
+
+        // Indexa produtos da requisição
+        $produtosIndexado = [];
+        foreach ($produtosreq as $param) {
+            $produtosIndexado[$param->pro_id][] = $param;
+        }
+
+        $resultado = [];
+
+        if (count($dados_est_produto) > 0) {
+            foreach ($dados_est_produto as $itemEstoque) {
+                $pro_id = $itemEstoque->pro_id;
+
+                if (isset($produtosIndexado[$pro_id])) {
+                    foreach ($produtosIndexado[$pro_id] as $param) {
+                        $resultado[] = array_merge(
+                            (array) $itemEstoque,
+                            (array) $param
+                        );
+                    }
+                } else {
+                    $resultado[] = (array) $itemEstoque;
+                }
+            }
+            $produtosreq = $resultado;
+        }
+        // debug($produtosreq, true);
+
         $colunas = [
             'Cód ERP',
             'Descrição',
@@ -372,21 +401,6 @@ class Requisicao extends BaseController
             'Atendida',
             'Saldo',
             'Conferida',
-        ];
-        $alinha = [
-            'center',
-            'start',
-            'start',
-            'start',
-            'center',
-            'end',
-            'end',
-            'end',
-            'end',
-            'end',
-            'end',
-            'end',
-            'end',
         ];
 
         $produtos = [];
@@ -422,14 +436,15 @@ class Requisicao extends BaseController
         $data = [
             'show'     => true,
             'colunas'  => $colunas,
-            'alinha'   => $alinha,
             'produtos' => $produtos
         ];
 
         $campos[0][count($campos[0])] =
             view('partials/pw_show_produtos_req', $data);
 
-        $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['metodo']      = ' ';
+        $this->data['title']       = '';
+        $this->data['desc_metodo'] = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['secoes']      = $secao;
         $this->data['campos']      = $campos;
         $this->data['destino']     = '';
@@ -495,8 +510,7 @@ class Requisicao extends BaseController
 
         $this->data['botao'] = $this->bt_envia;
 
-        // $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
-        $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['secoes']    = $secao;
         $this->data['campos']    = $campos;
         $this->data['destino']   = 'store'; // ou 'update' se você for criar
@@ -617,14 +631,12 @@ class Requisicao extends BaseController
         // ESTOQUES
         envia_msg_ws($this->data['controler'], "Buscando estoque de origem", 'MsgServer', session()->get('usu_id'), 1);
         $estorig = (array) $this->busca->buscaEstoqueDeposito($deporigem) ?? [];
-        // debug($estorig, true);
+        // debug((arrasy) $estorig, true);
         $estoqueOrigem  = $this->indexarEstoque($estorig);
-        // debug($estoqueOrigem, true);
 
         envia_msg_ws($this->data['controler'], "Buscando estoque de destino", 'MsgServer', session()->get('usu_id'), 1);
         $estdest = (array) $this->busca->buscaEstoqueDeposito($depdestino) ?? [];
         $estoqueDestino = $this->indexarEstoque($estdest);
-        // debug($estoqueDestino, true);
         $estoquePadrao  = [];
 
         // debug($tipomov);
@@ -674,17 +686,13 @@ class Requisicao extends BaseController
             );
 
             if ($res) {
-                // $consumo[$tipo] = $this->indexarConsumo($res);
-                $consumo[$tipo] = array_column($res, null, 'codigo_erp');
+                $consumo[$tipo] = $this->indexarConsumo($res);
             }
-            // debug($consumo);
-            // debug($consumo['insumos']['codigo_erp'] . ' ' . $consumo['insumos']['produto_nome'] . ' ' . $consumo['insumos']['consumido'], true);
         }
 
         // AGRUPAR PRODUTOS POR CLASSE
         $classesTemp = [];
         $produtoAnterior = [];
-        $codproant = '';
         // debug($estoquePadrao);
         foreach ($listaProdutos as $prod) {
             $codPro  = $prod->pro_codpro;
@@ -713,14 +721,16 @@ class Requisicao extends BaseController
             $prodArr['pro_mediaconsumo'] = $mediaconsumo;
             $prodArr['pro_primeiro']     = 1; // sempre é o primeiro lote do produtos
 
-            // SE O PRODUTO ANTERIOR ERA O MESMO DO ATUAL E FICARIA NEGATIVO DESCONTANDO O CONSUMO, 
-            // DESCONTA O RESTANTE DO CONSUMO DO PRODUTO ATUAL
-            if ($codPro === $codproant) {
-                $prodArr['pro_primeiro']        = 2; // não é mais o primeiiro lote do produto
-                if ((int)$produtoAnterior['pro_consumo_proximo'] > 0) {
+            if (!empty($produtoAnterior)) {
+                // debug($produtoFinal['pro_consumo_proximo']);
+                // SE O PRODUTO ANTERIOR ERA O MESMO DO ATUAL EFICARIA NEGATIVO DESCONTANDO O CONSUMO, 
+                // DESCONTA O RESTANTE DO CONSUMO DO PRODUTO ATUAL
+                if ($produtoAnterior['pro_codpro'] == $codPro) {
+                    // debug($codPro);
+                    // debug('Códipro ' . $codPro);
+                    $prodArr['pro_primeiro']        = 2; // não é mais o primeiiro lote do produto
                     $prodArr['pro_consumo_proximo']         = $produtoAnterior['pro_consumo_proximo'];
-                } else {
-                    $prodArr['pro_consumo_proximo']         = 0;
+                    // debug('Primeiro ' . $prodArr['pro_primeiro']);
                 }
             }
 
@@ -733,13 +743,11 @@ class Requisicao extends BaseController
                 $produtoreq
             );
 
-            if (count($produtoFinal) > 0) {
-                // debug('achou');
-                // debug($produtoFinal);
+            if (!empty($produtoFinal)) {
                 $produtoAnterior = $produtoFinal;
-                // debug($produtoFinal['pro_codpro'] . ' ' . $produtoFinal['lot_lote'] . ' ' . $produtoFinal['pro_consumo']);
+                // debug($produtoFinal['pro_consumo']);
                 // debug('Produto Anterior');
-                $codproant = $codPro;
+                // debug($produtoFinal['pro_consumo_proximo']);
                 if (!isset($classesTemp[$claId])) {
                     $classesTemp[$claId] = (object) [
                         'id'   => $claId,
@@ -792,7 +800,6 @@ class Requisicao extends BaseController
     {
         $indexado = [];
         foreach ($consumo as $item) {
-            // debug($item);
             $codigo = $item['codigo_erp'];
             $reindexado[$codigo] = $item;
         }
@@ -801,9 +808,6 @@ class Requisicao extends BaseController
 
     private function montarProduto(array $prod, array $ori, array $des, array $padr, array $consumo, array $produtoreq): array
     {
-        // if ($prod['pre_mindiaanterior'] != 'S') {
-        //     debug($prod);
-        // }
         $produto = new ProdutoMontado($prod);
 
         // === Preencher lote de origem ===
@@ -835,31 +839,39 @@ class Requisicao extends BaseController
         $proEstOrigem = $produto->loteori->pro_estorigem;
         $proEstPadrao = $produto->lotepad->pro_estpadrao;
 
-        // debug($consumo);
         $proEstDispon = $proEstPadrao + $proEstOrigem;
-        // debug($proEstDispon);
-        if ((int)($proEstDispon) <= 0 && (int)($proEstDestin) <= 0) {
-            // se não tem saldo nem na Origem nem no Destino, pula
+
+        if (($proEstDispon + $proEstDestin) <= 0) {
             return [];
         }
 
         // === Verifica se deve calcular consumo ===
         if ($prod['pro_diaanterior'] === 'S' || $prod['pro_mediaconsumo'] === 'S') {
-            // debug($prod);
-            $dash = strtolower($prod['cla_dash_consumo']);
+            $dash = $prod['cla_dash_consumo'];
             $codPro = $prod['pro_codpro'];
+
             // === Buscar consumo ===
-            if ($prod['pre_gestaoestoque'] === 'S' && !empty($dash)) {
-                // debug($consumo[$dash][$codPro]);
-                $produto->pro_consumo_medio  = $consumo[$dash][$codPro]['media'] ?? 0;
-                $produto->pro_consumo_diaant = $consumo[$dash][$codPro]['consumido'] ?? 0;
+            if ($prod['pre_gestaoestoque'] === 'S') {
+                switch ($dash) {
+                    case 'Insumos':
+                        $produto->pro_consumo_medio  = $consumo['insumos'][$codPro]['media'] ?? 0;
+                        $produto->pro_consumo_diaant = $consumo['insumos'][$codPro]['consumido'] ?? 0;
+                        break;
+                    case 'Equipos':
+                        $produto->pro_consumo_medio  = $consumo['equipos'][$codPro]['media'] ?? 0;
+                        $produto->pro_consumo_diaant = $consumo['equipos'][$codPro]['consumido'] ?? 0;
+                        break;
+                    case 'Bolsas':
+                        $produto->pro_consumo_medio  = $consumo['bolsas'][$codPro]['media'] ?? 0;
+                        $produto->pro_consumo_diaant = $consumo['bolsas'][$codPro]['consumido'] ?? 0;
+                        break;
+                }
             } else {
                 $produto->pro_consumo_medio  = 0;
                 $produto->pro_consumo_diaant = 0;
             }
 
             // === Base de consumo ===
-            // debug($prod);
             if ($prod['pro_primeiro'] === 1) {
                 $produto->pro_consumo = ($prod['pro_meddias'] > 0)
                     ? $produto->pro_consumo_medio
@@ -890,7 +902,6 @@ class Requisicao extends BaseController
                     $produto->pro_consumo_proximo = 0;
                 }
             }
-            // debug($produto->pro_consumo);
 
             // === Segurança e sugestão bruta (sempre calculadas) ===
             $produto->pro_seguranca = ceil($produto->pro_consumo * ($prod['pct_seguranca'] / 100));
@@ -904,9 +915,6 @@ class Requisicao extends BaseController
                 $produto->pro_consumo = ($prod['pre_mindiaanterior'] === 'S')
                     ? $produto->pro_consumo
                     : $prod['pre_sugerida'];
-                // if ($prod['pre_mindiaanterior'] != 'S') {
-                //     debug($prod);
-                // }
 
                 $produto->pro_seguranca = ceil(floatval($produto->pro_consumo * ($prod['pct_seguranca'] / 100)));
 
@@ -1203,55 +1211,6 @@ class Requisicao extends BaseController
 
             $db->transCommit();
             $db->transComplete();
-        }
-        // verifica se é atendimento automaticp
-        if ($status == 4) {
-            $tipomov = $this->tipomovimentacao->getTipoMovimentacao($postado['tmo_id'])[0];
-            // debug($tipomov, true);
-            if ($tipomov->tmo_conferencia == 'N') {
-                $dadosReq = [
-                    'stt_id' => 5
-                ];
-                $db->transBegin();
-                $this->requisicao->update($req_id, $dadosReq);
-                $produtosreq = $this->requisicao->getRequisicaoProdutos($req_id);
-                foreach ($produtosreq as $val) {
-                    $sql_save = [
-                        'rep_id'        => $val->rep_id,
-                        'pro_id'        => $val->pro_id,
-                        'rpa_cancelada' => 0,
-                        'rpa_atendida'  => $val->rep_quantia,
-                        'rpa_conferida'  => $val->rep_quantia,
-                        'rpa_data'      => date('Y-m-d H:i:s'),
-                        'rpa_data_conferencia'      => date('Y-m-d H:i:s'),
-                    ];
-
-                    $salva = $this->reqprodutoate->insert($sql_save);
-                }
-                $db->transCommit();
-                // TODO CRIAR MOVIMENTAÇÃO DE ESTOQUE
-
-            } else if ($tipomov->tmo_atendeautomatico == 'S') {
-                // ATENDE AUTOMÁTICO, STATUS = 18 = ATENDIDA
-                $dadosReq = [
-                    'stt_id' => 18
-                ];
-                $db->transBegin();
-                $this->requisicao->update($req_id, $dadosReq);
-                $produtosreq = $this->requisicao->getRequisicaoProdutos($req_id);
-                foreach ($produtosreq as $val) {
-                    $sql_save = [
-                        'rep_id'        => $val->rep_id,
-                        'pro_id'        => $val->pro_id,
-                        'rpa_cancelada' => 0,
-                        'rpa_atendida'  => $val->rep_quantia,
-                        'rpa_data'      => date('Y-m-d H:i:s'),
-                    ];
-
-                    $salva = $this->reqprodutoate->insert($sql_save);
-                }
-                $db->transCommit();
-            }
         }
         $ret['msg'] = "$vezes Requisição(ões) gravada(s) com sucesso!";
         $ret['url'] = site_url($this->data['controler']);

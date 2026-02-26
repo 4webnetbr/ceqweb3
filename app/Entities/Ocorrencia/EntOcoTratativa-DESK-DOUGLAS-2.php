@@ -62,9 +62,25 @@ class EntOcoTratativa extends Entity
         $ocoid->valor = $dados['oco_id'] ?? null;
         $ret['oco_id'] = $ocoid->crOculto();
 
+        // TIPO DE OCORRÊNCIA
+        $config = [];
+        $config['Label'] = 'Tipo de Ocorrência';
+        $config['Leitura'] = true;
+
+        $ret['tpo_id'] = criaSelectRelativo(
+            'oco_tipo_ocorrencia',
+            'tpo_id',
+            'tpo_nome',
+            $dados['tpo_id'] ?? null,
+            1,
+            'oco_ocorrencia',
+            [],
+            $config
+        );
 
         // TIPO DE AÇÃO
         $config['Label'] = 'Ação';
+
         $config['Pai'] = 'tpo_id';
         $config['Urlbusca'] = base_url('Buscas/buscaAcoesPorTipo');
 
@@ -173,12 +189,6 @@ class EntOcoTratativa extends Entity
         $dados->tpa_id = $dados->tpa_id ?? null;
         $leitura = $dados->somente_leitura ?? false;
 
-        // ENVIA O TPA_ID OCULTO
-        $tpaHidden = new MyCampo('oco_ocorrencia', 'tpa_id');
-        $tpaHidden->valor = $dados->tpa_id ?? null;
-
-        $ret['tpa_id'] = $tpaHidden->crOculto();
-
         // TIPO DE AÇÃO
         $acao = new MyCampo('oco_tipo_ocorrencia_acao', 'tpa_nome');
         $acao->valor    = $dados->tpa_nome ?? '';
@@ -190,7 +200,7 @@ class EntOcoTratativa extends Entity
         $ret['tpa_nome'] = $acao->crInput();
 
         // JUSTIFICAR
-        if ((int)$dados->tpa_id === 5) {
+        if ((int)$dados->tpa_id === 6) {
             $justi = new MyCampo('oco_ocorrencia', 'oco_justi');
             $justi->valor       = $dados->oco_justi ?? '';
             $justi->label       = 'Justificar';
@@ -249,11 +259,13 @@ class EntOcoTratativa extends Entity
                 // ? fmtEtiquetaClasse($stt->stt_cor, $stt->stt_nome)
                 ? fmtEtiquetaCor($stt->cor_valorrgb, $stt->stt_nome)
                 : '';
+
+            // IMPORTANTE: usar crShow, não crInput
             $ret['stt_nome'] = $stat->crShow();
         }
 
         // TELA
-        if ((int)$dados->tpa_id === 2) {
+        if ((int)$dados->tpa_id === 4) {
 
             $mod = new OcorreModOcorrenciaModel();
             $opc = [];

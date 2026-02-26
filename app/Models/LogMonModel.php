@@ -116,6 +116,7 @@ class LogMonModel
 				'log_id_registro' => $registro,
 				'log_data' => ['$gt'  =>  '']
 			];
+			// debug($filter);
 			$options = [
 				'projection' => ['_id' => 0],
 				'sort' => ['log_data' => -1],

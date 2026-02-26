@@ -80,7 +80,7 @@ class ConfRequisicao extends BaseController
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
 
-        $dados_requis = $this->requisicao->getRequisicaoConferencia(false, [18, 21, 24]);
+        $dados_requis = $this->requisicao->getRequisicaoLista(false, [18, 21, 24]);
         $dados_requis = filtrarPorPerfil($dados_requis);
 
         $req_ids_assoc = array_map(
@@ -220,7 +220,6 @@ class ConfRequisicao extends BaseController
         // debug(count($resultado));
         for ($p = 0; $p < count($resultado); $p++) {
             $prod = $resultado[$p];
-            // debug($prod, true);qs
             $val_cancelada  = $prod->rpa_cancelada  ?? 0;
             $val_atendida   = $prod->rpa_atendida   ?? 0;
             $val_conferida  = $prod->rpa_conferida  ?? 0;
@@ -308,12 +307,7 @@ class ConfRequisicao extends BaseController
             // QUANTIDADES
             $prod->rep_id        = $prod->rep_id        ?? 0;
             $prod->rep_quantia   = $prod->rep_quantia   ?? 0;
-            if ($prod->rpa_cancelada_val > 0) {
-                $qtcaixa = ceil($prod->rpa_atendida_val / $prod->pro_qtdemb);
-                $prod->qtd_caixa     = $qtcaixa;
-            } else {
-                $prod->qtd_caixa     = $prod->qtd_caixa     ?? 0;
-            }
+            $prod->qtd_caixa     = $prod->qtd_caixa     ?? 0;
 
             // ATENDIMENTO / CONFERÊNCIA
             $prod->rpa_atendida       = $prod->rpa_atendida       ?? 0;
@@ -373,7 +367,6 @@ class ConfRequisicao extends BaseController
         // debug($postado);
 
         $dadosAgrupados = [];
-        $parcial = false;
 
         foreach ($postado as $key => $value) {
             if (preg_match('/^repid_(\d+)$/', $key, $matches)) {
@@ -409,8 +402,6 @@ class ConfRequisicao extends BaseController
 
                 if ($conferida > 0) {
                     $dadosAgrupados[$id] = $dadosTemp;
-                } else {
-                    $parcial = true;
                 }
             }
         }
@@ -430,28 +421,29 @@ class ConfRequisicao extends BaseController
             $movs = [];
 
             foreach ($dadosAgrupados as $campo => $val) {
-                // debug($val, true);
-                // if ($val->rpa_conferida < $val->rpa_atendida) {
-                //     // GERA OCORRENCIA
-                //     $oco = [
-                //         'pro_id'   => $val->proid,
-                //         'lot_id'   => $val->proid,
-                //         'tpo_id'   => 'integer',
-                //         'sut_id'   => 'integer',
-                //         'tpa_id'   => 'integer',
-                //         'oco_qtd'  => 'integer',
-                //         'stt_id'   => 'integer',
-                //         'tmo_id'   => 'integer',
-                //         'req_id'   => 'integer',
+                debug($val, true);
+                if ($val->rpa_conferida < $val->rpa_atendida) {
+                    // GERA OCORRENCIA
+                    $oco = [
+                        'pro_id'   => $val->proid,
+                        'lot_id'   => $val->proid,
+                        'tpo_id'   => 'integer',
+                        'sut_id'   => 'integer',
+                        'tpa_id'   => 'integer',
+                        'oco_qtd'  => 'integer',
+                        'stt_id'   => 'integer',
+                        'tmo_id'   => 'integer',
+                        'req_id'   => 'integer',
 
-                //     ];
-                //     $entity = new EntOcoOcorrencia($oco);
-                //     // debug($entity->stt_id);
+                    ];
+                    // $entity = new EntOcoOcorrencia($postado);
+                    // debug($entity->stt_id);
 
-                //     if (!$this->ocorrencia->save($entity)) {
-                //         // throw new \Exception(implode('<br>', $this->ocorrencia->errors()));
-                //     }
-                // }
+                    // if (!$this->ocorrencia->save($entity)) {
+                    // throw new \Exception(implode('<br>', $this->ocorrencia->errors()));
+                    // }
+
+                }
                 $sql_save = [
                     'rpa_conferida' => $val->rpa_conferida,
                     'rpa_data_conferencia' => date('Y-m-d H:i:s'),
@@ -490,9 +482,6 @@ class ConfRequisicao extends BaseController
 
             if (!$ret['erro']) {
                 $status = 25;
-                if ($parcial) {
-                    $status = 24; //conferida parcial
-                }
                 $dadosReq = ['stt_id' => $status];
 
                 $this->requisicao->transStart();

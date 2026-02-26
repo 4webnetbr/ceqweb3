@@ -7,7 +7,6 @@ use App\Controllers\BaseController;
 use App\Traits\ForeignKeyUsageChecker;
 use App\Models\CommonModel;
 use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
-use App\Models\Ocorre\OcorreModOcorrenciaModel;
 
 class OcoTipoOcorrencia extends BaseController
 {
@@ -123,10 +122,6 @@ class OcoTipoOcorrencia extends BaseController
         $this->data['campos']  = $campos;
         $this->data['displ']   = $displ;
         $this->data['destino'] = 'store';
-        $this->data['script'] = "<script>
-                                acerta_botoes_rep('telas_aplicaveis');
-                                acerta_botoes_rep('acoes');
-                                </script>";
 
         echo view('vw_edicao', $this->data);
     }
@@ -359,10 +354,8 @@ class OcoTipoOcorrencia extends BaseController
                 ];
             } else {
                 // INATIVAR
-                $subtipoModel = new OcorreModOcorrenciaModel();
-
-                if ($subtipoModel->getSubtipoAtivo((int) $id)) {
-                    throw new \Exception('MSG_14');
+                if ($this->tipoocorrencia->getSubtipoAtivo((int) $id)) {
+                    throw new \Exception('MSG_14'); // possui subtipo ativo
                 }
 
                 $dad_atin = [
@@ -439,7 +432,13 @@ class OcoTipoOcorrencia extends BaseController
 
             // não permitir edição se já houver subtipo vinculado
             // Verifica unicidade
-            $exists = $this->common->verificaUnico($this->tipoocorrencia, 'tpo_nome', $postado['tpo_nome'], 'tpo_id', $postado['tpo_id'] ?? null);
+            $exists = $this->common->verificaUnico(
+                $this->tipoocorrencia,
+                'tpo_nome',
+                $postado['tpo_nome'],
+                'tpo_id',
+                $postado['tpo_id'] ?? null
+            );
 
             if ($exists > 0) {
                 throw new \Exception('MSG_8');

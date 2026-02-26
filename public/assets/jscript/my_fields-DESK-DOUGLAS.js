@@ -1010,7 +1010,6 @@ function seleciona_item(id, texto, obj) {
 
 function exclui_campo(objdest, obj) {
   jQuery(obj).closest(".row").remove();
-  jQuery("#form1").attr("data-alter", true);
   // indice = parseInt(obj.getAttribute('data-index'));
   // jQuery(obj).parents().eq(2).remove()
   acerta_botoes_rep(objdest);
@@ -1672,7 +1671,7 @@ function busca_dependente(obj, id_dep, url_busca, selec) {
   // $select.selectpicker("val", aSelec);
 
   // Fecha o dropdown programaticamente
-  $select.parent().find(".dropdown-toggle").dropdown("toggle"); // se aberto, fecha
+  // $select.parent().find(".dropdown-toggle").dropdown("toggle"); // se aberto, fecha
 }
 
 /**

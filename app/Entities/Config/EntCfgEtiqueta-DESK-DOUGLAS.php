@@ -56,7 +56,6 @@ class EntCfgEtiqueta extends Entity
 
         // Layout
         $config = [];
-        // $config['Label']     = $show;
         $config['Leitura']     = $show;
         $config['Obrigatorio'] = true;
         $config['Largura']     = 50;
@@ -72,7 +71,6 @@ class EntCfgEtiqueta extends Entity
             [],
             $config
         );
-        // ['let_ativo' => 'A'],
 
         // Módulo
         $ret['mod_id'] = criaSelectRelativo(
@@ -186,7 +184,7 @@ class EntCfgEtiqueta extends Entity
         $etc_caract->ordem       = $pos;
         $etc_caract->largura     = 14;
         $etc_caract->size        = 3;
-        $etc_caract->maximo      = 999;
+        $etc_caract->maximo      = 100;
         $etc_caract->dispForm    = "col-3";
         $etc_caract->funcChan    = "prevEtiqueta('" . $base_url . "')";
         $ret['etc_caracteres']  = $etc_caract->crInput();
@@ -196,7 +194,7 @@ class EntCfgEtiqueta extends Entity
         $etc_linhas->minimo        = 1;
         $etc_linhas->step        = 1;
         $etc_linhas->size        = 3;
-        $etc_linhas->maximo      = 999;
+        $etc_linhas->maximo      = 100;
         // $etc_linhas->maxLength   = 1;
         $etc_linhas->largura        = 14;
         $etc_linhas->obrigatorio = true;
@@ -243,7 +241,7 @@ class EntCfgEtiqueta extends Entity
         $etc_taman->valor       = (isset($dados['etc_tamanho'])) ? $dados['etc_tamanho'] : '12';
         // $etc_taman->tipo        = 'nteiro';
         $etc_taman->minimo        = 4;
-        $etc_taman->maximo        = 99;
+        $etc_taman->maximo        = 30;
         $etc_taman->step        = 1;
         $etc_taman->size        = 2;
         $etc_taman->obrigatorio = true;

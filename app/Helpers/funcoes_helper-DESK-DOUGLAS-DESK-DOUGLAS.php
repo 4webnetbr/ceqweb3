@@ -732,20 +732,13 @@ function fmtEtiquetaCorBst($cor, $label = '')
  * @param mixed $cor
  * @return string
  */
-function fmtEtiquetaCor($cor, $label = '', $tipo = 0)
+function fmtEtiquetaCor($cor, $label = '')
 {
     if ($label == '') {
         $label = $cor;
     }
-    $py = 'py-1';
-    $mw = 'min-width:20ch;';
-    if ($tipo == 1) {
-        // sem pad vertical e sem min-width pra caber em qualquer espaço
-        $py = '';
-        $mw = '';
-    }
     $cortexto = getContrastYIQ(substr($cor, 1, strlen($cor)));
-    $ret = "<span style='background-color:$cor;color:$cortexto;border:1px solid $cortexto;$mw' class='px-3 $py d-inline-block rounded-pill text-center text-nowrap '>$label</span>";
+    $ret = "<span style='background-color:$cor;color:$cortexto;border:1px solid $cortexto;min-width:20ch' class='px-3 py-1 d-inline-block rounded rounded-4 text-center text-nowrap '>$label</span>";
     return $ret;
 }
 function getContrast50($hexcolor)
@@ -887,7 +880,6 @@ function criaSelectRelativo(
 ): string {
     $opcoes = [];
     $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
-    // debug($configCampo);
     if ($nomeTabela != '') {
         // Detecta o DBGroup e o schema com base no nome da tabela
         $dicDados = new ConfigDicDadosModel();
@@ -908,25 +900,13 @@ function criaSelectRelativo(
             // Se existe, aplica filtro WHERE
             $builder->like('prf_id', $perfilId);
         }
-        // Verifica se existe algum campo que termina com "_ativo"
-        $campoAtivo = array_values(array_filter(
-            $fields,
-            fn(string $field): bool => str_ends_with($field, '_ativo')
-        ))[0] ?? null;
-
-        if ($campoAtivo !== null) {
-            $builder->where($campoAtivo, 'A');
-        }
 
         // Continua com os campos desejados
         $builder->select([$campoChave, $campoNome]);
 
-        // debug($filtros);
-
-        if (!empty($filtros)) {
+        if (!empty($filtros) && array_is_list($filtros)) {
             // só aplica where se a chave existir na tabela
             $campoFiltro = array_key_first($filtros);
-            // debug($campoFiltro);
             if ($db->fieldExists($campoFiltro, "$schema.$nomeTabela")) {
                 $builder->where($filtros);
             }
@@ -946,13 +926,12 @@ function criaSelectRelativo(
     }
     // Cria o campo
     $campo = new MyCampo($entidade, $nomeCampo);
-    // debug($campo);
     if ($tipo != 2 && $tipo != 4) {
         $opcoes = [-1 => $campo->place] + $opcoes;
     }
 
-    // Define opções obrigatórias
     // debug($opcoes);
+    // Define opções obrigatórias
     $campo->setOpcoes($opcoes);
 
     // Define valor e selecionado
@@ -968,16 +947,6 @@ function criaSelectRelativo(
         $valorStr = $valor ?? '-1';
         $valorArr = [$valor ?? '-1'];
     }
-    if (count($opcoes) <= 2 && count($opcoes) > 0) {
-        // debug($opcoes, true);
-        if (count($opcoes) == 2) {
-            $valorStr = array_keys($opcoes)[1];
-            $valorArr = [$valorStr];
-        } else {
-            $valorStr = array_keys($opcoes)[0];
-            $valorArr = [$valorStr];
-        }
-    }
 
     $campo->setValor($valorStr);
     $campo->setSelecionado($valorArr);
@@ -991,15 +960,11 @@ function criaSelectRelativo(
     $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
     $configCampo['Obrigatorio'] = $configCampo['Obrigatorio'] ?? true;
     $configCampo['Largura']     = $configCampo['Largura'] ?? 40;
-    // if (!isset($configCampo['Hint']) || empty($configCampo['Hint'])) {
-    $configCampo['Hint']        = $configCampo['Hint'] ?? $configCampo['Label'] ?? $campo->hint ?? $campo->label;
-
 
 
     // Aplica outras configurações dinamicamente
     foreach ($configCampo as $metodo => $parametro) {
         $metodo = 'set' . ucfirst($metodo);
-        // debug($metodo . ' ' . $parametro);
         if (method_exists($campo, $metodo)) {
             $campo->$metodo($parametro);
         }
@@ -1031,6 +996,16 @@ function criaSelectRelativo(
             $valorStr = $valor ?? '-1';
             $valorArr = [$valor ?? '-1'];
         }
+        // if (is_array($valor)) {
+        //     $campo->valor = implode(',', $valor);
+        //     $campo->selecionado = $valor;
+        // } elseif (is_string($valor) && $valor !== '') {
+        //     $campo->valor = $valor;
+        //     $campo->selecionado = explode(',', $valor);
+        // } else {
+        //     $campo->valor = '';
+        //     $campo->selecionado = [];
+        // }
     } else {
         // select normal
         $campo->valor = (string) $valor;
