@@ -82,6 +82,20 @@ class ProdutLoteModel extends Model
         return $builder->get()->getResult();
     }
 
+    public function getLoteValidade($validade = false)
+    {
+        $db = db_connect('dbProduto');
+    
+        $builder = $db->table('pro_sap_lote');
+        $builder->select('*');
+    
+        if (!empty($validade)) {
+            $builder->where('lot_validade', $validade);
+        }
+    
+        return $builder->get()->getResult();
+    }
+
 
     public function getLoteCodbar($codbar = false)
     {
@@ -108,19 +122,19 @@ class ProdutLoteModel extends Model
 
     public function getLoteSearch($termo)
     {
-        $array = ['lot_lote' => $termo . '%'];
-        $array2 = ['lot_codbar' => $termo . '%'];
         $db = db_connect('dbProduto');
         $builder = $db->table('vw_pro_sap_lote_relac');
-
-        // Utiliza a VIEW de lotes
+    
         $builder->select('*');
-        $builder->like('lot_lote', $termo);
-        $builder->orLike('lot_codbar', $termo);
-
-        // debug($builder->getCompiledSelect());
-        $ret = $builder->get()->getResult();
-        return $ret;
+    
+        $builder->groupStart()
+                    ->like('lot_lote', $termo)
+                    ->orLike('lot_codbar', $termo)
+                ->groupEnd();
+    
+        $builder->where('stt_id', 9);
+    
+        return $builder->get()->getResult();
     }
 
     public function getLoteCodproLote($codpro, $lote)
@@ -177,15 +191,15 @@ class ProdutLoteModel extends Model
         if (empty($lot_id)) {
             return '';
         }
-        $dbProduto = db_connect('dbProduto');
-
-        $lote = $dbProduto
-            ->table('pro_sap_lote')
-            ->select('lot_lote')
-            ->where('lot_id', $lot_id)
-            ->get()
-            ->getRow();
-
-        return $lote->lot_lote ?? '';
+    
+        $db = db_connect('dbProduto');
+    
+        $builder = $db->table('pro_sap_lote');
+        $builder->select('lot_lote');
+        $builder->where('lot_id', $lot_id);
+    
+        $row = $builder->get()->getRow();
+    
+        return $row->lot_lote ?? '';
     }
 }

@@ -950,6 +950,9 @@ function criaSelectRelativo(
     if ($tipo != 2 && $tipo != 4) {
         $opcoes = [-1 => $campo->place] + $opcoes;
     }
+    if ($tipo == 2) {
+        $campo->place = '';
+    }
 
     // Define opções obrigatórias
     // debug($opcoes);

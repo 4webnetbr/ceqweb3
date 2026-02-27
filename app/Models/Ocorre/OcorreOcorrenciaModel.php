@@ -92,6 +92,7 @@ class OcorreOcorrenciaModel extends Model
         $builder = $db->table($this->view);
         $builder->select('*');
         $builder->orderBy('stt_ordem');
+        $builder->orderBy('oco_id', 'ASC'); 
         return $builder->get()->getResult();
     }
 

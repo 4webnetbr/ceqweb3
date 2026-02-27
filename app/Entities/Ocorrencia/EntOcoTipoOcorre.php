@@ -82,12 +82,12 @@ class EntOcoTipoOcorre extends Entity
         // modulo
         $config = [];
         $config['Label']       = 'Modulo';
-        $config['Leitura'] = $show;
+        $config['Leitura']     = $show;
         $config['Largura']     = 40;
         $config['DispForm']    = 'col-4';
         $config['Ordem']       = $pos;
         $config['Obrigatorio'] = false;
-        $config['FunChan']    = "mudaObrigatorio(this,'>-1','tel_id[$pos]')";
+        // $config['FunChan']    = "mudaObrigatorio(this,'>-1','tel_id[$pos]')";
 
         $ret['mod_id'] = criaSelectRelativo(
             'cfg_modulo',
@@ -104,7 +104,7 @@ class EntOcoTipoOcorre extends Entity
         $config['Label']       = 'Tela';
         $config['Pai']         = "mod_id[$pos]";
         $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
-        $config['FunChan']    = "mudaObrigatorio(this,'>-1','tof_campo[$pos][]')";
+        // $config['FunChan']    = "mudaObrigatorio(this,'>-1','tof_campo[$pos][]')";
 
         $ret['tel_id'] = criaSelectRelativo(
             'cfg_tela',
@@ -121,7 +121,6 @@ class EntOcoTipoOcorre extends Entity
         $config['Pai']         = "tel_id[$pos]";
         $config['Label']       = 'Campo';
         $config['Urlbusca']    = base_url('buscas/busca_campo_tela');
-        $config['Obrigatorio'] = false;
 
         $ret['tof_campo'] = criaSelectRelativo(
             '',
@@ -190,7 +189,7 @@ class EntOcoTipoOcorre extends Entity
         $config['FunChan']     = '';
         $config['Label']       = 'Tipo de Movimentação';
         $config['DispForm']    = 'col-12';
-        $config['Obrigatorio'] = true;
+        $config['Obrigatorio'] = false;
 
         $ret['tmo_id'] = criaSelectRelativo(
             'est_tipo_movimentacao',

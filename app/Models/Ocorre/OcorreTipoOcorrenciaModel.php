@@ -67,18 +67,10 @@ class OcorreTipoOcorrenciaModel extends Model
 
     public function getTipoOcorrencia($tpo_id = false, $tel_id = false, bool $somenteAtivos = false) 
     {
-        $perfilId = session()->get('usu_perfil_id'); 
+        // $perfilId = session()->get('usu_perfil_id'); 
         $db       = db_connect('dbOcorrencia');
         $builder  = $db->table('vw_oco_tpo_ocorrencia_relac');
         $builder->select('vw_oco_tpo_ocorrencia_relac.*');
-    
-        // JOIN de permissão por TIPO
-        // $builder->join(
-        //     'oco_tipo_ocorrencia_permissao tp',
-        //     'tp.tpo_id = vw_oco_tpo_ocorrencia_relac.tpo_id',
-        //     'inner'
-        // );
-        // $builder->where('tp.prf_id', $perfilId);
     
         // filtros existentes
         if ($somenteAtivos) {
@@ -132,16 +124,6 @@ class OcorreTipoOcorrenciaModel extends Model
 
         return $builder->get()->getResult();
     }
-
-    public function getSubtipoAtivo(int $tpo_id): bool
-    {
-        $db = db_connect('dbOcorrencia'); 
-    
-        return $db->table('oco_subt_ocorrencia')
-            ->where('tpo_id', $tpo_id)
-            ->where('sut_ativo', 'A')
-            ->countAllResults() > 0;
-    }
     
     public function getTipoMovimentacao($tmo_id = false, $prf_id = false)
     {
@@ -162,11 +144,18 @@ class OcorreTipoOcorrenciaModel extends Model
         return $builder->get()->getResult();
     }
 
-    public function getTipoOcorrenciaAtivo()
+    public function getMovimentacao(int $tpo_id, int $tpa_id): ?int
     {
-        return $this
-            ->where('tpo_ativo', 'A')
-            ->orderBy('tpo_nome')
-            ->findAll();
+        $db = db_connect('dbOcorrencia');
+    
+        $builder = $db->table('oco_tipo_ocorrencia_acao o');
+        $builder->select('o.tmo_id');
+    
+        $builder->where('o.tpo_id', $tpo_id);
+        $builder->where('o.tpa_id', $tpa_id);
+    
+        $row = $builder->get()->getRow();
+    
+        return $row ? (int) $row->tmo_id : null;
     }
 }

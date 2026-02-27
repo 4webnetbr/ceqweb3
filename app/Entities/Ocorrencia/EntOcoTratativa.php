@@ -4,8 +4,6 @@ namespace App\Entities\Ocorrencia;
 
 use CodeIgniter\Entity\Entity;
 use App\Libraries\MyCampo;
-use App\Entities\Estoque\EntTipoMovimentacao;
-use App\Entities\Produto\EntLote;
 use App\Models\Config\ConfigStatusModel;
 use App\Models\Ocorre\OcorreModOcorrenciaModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
@@ -130,8 +128,8 @@ class EntOcoTratativa extends Entity
         $descpro = '';
         if (isset($dados['pro_id']) && !empty($dados['pro_id'])) {
             $modProduto = new ProdutProdutoModel();
-            $prod = (array) $modProduto->getProduto($dados['pro_id'])[0];
-            $descpro =  $prod['pro_despro'];
+            $prod = $modProduto->getProduto($dados['pro_id']);
+            $descpro = !empty($listaProd) ? $prod[0]->pro_despro : '';
         }
         // PRODUTO 
         $produto           = new MyCampo('pro_sap_produto', 'pro_despro');
@@ -165,8 +163,6 @@ class EntOcoTratativa extends Entity
         return $ret;
     }
 
-
-
     public function defCamposAcao(object $dados): array
     {
         $ret = [];
@@ -174,7 +170,7 @@ class EntOcoTratativa extends Entity
         $leitura = $dados->somente_leitura ?? false;
 
         // ENVIA O TPA_ID OCULTO
-        $tpaHidden = new MyCampo('oco_ocorrencia', 'tpa_id');
+        $tpaHidden = new MyCampo('oco_ocorrencia', 'tpa_id[]');
         $tpaHidden->valor = $dados->tpa_id ?? null;
 
         $ret['tpa_id'] = $tpaHidden->crOculto();
@@ -207,11 +203,7 @@ class EntOcoTratativa extends Entity
         // MOVIMENTAÇÃO
         if ((int)$dados->tpa_id === 3) {
 
-            $modelMod = new OcorreModOcorrenciaModel();
-            $tmo_id = $modelMod->getMovimentacao(
-                $dados->tpo_id,
-                $dados->tpa_id
-            );
+            $tmo_id = $dados->tmo_id ?? null;
 
             $tmoModel = new EstoquTipoMovimentacaoModel();
             $opc_tmo = [];

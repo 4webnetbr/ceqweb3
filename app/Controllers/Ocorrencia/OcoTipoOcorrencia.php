@@ -238,7 +238,7 @@ class OcoTipoOcorrencia extends BaseController
                 }
             }
         } else {
-            $fields = $entity->defCamposTelasAplicaveis(false, 0, true);
+            $fields = $entity->defCamposTelasAplicaveis(false, 0, $show);
 
             $campos[1][0][] = $fields['mod_id'];
             $campos[1][0][] = $fields['tel_id'];

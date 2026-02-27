@@ -71,30 +71,38 @@ class OcorreTrataOcorrenciaModel extends Model
 
 
 
-    public function getOcorrencia($id)
+    public function getTrataOcorrencia($id)
     {
-        // Busca ocorrência na tabela principal
-        return $this->db->table('oco_ocorrencia')
-            ->where('oco_id', $id)
-            ->get()
-            ->getResult();
+        $db = db_connect('dbOcorrencia');
+    
+        $builder = $db->table('oco_ocorrencia o');
+        $builder->select('o.*');
+        $builder->where('o.oco_id', $id);
+    
+        return $builder->get()->getRow();
     }
     
     
     public function getListaCompleta()
     {
         // Retorna todos os registros da VIEW
-        return $this->db->table($this->view)
-            ->get()
-            ->getResult();
+        $db = db_connect('dbOcorrencia');
+
+        $builder = $db->table($this->view . ' v');
+        $builder->select('v.*');
+
+        return $builder->get()->getResult();
     }  
 
     public function getView($id)
     {
         // Busca ocorrência específica na VIEW
-        return $this->db->table($this->view)
-            ->where('oco_id', $id)
-            ->get()
-            ->getResult();
+        $db = db_connect('dbOcorrencia');
+
+        $builder = $db->table($this->view . ' v');
+        $builder->select('v.*');
+        $builder->where('v.oco_id', $id);
+
+        return $builder->get()->getResult();
     }
 }

@@ -48,7 +48,6 @@ class OcorreTipoAcaoModel extends Model
 
     protected $logdb;
 
-
     protected function depoisInsert(array $data)
     {
         (new LogMonModel())->insertLog($this->table, 'Incluído', $data['id'], $data['data']);

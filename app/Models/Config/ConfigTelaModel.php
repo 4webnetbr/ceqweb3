@@ -131,6 +131,18 @@ class ConfigTelaModel extends Model
         return $ret;
     }
 
+    public function getTelas()
+    {
+        $db = db_connect('dbOcorrencia');
+    
+        $builder = $db->table('config_ceqweb_db.cfg_tela t');
+        $builder->select('t.tel_id, t.tel_nome');
+    
+        $builder->orderBy('t.tel_nome', 'ASC');
+    
+        return $builder->get()->getResult();
+    }
+
     /**
      * getTelaPerfil
      *

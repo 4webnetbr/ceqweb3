@@ -18,7 +18,7 @@ class OcorreModOcorrenciaModel extends Model
     protected $useSoftDeletes   = false;
 
     protected $allowedFields    = [
-        // 'sut_id',
+        'sut_id',
         'sut_nome',
         'sut_ativo',
         'sut_excluido',
@@ -27,8 +27,7 @@ class OcorreModOcorrenciaModel extends Model
 
     protected $validationRules = [
         'sut_nome' => 'required|max_length[50]|min_length[5]',
-    ];
-
+    ]; 
     protected $validationMessages = [
         'sut_nome'   => [
             'required'   => 'O campo Nome do Tipo da Ocorrência é Obrigatório',
@@ -94,16 +93,6 @@ class OcorreModOcorrenciaModel extends Model
         return $builder->get()->getResult();
     }
 
-    public function getAcoesByTipo(int $tpo_id)
-    {
-        return $this->db
-            ->table('oco_tipo_ocorrencia_acao o')
-            ->where('tpo_id', $tpo_id)
-            ->orderBy('o.toa_id', 'ASC')
-            ->get()
-            ->getResult();
-    }
-
     public function getModOcorrenciaPorTipo($tpo_id = null)
     {
         // Conecta ao banco de Ocorrência
@@ -152,70 +141,63 @@ class OcorreModOcorrenciaModel extends Model
 
     public function getUsoGestao(int $sut_id): bool
     {
-        return $this->db
-            ->table('oco_ocorrencia')
-            ->where('sut_id', $sut_id)
-            ->countAllResults() > 0;
+        $db = db_connect('dbOcorrencia');
+    
+        $builder = $db->table('oco_ocorrencia o');
+        $builder->select('o.oco_id');
+    
+        $builder->where('o.sut_id', $sut_id);
+        $builder->where('o.stt_id', 28);
+    
+        return $builder->countAllResults() > 0;
     }
 
     public function getSubtipoPorTipos(int $tpo_id)
     {
-        return $this->where('tpo_id', $tpo_id)
-            ->orderBy('sut_nome')
-            ->findAll();
+        $db = db_connect('dbOcorrencia');
+    
+        $builder = $db->table('oco_subt_ocorrencia s');
+        $builder->select('s.*');
+    
+        $builder->where('s.tpo_id', $tpo_id);
+    
+        $builder->orderBy('s.sut_nome', 'ASC');
+    
+        return $builder->get()->getResult();
     }
 
-    public function getSubPorTipo(int $tpo_id): ?int
+    public function getSubTipo(int $tpo_id): ?int
     {
         $db = db_connect('dbOcorrencia');
     
-        $builder = $db->table('oco_subt_ocorrencia_acao');
-        $builder->select('sut_id');
-        $builder->where('tpo_id', $tpo_id);
-        $builder->where('sut_nome', 'Nenhuma');
+        $builder = $db->table('oco_subt_ocorrencia_acao s');
+        $builder->select('s.sut_id');
+    
+        $builder->where('s.tpo_id', $tpo_id);
+        $builder->where('s.sut_nome', 'Nenhuma');
     
         $row = $builder->get()->getRow();
     
-        return $row ? $row->sut_id : null;
-    }
-
-     public function getSubTipo(int $tpo_id): ?int
-    {
-        $row = $this->db
-            ->table('oco_subt_ocorrencia_acao')
-            ->select('sut_id')
-            ->where('tpo_id', $tpo_id)
-            ->where('sut_nome', 'Nenhuma')
-            ->get()
-            ->getRow();
-    
-        return $row?->sut_id;
-    }
-
-    public function getAcoesByTipoOcorrencia($tpo_id)
-    {
-        // Busca ações vinculadas ao tipo de ocorrência
-        return $this->db->table('oco_tipo_ocorrencia_acao o')
-            ->select('o.tpa_id, a.tpa_nome')
-            ->join('oco_tipo_ocorrencia_acao a', 'a.tpa_id = o.tpa_id')
-            ->where('o.tpo_id', $tpo_id)
-            ->get()
-            ->getResult();
+        return $row ? (int) $row->sut_id : null;
     }
 
 
     public function getTelaByTpoTpa(int $tpo_id, int $tpa_id): ?int
     {
-        // Busca a tela associada
-        $row = $this->db->table('oco_tipo_ocorrencia_acao')
-            ->select('tel_id')
-            ->where('tpo_id', $tpo_id)
-            ->where('tpa_id', $tpa_id)
-            ->get()
-            ->getRow();
-
-        return $row?->tel_id;
+        $db = db_connect('dbOcorrencia');
+    
+        $builder = $db->table('oco_tipo_ocorrencia_acao o');
+        $builder->select('o.tel_id');
+    
+        $builder->where('o.tpo_id', $tpo_id);
+        $builder->where('o.tpa_id', $tpa_id);
+    
+        $row = $builder->get()->getRow();
+    
+        return $row ? (int) $row->tel_id : null;
     }
+
+
     public function getAcaoConfigurada(int $sut_id)
     {
         $db = db_connect('dbOcorrencia');
@@ -227,27 +209,28 @@ class OcorreModOcorrenciaModel extends Model
         return $builder->get()->getRow();
     }
 
-    public function getTelas()
+    public function getAcaoPorId($tpa_id, $sut_id)
     {
-        // Busca telas do sistema
-        return $this->db->table('config_ceqweb_db.cfg_tela')
-            ->select('tel_id, tel_nome')
-            ->orderBy('tel_nome', 'ASC')
-            ->get()
-            ->getResult();
+        $db = db_connect('dbOcorrencia');
+
+        $builder = $db->table('oco_subt_ocorrencia_acao');
+        $builder->select('*');
+        $builder->where('sut_id', $sut_id);
+        $builder->where('tpa_id', $tpa_id);
+    
+        return $builder->get()->getRow();
     }
 
-    public function getMovimentacao(int $tpo_id, int $tpa_id): ?int
+    public function getSubtipoAtivo(int $tpo_id): bool
     {
-        // Busca a movimentação associada
-        $row = $this->db->table('oco_tipo_ocorrencia_acao')
-            ->select('tmo_id')
-            ->where('tpo_id', $tpo_id)
-            ->where('tpa_id', $tpa_id)
-            ->get()
-            ->getRow();
-
-        // Retorna o ID da movimentação    
-        return $row?->tmo_id;
+        $db = db_connect('dbOcorrencia');
+    
+        $builder = $db->table('oco_subt_ocorrencia s');
+        $builder->select('s.sut_id');
+    
+        $builder->where('s.tpo_id', $tpo_id);
+        $builder->where('s.sut_ativo', 'A');
+    
+        return $builder->countAllResults() > 0;
     }
 }

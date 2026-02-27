@@ -338,6 +338,9 @@ async function carregarProdutos(url, aba, obj) {
     jQuery("#" + aba).html(text.join(""));
     jQuery("#produtos-tabr").trigger("click");
     jQuery("#produtos-tab").trigger("click");
+    jQuery(".seguranca").each(function () {
+      recalculaSeguranca(this);
+    });
     atualizarEstadoBotaoSalvar();
 
     function calcularSugestao(
@@ -400,6 +403,11 @@ async function carregarProdutos(url, aba, obj) {
             inicio + (ind + 1),
           );
           atualizarSugestao(inicio + (ind + 1), novaSug);
+          preencherRequisicaoAutomatica(
+            inicio + (ind + 1),
+            novaSug,
+            trAtual.attr("data-classe"),
+          );
         }
       }
       // }
@@ -426,6 +434,89 @@ async function carregarProdutos(url, aba, obj) {
       const novoSeg = Math.ceil(consumo * (seguranca / 100));
       jQuery(`#seg_${index}`).text(novoSeg);
       return novoSeg;
+    }
+
+    function recalculaSeguranca(obj) {
+      const input = jQuery(obj);
+      const indice = input.attr("data-index");
+      let match = indice.match(/^(.*?)(\d+)$/);
+
+      let inicio = match[1]; // "cl7_pr"
+      let ind = parseInt(match[2]); // "14"
+      let posicao = 1;
+
+      // verificar se o produto da linha atual é o mesmo da linha anterior ou da próxima linha
+      const trAnte = jQuery(`tr[data-index="${inicio + (ind - 1)}"]`);
+      const codproAnte = trAnte.attr("data-codpro");
+      const trAtual = jQuery(`tr[data-index="${indice}"]`);
+      const codproAtual = trAtual.attr("data-codpro");
+      const trProxi = jQuery(`tr[data-index="${inicio + (ind + 1)}"]`);
+      const codproProxi = trProxi.attr("data-codpro");
+      let sugAnte = 0;
+      if (codproAnte == codproAtual) {
+        posicao = 2; // sou igual ao anterior
+        sugAnte = parseInt(jQuery(`#sug_${inicio + (ind - 1)}`).text());
+      } else if (codproAtual == codproProxi) {
+        posicao = 1; // sou igual ao próximo
+      }
+
+      // const tr = jQuery(`tr[data-index="${index}"]`);
+
+      const baseSugOriginal = parseInt(trAtual.find(".sugestao").text()) || 0;
+      // const baseSugOriginal = parseInt(tr.data('sugestao-base')) || 0;
+      const saldoDisponivel =
+        parseInt(trAtual.attr("data-saldo-disponivel")) || 0;
+      const min = parseInt(trAtual.attr("data-min")) || 0;
+      let max = parseInt(trAtual.attr("data-max")) || 0;
+      max = max === 0 ? saldoDisponivel : max;
+
+      // const codproAtual = tr.attr("data-codpro");
+      let saldoDestino = 0;
+
+      jQuery("tr").each(function () {
+        const linha = jQuery(this);
+        if (linha.attr("data-codpro") == codproAtual) {
+          saldoDestino += parseInt(linha.attr("data-saldo-destino")) || 0;
+        }
+      });
+
+      // const saldoDestino = parseInt(tr.data('saldo-destino')) || 0;
+      let consumo = 0;
+      if (posicao == 1) {
+        consumo = parseInt(trAtual.attr("data-consumo")) || 0;
+      } else {
+        consumo = parseInt(trAnte.attr("data-consumo")) - sugAnte || 0;
+      }
+      const seguranca = parseInt(input.val()) || 0;
+
+      const multiplicador =
+        parseInt(jQuery(`#pro_multiplica_${indice}`).val()) || 1;
+      max = max * multiplicador;
+
+      const segAnterior = parseInt(jQuery(`#seg_${indice}`).text()) || 0;
+
+      let baseSug = baseSugOriginal - segAnterior;
+      const novoSeg = atualizarSeguranca(indice, consumo, seguranca);
+      baseSug += novoSeg;
+
+      const novaSug = calcularSugestao(
+        consumo,
+        multiplicador,
+        seguranca,
+        max,
+        saldoDestino,
+        saldoDisponivel,
+        indice,
+      );
+
+      // const novaSug = calcularSugestao(consumo, multiplicador, min, max, saldoDestino, saldoDisponivel);
+
+      atualizarSugestao(indice, novaSug);
+      preencherRequisicaoAutomatica(
+        indice,
+        novaSug,
+        trAtual.attr("data-classe"),
+      );
     }
 
     // Evento para multiplicador
@@ -476,55 +567,7 @@ async function carregarProdutos(url, aba, obj) {
 
     // Evento para segurança
     jQuery(".seguranca").on("change", function () {
-      const input = jQuery(this);
-      const index = input.attr("data-index");
-      const tr = jQuery(`tr[data-index="${index}"]`);
-
-      const baseSugOriginal = parseInt(tr.find(".sugestao").text()) || 0;
-      // const baseSugOriginal = parseInt(tr.data('sugestao-base')) || 0;
-      const saldoDisponivel = parseInt(tr.attr("data-saldo-disponivel")) || 0;
-      const min = parseInt(tr.attr("data-min")) || 0;
-      let max = parseInt(tr.attr("data-max")) || 0;
-      max = max === 0 ? saldoDisponivel : max;
-
-      const codproAtual = tr.attr("data-codpro");
-      let saldoDestino = 0;
-
-      jQuery("tr").each(function () {
-        const linha = jQuery(this);
-        if (linha.attr("data-codpro") == codproAtual) {
-          saldoDestino += parseInt(linha.attr("data-saldo-destino")) || 0;
-        }
-      });
-
-      // const saldoDestino = parseInt(tr.data('saldo-destino')) || 0;
-      const consumo = parseInt(tr.attr("data-consumo")) || 0;
-      const seguranca = parseInt(input.val()) || 0;
-
-      const multiplicador =
-        parseInt(jQuery(`#pro_multiplica_${index}`).val()) || 1;
-      max = max * multiplicador;
-
-      const segAnterior = parseInt(jQuery(`#seg_${index}`).text()) || 0;
-
-      let baseSug = baseSugOriginal - segAnterior;
-      const novoSeg = atualizarSeguranca(index, consumo, seguranca);
-      baseSug += novoSeg;
-
-      const novaSug = calcularSugestao(
-        consumo,
-        multiplicador,
-        seguranca,
-        max,
-        saldoDestino,
-        saldoDisponivel,
-        index,
-      );
-
-      // const novaSug = calcularSugestao(consumo, multiplicador, min, max, saldoDestino, saldoDisponivel);
-
-      atualizarSugestao(index, novaSug);
-      preencherRequisicaoAutomatica(index, novaSug, tr.attr("data-classe"));
+      recalculaSeguranca(this);
     });
 
     jQuery(".aceita-sugestao").on("change", function () {
@@ -561,9 +604,11 @@ async function carregarProdutos(url, aba, obj) {
       const codproAnte = trAnte.attr("data-codpro");
       const trAtual = jQuery(`tr[data-index="${index}"]`);
       const codproAtual = trAtual.attr("data-codpro");
+      let jaSolicitado = 0;
       if (codproAnte == codproAtual) {
         saldoAnte = trAnte.attr("data-saldo-disponivel");
         solicAnte = jQuery("#requisicao_" + index).val();
+        jaSolicitado = jQuery("#requisicao_" + inicio + (ind - 1)).val();
         if (saldoAnte > solicAnte) {
           conf = await boxAlert(39, false, "", false, 1, true);
           if (!conf) {
@@ -626,7 +671,9 @@ async function carregarProdutos(url, aba, obj) {
             } else {
               max = Math.max(0, maxOriginal - saldoDestinoAtual);
             }
-            const min = Math.min(minOriginal, minOriginal - saldoDestinoAtual);
+            let min = Math.min(minOriginal, minOriginal - saldoDestinoAtual);
+
+            min = min - solicAnte;
 
             let restantePermitido = 0;
 
@@ -661,7 +708,6 @@ async function carregarProdutos(url, aba, obj) {
               }
               if (valAtual < min) {
                 motivo = 13;
-                // motivos.push(`Mínimo permitido (${min})`);
               }
 
               if (valAtual > saldoDisponivelAtual) {

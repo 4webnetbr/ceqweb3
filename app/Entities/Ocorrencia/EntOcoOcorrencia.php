@@ -4,7 +4,6 @@ namespace App\Entities\Ocorrencia;
 
 use CodeIgniter\Entity\Entity;
 use App\Libraries\MyCampo;
-use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
 
 class EntOcoOcorrencia extends Entity
 {
@@ -64,6 +63,9 @@ class EntOcoOcorrencia extends Entity
         $config = [];
         $config['Label'] = 'Tipo de Ocorrência';
         $config['Leitura'] = $show;
+        $config['FunChan'] = 'carregaSubtipoOcorrencia(this)';
+
+        
         $ret['tpo_id'] = criaSelectRelativo(
             'vw_oco_tpo_ocorrencia_relac',
             'tpo_id',
@@ -107,6 +109,20 @@ class EntOcoOcorrencia extends Entity
         $proid->valor       = (isset($dados['pro_id'])) ? $dados['pro_id'] : '';
         $ret['pro_id'] = $proid->crOculto();
 
+        // CÓDIGO ERP (oculto)
+        $lotVal = new MyCampo('oco_ocorrencia', 'lot_codpro');
+        $lotVal->valor = (isset($dados['lot_codpro'])) ? $dados['lot_codpro'] : '';
+        $ret['cod_erp'] = $lotVal->crOculto();
+        
+        // CÓDIGO ERP (mostrar na tela) 
+        $valid = new MyCampo('pro_sap_lote', 'lot_codpro');
+        $valid->valor    = (isset($dados['lot_codpro'])) ? $dados['lot_codpro'] : '';
+        $valid->leitura  = true;
+        $valid->size     = 30;
+        $valid->dispForm = 'col-6';
+        
+        $ret['cod_erp_show'] = $valid->crInput();
+
         // LOTE
         $lotid              = new MyCampo('oco_ocorrencia', 'lot_id');
         $lotid->valor       = (isset($dados['lot_id'])) ? $dados['lot_id'] : '';
@@ -120,6 +136,34 @@ class EntOcoOcorrencia extends Entity
         $lote->funcBlur    = "buscaLoteProduto(this,'" . base_url('/buscas/buscaProdutoporLote') . "')";
         $ret['lot_lote'] = $lote->crInput();
 
+        // VALIDADE (oculto)
+        $lotVal = new MyCampo('oco_ocorrencia', 'lot_validade');
+        $lotVal->valor = (isset($dados['lot_validade'])) ? $dados['lot_validade'] : '';
+        $ret['lot_validade'] = $lotVal->crOculto();
+        
+        // VALIDADE (mostrar na tela) 
+        $valid = new MyCampo('pro_sap_lote', 'lot_validade');
+        $valid->valor    = (isset($dados['lot_validade'])) ? $dados['lot_validade'] : '';
+        $valid->leitura  = true;
+        $valid->size     = 20;
+        $valid->dispForm = 'col-6';
+        
+        $ret['lot_validade_show'] = $valid->crInput();
+        
+        // fabricante (oculto)
+        $lotVal = new MyCampo('oco_ocorrencia', 'fab_nomFab');
+        $lotVal->valor = (isset($dados['fab_nomFab'])) ? $dados['fab_nomFab'] : '';
+        $ret['fab_nomFab'] = $lotVal->crOculto();
+        
+        // fabricante (mostrar na tela)
+        $valid = new MyCampo('pro_sap_fabricante', 'fab_nomFab');
+        $valid->valor    = (isset($dados['fab_nomFab'])) ? $dados['fab_nomFab'] : '';
+        $valid->leitura  = true;
+        $valid->size     = 40;
+        $valid->dispForm = 'col-6';
+        
+        $ret['lot_fabricante'] = $valid->crInput();
+        
 
         // PRODUTO 
         $produto           = new MyCampo('pro_sap_produto', 'pro_despro');

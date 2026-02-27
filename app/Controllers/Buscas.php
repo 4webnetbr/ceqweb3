@@ -451,16 +451,19 @@ class Buscas extends BaseController
         if (!empty($busca)) {
             $lotesm = new ProdutLoteModel();
             $lote   = $lotesm->getLoteSearch($busca);
-
+    
             if (empty($lote)) {
                 $ret->lotid = '-1';
             } else {
-                $ret->proid  = $lote[0]->pro_id;
-                $ret->lotid  = $lote[0]->lot_id;
-                $ret->despro = $lote[0]->pro_despro;
+                $ret->proid     = $lote[0]->pro_id;
+                $ret->lotid     = $lote[0]->lot_id;
+                $ret->despro    = $lote[0]->pro_despro;
+                $ret->validade  = $lote[0]->lot_validade ?? '';
+                $ret->Fabrica   = $lote[0]->fab_nomFab ?? '';
+                $ret->codErp    = $lote[0]->lot_codpro ?? '';
             }
         }
-
+    
         return $this->response->setJSON($ret);
     }
 
