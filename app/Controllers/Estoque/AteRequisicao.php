@@ -194,10 +194,10 @@ class AteRequisicao extends BaseController
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
 
         // array_column mudando para o OBJ
-        $pro_ids = array_unique(array_map(
-            fn($p) => $p->pro_id,
+        $pro_ids = array_map(
+            fn(object $p): int => $p->pro_id,
             $produtos
-        ));
+        );
         // debug($pro_ids);
 
         $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $requisicao->req_deporigem);
@@ -207,9 +207,9 @@ class AteRequisicao extends BaseController
         // Transformar $produtos em um array indexado por pro_id
         $produtosIndexado = [];
         foreach ($produtos as $param) {
-            $produtosIndexado[$param->pro_id] = $param;
+            $produtosIndexado[$param->pro_id][$param->lot_lote] = $param;
         }
-
+        // debug($produtosIndexado, true);
         // Indexa os dados de estoque por pro_id para facilitar busca
         $estoqueIndexado = [];
         foreach ($dados_est_produto as $itemEstoque) {
@@ -228,13 +228,15 @@ class AteRequisicao extends BaseController
             // Resultado final com todos os produtos
             $resultado = [];
 
-            foreach ($produtosIndexado as $pro_id => $produto) {
-                if (isset($estoqueIndexado[$pro_id])) {
-                    // Mescla produto com dados de estoque (OBJ para array temporário)
-                    $resultado[] = array_merge((array)$produto, (array)$estoqueIndexado[$pro_id]);
-                } else {
-                    // Apenas dados do produto 
-                    $resultado[] = (array)$produto;
+            foreach ($produtosIndexado as $pro_id => $lotes) {
+                foreach ($lotes as $produto) {
+                    if (isset($estoqueIndexado[$pro_id])) {
+                        // Mescla produto com dados de estoque (OBJ para array temporário)
+                        $resultado[] = array_merge((array)$produto, (array)$estoqueIndexado[$pro_id]);
+                    } else {
+                        // Apenas dados do produto 
+                        $resultado[] = (array)$produto;
+                    }
                 }
             }
             // debug($resultado, true);

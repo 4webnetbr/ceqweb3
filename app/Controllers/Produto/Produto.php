@@ -645,7 +645,7 @@ class Produto extends BaseController
                             'pre_estdataatual'  => $postado['pre_estdataatual'][$key] ?? null,
                             'pre_gestaoestoque' => $postado['pre_gestaoestoque'][$key] ?? null,
                         ];
-                        // debug($sql_dep);
+                        debug($sql_dep);
                         $dep_id = $this->common->insertReg('dbProduto', 'pro_est_produto', $sql_dep);
                         // debug($dep_id);
 

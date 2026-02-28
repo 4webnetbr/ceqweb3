@@ -937,6 +937,74 @@ function mostraOcultaDivTodos(nomecampo, regra, divs) {
 }
 
 /**
+ * bloqueiaCampo
+ * bloqueia ou Desbloqueia os Campos conforme a regra
+ * @param {object} obj - objeto a ser testado na regra
+ * @param {string} regra - regra para ocultar os campos
+ * @param {string} fields - campos que serão ocultados
+ */
+function bloqueiaCampo(obj, regra, fields) {
+  if (typeof obj === "object" && obj !== null) {
+    nomecampo = obj.name;
+  } else {
+    nomecampo = obj;
+  }
+  nomecampo = nomecampo.replaceAll("[", "\\[");
+  nomecampo = nomecampo.replaceAll("]", "\\]");
+  valor = jQuery('input[name="' + nomecampo + '"]:checked').val();
+  campos = fields.split(",");
+  if (valor == regra) {
+    // MOSTRA O CAMPO
+    jQuery.each(campos, function (key, value) {
+      value = value.replaceAll("[", "\\[");
+      value = value.replaceAll("]", "\\]");
+      div = "#ig_" + value;
+      camp = "#" + value;
+      if (
+        jQuery(camp).is("button") ||
+        jQuery(camp).is("input[type='button']")
+      ) {
+        if (jQuery(camp).hasClass("disabled")) {
+          jQuery(camp).removeClass("disabled");
+        }
+      } else {
+        obriga = jQuery("[name='" + value + "']").attr("data-obrig");
+        if (obriga == "required") {
+          jQuery(camp).attr("required", "required");
+        }
+        jQuery(camp).removeClass("disabled");
+      }
+    });
+  } else {
+    // OCULTA O CAMPO
+    jQuery.each(campos, function (key, value) {
+      value = value.replaceAll("[", "\\[");
+      value = value.replaceAll("]", "\\]");
+      div = "#ig_" + value;
+      camp = "#" + value;
+      pai = jQuery(camp).parent();
+      next = jQuery(camp).next();
+      if (
+        jQuery(camp).is("button") ||
+        jQuery(camp).is("input[type='button']")
+      ) {
+        if (!jQuery(camp).hasClass("disabled")) {
+          jQuery(camp).addClass("disabled");
+        }
+      } else {
+        jQuery(pai).addClass("disabled");
+        jQuery(camp).addClass("disabled");
+        jQuery(next).addClass("disabled");
+        jQuery(camp).attr("readonly", "readonly");
+        jQuery(camp).attr("disabled", "disabled");
+        jQuery(camp).removeAttr("required");
+        // jQuery(div).addClass("disabled");
+      }
+    });
+  }
+}
+
+/**
  * buscar
  * Cria a caixa de listagem, com os resultados da busca do campo "selbusca"
  * @param {string} url - URL de pesquisa

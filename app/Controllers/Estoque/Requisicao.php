@@ -970,6 +970,7 @@ class Requisicao extends BaseController
     public function store()
     {
         $postado = $this->request->getPost();
+        // debug($postado);
         $ret['erro'] = false;
         $db = \Config\Database::connect();
 

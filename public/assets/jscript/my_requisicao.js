@@ -608,8 +608,8 @@ async function carregarProdutos(url, aba, obj) {
       if (codproAnte == codproAtual) {
         saldoAnte = trAnte.attr("data-saldo-disponivel");
         solicAnte = jQuery("#requisicao_" + index).val();
-        jaSolicitado = jQuery("#requisicao_" + inicio + (ind - 1)).val();
-        if (saldoAnte > solicAnte) {
+        jaSolicitado = jQuery(`#requisicao_${inicio + (ind - 1)}`).val();
+        if (saldoAnte > jaSolicitado) {
           conf = await boxAlert(39, false, "", false, 1, true);
           if (!conf) {
             jQuery(this).val(0);
@@ -673,7 +673,7 @@ async function carregarProdutos(url, aba, obj) {
             }
             let min = Math.min(minOriginal, minOriginal - saldoDestinoAtual);
 
-            min = min - solicAnte;
+            min = min - jaSolicitado;
 
             let restantePermitido = 0;
 

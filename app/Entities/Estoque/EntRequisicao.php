@@ -265,7 +265,7 @@ class EntRequisicao extends Entity
         $btca->i_cone    = "<i class='fas fa-cart-flatbed fs-3'></i> <scan class='mx-3'>Carregar Produtos</scan>";
         $btca->label     = $btca->place     = "Carregar Produtos";
         $btca->classep   = "btn-outline-success btn-sm align-items-center d-flex m-3";
-        $btca->funcChan  = "carregarProdutos('" . base_url("Requisicao/produtos/") . "','produtos',this)";
+        $btca->funcChan  = "carregarProdutos('" . base_url("Requisicao/produtos/") . "','produtos',this); bloqueiaCampo(this,'','tmo_id,req_consdiaanterior[0],req_consdiaanterior[1],req_medconsumodias[0],req_medconsumodias[1],req_meddias,req_percseguranca,pro_id[],bt_carregar'); ";
         $ret['bt_carregar']   = $btca->crBotao();
 
         $codb                 = new MyCampo('pro_sap_lote', 'lot_codbar', false);

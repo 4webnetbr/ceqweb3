@@ -304,7 +304,7 @@ class ProdutProdutoModel extends Model
     public function getProdutoRequisicao($deposito = false, $produto = false)
     {
         $db = db_connect('dbProduto');
-        $builder = $db->table('vw_classe_produto_lote_semlote_info2');
+        $builder = $db->table('vw_classe_produto_lote_semlote_info3');
 
         $builder->select('*');
 
@@ -315,7 +315,7 @@ class ProdutProdutoModel extends Model
             $builder->whereIn('pro_id', $produto);
         }
         $builder->orderBy('cla_ordem, pro_despro, pro_codpro, lot_validade');
-        // debug($builder->getCompiledSelect());
+        debug($builder->getCompiledSelect());
         // $cs = $builder->getCompiledSelect();
         $ret = $builder->get()->getResult();
 
