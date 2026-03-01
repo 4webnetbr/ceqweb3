@@ -675,7 +675,7 @@ class Requisicao extends BaseController
 
             if ($res) {
                 // $consumo[$tipo] = $this->indexarConsumo($res);
-                $consumo[$tipo] = array_column($res, null, 'codigo_erp');
+                $consumo[$tipo] = array_column($res, null,'codigo_erp');
             }
             // debug($consumo);
             // debug($consumo['insumos']['codigo_erp'] . ' ' . $consumo['insumos']['produto_nome'] . ' ' . $consumo['insumos']['consumido'], true);
@@ -847,7 +847,7 @@ class Requisicao extends BaseController
         if ($prod['pro_diaanterior'] === 'S' || $prod['pro_mediaconsumo'] === 'S') {
             // debug($prod);
             $dash = strtolower($prod['cla_dash_consumo']);
-            $codPro = $prod['pro_codpro'];
+            $codPro = trim($prod['pro_codpro']);
             // === Buscar consumo ===
             if ($prod['pre_gestaoestoque'] === 'S' && !empty($dash)) {
                 // debug($consumo[$dash][$codPro]);

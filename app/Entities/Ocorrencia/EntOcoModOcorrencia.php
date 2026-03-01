@@ -71,13 +71,13 @@ class EntOcoModOcorrencia extends Entity
         return $ret;
     }
 
-    public function defCamposTelasAplicaveis($dados = false, $pos = 0, $show)
+    public function defCamposTelasAplicaveis($dados = false, $pos = 0, $show = true)
     {
         $dados = (array) $dados;
 
         // modulo
         $config = [];
-        $config['Leitura']     = true;
+        $config['Leitura']     = $show;
         $config['Largura']     = 40;
         $config['DispForm']    = 'col-4';
         $config['Ordem']       = $pos;
@@ -93,10 +93,9 @@ class EntOcoModOcorrencia extends Entity
             $config
         );
 
-
         // telas
         $config['Pai']         = "mod_id[$pos]";
-        $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
+        $config['Urlbusca']    = base_url('buscas/busca_tela_modulo'); 
 
         $ret['tel_id'] = criaSelectRelativo(
             'cfg_tela',
@@ -127,6 +126,7 @@ class EntOcoModOcorrencia extends Entity
             'tof_campo'
         );
 
+        
         $atrib['data-index'] = $pos;
         $add            = new MyCampo();
         $add->attrdata  = $atrib;

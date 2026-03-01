@@ -304,7 +304,8 @@ class ProdutProdutoModel extends Model
     public function getProdutoRequisicao($deposito = false, $produto = false)
     {
         $db = db_connect('dbProduto');
-        $builder = $db->table('vw_classe_produto_lote_semlote_info2');
+        // $builder = $db->table('vw_classe_produto_lote_semlote_info3');
+        $builder = $db->table('vw_produtos_para_requisicao');
 
         $builder->select('*');
 

@@ -4,6 +4,7 @@ namespace App\Controllers\Ocorrencia;
 
 use App\Entities\Ocorrencia\EntOcoTratativa;
 use App\Entities\Ocorrencia\EntOcoOcorrencia;
+use App\Entities\Ocorrencia\EntOcoModOcorrencia;
 use App\Controllers\BaseController;
 use App\Models\Ocorre\OcorreOcorrenciaModel;
 use App\Models\Ocorre\OcorreModOcorrenciaModel;
@@ -154,18 +155,44 @@ class OcoTrataOcorrencia extends BaseController
 
         $etiqueta = fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
 
-        // // ações 
+        // ações 
         $acoes = $this->ocorrencia->getAcoesFinalizar($id);
         // debug($acoes, true);
         $entity = new EntOcoTratativa($dados, true);
+        // BLOCO DAS TELAS APLICÁVEIS
+        $entity   = new EntOcoModOcorrencia((array) $dados);
+        $modModel = new OcorreModOcorrenciaModel();
+        $oco   = $this->ocorrencia->find($id);
+        $telas = $modModel->getTOTelasAplicaveis($oco->sut_id);
+        
+        if (!empty($telas)) {
+        
+            $telasResultado = [];
+            $total = count($telas);
+        
+            for ($c = 0; $c < $total; $c++) {
+                $fields = $entity->defCamposTelasAplicaveis($telas[$c], $c, $total, true);
+                $telasResultado[] = $fields;
+            }
+        
+            $campos[0][] = view(
+                'partials/pw_telas_aplicaveis_ocorrencia',
+                [
+                    'telas'  => $telasResultado,
+                    'oco_id' => $id
+                ]
+            );
+        }
 
         // BLOCO DAS AÇÕES 
+        $entity = new EntOcoTratativa($dados, true);
+        $acoes = $this->ocorrencia->getAcoesFinalizar($id);
         if (!empty($acoes)) {
 
             $acoesResultado = [];
 
             foreach ($acoes as $acao) {
-                $acao->somente_leitura = false;
+                $acao->somente_leitura = true;
                 $camposAcao = $entity->defCamposAcao($acao);
                 $acoesResultado[] = $camposAcao;
             }

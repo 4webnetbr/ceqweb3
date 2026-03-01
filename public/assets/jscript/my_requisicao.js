@@ -785,6 +785,15 @@ function atualizarEstadoBotaoSalvar() {
 
   jQuery("#bt_salvar").prop("disabled", !habilitar);
   jQuery("#bt_envia").prop("disabled", !habilitar);
+  regra = "S";
+  if (habilitar) {
+    regra = "N";
+  }
+  bloqueiaCampo(
+    "S",
+    regra,
+    "tmo_id,req_consdiaanterior[0],req_consdiaanterior[1],req_medconsumodias[0],req_medconsumodias[1],req_meddias,req_percseguranca,pro_id[],bt_carregar",
+  );
 }
 
 function normalizarNomeColuna(texto) {
@@ -806,10 +815,6 @@ async function enviarRequisicoes(tipo = 0, event) {
   if (tipo === 1) {
     jqForm.find('input[name="req_status"]').remove();
     jqForm.append(`<input type="hidden" name="req_status" value="${tipo}">`);
-  } else {
-    // se foi clicado no SALVAR
-    // repeteDias = 0;
-    // jQuery("#req_repetedias").val(repeteDias);
   }
 
   const linhasProduto = jQuery("tr.linha-produto");

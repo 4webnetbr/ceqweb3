@@ -1,0 +1,58 @@
+<style>
+    .tabela-pequena {
+        font-size: 12px;
+    }
+</style>
+
+<div class="accordion" id="accTelas">
+    <div class="accordion-item">
+
+        <h2 class="accordion-header border border-bottom-1" id="headtela<?= $oco_id ?>">
+            <button class="accordion-button text-center"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#collapsetela<?= $oco_id ?>"
+                aria-expanded="true"
+                aria-controls="collapsetela<?= $oco_id ?>">
+
+                Telas Aplicáveis
+            </button>
+        </h2>
+
+        <div id="collapsetela<?= $oco_id ?>"
+             class="accordion-collapse collapse show"
+             aria-labelledby="headtela<?= $oco_id ?>"
+             data-bs-parent="#accTelas">
+
+            <div class="accordion-body p-2">
+
+                <table class="table table-bordered table-sm align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Detalhes</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        <?php foreach ($telas as $tela): ?>
+                            <tr>
+                                <td>
+                                    <div class="row">
+                                        <?php foreach ($tela as $chave => $campo): ?>
+                                            <?php if (in_array($chave, ['bt_addta', 'bt_delta'])) continue; ?>                                       
+                                            <?= $campo ?>                                       
+                                        <?php endforeach; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+
+    </div>
+</div>

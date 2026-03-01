@@ -936,6 +936,21 @@ function mostraOcultaDivTodos(nomecampo, regra, divs) {
   );
 }
 
+function obterTipoCampo(obj) {
+  const nomeCampo = escIdColchetes(
+    typeof obj === "object" && obj !== null ? obj.name : obj,
+  );
+
+  const elementos = document.getElementsByName(nomeCampo);
+
+  if (!elementos.length) {
+    return false;
+  }
+
+  const el = elementos[0]; // pega o primeiro
+
+  return el.type || el.tagName.toLowerCase();
+}
 /**
  * bloqueiaCampo
  * bloqueia ou Desbloqueia os Campos conforme a regra
@@ -944,14 +959,12 @@ function mostraOcultaDivTodos(nomecampo, regra, divs) {
  * @param {string} fields - campos que serão ocultados
  */
 function bloqueiaCampo(obj, regra, fields) {
-  if (typeof obj === "object" && obj !== null) {
-    nomecampo = obj.name;
+  tipoCampo = obterTipoCampo(obj); // assim posso passar um valor pra comparar sem ser um campo
+  if (!tipoCampo) {
+    valor = obj;
   } else {
-    nomecampo = obj;
+    valor = jQuery('input[name="' + nomecampo + '"]:checked').val();
   }
-  nomecampo = nomecampo.replaceAll("[", "\\[");
-  nomecampo = nomecampo.replaceAll("]", "\\]");
-  valor = jQuery('input[name="' + nomecampo + '"]:checked').val();
   campos = fields.split(",");
   if (valor == regra) {
     // MOSTRA O CAMPO
@@ -960,6 +973,8 @@ function bloqueiaCampo(obj, regra, fields) {
       value = value.replaceAll("]", "\\]");
       div = "#ig_" + value;
       camp = "#" + value;
+      pai = jQuery(camp).parent();
+      next = jQuery(camp).next();
       if (
         jQuery(camp).is("button") ||
         jQuery(camp).is("input[type='button']")
@@ -968,11 +983,16 @@ function bloqueiaCampo(obj, regra, fields) {
           jQuery(camp).removeClass("disabled");
         }
       } else {
+        jQuery(pai).removeClass("disabled");
+        jQuery(camp).removeClass("disabled");
+        jQuery(next).removeClass("disabled");
+        jQuery(camp).removeAttr("readonly");
+        jQuery(camp).removeAttr("disabled");
         obriga = jQuery("[name='" + value + "']").attr("data-obrig");
         if (obriga == "required") {
           jQuery(camp).attr("required", "required");
         }
-        jQuery(camp).removeClass("disabled");
+        // jQuery(div).addClass("disabled");
       }
     });
   } else {

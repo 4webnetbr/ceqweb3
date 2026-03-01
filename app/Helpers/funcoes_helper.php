@@ -886,6 +886,7 @@ function criaSelectRelativo(
     string $nomeCampo = '' // Configurações adicionais para o MyCampo
 ): string {
     $opcoes = [];
+    // debug($opcoes, true);
     $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
     // debug($configCampo);
     if ($nomeTabela != '') {
