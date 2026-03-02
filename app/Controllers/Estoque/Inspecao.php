@@ -2,16 +2,17 @@
 
 namespace App\Controllers\Estoque;
 
-use App\Controllers\BuscasSapiens;
 use App\Controllers\BaseController;
-use App\Models\Produt\ProdutLoteModel;
-use App\Models\Produt\ProdutClasseModel;
-use App\Models\Produt\ProdutProdutoModel;
+use App\Controllers\BuscasSapiens;
+use App\Entities\Estoque\EntInspecao;
+use App\Libraries\MyCampo;
 use App\Models\Estoqu\EstoquDepositoModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
-use App\Entities\Estoque\EntInspecao;
-use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
+use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
+use App\Models\Produt\ProdutClasseModel;
+use App\Models\Produt\ProdutLoteModel;
+use App\Models\Produt\ProdutProdutoModel;
 
 class Inspecao extends BaseController
 {
@@ -79,7 +80,7 @@ class Inspecao extends BaseController
         $dados_requis = $this->requisicao->getRequisicaoLista(false, [25]);
         $dados_requis = filtrarRequisicoesPorPerfil($dados_requis);
         // debug($dados_requis, true);
-        if($dados_requis){
+        if ($dados_requis) {
             $req_ids_assoc = array_map(fn($r) => $r->req_id, $dados_requis);
 
             $log = buscaLogTabela('est_requisicao', $req_ids_assoc);
@@ -87,9 +88,9 @@ class Inspecao extends BaseController
             foreach ($dados_requis as $req) {
                 if ($req->req_id) {
                     $req->usu_nome = $log[$req->req_id]['usua_alterou'] ?? '';
-            
-                    $url_con = $base_url . '/inspeciona/' . $req->req_id;
-            
+
+                    $url_con = $base_url . '/inspprodutos/' . $req->req_id;
+
                     $req->acao_person = [
                         "<button class='btn btn-outline-success btn-sm border-0 mx-0 fs-0'
                             title='Conferência'
@@ -111,16 +112,17 @@ class Inspecao extends BaseController
         echo json_encode($requis);
     }
 
-    public function show($id){
-        return redirect()->to('/Requisicao/show/'.$id);
+    public function show($id)
+    {
+        return redirect()->to('/Requisicao/show/' . $id);
     }
 
-    public function inspeciona($id, $show = true)
+    public function inspprodutos($id, $show = true)
     {
         // Busca a requisição no banco e pega o primeiro registro retornado
         $requisicaoRaw = $this->requisicao->getRequisicao($id)[0];
         $requisicao    = new EntInspecao((array) $requisicaoRaw, $show, 'conf');
-    
+
         // Validação de segurança caso a requisição não exista
         if (!$requisicao) {
             session()->setFlashdata('erromsg', 'Requisição não encontrada.');
@@ -130,10 +132,10 @@ class Inspecao extends BaseController
         // OBJETOS
         $secao  = new \stdClass();
         $campos = new \stdClass();
-    
+
         // Montar campos como no add()
         $fields = $requisicao->campos;
-    
+
         // Define a primeira seção da tela
         $secao->{0} = 'Dados Gerais';
         $campos->{0} = [];
@@ -143,51 +145,21 @@ class Inspecao extends BaseController
         $campos->{0}[] = $fields['req_dataentrega'];
         $campos->{0}[] = $fields['tmo_id'];
         $campos->{0}[] = "<div class='col-6'>.</div>";
-    
+
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
-    
+
         $filtrado = array_filter($produtos, function ($item) {
             return ($item->rpa_atendida + $item->rpa_cancelada) == $item->rep_quantia;
         });
         $produtos = $filtrado;
         $pro_ids = array_unique(array_map(fn($p) => $p->pro_id, $produtos));
 
-        // Busca dados de estoque no CEQWeb para os produtos filtrados
-        $dados_est_produto = $this->produtos->getProdutoEstoqueCeqweb(
-            $pro_ids,
-            $requisicao->req_depdestino
-        );
-    
-        // Indexa produtos pelo pro_id para facilitar merge de dados
-        $produtosIndexado = [];
-        foreach ($produtos as $param) {
-            $produtosIndexado[$param->pro_id] = $param;
-        }
-        $resultado = [];
-    
-        // Mescla dados de estoque com os produtos da requisição
-        if (count($dados_est_produto) > 0) {
-            foreach ($dados_est_produto as $itemEstoque) {
-                $pro_id = $itemEstoque->pro_id;
-    
-                if (isset($produtosIndexado[$pro_id])) {
-                    $prod = clone $produtosIndexado[$pro_id];
-                    foreach ($itemEstoque as $k => $v) {
-                        $prod->$k = $v;
-                    }
-                    $resultado[] = $prod;
-                } else {
-                    $resultado[] = $itemEstoque;
-                }
-            }
-        } else {
-            $resultado = $produtos;
-        }
-    
+        $resultado = $produtos;
+
         // Loop de tratamento visual e funcional de cada produto
         for ($p = 0; $p < count($resultado); $p++) {
             $prod = $resultado[$p];
-    
+
             // Inicializa flags padrão de conferência
             $prod->pre_cbmisturador  ??= 'N';
             $prod->pre_undmisturador ??= 'N';
@@ -195,34 +167,40 @@ class Inspecao extends BaseController
             $prod->pre_undfabricante ??= 'N';
             $prod->pre_cblote        ??= 'N';
             $prod->pre_undlote       ??= 'N';
-    
-            $prod->bt_ocorre = "<button class='btn btn-outline-warning btn-sm border-0 mx-0 fs-0'>
-                <i class='fas fa-exclamation-triangle'></i></button>";
-    
+
             $prod->bt_insvis = '';
             if ($prod->cla_insvis == 'S' && $prod->cla_insvisconf == 'S') {
-                $prod->bt_insvis = "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0'>
-                    <i class='fa-solid fa-magnifying-glass-arrow-right'></i></button>";
+                $bt_insvis = new MyCampo();
+                $bt_insvis->id = $bt_insvis->nome = 'bt_insvis';
+                $bt_insvis->classep  = 'btn btn-outline-black btn-sm border-0 mx-0 fs-0';
+                $bt_insvis->i_cone   = "<i class='fa-solid fa-magnifying-glass-arrow-right'></i>";
+                $bt_insvis->label    = '';
+                $bt_insvis->place    = 'Inspeção';
+                $bt_insvis->funcChan = "gerarInspecao({$prod->rep_id})";
+                $prod->bt_insvis = $bt_insvis->crBotao();
             }
-            $fieldsProd = $requisicao->defCamposProdutoConf($prod);
-    
-            $prod->rpa_atendida  = $fieldsProd['rpa_atendida'];
-            $prod->rpa_conferida = $fieldsProd['rpa_conferida'];
+            $fieldsAten = $requisicao->defCamposProdutoAte($prod);
+            $fieldsConf = $requisicao->defCamposProdutoConf($prod);
+
+            $prod->rpa_data         = data_br($prod->rpa_data);
+            $prod->rpa_data_conferencia = data_br($prod->rpa_data_conferencia);
             $prod->saldo         = (int)$prod->rpa_atendida - (int)$prod->rpa_conferida;
         }
+        // debug($resultado, true);
         $campos->{0}[] = view('partials/pw_produtos_inspecao', ['produtos' => array_map(fn($p) => (array) $p, $resultado)]);
-    
+
         // Define dados principais da tela
-        $this->data['title']       = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
-        $this->data['desc_metodo'] = ' Inspeção de ';
+        // $this->data['title']       = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['metodo'] = 'index';
+        $this->data['desc_edicao'] = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['destino']     = 'store';
         $this->data['scripts']     = 'my_requisicao';
         $this->data['secoes']      = (array) $secao;
         $this->data['campos']      = array_map(function ($linha) {
             return is_array($linha)
-                    ? array_map(fn($v) => is_object($v) ? (array) $v : $v, $linha)
-                    : $linha;
-            }, (array) $campos);
+                ? array_map(fn($v) => is_object($v) ? (array) $v : $v, $linha)
+                : $linha;
+        }, (array) $campos);
 
         // Define foco inicial no campo de código de barras
         $this->data['script'] = "<SCRIPT>jQuery('#lot_codbar').focus();</SCRIPT>";
@@ -243,6 +221,50 @@ class Inspecao extends BaseController
 
     }
 
+    public function inspeciona($id, $show = true)
+    {
+        // Busca a requisição no banco e pega o primeiro registro retornado
+        $requisicaoRaw = $this->requisicao->getRequisicao($id)[0];
+        $requisicao    = new EntInspecao((array) $requisicaoRaw, $show, 'conf');
+
+        // Validação de segurança caso a requisição não exista
+        if (!$requisicao) {
+            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
+            return redirect()->to(site_url($this->data['controler']));
+        }
+
+        // OBJETOS
+        $secao  = new \stdClass();
+        $campos = new \stdClass();
+
+        // Montar campos como no add()
+        $fields = $requisicao->campos;
+
+        // Define a primeira seção da tela
+        $secao->{0} = 'Dados Gerais';
+        $campos->{0} = [];
+        $campos->{0}[] = $fields['req_id'];
+        $campos->{0}[] = $fields['req_numero'];
+        $campos->{0}[] = $fields['req_data'];
+        $campos->{0}[] = $fields['req_dataentrega'];
+        $campos->{0}[] = $fields['tmo_id'];
+        $campos->{0}[] = "<div class='col-6'>.</div>";
+
+        $this->data['metodo'] = 'index';
+        $this->data['desc_edicao'] = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['destino']     = 'store';
+        $this->data['scripts']     = 'my_requisicao';
+        $this->data['secoes']      = (array) $secao;
+        $this->data['campos']      = array_map(function ($linha) {
+            return is_array($linha)
+                ? array_map(fn($v) => is_object($v) ? (array) $v : $v, $linha)
+                : $linha;
+        }, (array) $campos);
+
+        // Define foco inicial no campo de código de barras
+        $this->data['script'] = "<SCRIPT>jQuery('#lot_codbar').focus();</SCRIPT>";
+        echo view('vw_edicao_modal', $this->data);
+    }
     /**
      * Gravação
      * store
@@ -253,16 +275,16 @@ class Inspecao extends BaseController
     {
         $postado = $this->request->getPost();
         $ret = [];
-    
+
         try {
             // AGRUPA DADOS
             $dadosAgrupados = [];
             foreach ($postado as $key => $value) {
-    
+
                 if (preg_match('/^repid_(\d+)$/', $key, $matches)) {
-    
+
                     $id = $matches[1];
-    
+
                     $dadosTemp = [
                         'repid'  => $value,
                         'req_id' => $postado['req_id'] ?? null,
@@ -275,21 +297,21 @@ class Inspecao extends BaseController
                         }
                     }
                     $dadosTemp['rpa_conferida'] = (int) ($dadosTemp['rpa_conferida'] ?? 0);
-    
+
                     if ($dadosTemp['rpa_conferida'] > 0) {
                         $dadosAgrupados[$id] = $dadosTemp;
                     }
                 }
             }
-    
+
             // NADA PARA SALVAR
             if (count($dadosAgrupados) === 0) {
                 throw new \Exception('Nenhum item pendente de conferência.');
             }
-    
+
             // TRANSAÇÃO
             $this->requisicaoate->transStart();
-    
+
             foreach ($dadosAgrupados as $val) {
                 $sql = [
                     'rpa_conferida'        => $val['rpa_conferida'],
@@ -299,22 +321,21 @@ class Inspecao extends BaseController
                     throw new \Exception('Erro ao gravar a conferência.');
                 }
             }
-    
+
             $this->requisicao->transStart();
-    
+
             if (!$this->requisicao->update($postado['req_id'], ['stt_id' => 5])) {
                 throw new \Exception('Erro ao atualizar status da requisição.');
             }
             $this->requisicaoate->transCommit();
             $this->requisicao->transCommit();
-    
+
 
             // SUCESSO (IGUAL AO PADRÃO)
             $ret['erro'] = false;
             $ret['msg']  = 'Conferência gravada com sucesso!';
             session()->setFlashdata('msg', $ret['msg']);
             $ret['url']  = site_url($this->data['controler']);
-    
         } catch (\Exception $e) {
             $this->requisicaoate->transRollback();
             $this->requisicao->transRollback();
@@ -322,7 +343,7 @@ class Inspecao extends BaseController
             $ret['erro'] = true;
             $ret['msg']  = 'Erro ao gravar a conferência:<br><br>' . $e->getMessage();
         }
-    
+
         return $this->response->setJSON($ret);
     }
 }

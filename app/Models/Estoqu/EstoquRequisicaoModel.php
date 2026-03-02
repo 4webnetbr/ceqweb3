@@ -15,6 +15,7 @@ class EstoquRequisicaoModel extends Model
     protected $viewlista        = 'vw_est_requisicao_lista_relac';
     protected $viewoutra        = 'vw_est_requisicao_produto_relac';
     protected $viewatend        = 'vw_est_requisicao_produto_atendimento_relac';
+    protected $viewinspe        = 'vw_est_requisicao_produto_inspecao_relac';
     protected $primaryKey       = 'req_id';
     protected $useAutoIncremodt = true;
 

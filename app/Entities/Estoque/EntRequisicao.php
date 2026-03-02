@@ -355,6 +355,15 @@ class EntRequisicao extends Entity
         $aten->funcChan       = 'acertaSaldoReq(this)';
         $aten->largura        = 30;
         $ret['rpa_atendida']      = $aten->crInput();
+
+        $aten                 = new MyCampo('est_requisicao_produto_atendimento', 'rpa_data', false);
+        $aten->valor          = (isset($dados->rpa_data)) ? $dados->rpa_data : '';
+        $aten->leitura        = true;
+        $aten->obrigatorio    = false;
+        $aten->dispForm       = 'col-6';
+        $aten->classep        = 'mb3';
+        $ret['rpa_data']   = $aten->crInput();
+
         return $ret;
     }
 
@@ -395,10 +404,16 @@ class EntRequisicao extends Entity
         if ($dados->pre_cbfabricante == 'N' && $dados->pre_undfabricante == 'N' && $dados->pre_cblote == 'N' && $dados->pre_undlote == 'N' && $dados->pre_cbmisturador == 'N' && $dados->pre_undmisturador == 'N') {
             $conf->leitura        = false;
         }
-        // if (intval($dados->rpa_atendida) == intval($dados->rpa_conferida)) {
-        //     $conf->leitura        = true;
-        // }
         $ret['rpa_conferida']      = $conf->crInput();
+
+        $dtcf                 = new MyCampo('est_requisicao_produto_atendimento', 'rpa_data_conferencia', false);
+        $dtcf->valor          = (isset($dados->rpa_data_conferencia)) ? $dados->rpa_data_conferencia : '';
+        $dtcf->leitura        = true;
+        $dtcf->obrigatorio    = false;
+        $dtcf->dispForm       = 'col-6';
+        $dtcf->classep        = 'mb3';
+        $ret['rpa_data_conferencia']   = $dtcf->crInput();
+
         return $ret;
     }
 }

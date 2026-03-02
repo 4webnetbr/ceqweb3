@@ -1107,3 +1107,20 @@ async function gerarOcorrencia(tela, indice) {
 async function copiar_requisicao(url) {
   const retornoAjax = await executaAjaxWait(url, "html", dados);
 }
+
+async function gerarInspecao(indice) {
+  url = window.location.origin + "/Inspecao/inspeciona";
+  // repid = jQuery("#rep_id" + indice).val();
+  url = url + "/" + indice;
+  titulo = "Gerar Inspeção";
+  const retornoAjax = await executaAjaxWait(url, "html");
+  if (retornoAjax) {
+    if (titulo) {
+      jQuery(".modal-title").html(titulo);
+    }
+    jQuery(".modal-body").html(retornoAjax);
+    var myModal = new bootstrap.Modal(document.getElementById("myModal"), {});
+    // document.onreadystatechange = function () {
+    myModal.show();
+  }
+}
