@@ -10,10 +10,7 @@ jQuery(document).ready(function () {
 
     conn.onopen = function (e) {
       console.log("Conexão estabelecida com o servidor WS");
-      jQuery("#stat_server")
-        .addClass("text-success")
-        .addClass("truck-icon")
-        .removeClass("text-danger");
+      jQuery("#stat_server").removeClass("parado");
       jQuery("#stat_server").prop("title", "Servidor Conectado");
 
       startKeepAlive();
@@ -68,10 +65,7 @@ jQuery(document).ready(function () {
     };
 
     conn.onclose = function (e) {
-      jQuery("#stat_server")
-        .removeClass("text-success")
-        .removeClass("truck-icon")
-        .addClass("text-danger");
+      jQuery("#stat_server").addClass("parado");
       jQuery("#stat_server").prop("title", "Servidor Desconectado");
       console.log("Conexão fechada. Tentando reconectar...");
 

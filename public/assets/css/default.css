@@ -508,11 +508,11 @@ table.dataTable > tbody > tr {
   padding-top: 0.15em !important;
 }
 
-.dataTables_paginate {
+/* .dataTables_paginate {
   float: right;
   margin-top: -0.35em !important;
   width: auto;
-}
+} */
 
 .btn-group > .btn {
   position: relative;
