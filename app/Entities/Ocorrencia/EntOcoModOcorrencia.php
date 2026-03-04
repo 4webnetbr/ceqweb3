@@ -95,7 +95,7 @@ class EntOcoModOcorrencia extends Entity
 
         // telas
         $config['Pai']         = "mod_id[$pos]";
-        $config['Urlbusca']    = base_url('buscas/busca_tela_modulo'); 
+        $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
 
         $ret['tel_id'] = criaSelectRelativo(
             'cfg_tela',
@@ -113,7 +113,7 @@ class EntOcoModOcorrencia extends Entity
         $config['Urlbusca']    = base_url('buscas/busca_campo_tela');
         $config['DispForm']    = 'col-4';
 
-        // debug($dados['tof_campo'], true);
+        // debug($dados['tel_id'], true);
         $ret['tof_campo'] = criaSelectRelativo(
             '',
             '',
@@ -125,8 +125,9 @@ class EntOcoModOcorrencia extends Entity
             $config,
             'tof_campo'
         );
+        // debug($ret['tof_campo']);
 
-        
+
         $atrib['data-index'] = $pos;
         $add            = new MyCampo();
         $add->attrdata  = $atrib;

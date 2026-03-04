@@ -176,12 +176,11 @@ class EntOcoTratativa extends Entity
         $ret['tpa_id'] = $tpaHidden->crOculto();
 
         // TIPO DE AÇÃO
-        $acao = new MyCampo('oco_tipo_ocorrencia_acao', 'tpa_nome');
+        $acao = new MyCampo('oco_tipo_acao', 'tpa_nome');
         $acao->valor    = $dados->tpa_nome ?? '';
-        $acao->label    = 'Ação';
         $acao->leitura  = true;
         $acao->size     = 50;
-        $acao->dispForm = '2col';
+        $acao->dispForm = 'col-6';
 
         $ret['tpa_nome'] = $acao->crInput();
 
@@ -189,15 +188,14 @@ class EntOcoTratativa extends Entity
         if ((int)$dados->tpa_id === 5) {
             $justi = new MyCampo('oco_ocorrencia', 'oco_justi');
             $justi->valor       = $dados->oco_justi ?? '';
-            $justi->label       = 'Justificar';
             $justi->obrigatorio = true;
-            $justi->dispForm    = '2col';
+            $justi->dispForm    = 'col-6';
             $justi->linhas      = 3;
             $justi->colunas     = 56;
             $justi->leitura     = $leitura;
             $justi->obrigatorio = !$leitura;
 
-            $ret['oco_justi'] = $justi->crTexto();
+            $ret['oco_justi'] = $justi->crInput();
         }
 
         // MOVIMENTAÇÃO
@@ -212,11 +210,11 @@ class EntOcoTratativa extends Entity
                 $opc_tmo[$tmo->tmo_id] = $tmo->tmo_nome;
             }
 
-            $movNome = new MyCampo('oco_tpo_acao', 'tmo_nome');
+            $movNome = new MyCampo('est_tipo_movimentacao', 'tmo_nome');
             $movNome->valor    = $opc_tmo[$tmo_id] ?? '';
             $movNome->label    = 'Movimentação';
             $movNome->leitura  = true;
-            $movNome->dispForm = '2col';
+            $movNome->dispForm = 'col-6';
             $movNome->size     = 50;
 
             $ret['tmo_id'] = $movNome->crInput();
@@ -263,7 +261,7 @@ class EntOcoTratativa extends Entity
             $tela->valor    = $opc[$tel_id] ?? '';
             $tela->label    = 'Tela';
             $tela->leitura  = true;
-            $tela->dispForm = '2col';
+            $tela->dispForm = 'col-6';
             $tela->size     = 60;
 
             $ret['tel_id'] = $tela->crInput();

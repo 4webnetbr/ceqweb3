@@ -20,9 +20,9 @@
         </h2>
 
         <div id="collapsetela<?= $oco_id ?>"
-             class="accordion-collapse collapse show"
-             aria-labelledby="headtela<?= $oco_id ?>"
-             data-bs-parent="#accTelas">
+            class="accordion-collapse collapse show"
+            aria-labelledby="headtela<?= $oco_id ?>"
+            data-bs-parent="#accTelas">
 
             <div class="accordion-body p-2">
 
@@ -40,8 +40,8 @@
                                 <td>
                                     <div class="row">
                                         <?php foreach ($tela as $chave => $campo): ?>
-                                            <?php if (in_array($chave, ['bt_addta', 'bt_delta'])) continue; ?>                                       
-                                            <?= $campo ?>                                       
+                                            <?php if (in_array($chave, ['bt_addta', 'bt_delta'])) continue; ?>
+                                            <?= $campo ?>
                                         <?php endforeach; ?>
                                     </div>
                                 </td>

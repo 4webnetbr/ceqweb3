@@ -2826,11 +2826,22 @@ div.dtsb-searchBuilder div.dtsb-titleRow button.dtsb-clearAll {
   margin-right: 25px !important;
 }
 
-.dataTables_scrollBody {
-  /* min-height: 75vh; */
-  /* height: 75vh; */
-  /* max-height: 75vh !important; */
-  max-height: calc(100vh - (100vh * 0.22)) !important;
+/* .dataTables_scrollBody { */
+/* min-height: 75vh; */
+/* height: 75vh; */
+/* max-height: 75vh !important; */
+/* max-height: calc(100vh - (100vh * 0.22)) !important; */
+/* max-height: calc(100vh - 14.5rem) !important; */
+/* } */
+
+/* Quando existir <br> em algum th */
+.dataTables_scrollHead:has(thead th br) + .dataTables_scrollBody {
+  max-height: calc(100vh - 14.5rem) !important;
+}
+
+/* Quando NÃO existir <br> */
+.dataTables_scrollHead:not(:has(thead th br)) + .dataTables_scrollBody {
+  max-height: calc(100vh - 13rem) !important;
 }
 
 .dataTables_scroll {
@@ -2838,6 +2849,6 @@ div.dtsb-searchBuilder div.dtsb-titleRow button.dtsb-clearAll {
   height: 80vh;
   max-height: 80vh; */
   /* min-height: 80vh; */
-  height: calc(100vh - (100vh * 0.16));
+  height: calc(100vh - 10rem);
   /* max-height: 80vh; */
 }

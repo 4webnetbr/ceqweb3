@@ -66,7 +66,7 @@ class OcoTrataOcorrencia extends BaseController
 
         $this->data['exclusao']    = false; // não tem exclusão
         $this->data['edicao']      = false; // não tem edição
-        $this->data['allconsulta'] = true; 
+        $this->data['allconsulta'] = true;
 
         $base_url = base_url($this->data['controler']);
 
@@ -145,36 +145,39 @@ class OcoTrataOcorrencia extends BaseController
             $fields['lot_id'],
             $fields['lot_lote'],
             $fields['pro_despro'],
-            $fields['lot_validade_show'], 
-            $fields['lot_validade'],    
-            $fields['fab_nomFab'],    
-            $fields['lot_fabricante'],    
+            $fields['lot_validade_show'],
+            $fields['lot_validade'],
+            $fields['fab_nomFab'],
+            $fields['lot_fabricante'],
             $fields['oco_qtd'],
             $fields['oco_descricao'],
         ];
-
         $etiqueta = fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
 
-        // ações 
-        $acoes = $this->ocorrencia->getAcoesFinalizar($id);
-        // debug($acoes, true);
-        $entity = new EntOcoTratativa($dados, true);
-        // BLOCO DAS TELAS APLICÁVEIS
+        // BLOCO TELAS APLICAVEIS
         $entity   = new EntOcoModOcorrencia((array) $dados);
-        $modModel = new OcorreModOcorrenciaModel();
-        $oco   = $this->ocorrencia->find($id);
-        $telas = $modModel->getTOTelasAplicaveis($oco->sut_id);
-        
+        $sutModel = new OcorreModOcorrenciaModel();
+        $telas = $sutModel->getTOTelasAplicaveis($dados->sut_id);
+        // debug($telas, true);
+
         if (!empty($telas)) {
-        
+
             $telasResultado = [];
             $total = count($telas);
-        
+
             for ($c = 0; $c < $total; $c++) {
-                $fields = $entity->defCamposTelasAplicaveis($telas[$c], $c, $total, true);
-                $telasResultado[] = $fields;
+                // debug($telas[$c]);
+                $fields = $entity->defCamposTelasAplicaveis(
+                    $telas[$c],
+                    $c,
+                    $total,
+                    true
+                );
+                $campos[1][$c][] = $fields['mod_id'];
+                $campos[1][$c][] = $fields['tel_id'];
+                $campos[1][$c][] = $fields['tof_campo'];
             }
-        
+            $telasResultado = $campos[1];
             $campos[0][] = view(
                 'partials/pw_telas_aplicaveis_ocorrencia',
                 [
@@ -192,7 +195,7 @@ class OcoTrataOcorrencia extends BaseController
             $acoesResultado = [];
 
             foreach ($acoes as $acao) {
-                $acao->somente_leitura = true;
+                $acao->somente_leitura = false;
                 $camposAcao = $entity->defCamposAcao($acao);
                 $acoesResultado[] = $camposAcao;
             }
@@ -214,12 +217,12 @@ class OcoTrataOcorrencia extends BaseController
         $this->data['campos']       = $campos;
         $this->data['destino']      = "store";
         $this->data['desc_metodo']  = '';
-        $this->data['script']  = '<script>jQuery("#form1").attr("data-alter", true)</script>';
+        $this->data['script']  = '<script>jQuery("#form1").attr("data-alter", true);</script>';
 
         echo view('vw_edicao', $this->data);
     }
 
-     public function store()
+    public function store()
     {
         // debug('ENTROU NO STORE');
         $postado = $this->request->getPost();
@@ -245,16 +248,16 @@ class OcoTrataOcorrencia extends BaseController
             // confirmação obrigatória
             $movs    = [];
             $novoStt = null;
-            
+
             foreach ($acaoSelecionada as $tpaId) {
-            
+
                 $tpaId = (int)$tpaId;
                 $acao = (new OcorreModOcorrenciaModel())->getAcaoPorId($tpaId, $oco->sut_id);
-            
+
                 if (!$acao) {
                     continue;
                 }
-            
+
                 // MOVIMENTAÇÃO
                 if ((int)$acao->tpa_id === 3) {
 
@@ -265,21 +268,14 @@ class OcoTrataOcorrencia extends BaseController
                             'msg'  => 6
                         ]);
                     }
-                
-                    // EXECUTA MOVIMENTAÇÃO
-                    // $movs[] = [
-                    //     'id'  => (int)$postado['tmo_id'],
-                    //     'qt'  => (int)$postado['oco_qtd'],
-                    //     'msg' => 'Ação da tratativa'
-                    // ];
                 }
-            
+
                 // ALTERAR STATUS
                 // debug($postado['stt_id'] ?? 'NÃO VEIO', true);
                 // debug($acao->tpa_id, true);
                 if ((int)$acao->tpa_id === 4) {
                     $novoStt = (int)$acao->stt_id;
-                
+
                     // PRODUTO
                     $produtoModel = new ProdutProdutoModel();
                     if (!$produtoModel->update($oco->pro_id, [
@@ -287,14 +283,14 @@ class OcoTrataOcorrencia extends BaseController
                     ])) {
                         throw new \Exception('Erro ao atualizar status do produto');
                     }
-                
+
                     // OCORRÊNCIA = SEMPRE FINALIZADA
                     $this->ocorrencia->update($oco->oco_id, [
                         'stt_id'       => 30,
                         'usu_fina'     => session()->get('usu_nome'),
                         'oco_data_fim' => date('Y-m-d H:i:s')
                     ]);
-                
+
                     $novoStt = null;
                 }
             }
@@ -316,6 +312,7 @@ class OcoTrataOcorrencia extends BaseController
             $postado['oco_data_fim'] = date('Y-m-d H:i:s');
 
             unset(
+                $postado['usu_nome'],
                 $postado['sut_id'],
                 $postado['tpa_id'],
                 $postado['tmo_id'],

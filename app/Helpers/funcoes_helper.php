@@ -888,7 +888,7 @@ function criaSelectRelativo(
     $opcoes = [];
     // debug($opcoes, true);
     $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
-    // debug($configCampo);
+    // debug($nomeTabela);
     if ($nomeTabela != '') {
         // Detecta o DBGroup e o schema com base no nome da tabela
         $dicDados = new ConfigDicDadosModel();
@@ -961,8 +961,9 @@ function criaSelectRelativo(
 
     // Define valor e selecionado
     // Garante que $valor seja tratado corretamente
+
+    // debug($valor);
     if (is_array($valor)) {
-        // debug($valor, true);
         $valorStr = implode(',', $valor);
         $valorArr = $valor;
     } elseif (is_string($valor) && str_contains($valor, ',')) {

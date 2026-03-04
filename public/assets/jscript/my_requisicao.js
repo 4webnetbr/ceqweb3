@@ -1051,11 +1051,7 @@ async function enviarConfRequisicoes(event) {
       }
       if (parseInt(conf) > 0) {
         // SCANIEI PELO MENOS 1 PRODUTO
-        if (
-          parseInt(saldo) > 0 &&
-          parseInt(ctafab) > 0 &&
-          parseInt(ctamis) > 0
-        ) {
+        if (parseInt(saldo) > 0) {
           msg = 9;
         } else if (
           parseInt(saldo) == 0 &&
@@ -1067,10 +1063,50 @@ async function enviarConfRequisicoes(event) {
       if (msg > 0) {
         event.preventDefault();
         event.stopPropagation();
-        resposta = await boxAlert(msg);
         if (msg == 9) {
+          resposta = await boxAlert(msg, false, "", false, 1, true);
+          if (resposta) {
+            var qtnacaixa = parseInt(jQuery("#qtdemb_" + idBase).val());
+            qtconferida = Math.ceil(parseInt(ctalot) / qtnacaixa);
+            if (lf == "SN") {
+              if (parseInt(ctafab) >= parseInt(qtconferida)) {
+                fabok = true;
+              } else if (parseInt(ctafab) > 0) {
+                fabok = false;
+              }
+            } else if (lf == "NN") {
+              fabok = true;
+            } else if (lf == "SS") {
+              if (parseInt(ctafab) == parseInt(ctalot)) {
+                fabok = true;
+              } else if (parseInt(ctafab) > 0) {
+                fabok = false;
+              }
+            }
+            if (lm == "SN") {
+              if (parseInt(ctamis) >= parseInt(qtconferida)) {
+                misok = true;
+              } else if (parseInt(ctamis) > 0) {
+                misok = false;
+              }
+            } else if (lp == "NN") {
+              misok = true;
+            } else if (lp == "SS") {
+              if (parseInt(ctamis) == parseInt(ctalot)) {
+                misok = true;
+              } else if (parseInt(ctamis) > 0) {
+                misok = false;
+              }
+            }
+            if (!fabok || !misok) {
+              msg = 38;
+              resposta = await boxAlert(msg, true, "", false, 1, false);
+              resposta = false;
+            }
+          }
           return resposta;
         } else {
+          resposta = await boxAlert(msg, true, "", false, 1, false);
           return false;
         }
       }

@@ -222,10 +222,16 @@ class OcoTipoOcorrencia extends BaseController
         $dados_TelasAplicaveis = $this->tipoocorrencia->getTOTelasAplicaveis($id, $show);
 
         if (count($dados_TelasAplicaveis) > 0) {
+            $total = count($dados_TelasAplicaveis);
             for ($c = 0; $c < count($dados_TelasAplicaveis); $c++) {
-
-                $fields = $entity->defCamposTelasAplicaveis($dados_TelasAplicaveis[$c], $c, $show);
-
+                // debug($dados_TelasAplicaveis[$c]);
+                $fields = $entity->defCamposTelasAplicaveis(
+                    $dados_TelasAplicaveis[$c],
+                    $c,
+                    $total,
+                    $show
+                );
+                debug($fields);
                 $campos[1][$c][] = $fields['mod_id'];
                 $campos[1][$c][] = $fields['tel_id'];
                 $campos[1][$c][] = $fields['tof_campo'];

@@ -220,8 +220,8 @@ class OcoModOcorrencia extends BaseController
         // debug($dados_TelasAplicaveis, true);
         if (count($dados_TelasAplicaveis) > 0) {
             $total = count($dados_TelasAplicaveis);
-
             for ($c = 0; $c < $total; $c++) {
+                // debug($dados_TelasAplicaveis[$c]);
                 $fields = $entity->defCamposTelasAplicaveis(
                     $dados_TelasAplicaveis[$c],
                     $c,
@@ -387,7 +387,7 @@ class OcoModOcorrencia extends BaseController
 
             if (empty($postado['sut_id'])) {
                 unset($postado['sut_id']);
-            
+
                 $this->modocorrencia->insert($postado);
                 $sut_id = $this->modocorrencia->getInsertID();
             } else {

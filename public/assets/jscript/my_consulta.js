@@ -378,6 +378,8 @@ function validaCodBar(obj) {
           if (parseInt(ctafab) == parseInt(qtde) - parseInt(canc)) {
             fabok = true;
           } else if (parseInt(ctafab) > parseInt(qtde) - parseInt(canc)) {
+            ctafab--;
+            jQuery("#ctafb_" + idBase).val(ctafab);
             boxAlert(msgqterrada, false, "", true, 1, false);
             obj.value = "";
             obj.focus();
@@ -485,10 +487,10 @@ function acertaCorStt(idBase, tipo = "ate") {
     var canc = parseInt(jQuery("#ca_" + idBase).text());
   }
 
+  jQuery("#fab_" + idBase).removeClass("border-secondary");
+  jQuery("#fab_" + idBase).removeClass("border-warning bg-warning");
   if (lf == "SN") {
     if (parseInt(ctafab) == parseInt(qtcaixa)) {
-      jQuery("#fab_" + idBase).removeClass("border-secondary");
-      jQuery("#fab_" + idBase).removeClass("border-warning bg-warning");
       jQuery("#fab_" + idBase).addClass("border-success bg-success");
       fabok = true;
     } else if (parseInt(ctafab) > 0) {
@@ -503,8 +505,6 @@ function acertaCorStt(idBase, tipo = "ate") {
   } else if (lf == "SS") {
     if (parseInt(ctafab) == parseInt(qtde) - parseInt(canc)) {
       fabok = true;
-      jQuery("#fab_" + idBase).removeClass("border-secondary");
-      jQuery("#fab_" + idBase).removeClass("border-warning bg-warning");
       jQuery("#fab_" + idBase).addClass("border-success bg-success");
     } else if (parseInt(ctafab) > 0) {
       fabok = false;
@@ -514,10 +514,10 @@ function acertaCorStt(idBase, tipo = "ate") {
       }
     }
   }
+  jQuery("#lot_" + idBase).removeClass("border-secondary");
+  jQuery("#lot_" + idBase).removeClass("border-warning bg-warning");
   if (lp == "SN") {
     if (parseInt(ctalot) == parseInt(qtcaixa)) {
-      jQuery("#lot_" + idBase).removeClass("border-secondary");
-      jQuery("#lot_" + idBase).removeClass("border-warning bg-warning");
       jQuery("#lot_" + idBase).addClass("border-success bg-success");
       lotok = true;
     } else if (parseInt(ctalot) > 0) {
@@ -534,8 +534,6 @@ function acertaCorStt(idBase, tipo = "ate") {
   } else if (lp == "SS") {
     if (parseInt(ctalot) == parseInt(qtde) - parseInt(canc)) {
       lotok = true;
-      jQuery("#lot_" + idBase).removeClass("border-secondary");
-      jQuery("#lot_" + idBase).removeClass("border-warning bg-warning");
       jQuery("#lot_" + idBase).addClass("border-success bg-success");
     } else if (parseInt(ctalot) > 0) {
       lotok = false;
@@ -550,10 +548,10 @@ function acertaCorStt(idBase, tipo = "ate") {
     var lm = jQuery("#mis_" + idBase).text();
     var ctamis = jQuery("#ctami_" + idBase).val();
     // lotok = false;
+    jQuery("#mis_" + idBase).removeClass("border-secondary");
+    jQuery("#mis_" + idBase).removeClass("border-warning bg-warning");
     if (lm == "SN") {
       if (parseInt(ctamis) == parseInt(qtcaixa)) {
-        jQuery("#mis_" + idBase).removeClass("border-secondary");
-        jQuery("#mis_" + idBase).removeClass("border-warning bg-warning");
         jQuery("#mis_" + idBase).addClass("border-success bg-success");
         misok = true;
       } else {
@@ -566,8 +564,6 @@ function acertaCorStt(idBase, tipo = "ate") {
     } else if (lm == "SS") {
       if (parseInt(ctamis) == parseInt(qtde) - parseInt(canc)) {
         misok = true;
-        jQuery("#mis_" + idBase).removeClass("border-secondary");
-        jQuery("#mis_" + idBase).removeClass("border-warning bg-warning");
         jQuery("#mis_" + idBase).addClass("border-success bg-success");
       } else {
         misok = false;
@@ -607,6 +603,21 @@ function acertaCorStt(idBase, tipo = "ate") {
   jQuery("#stt_" + idBase).removeClass("bg-success");
   jQuery("#stt_" + idBase).removeClass("bg-danger");
   jQuery("#stt_" + idBase).addClass(fundo);
+  jQuery("#stt_" + idBase).off("dblclick");
+  if (fundo == "bg-warning") {
+    jQuery("#stt_" + idBase).on("dblclick", () => zerarConferencia(idBase));
+  }
+}
+
+function zerarConferencia(idBase) {
+  jQuery("#ctafb_" + idBase).val(0);
+  jQuery("#ctalt_" + idBase).val(0);
+  jQuery("#ctami_" + idBase).val(0);
+  jQuery("#rpa_conferida_" + idBase).val(0);
+  jQuery("#sl_" + idBase).text(
+    parseInt(jQuery("#rpa_atendida_" + idBase).val()),
+  );
+  acertaCorStt(idBase);
 }
 
 function extrairCodBarFab(str) {
