@@ -70,7 +70,7 @@
             echo "<div class='tab-content bg-white' id='myTabContent'>";
             for ($s = 0; $s < count($secoes); $s++) {
                 $secao = url_amigavel($secoes[$s]);
-                echo "<div class='tab-pane fade p-lg-3 p-2 $active' style='max-height:86vh !important' id='" . $secao . "' role='tabpanel' aria-labelledby='" . $secao . "-tab' tabindex='0'>";
+                echo "<div class='tab-pane fade p-lg-3 p-2 $active' id='" . $secao . "' role='tabpanel' aria-labelledby='" . $secao . "-tab' tabindex='0'>";
                 if (isset($botaosecao[$s])) {
                     echo $botaosecao[$s];
                 }

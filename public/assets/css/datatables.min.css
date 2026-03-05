@@ -2802,12 +2802,6 @@ div.dtsr-confirmation-text {
   margin-top: 1.5em;
 }
 
-.table-responsive {
-  min-height: 91vh;
-  height: 91vh;
-  max-height: 91vh;
-}
-
 .dtsb-titleRow {
   padding: 5px 10px;
   background-color: var(--bs-blue-dark);
@@ -2845,10 +2839,5 @@ div.dtsb-searchBuilder div.dtsb-titleRow button.dtsb-clearAll {
 }
 
 .dataTables_scroll {
-  /* min-height: 80vh;
-  height: 80vh;
-  max-height: 80vh; */
-  /* min-height: 80vh; */
   height: calc(100vh - 10rem);
-  /* max-height: 80vh; */
 }

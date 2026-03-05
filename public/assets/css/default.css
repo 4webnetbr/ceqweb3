@@ -257,17 +257,19 @@ a:hover {
   transform-style: preserve-3D;
 }
 
-.tab-content,
-.tab-content-prin {
-  border: var(--bs-border-width) solid var(--bs-border-color);
-  border-radius: 0 10px 10px 10px;
-}
+/* .tab-content, */
+/* .tab-content-prin { */
+/* border: var(--bs-border-width) solid var(--bs-border-color); */
+/* border-radius: 0 10px 10px 10px; */
+/* } */
 
 .tab-content > .tab-pane {
-  max-height: 80vh;
+  max-height: calc(100vh - 9rem);
   overflow: auto;
   height: auto;
-  min-height: 80vh;
+  padding-bottom: 2rem !important;
+  border-radius: 0 15px 15px 15px;
+  /* min-height: 80vh; */
 }
 
 .tab-content-prin > .tab-pane-prin {
@@ -278,7 +280,8 @@ a:hover {
 
 .tab-content > .tab-pane.show,
 .tab-content-prin > .tab-pane-prin.show {
-  box-shadow: 0 -1px 1px 1px lightgrey;
+  box-shadow: inset 0 0 1px 1px var(--bs-gray-500);
+  /* box-shadow: 0 -1px 1px 1px lightgrey; */
 }
 
 .nav-item > .nav-link {
@@ -291,7 +294,7 @@ a:hover {
 
 .nav-item > .nav-link.active {
   margin-top: 3px;
-  box-shadow: 0 -1px 1px 1px lightgrey;
+  box-shadow: 0 -1px 1px 1px var(--bs-gray-500);
   color: #0d6efd;
 }
 
