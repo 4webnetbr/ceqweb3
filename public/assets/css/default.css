@@ -683,6 +683,21 @@ div.msgprocessando > div:last-child > div {
   display: none !important;
 }
 
+.selectpicker-selected-list {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  padding-left: 12px;
+  cursor: pointer;
+  max-height: 10rem;
+  overflow-y: auto;
+}
+
+.selectpicker-selected-list div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .dropdown-toggle[aria-expanded="false"]::after {
   content: "\f0a5";
   right: 3.5rem;
