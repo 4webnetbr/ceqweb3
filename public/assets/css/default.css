@@ -264,11 +264,13 @@ a:hover {
 /* } */
 
 .tab-content > .tab-pane {
-  max-height: calc(100vh - 9rem);
-  overflow: auto;
+  max-height: calc(100vh - 9rem) !important;
+  overflow-x: hidden;
+  overflow-y: visible;
   height: auto;
   padding-bottom: 2rem !important;
   border-radius: 0 15px 15px 15px;
+  transition: height 0.2s ease;
   /* min-height: 80vh; */
 }
 
@@ -670,6 +672,12 @@ div.msgprocessando > div:last-child > div {
   background-color: var(--bs-info);
 }
 
+.bootstrap-select .dropdown-menu.fixed-dropdown {
+  position: fixed !important;
+  transform: none !important;
+  will-change: auto;
+}
+
 /* Remove o ::after do botão quando o select estiver desabilitado */
 .bootstrap-select.disabled .dropdown-toggle::after {
   display: none !important;
@@ -703,7 +711,7 @@ div.msgprocessando > div:last-child > div {
 }
 
 .inner.show {
-  max-height: 20vh !important;
+  max-height: 30vh !important;
 }
 
 .bootstrap-select > .dropdown-toggle {
@@ -891,7 +899,8 @@ input[type="number"] {
 }
 
 .dropdown-menu {
-  border-radius: 0px 10px 10px 10px;
+  border-radius: 0px 0px 20px 20px;
+  box-shadow: 2px 5px 5px -1px var(--bs-gray-500);
 }
 
 /* .form-check-input:disabled,

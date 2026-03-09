@@ -65,13 +65,13 @@ class OcorreTipoOcorrenciaModel extends Model
     }
 
 
-    public function getTipoOcorrencia($tpo_id = false, $tel_id = false, bool $somenteAtivos = false) 
+    public function getTipoOcorrencia($tpo_id = false, $tel_id = false, bool $somenteAtivos = false)
     {
         // $perfilId = session()->get('usu_perfil_id'); 
         $db       = db_connect('dbOcorrencia');
         $builder  = $db->table('vw_oco_tpo_ocorrencia_relac');
         $builder->select('vw_oco_tpo_ocorrencia_relac.*');
-    
+
         // filtros existentes
         if ($somenteAtivos) {
             $builder->groupStart()
@@ -83,14 +83,14 @@ class OcorreTipoOcorrenciaModel extends Model
         } elseif ($tpo_id) {
             $builder->where('vw_oco_tpo_ocorrencia_relac.tpo_id', $tpo_id);
         }
-    
+
         if ($tel_id) {
             $builder->where('tel_id', $tel_id);
         }
-    
+
         $builder->orderBy("CASE WHEN tpo_ativo = 'A' THEN 0 ELSE 1 END");
         $builder->orderBy('tpo_nome');
-    
+
         return $builder->get()->getResult();
     }
 
@@ -124,7 +124,7 @@ class OcorreTipoOcorrenciaModel extends Model
 
         return $builder->get()->getResult();
     }
-    
+
     public function getTipoMovimentacao($tmo_id = false, $prf_id = false)
     {
         $db = db_connect('dbEstoque');
@@ -147,15 +147,27 @@ class OcorreTipoOcorrenciaModel extends Model
     public function getMovimentacao(int $tpo_id, int $tpa_id): ?int
     {
         $db = db_connect('dbOcorrencia');
-    
+
         $builder = $db->table('oco_tipo_ocorrencia_acao o');
         $builder->select('o.tmo_id');
-    
+
         $builder->where('o.tpo_id', $tpo_id);
         $builder->where('o.tpa_id', $tpa_id);
-    
+
         $row = $builder->get()->getRow();
-    
+
         return $row ? (int) $row->tmo_id : null;
+    }
+
+    public function getClassePorTipo($tpo_id)
+    {
+        $db = db_connect('dbOcorrencia');
+
+        $builder = $db->table('vw_tpo_ocorrencia_classe_relac');
+        $builder->select('*');
+
+        $builder->where('tpo_id', $tpo_id);
+
+        return $builder->get()->getResult();
     }
 }

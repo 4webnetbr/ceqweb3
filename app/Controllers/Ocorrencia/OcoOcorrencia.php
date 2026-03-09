@@ -91,7 +91,7 @@ class OcoOcorrencia extends BaseController
                 $url_imp = base_url('/CriaPdf2025/PrintOcorrencia/' . $nov->oco_id);
                 $nov->acao_person[] = "
                      <button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0'
-                         title='Imprimir Ocorrência'
+                         title='Imprimir'
                          onclick='openPDFModal(\"{$url_imp}\",\"Imprimir Ocorrência\")'>
                          <i class='fa-solid fa-print'></i>
                      </button>
@@ -103,7 +103,7 @@ class OcoOcorrencia extends BaseController
                 $url_finalizar = $base_url . '/finalizar/' . $nov->oco_id;
                 $nov->acao_person[] = "
                     <button class='btn btn-outline-success btn-sm border-0 mx-0 fs-0'
-                        title='Finalizar Tratativa'
+                        title='Finalizar'
                         onclick='redireciona(\"$url_finalizar\")'>
                         <i class='fas fa-check'></i>
                     </button>
@@ -205,10 +205,10 @@ class OcoOcorrencia extends BaseController
 
         $etiqueta = fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
 
-        // BLOCO DAS TELAS APLICÁVEIS
-        $entity = new EntOcoModOcorrencia((array) $dados);
+        // BLOCO TELAS APLICÁVEIS
+        $entity   = new EntOcoModOcorrencia((array) $dados);
         $modModel = new OcorreModOcorrenciaModel();
-        $oco   = $this->ocorrencia->find($id);
+        $oco   = $this->ocorrencia->getOcorrencia($id);
         $telas = array_map(fn($item) => (array) $item, 
             $modModel->getTOTelasAplicaveis($oco->sut_id)
         );
@@ -500,26 +500,28 @@ class OcoOcorrencia extends BaseController
                 unset($postado['oco_id']);
             }
 
-            // // SUBTIPO / STATUS
+            // SUBTIPO / STATUS
             $modModel = new OcorreModOcorrenciaModel();
-            $acao = $modModel->getAcaoConfigurada(
-                (int)$postado['sut_id']
-            );
-            // debug($acao->tpa_id ?? null, true);
-            // SE NÃO EXISTIR NENHUMA AÇÃO: FINALIZA AUTOMÁTICO
-            if (!$acao) {
-                $postado['stt_id'] = 29; // Finalização automática
-            } elseif ((int)$acao->tpa_id === 12) { // 12 = Nenhuma
-                $postado['stt_id'] = 29; // Finalização automática
+            $subtipo = $modModel->getModOcorrencia((int)$postado['sut_id'])[0] ?? null;
+            
+            if ($subtipo && $subtipo->sut_fina === 'S') {
+                // FINALIZA AUTOMÁTICO
+                $postado['stt_id'] = 29;
             } else {
-                $postado['stt_id'] = 28; // Pendente
-            }
-
-            // INJETA NA OCORRENCIA
-            if ($acao) {
-                $postado['tpa_id'] = $acao->tpa_id ?? null;
-                $postado['tmo_id'] = $acao->tmo_id ?? null;
-                $postado['tel_id'] = $acao->tel_id ?? null;
+                $acao = $modModel->getAcaoConfigurada((int)$postado['sut_id']);
+            
+                if (!$acao) {
+                    $postado['stt_id'] = 29;
+                } elseif ((int)$acao->tpa_id === 12) {
+                    $postado['stt_id'] = 29;
+                } else {
+                    $postado['stt_id'] = 28;
+                }
+                if ($acao) {
+                    $postado['tpa_id'] = $acao->tpa_id ?? null;
+                    $postado['tmo_id'] = $acao->tmo_id ?? null;
+                    $postado['tel_id'] = $acao->tel_id ?? null;
+                }
             }
             // cria data se não veio do form
             if (empty($postado['oco_data'])) {

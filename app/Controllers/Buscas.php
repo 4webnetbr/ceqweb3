@@ -451,7 +451,7 @@ class Buscas extends BaseController
         if (!empty($busca)) {
             $lotesm = new ProdutLoteModel();
             $lote   = $lotesm->getLoteSearch($busca);
-    
+
             if (empty($lote)) {
                 $ret->lotid = '-1';
             } else {
@@ -463,7 +463,7 @@ class Buscas extends BaseController
                 $ret->codErp    = $lote[0]->lot_codpro ?? '';
             }
         }
-    
+
         return $this->response->setJSON($ret);
     }
 
@@ -769,6 +769,30 @@ class Buscas extends BaseController
             }
         }
 
+        echo json_encode($ret);
+        exit;
+    }
+
+    public function buscaClassePorTipo()
+    {
+        $ret = [];
+        if ($_REQUEST['busca']) {
+            $model = new OcorreTipoOcorrenciaModel();
+            $lst = $model->getClassePorTipo($_REQUEST['busca']);
+            if (empty($lst)) {
+                $o = new \stdClass();
+                $o->id   = -1;
+                $o->text = 'Nenhuma Classe encontrada';
+                $ret[] = $o;
+            } else {
+                foreach ($lst as $l) {
+                    $o = new \stdClass();
+                    $o->id   = $l->cla_id;
+                    $o->text = $l->cla_nome;
+                    $ret[] = $o;
+                }
+            }
+        }
         echo json_encode($ret);
         exit;
     }

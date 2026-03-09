@@ -989,10 +989,10 @@ async function enviarConfRequisicoes(event) {
         var lm = jQuery("#mis_" + idBase).text();
         var qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
         var qtde = jQuery("#qt_" + idBase).text();
-        var canc = jQuery("#rpa_cancelada_" + idBase).val();
+        var canc = jQuery("#ca_" + idBase).text();
         var saldo = jQuery("#sl_" + idBase).text();
         fabok = false;
-        lotof = false;
+        lotok = false;
         misok = false;
 
         if (lf == "SN") {
@@ -1004,7 +1004,7 @@ async function enviarConfRequisicoes(event) {
         } else if (lf == "NN") {
           fabok = true;
         } else if (lf == "SS") {
-          if (parseInt(ctafab) == parseInt(qtde)) {
+          if (parseInt(ctafab) == parseInt(qtde) - parseInt(canc)) {
             fabok = true;
           } else if (parseInt(ctafab) > 0) {
             fabok = false;
@@ -1019,7 +1019,7 @@ async function enviarConfRequisicoes(event) {
         } else if (lp == "NN") {
           lotok = true;
         } else if (lp == "SS") {
-          if (parseInt(ctalot) == parseInt(qtde)) {
+          if (parseInt(ctalot) == parseInt(qtde) - parseInt(canc)) {
             lotok = true;
           } else if (parseInt(ctalot) > 0) {
             lotok = false;
@@ -1031,10 +1031,10 @@ async function enviarConfRequisicoes(event) {
           } else if (parseInt(ctamis) > 0) {
             misok = false;
           }
-        } else if (lp == "NN") {
+        } else if (lm == "NN") {
           misok = true;
-        } else if (lp == "SS") {
-          if (parseInt(ctamis) == parseInt(qtde)) {
+        } else if (lm == "SS") {
+          if (parseInt(ctamis) == parseInt(qtde) - parseInt(canc)) {
             misok = true;
           } else if (parseInt(ctamis) > 0) {
             misok = false;
@@ -1047,7 +1047,7 @@ async function enviarConfRequisicoes(event) {
         parseInt(conf) == 0 &&
         (parseInt(ctafab) > 0 || parseInt(ctamis) > 0)
       ) {
-        msg = 38;
+        msg = 40;
       }
       if (parseInt(conf) > 0) {
         // SCANIEI PELO MENOS 1 PRODUTO

@@ -114,7 +114,7 @@ class Requisicao extends BaseController
                 // Datas
                 $dataBanco  = new DateTime($req->req_data);
                 $dataLimite = new DateTime();
-                $dataLimite->modify('-30 days');
+                $dataLimite->modify('-1 month');
 
                 // URLs
 
@@ -675,7 +675,7 @@ class Requisicao extends BaseController
 
             if ($res) {
                 // $consumo[$tipo] = $this->indexarConsumo($res);
-                $consumo[$tipo] = array_column($res, null,'codigo_erp');
+                $consumo[$tipo] = array_column($res, null, 'codigo_erp');
             }
             // debug($consumo);
             // debug($consumo['insumos']['codigo_erp'] . ' ' . $consumo['insumos']['produto_nome'] . ' ' . $consumo['insumos']['consumido'], true);

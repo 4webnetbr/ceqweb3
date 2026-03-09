@@ -536,14 +536,14 @@ class Produto extends BaseController
                 $this->produtos->transRollback();
                 $ret['erro'] = true;
                 $ret['msg']  = 'Erro ao salvar produto: ' . $e->getMessage();
-                debug($ret);
-                debug($e, true);
+                // // debug($ret);
+                // debug($e, true);
             }
 
             if (!$salva) {
                 $ret['erro'] = true;
                 $ret['msg']  = implode('<br>', $this->produtos->errors());
-                debug($ret, true);
+                // debug($ret, true);
                 // return;
             } else {
                 if ($postado['pro_id'] == '') {
@@ -576,7 +576,7 @@ class Produto extends BaseController
                 if (!$salva) {
                     $ret['erro'] = true;
                     $ret['msg']  = 'Erro ao salvar dados adicionais do produto.';
-                    debug($ret, true);
+                    // debug($ret, true);
                 }
 
                 $pro_id = (int) $postado['pro_id'];
@@ -645,7 +645,7 @@ class Produto extends BaseController
                             'pre_estdataatual'  => $postado['pre_estdataatual'][$key] ?? null,
                             'pre_gestaoestoque' => $postado['pre_gestaoestoque'][$key] ?? null,
                         ];
-                        debug($sql_dep);
+                        // debug($sql_dep);
                         $dep_id = $this->common->insertReg('dbProduto', 'pro_est_produto', $sql_dep);
                         // debug($dep_id);
 

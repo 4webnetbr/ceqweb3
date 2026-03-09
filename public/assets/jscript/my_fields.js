@@ -459,24 +459,6 @@ function carregamentos_iniciais() {
   }
 
   /**
-   * Disable Option Select
-   * desabilita a opção do Select, se o valor for -1
-   * Document Ready my_fields
-   */
-  if (jQuery("select")[0]) {
-    jQuery("select option").each(function () {
-      var value = this.value;
-      if (value == "-1") {
-        jQuery(this).prop("readonly", "true");
-      }
-      if (value == this.parentElement.getAttribute("data-selec")) {
-        jQuery(this.parentElement).selectpicker("val", value);
-      }
-    });
-    jQuery("select").selectpicker();
-  }
-
-  /**
    * Campo Selpic
    * Se existir um campo selpic, aplica a Select Picker
    * Document Ready my_fields
@@ -617,8 +599,27 @@ function carregamentos_iniciais() {
     }
   });
 
+  jQuery(".selectpicker").each(function () {
+    jQuery(this).selectpicker();
+  });
   acertaDependente();
-  jQuery("select").selectpicker();
+
+  /**
+   * Disable Option Select
+   * desabilita a opção do Select, se o valor for -1
+   * Document Ready my_fields
+   */
+  if (jQuery("select")[0]) {
+    jQuery("select option").each(function () {
+      var value = this.value;
+      if (value == "-1") {
+        jQuery(this).prop("readonly", "true");
+      }
+      if (value == this.parentElement.getAttribute("data-selec")) {
+        jQuery(this.parentElement).selectpicker("val", value);
+      }
+    });
+  }
 }
 
 function oculta_passinfo() {
@@ -633,7 +634,7 @@ function acertaDependente() {
    */
   jQuery(".dependente").each(function () {
     const $element = jQuery(this);
-    const elemen = $element[0];
+    const elemen = this;
 
     if (elemen.tagName === "SELECT") {
       const busca = $element.data("busca");
@@ -642,22 +643,17 @@ function acertaDependente() {
 
       const $pai = jQuery('[name="' + pai + '"]');
 
-      // Evita múltiplos bindings: remove antigo handler (opcional, só se necessário)
-      $pai.off("change.busca_dependente");
-
-      // Adiciona o novo handler usando namespace
+      // Adiciona sem remover outros eventos
       $pai.on("change.busca_dependente", function () {
         busca_dependente(this, elemen.name, busca, valor);
       });
 
-      // Dispara a mudança sem manter o select aberto
-      // Em vez de trigger("change"), altere o valor diretamente (se necessário)
+      // Executa diretamente em vez de disparar change
       if ($pai.val()) {
-        $pai.triggerHandler("change"); // Dispara sem abrir UI de dropdown
+        busca_dependente($pai[0], elemen.name, busca, valor);
       }
     }
   });
-
   // Aplica no carregamento
   jQuery("select.selectpicker[multiple]").each(function () {
     atualizarTextoSelectpicker(this);
@@ -671,15 +667,6 @@ function acertaDependente() {
       atualizarTextoSelectpicker(this);
     },
   );
-
-  // jQuery("select.selectpicker[multiple]").each(function () {
-  //     atualizarTextoSelectpicker(this); // Aplica no carregamento
-
-  //     // Continua reagindo a mudanças
-  //     jQuery(this).on("changed.bs.select", function () {
-  //       atualizarTextoSelectpicker(this);
-  //     });
-  //   });
 
   function atualizarTextoSelectpicker(select) {
     var selectedOptions = jQuery(select).find("option:selected");
@@ -697,6 +684,12 @@ function acertaDependente() {
         .get()
         .join("");
       $button.html(list);
+
+      var altura = $button.outerHeight();
+
+      var $menu = jQuery(select).parent().find(".dropdown-menu").first();
+
+      $menu.css("top", -altura + "px !important");
     }
   }
 }
@@ -1179,7 +1172,10 @@ function addCampo(url, objdest, obj) {
     jQuery(divSelector)
       .find("select")
       .each(function () {
-        jQuery(this).selectpicker(); // Substitua "seuPlugin" pelo nome do plugin
+        jQuery(this).selectpicker({
+          container: "body",
+        });
+        // Substitua "seuPlugin" pelo nome do plugin
       });
 
     /**
@@ -1224,42 +1220,6 @@ function addCampo(url, objdest, obj) {
       acertaOcultos();
     }
   }
-
-  //   jQuery.ajax({
-  //       type: 'POST',
-  //       async: true,
-  //       dataType: 'json',
-  //       url: url + '/' + proximo,
-  //       success: function (retorno) {
-  //           text = "<div class='row tableDiv table2 table-" + objdest + "' width='100 % ' data-index=" + proximo + " >";
-  //           text += "<div class='col-11'>";
-  //           // text = '<table class="table2 table-sm" data-index="' + proximo + '"><tbody><tr>';
-  //           indice = 0;
-  //           for (const ind in retorno) {
-  //               if (ind < retorno.length - 2) {
-  //                   quebra = retorno[ind].indexOf("quebralinha");
-  //                   oculto = retorno[ind].indexOf("hidden");
-  //                   text += retorno[ind];
-  //               }
-  //           }
-  //           text += "</div>";
-  //           text += "<div class='col-1 d-initial h-auto p-0'>";
-  //           text += "<div class='col-9 d-block float-start text-center p-0'>";
-  //           text += retorno[retorno.length - 2];
-  //           text += retorno[retorno.length - 1];
-  //           text += '</div>';
-  //           text += "<div class='col-3 d-block float-end text-end'>";
-  //           text += "<button name='bt_up["   + proximo + "]' type='button' id='bt_up["   + proximo + "]' class='btn btn-outline-info btn-sm bt-up mt-0 float-end' onclick='sobe_desce_item(this,\"sobe\",\"" + objdest + "\")' title='Acima' data-index='" + proximo + "'><i class='fa fa-arrow-up' aria-hidden='true'></i></button>";
-  //           text += "<button name='bt_down[" + proximo + "]' type='button' id='bt_down[" + proximo + "]' class='btn btn-outline-info btn-sm bt-down mt-0 float-end' onclick='sobe_desce_item(this,\"desce\",\"" + objdest + "\")' title='Abaixo' data-index='" + proximo + "'><i class='fa fa-arrow-down' aria-hidden='true'></i></button>";
-  //           text += '</div>';
-  //           text += '</div>';
-  //           text += '</div>';
-  //           jQuery('#rep_' + objdest).append(text);
-  //           jQuery('select').selectpicker();
-  //           carregamentos_iniciais();
-  //           acerta_botoes_rep(objdest);
-  //       }
-  //   });
 }
 
 /**
@@ -1752,6 +1712,15 @@ function busca_dependente(obj, id_dep, url_busca, selec) {
     $select.append($option);
   });
   // $select.selectpicker("refresh");
+  if (selec === "Todos") {
+    // pega todos os values das options
+    aSelec = $select
+      .find("option")
+      .map(function () {
+        return $(this).val();
+      })
+      .get();
+  }
   $select.addClass("selectpicker");
   $select.selectpicker("val", aSelec);
   // acertaDependente();

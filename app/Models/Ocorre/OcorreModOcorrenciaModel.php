@@ -23,11 +23,13 @@ class OcorreModOcorrenciaModel extends Model
         'sut_ativo',
         'sut_excluido',
         'tpo_id',
+        'cla_id',
+        'sut_fina',
     ];
 
     protected $validationRules = [
         'sut_nome' => 'required|max_length[50]|min_length[5]',
-    ]; 
+    ];
     protected $validationMessages = [
         'sut_nome'   => [
             'required'   => 'O campo Nome do Tipo da Ocorrência é Obrigatório',
@@ -68,28 +70,22 @@ class OcorreModOcorrenciaModel extends Model
     public function getModOcorrencia($sut_id = false)
     {
         $db = db_connect('dbOcorrencia');
-    
+
         $builder = $db->table('vw_oco_subt_ocorrencia_relac v');
-        $builder->select('v.*');
-    
+        $builder->select('*');
+
         $perfilId = session()->get('usu_perfil_id');
-    
-        $builder->join(
-            'oco_tipo_ocorrencia_permissao tp',
-            'tp.tpo_id = v.tpo_id',
-            'inner'
-        );
-    
-        $builder->where('tp.prf_id', $perfilId);
-    
+
+        $builder->where("FIND_IN_SET($perfilId, v.prf_id)");
+
         if ($sut_id) {
             $builder->where('v.sut_id', $sut_id);
         }
-    
+
         $builder->groupBy('v.sut_id');
-    
+
         $builder->orderBy('v.sut_ativo, v.sut_nome');
-    
+
         return $builder->get()->getResult();
     }
 
@@ -142,42 +138,42 @@ class OcorreModOcorrenciaModel extends Model
     public function getUsoGestao(int $sut_id): bool
     {
         $db = db_connect('dbOcorrencia');
-    
+
         $builder = $db->table('oco_ocorrencia o');
-        $builder->select('o.oco_id');
-    
+        $builder->select('o.oco_id');           
+        
         $builder->where('o.sut_id', $sut_id);
         $builder->where('o.stt_id', 28);
-    
+
         return $builder->countAllResults() > 0;
     }
 
     public function getSubtipoPorTipos(int $tpo_id)
     {
         $db = db_connect('dbOcorrencia');
-    
+
         $builder = $db->table('oco_subt_ocorrencia s');
         $builder->select('s.*');
-    
+
         $builder->where('s.tpo_id', $tpo_id);
-    
+        $builder->where('sut_ativo', 'A');
         $builder->orderBy('s.sut_nome', 'ASC');
-    
+
         return $builder->get()->getResult();
     }
 
     public function getSubTipo(int $tpo_id): ?int
     {
         $db = db_connect('dbOcorrencia');
-    
+
         $builder = $db->table('oco_subt_ocorrencia_acao s');
         $builder->select('s.sut_id');
-    
+
         $builder->where('s.tpo_id', $tpo_id);
         $builder->where('s.sut_nome', 'Nenhuma');
-    
+
         $row = $builder->get()->getRow();
-    
+
         return $row ? (int) $row->sut_id : null;
     }
 
@@ -185,15 +181,15 @@ class OcorreModOcorrenciaModel extends Model
     public function getTelaByTpoTpa(int $tpo_id, int $tpa_id): ?int
     {
         $db = db_connect('dbOcorrencia');
-    
+
         $builder = $db->table('oco_tipo_ocorrencia_acao o');
         $builder->select('o.tel_id');
-    
+
         $builder->where('o.tpo_id', $tpo_id);
         $builder->where('o.tpa_id', $tpa_id);
-    
+
         $row = $builder->get()->getRow();
-    
+
         return $row ? (int) $row->tel_id : null;
     }
 
@@ -201,11 +197,11 @@ class OcorreModOcorrenciaModel extends Model
     public function getAcaoConfigurada(int $sut_id)
     {
         $db = db_connect('dbOcorrencia');
-    
+
         $builder = $db->table('oco_subt_ocorrencia_acao');
         $builder->select('*');
         $builder->where('sut_id', $sut_id);
-    
+
         return $builder->get()->getRow();
     }
 
@@ -217,20 +213,31 @@ class OcorreModOcorrenciaModel extends Model
         $builder->select('*');
         $builder->where('sut_id', $sut_id);
         $builder->where('tpa_id', $tpa_id);
-    
+
         return $builder->get()->getRow();
     }
 
     public function getSubtipoAtivo(int $tpo_id): bool
     {
         $db = db_connect('dbOcorrencia');
-    
+
         $builder = $db->table('oco_subt_ocorrencia s');
         $builder->select('s.sut_id');
-    
+
         $builder->where('s.tpo_id', $tpo_id);
         $builder->where('s.sut_ativo', 'A');
-    
+
         return $builder->countAllResults() > 0;
+    }
+
+    public function getClassePorSubtipo(int $sut_id)
+    {
+        $db = db_connect('dbOcorrencia');
+
+        $builder = $db->table('oco_subt_ocorrencia_classe');
+        $builder->select('cla_id');
+        $builder->where('sut_id', $sut_id);
+
+        return $builder->get()->getResult();
     }
 }

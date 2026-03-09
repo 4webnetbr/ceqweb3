@@ -477,7 +477,7 @@ function acertaCorStt(idBase, tipo = "ate") {
   var canc = parseInt(jQuery("#rpa_cancelada_" + idBase).val());
   var saldo = parseInt(jQuery("#sl_" + idBase).text());
   fabok = false;
-  lotof = false;
+  lotok = false;
   misok = false;
   if (tipo == "ate") {
     misok = true;
@@ -487,6 +487,7 @@ function acertaCorStt(idBase, tipo = "ate") {
     var canc = parseInt(jQuery("#ca_" + idBase).text());
   }
 
+  jQuery("#fab_" + idBase).removeClass("border-success bg-success");
   jQuery("#fab_" + idBase).removeClass("border-secondary");
   jQuery("#fab_" + idBase).removeClass("border-warning bg-warning");
   if (lf == "SN") {
@@ -514,6 +515,7 @@ function acertaCorStt(idBase, tipo = "ate") {
       }
     }
   }
+  jQuery("#lot_" + idBase).removeClass("border-success bg-success");
   jQuery("#lot_" + idBase).removeClass("border-secondary");
   jQuery("#lot_" + idBase).removeClass("border-warning bg-warning");
   if (lp == "SN") {
@@ -548,6 +550,7 @@ function acertaCorStt(idBase, tipo = "ate") {
     var lm = jQuery("#mis_" + idBase).text();
     var ctamis = jQuery("#ctami_" + idBase).val();
     // lotok = false;
+    jQuery("#mis_" + idBase).removeClass("border-success bg-success");
     jQuery("#mis_" + idBase).removeClass("border-secondary");
     jQuery("#mis_" + idBase).removeClass("border-warning bg-warning");
     if (lm == "SN") {

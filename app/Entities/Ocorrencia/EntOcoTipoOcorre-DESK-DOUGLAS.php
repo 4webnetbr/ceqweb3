@@ -56,7 +56,6 @@ class EntOcoTipoOcorre extends Entity
         $teste->opcoes  = $simnao;
         $ret['tpo_ativo'] = $teste->cr2opcoes();
 
-        // CLASSES
         $config = [];
         $config['Obrigatorio'] = false;
         $config['Leitura'] = $show;
@@ -83,12 +82,12 @@ class EntOcoTipoOcorre extends Entity
         // modulo
         $config = [];
         $config['Label']       = 'Modulo';
-        $config['Leitura']     = $show;
+        $config['Leitura']       = $show;
         $config['Largura']     = 40;
         $config['DispForm']    = 'col-4';
         $config['Ordem']       = $pos;
         $config['Obrigatorio'] = false;
-        // $config['FunChan']    = "mudaObrigatorio(this,'>-1','tel_id[$pos]')";
+        $config['FunChan']    = "mudaObrigatorio(this,'>-1','tel_id[$pos]')";
 
         $ret['mod_id'] = criaSelectRelativo(
             'cfg_modulo',
@@ -105,7 +104,7 @@ class EntOcoTipoOcorre extends Entity
         $config['Label']       = 'Tela';
         $config['Pai']         = "mod_id[$pos]";
         $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
-        // $config['FunChan']    = "mudaObrigatorio(this,'>-1','tof_campo[$pos][]')";
+        $config['FunChan']    = "mudaObrigatorio(this,'>-1','tof_campo[$pos][]')";
 
         $ret['tel_id'] = criaSelectRelativo(
             'cfg_tela',
@@ -122,6 +121,7 @@ class EntOcoTipoOcorre extends Entity
         $config['Pai']         = "tel_id[$pos]";
         $config['Label']       = 'Campo';
         $config['Urlbusca']    = base_url('buscas/busca_campo_tela');
+        $config['Obrigatorio'] = false;
 
         $ret['tof_campo'] = criaSelectRelativo(
             '',
@@ -144,7 +144,7 @@ class EntOcoTipoOcorre extends Entity
         $add->i_cone    = "<i class='fas fa-plus'></i>";
         $add->place     = "Adicionar Campo";
         $add->classep   = "btn-outline-success btn-sm bt-repete";
-        $add->funcChan  = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTa/") . "','telas_aplicaveis',this);setTimeout(function(){acerta_botoes_rep_telas('telas_aplicaveis');},50)";
+        $add->funcChan  = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTa/") . "','telas_aplicaveis',this)";
         $ret['bt_addta']   = $add->crBotao();
 
         $del            = new MyCampo();
@@ -169,7 +169,7 @@ class EntOcoTipoOcorre extends Entity
         // tipo de ação
         $config = [];
         $config['Label']    = 'Tipo de Ação';
-        $config['Leitura']  = $show;
+        $config['Leitura']   = $show;
         $config['DispForm'] = 'col-6';
         $config['Largura']  = 50;
         $config['Ordem']    = $pos;
@@ -181,7 +181,7 @@ class EntOcoTipoOcorre extends Entity
             'tpa_nome',
             $dados['tpa_id'] ?? '',
             1,
-            'oco_tipo_ocorrencia',
+            'oco_tipo_acao',
             [],
             $config
         );
@@ -198,7 +198,7 @@ class EntOcoTipoOcorre extends Entity
             'tmo_nome',
             $dados['tmo_id'] ?? '',
             1,
-            'oco_tipo_ocorrencia',
+            'oco_tipo_acao',
             [],
             $config,
             "tmo_id_acao[$pos]"
@@ -216,7 +216,7 @@ class EntOcoTipoOcorre extends Entity
             'mod_nome',
             $dados['mod_id'] ?? '',
             1,
-            'oco_tipo_ocorrencia',
+            'oco_tipo_acao',
             [],
             $config,
             "mod_id_acao[$pos]"
@@ -225,7 +225,7 @@ class EntOcoTipoOcorre extends Entity
         // tela
         $config['Label']       = 'Tela';
         $config['Pai']         = "mod_id_acao[$pos]";
-        // $config['Obrigatorio'] = false;
+        $config['Obrigatorio'] = true;
         $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
 
         $ret['tel_id'] = criaSelectRelativo(
@@ -234,7 +234,7 @@ class EntOcoTipoOcorre extends Entity
             '',
             $dados['tel_id'] ?? '',
             2,
-            'oco_tipo_ocorrencia',
+            'oco_tipo_acao',
             ['mod_id' => $dados['mod_id'] ?? ''],
             $config,
             "tel_id_acao[$pos]"
@@ -244,7 +244,6 @@ class EntOcoTipoOcorre extends Entity
         $config['DispForm'] = 'col-12';
         $config['Label']    = 'Status';
         $config['Largura']  = 50;
-        // $config['Obrigatorio'] = false;
 
         $ret['stt_id'] = criaSelectRelativo(
             'vw_cfg_status_relac',
@@ -252,7 +251,7 @@ class EntOcoTipoOcorre extends Entity
             'stt_tela_status',
             $dados['stt_id'] ?? '',
             1,
-            'oco_tipo_ocorrencia',
+            'oco_tipo_acao',
             [],
             $config,
             "stt_id_acao[$pos]"
@@ -262,21 +261,20 @@ class EntOcoTipoOcorre extends Entity
         $add            = new MyCampo();
         $add->attrdata  = $atrib;
         $add->dispForm  = '2col';
-        $add->nome      = "bt_addtp[$pos]";
-        $add->id        = "bt_addtp[$pos]";
+        $add->nome      = "bt_addta[$pos]";
+        $add->id        = "bt_addta[$pos]";
         $add->i_cone    = "<i class='fas fa-plus'></i>";
         $add->place     = "Adicionar Campo";
         $add->classep   = "btn-outline-success btn-sm bt-repete";
-        $add->funcChan  = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTp/") . "','acoes',this); setTimeout(function(){acerta_botoes_rep_acoes('acoes'); corrigeObrigatorio();}, 50)";
-
+        $add->funcChan = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTp/") . "','acoes',this); setTimeout(corrigeObrigatorio, 50)";
 
         $ret['bt_addtp']   = $add->crBotao();
 
         $del            = new MyCampo();
         $del->attrdata  = $atrib;
         $del->dispForm  = '2col';
-        $del->nome      = "bt_deltp[$pos]";
-        $del->id        = "bt_deltp[$pos]";
+        $del->nome      = "bt_delta[$pos]";
+        $del->id        = "bt_delta[$pos]";
         $del->i_cone    = "<i class='fas fa-trash'></i>";
         $del->classep   = "btn-outline-danger btn-sm bt-exclui";
         $del->funcChan  = "exclui_campo('acoes',this)";

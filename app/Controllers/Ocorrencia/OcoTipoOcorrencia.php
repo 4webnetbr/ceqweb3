@@ -231,7 +231,7 @@ class OcoTipoOcorrencia extends BaseController
                     $total,
                     $show
                 );
-                debug($fields);
+                // debug($fields);
                 $campos[1][$c][] = $fields['mod_id'];
                 $campos[1][$c][] = $fields['tel_id'];
                 $campos[1][$c][] = $fields['tof_campo'];

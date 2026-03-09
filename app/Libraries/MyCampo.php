@@ -1587,6 +1587,7 @@ class MyCampo
         $this->field = [
             'name'  => $this->nome,
             'id'    => $this->id,
+            'data-container' => 'body',
             'class' => ' form-control form-select selectpicker',
         ];
         if (! isset($this->size) || $this->size == '') {
@@ -1724,6 +1725,7 @@ class MyCampo
         $this->field = [
             'name'       => $this->nome,
             'id'         => $this->id,
+            'data-container' => 'body',
             'data-busca' => $this->urlbusca,
             'class'      => "$this->classep form-control form-select selbusca selectpicker",
         ];
@@ -1763,6 +1765,7 @@ class MyCampo
         $this->field = [
             'name'       => $this->nome,
             'id'         => $this->id,
+            'data-container' => 'body',
             'data-busca' => $this->urlbusca,
             'data-pai'   => $this->pai,
             'onfocus'    => "testa_dep('" . $this->pai . "')",
@@ -1804,6 +1807,7 @@ class MyCampo
         $this->field = [
             'name'             => $this->nome . '[]',
             'id'               => $this->id . '[]',
+            'data-container' => 'body',
             'data-busca'       => $this->urlbusca,
             'data-pai'         => $this->pai,
             'onfocus'          => "testa_dep('" . $this->pai . "')",

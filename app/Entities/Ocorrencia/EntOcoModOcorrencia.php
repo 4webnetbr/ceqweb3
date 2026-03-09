@@ -4,7 +4,7 @@ namespace App\Entities\Ocorrencia;
 
 use CodeIgniter\Entity\Entity;
 use App\Libraries\MyCampo;
-
+use App\Models\Produt\ProdutClasseModel;
 
 class EntOcoModOcorrencia extends Entity
 {
@@ -14,6 +14,8 @@ class EntOcoModOcorrencia extends Entity
         'sut_ativo'    => 'A',
         'sut_excluido' => null,
         'tpo_id'       => null,
+        'cla_id'       => null,
+        'sut_fina'     => null,
     ];
 
     protected $casts = [
@@ -29,11 +31,10 @@ class EntOcoModOcorrencia extends Entity
         $this->campos = $this->defCampos($show);
     }
 
-    public function defCampos($show = true)
+    public function defCampos($show = true, $pos = 0)
     {
         $dados = $this->toArray();
-
-        $ret = [];
+        $ret   = [];
 
         $mid            = new MyCampo('oco_subt_ocorrencia', 'sut_id');
         $mid->valor     = $dados['sut_id'] ?? '';
@@ -53,9 +54,10 @@ class EntOcoModOcorrencia extends Entity
         $config['DispForm'] = 'col-6';
         $config['Largura']  = 50;
         $config['Leitura']  = $show;
+        // $config['Ordem']    = $pos;
         $config['FunChan']  =  'carregaTelaAcaoTipo(this); carregaAcaoTipo(this);';
         // debug($config, true);
-
+        // debug('Tipo de Ocorrencia');
         $ret['tpo_id'] = criaSelectRelativo(
             'vw_oco_tpo_ocorrencia_relac',
             'tpo_id',
@@ -66,6 +68,49 @@ class EntOcoModOcorrencia extends Entity
             ['tpo_ativo' => 'A'],
             $config
         );
+
+        // CLASSE
+        $config = [];
+        $config['Pai'] = 'tpo_id';
+        $config['Label'] = "Classe de Produto";
+        $config['Urlbusca'] = base_url('Buscas/buscaClassePorTipo');
+        $config['DispForm'] = 'col-8';
+        $config['Leitura']  = $show;
+        $config['Todos']  = true;
+        $filtro = [];
+        if (!empty($dados['cla_id'])) {
+            unset($config['Todos']);
+        }
+        // debug($dados['cla_id'], true);
+
+        $ret['cla_id'] = criaSelectRelativo(
+            '',
+            '',
+            '',
+            $dados['cla_id'] ?? '',
+            4,
+            'oco_subt_ocorrencia_classe',
+            [],
+            $config,
+            'cla_id'
+        );
+        // debug($ret, true);
+        // ['cla_id' => $dados['cla_id'] ?? ''],
+
+        // FINALIZAÇÃO AUTOMÁTICA
+        $simnao['S']    = 'Sim';
+        $simnao['N']    = 'Não';
+
+        $Subt_SimNao            = new MyCampo('oco_subt_ocorrencia', 'sut_fina');
+        $Subt_SimNao->valor     = (isset($dados['sut_fina'])) ? $dados['sut_fina'] : 'N';
+        $Subt_SimNao->leitura   = $show;
+        $Subt_SimNao->selecionado    = $Subt_SimNao->valor;
+        $Subt_SimNao->opcoes    = $simnao;
+        $Subt_SimNao->leitura   = $show;
+        $Subt_SimNao->ordem       = $pos;
+        $Subt_SimNao->dispForm    = "col-8";
+        // $etc_italico->funcChan    = "prevEtiqueta('" . $base_url . "')";
+        $ret['sut_fina']     = $Subt_SimNao->cr2opcoes();
 
 
         return $ret;
@@ -96,6 +141,7 @@ class EntOcoModOcorrencia extends Entity
         // telas
         $config['Pai']         = "mod_id[$pos]";
         $config['Urlbusca']    = base_url('buscas/busca_tela_modulo');
+        // debug($config, true);
 
         $ret['tel_id'] = criaSelectRelativo(
             'cfg_tela',
@@ -113,7 +159,7 @@ class EntOcoModOcorrencia extends Entity
         $config['Urlbusca']    = base_url('buscas/busca_campo_tela');
         $config['DispForm']    = 'col-4';
 
-        // debug($dados['tel_id'], true);
+        // debug($dados['tof_campo'], true);
         $ret['tof_campo'] = criaSelectRelativo(
             '',
             '',
@@ -125,7 +171,6 @@ class EntOcoModOcorrencia extends Entity
             $config,
             'tof_campo'
         );
-        // debug($ret['tof_campo']);
 
 
         $atrib['data-index'] = $pos;

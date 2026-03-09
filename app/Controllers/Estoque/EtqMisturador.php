@@ -93,8 +93,8 @@ class EtqMisturador extends BaseController
                 $req->acao_person = [
                     "<button class='btn btn-outline-warning btn-sm border-0 mx-0 fs-0' 
                     data-mdb-toggle='tooltip' data-mdb-placement='top' 
-                    title='Etiquetas de Produtos' onclick='redireciona(\"$url_eti\")'>
-                    <i class='fas fa-tag'></i></button>"
+                    title='Etiquetas do Misturador' onclick='redireciona(\"$url_eti\")'>
+                    <i class='fas fa-tags fa-rotate-90'></i></button>"
                 ];
             }
         }
@@ -193,9 +193,7 @@ class EtqMisturador extends BaseController
 
         $campos[0][count($campos[0])] = view('partials/pw_show_produtos_req', $data); // mesma estrutura do add()
 
-        $this->data['icone']   = "<i class='fas fa-tag'></i>"; // ou 'update' se você for criar
         $this->data['desc_metodo']   = ' '; // ou 'update' se você for criar
-        // $this->data['title']   = 'Impressão de Etiquetas de Produtos'; // ou 'update' se você for criar
         $this->data['desc_edicao']  = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['secoes']    = $secao;
         $this->data['campos']    = $campos;
