@@ -140,8 +140,8 @@ class OcorreModOcorrenciaModel extends Model
         $db = db_connect('dbOcorrencia');
 
         $builder = $db->table('oco_ocorrencia o');
-        $builder->select('o.oco_id');
-
+        $builder->select('o.oco_id');           
+        
         $builder->where('o.sut_id', $sut_id);
         $builder->where('o.stt_id', 28);
 
@@ -156,7 +156,7 @@ class OcorreModOcorrenciaModel extends Model
         $builder->select('s.*');
 
         $builder->where('s.tpo_id', $tpo_id);
-
+        $builder->where('sut_ativo', 'A');
         $builder->orderBy('s.sut_nome', 'ASC');
 
         return $builder->get()->getResult();

@@ -549,14 +549,18 @@ class MyCampo
             if ($this->tipo == 'select' || $this->tipo == 'number') {
                 $auto = $largura;
             }
-            $respf .= "<div class='input-group mt-0 $hasvalid $disabled' style='width: $auto !important; max-width: $largura !important;'>";
+            $mb = '';
+            if($this->tipo == 'number'){
+                $mb = 'mb-1';
+            }
+            $respf .= "<div class='input-group mt-0 $mb $hasvalid $disabled' style='width: $auto !important; max-width: $largura !important;'>";
         } elseif ($this->tipo != 'check' && $this->tipo != 'editor') {
             $respf .= "<div class='input-group mt-0 $hasvalid $disabled'
                 style='width: auto !important;'>";
         } elseif ($this->tipo == 'editor') {
-            $respf .= "<div class='input-group mt-0 $disabled'>";
+            $respf .= "<div class='input-group mt-0 $hasvalid $disabled'>";
         } elseif ($this->tipo == 'check') {
-            $respf .= "<div class='mt-0 $disabled' style='width: auto !important; '>";
+            $respf .= "<div class='mt-0 $hasvalid $disabled' style='width: auto !important; '>";
         }
         $respf .= $groupant;
 
@@ -1511,8 +1515,8 @@ class MyCampo
         // debug($this->selecionado, true);
         $extras = [
             'data-actions-box'          => 'true',
-            'data-size'                 => '5',
-            'data-selected-text-format' => 'count > 3',
+            'data-size'                 => '2',
+            'data-selected-text-format' => 'count > 1',
             'style' => "height:130px; overflow-y:auto max-height:130px;",
         ];
 
@@ -1825,7 +1829,7 @@ class MyCampo
             $this->opcoes = ['' => 'Escolha ' . $this->place] + $this->opcoes;
         }
 
-        $extras = 'size=3; data-actions-box="true"; data-size="5"; data-selected-text-format="count > 3"; style = "height:auto; overflow-y:auto max-height:100px;"; ';
+        $extras = 'size=1; data-actions-box="true"; data-size="2"; data-selected-text-format="count > 1"; style = "height:auto; overflow-y:auto max-height:100px;"; ';
 
         // debug($this->opcoes);
         $campo = form_multiselect($this->field, $this->opcoes, $this->selecionado, $extras);

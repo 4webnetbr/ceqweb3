@@ -602,6 +602,7 @@ function carregamentos_iniciais() {
   jQuery(".selectpicker").each(function () {
     jQuery(this).selectpicker();
   });
+
   acertaDependente();
 
   /**
@@ -670,7 +671,11 @@ function acertaDependente() {
 
   function atualizarTextoSelectpicker(select) {
     var selectedOptions = jQuery(select).find("option:selected");
-    var $button = jQuery(select).parent().find(".filter-option-inner-inner");
+    var $select = jQuery(select).parent();
+    var $button = $select.find(".filter-option-inner-inner");
+
+    // remove lista anterior
+    $select.find(".selectpicker-selected-list").remove();
 
     if (selectedOptions.length > 1) {
       var list = selectedOptions
@@ -683,15 +688,24 @@ function acertaDependente() {
         })
         .get()
         .join("");
-      $button.html(list);
 
-      var altura = $button.outerHeight();
+      var $lista = jQuery(
+        "<div class='selectpicker-selected-list'>" + list + "</div>",
+      );
 
-      var $menu = jQuery(select).parent().find(".dropdown-menu").first();
-
-      $menu.css("top", -altura + "px !important");
+      // insere logo após o botão
+      $select.append($lista);
     }
   }
+
+  jQuery(document).on("click", ".selectpicker-selected-list", function (e) {
+    e.preventDefault();
+
+    var $bootstrapSelect = jQuery(this).closest(".bootstrap-select");
+    var $button = $bootstrapSelect.find("button.dropdown-toggle");
+
+    $button.trigger("click");
+  });
 }
 /**
  * mostraOcultaCampo
@@ -1172,9 +1186,7 @@ function addCampo(url, objdest, obj) {
     jQuery(divSelector)
       .find("select")
       .each(function () {
-        jQuery(this).selectpicker({
-          container: "body",
-        });
+        jQuery(this).selectpicker();
         // Substitua "seuPlugin" pelo nome do plugin
       });
 
@@ -1729,7 +1741,7 @@ function busca_dependente(obj, id_dep, url_busca, selec) {
   // $select.selectpicker("val", aSelec);
 
   // Fecha o dropdown programaticamente
-  $select.parent().find(".dropdown-toggle").dropdown("toggle"); // se aberto, fecha
+  // $select.parent().find(".dropdown-toggle").dropdown("toggle"); // se aberto, fecha
 }
 
 /**

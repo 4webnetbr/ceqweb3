@@ -4,19 +4,6 @@ jQuery.noConflict();
 var retornoAjax;
 var executandoAjax = false;
 jQuery(document).ready(function () {
-  // jQuery(".div-img-etapa").mousedown(function (ev) {
-  //     if (ev.which == 2) {
-  //         urlimage = this.children[0].src;
-  //         openImgDiv(urlimage, 'show_image');
-  //         ev.stopPropagation();
-  //         ev.preventDefault();
-  //         // these two are older ways I like to add to maximize browser compat
-  //         ev.returnValue = false;
-  //         ev.cancelBubble = true;
-  //         return false;                 //   alert("Right mouse button clicked on element with id myId");
-  //     }
-  // });
-
   // Gera ou recupera um identificador único para a guia
   if (!sessionStorage.getItem("tabId")) {
     // grava na seção local data

@@ -35,7 +35,6 @@ class OcoModOcorrencia extends BaseController
             $this->__erro();
         }
     }
-
     /**
      * Erro de Acesso
      * erro
@@ -44,7 +43,6 @@ class OcoModOcorrencia extends BaseController
     {
         echo view('vw_semacesso', $this->data);
     }
-
     /**
      * Tela de Abertura
      * index
@@ -55,7 +53,6 @@ class OcoModOcorrencia extends BaseController
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
     }
-
     /**
      * ListagemF
      * lista
@@ -201,9 +198,10 @@ class OcoModOcorrencia extends BaseController
 
         // Cria a entity com os dados retornados
         // debug($dados_ModOcorrencia['cla_id'], true);
-        $entity = new EntOcoModOcorrencia($dados_ModOcorrencia);
+        $entity = new EntOcoModOcorrencia($dados_ModOcorrencia, $show);
 
-        $fields = $entity->defCampos($show);
+        // $fields = $entity->defCampos($show);
+        $fields = $entity->campos;
 
         // Dados Gerais
         $secao[0] = 'Dados Gerais';
@@ -328,13 +326,6 @@ class OcoModOcorrencia extends BaseController
         echo json_encode($ret);
     }
 
-    /**
-     * ATIVO
-     * & INATIVO
-     *
-     * @param mixed $id 
-     * @return void
-     */
     public function ativinativ($id, $tipo)
     {
         // debug([$id, $tipo], true);
@@ -396,6 +387,7 @@ class OcoModOcorrencia extends BaseController
         }
         // classes
         $classesSelecionadas = $postado['cla_id'] ?? [];
+        // debug($classesSelecionadas, true);
         unset($postado['cla_id']);
 
         try {
@@ -475,23 +467,27 @@ class OcoModOcorrencia extends BaseController
                     }
                 }
                 if (!empty($telas)) {
+                    // debug($telas);
                     $this->common->insertRegBatch($grupo, 'oco_subt_ocorrencia_tela', $telas);
                 }
             }
 
-            
+
             // CLASSES
-            if (!empty($classesSelecionadas)) {           
+            if (!empty($classesSelecionadas)) {
+
                 $classes = [];
 
                 foreach ($classesSelecionadas as $cla_id) {
+
                     if (!$cla_id) continue;
-            
+
                     $classes[] = [
                         'sut_id' => $sut_id,
                         'cla_id' => $cla_id
                     ];
                 }
+                // debug($classes, true);
                 if (!empty($classes)) {
                     $this->common->insertRegBatch(
                         $grupo,
