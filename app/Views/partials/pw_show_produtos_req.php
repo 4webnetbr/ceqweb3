@@ -8,7 +8,46 @@ if (!isset($show)) {
     $show = false;
 }
 ?>
-<div class="accordion" id="accProdutos">
+<table class="display compact table table-sm table-info table-striped table-hover table-bordered col-12 dataTable no-footer tabela-pequena">
+    <thead class="table-default col-12 overflow-x-auto">
+        <tr>
+            <?
+            for ($c = 0; $c < count($colunas); $c++) { ?>
+                <th><?= $colunas[$c]; ?></th>
+            <?
+            }
+            ?>
+        </tr>
+    </thead>
+    <tbody style="max-height: 45vh; overflow-y: auto;">
+        <?
+        if (count($produtos) > 1) {
+            for ($p = 1; $p < count($produtos); $p++) {
+                $prodt = $produtos[$p];
+        ?>
+                <tr id='<?= $prodt[0] ?>'>
+                    <?
+                    for ($pp = 1; $pp <= count($colunas); $pp++) { ?>
+                        <td class='px-2 text-<?= $alinha[$pp - 1]; ?>'><?= $prodt[$pp]; ?></td>
+                    <?
+                    } ?>
+                </tr>
+            <?
+            };
+        } else { ?>
+            <tr>
+                <?
+                for ($c = 0; $c < count($colunas); $c++) { ?>
+                    <td></td>
+                <?
+                } ?>
+            </tr>
+        <?
+        }
+        ?>
+    </tbody>
+</table>
+<!-- <div class="accordion" id="accProdutos">
     <div class="accordion-item">
         <h2 class="accordion-header border border-bottom-1" id="headprod<?= $produtos[0] ?>">
             <button class="accordion-button" type="button" data-bs-toggle="collapse"

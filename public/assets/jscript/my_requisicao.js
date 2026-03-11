@@ -1144,12 +1144,20 @@ async function copiar_requisicao(url) {
   const retornoAjax = await executaAjaxWait(url, "html", dados);
 }
 
-async function gerarInspecao(indice) {
-  url = window.location.origin + "/Inspecao/inspeciona";
-  // repid = jQuery("#rep_id" + indice).val();
-  url = url + "/" + indice;
+async function gerarInspecao(tela, indice) {
+  url = window.location.origin + "/InspecaoProd/inspeciona";
+  telid = tela;
+  regid = jQuery("#req_id").val();
+  proid = jQuery("#proid_" + indice).val();
+  lotlote = jQuery("#lotlote_" + indice).val();
   titulo = "Gerar Inspeção";
-  const retornoAjax = await executaAjaxWait(url, "html");
+  dados = JSON.stringify({
+    pro_id: proid,
+    lot_lote: lotlote,
+    req_id: regid,
+    tel_id: telid,
+  });
+  const retornoAjax = await executaAjaxWait(url, "html", dados);
   if (retornoAjax) {
     if (titulo) {
       jQuery(".modal-title").html(titulo);

@@ -112,7 +112,7 @@ class EntOcoOcorrencia extends Entity
         $lote->leitura     = $show;
         $lote->label       = 'Lote';
         $lote->dispForm    = 'col-6';
-        $lote->size        = 54;
+        // $lote->size        = 54;
         $lote->funcBlur    = "buscaLoteProduto(this,'" . base_url('/buscas/buscaProdutoporLote') . "')";
         $ret['lot_lote'] = $lote->crInput();
 

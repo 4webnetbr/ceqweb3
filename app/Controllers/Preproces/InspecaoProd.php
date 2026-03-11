@@ -1,13 +1,16 @@
 <?php
 
-namespace App\Controllers\Estoque;
+namespace App\Controllers\Preproces;
 
-use App\Libraries\MyCampo;
 use App\Controllers\BaseController;
+use App\Controllers\Estoque\Requisicao;
+use App\Entities\Ocorrencia\EntOcoOcorrencia;
+use App\Entities\Preproces\EntInspecaoProd;
+use App\Libraries\MyCampo;
 use App\Models\Estoqu\EstoquRequisicaoModel;
+use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
 use App\Models\Produt\ProdutClasseModel;
 use App\Models\Produt\ProdutProdutoModel;
-use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
 
 class InspecaoProd extends BaseController
 {
@@ -68,95 +71,137 @@ class InspecaoProd extends BaseController
     {
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
-        $dados_requis = $this->requisicao->getRequisicaoLista(false, [18,21]);
+        $dados_requis = $this->requisicao->getRequisicaoLista(false, [25]);
         $dados_requis = filtrarRequisicoesPorPerfil($dados_requis);
-        $req_ids_assoc = array_column($dados_requis, 'req_id');
-        $log = buscaLogTabela('est_requisicao', $req_ids_assoc);
+        // debug($dados_requis, true);
+        if ($dados_requis) {
+            $req_ids_assoc = array_map(fn($r) => $r->req_id, $dados_requis);
 
-        $base_url = base_url($this->data['controler']);
-        foreach ($dados_requis as &$req) {
-            // Verificar se o log já está disponível para esse ana_id
-            if ($req['req_id']) {
-                $req['usu_nome'] = $log[$req['req_id']]['usua_alterou'] ?? '';
-                // Concatenar o URL de forma mais eficiente
-                $url_con = $base_url .'/confere/' . $req['req_id'];
-                // Gerar a ação do botão
-                $req['acao_person'] = [
-                    "<button class='btn btn-outline-success btn-sm border-0 mx-0 fs-0' 
-            data-mdb-toggle='tooltip' data-mdb-placement='top' 
-            title='Conferência' onclick='redireciona(\"$url_con\")'>
-            <i class='fas fa-check'></i></button>",
-                ];
+            $log = buscaLogTabela('est_requisicao', $req_ids_assoc);
+            $base_url = base_url($this->data['controler']);
+            foreach ($dados_requis as $req) {
+                if ($req->req_id) {
+                    $req->usu_nome = $log[$req->req_id]['usua_alterou'] ?? '';
+
+                    $url_ins = $base_url . '/edit/' . $req->req_id;
+                    // Gerar a ação do botão
+                    $bt_ins = new MyCampo();
+                    $bt_ins->id = $bt_ins->nome = 'bt_inspecao';
+                    $bt_ins->classep  = 'btn btn-outline-success btn-sm border-0 mx-0 fs-0';
+                    $bt_ins->i_cone   = "<i class='fab fa-searchengin'></i>";
+                    $bt_ins->label    = '';
+                    $bt_ins->place    = 'Inpeção de Produtos';
+                    $bt_ins->funcChan = "redireciona('{$url_ins}')";
+                    $btins = $bt_ins->crBotao();
+
+                    $req->acao_person = [
+                        $btins,
+                    ];
+                }
             }
         }
         // debug($dados_requis, true);
         $this->data['edicao'] = false;
         $requis = [
-            'data' => montaListaColunas($this->data, 'req_id', $dados_requis, $campos[1]),
+            'data' => montaListaColunasEnt($this->data, 'req_id', $dados_requis, $campos[1]),
         ];
-        cache()->save('requis', $requis, 60000);
+        // cache()->save('requis', $requis, 60000);
         // }
 
         echo json_encode($requis);
     }
-    /**
-     * Inclusão
-     * add
-     *
-     * @return void
-     */
-    public function add()
+
+    public function show($id)
     {
-        $fields = $this->requisicao->defCampos();
+        return redirect()->to('/Requisicao/show/' . $id);
+    }
+
+    public function edit($id, $show = true)
+    {
+        $requisicao = $this->requisicao->getRequisicao($id)[0];
+
+        if (!$requisicao) {
+            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
+            return redirect()->to(site_url($this->data['controler']));
+        }
+        $log = buscaLog('est_requisicao', $id);
+        $requisicao->usu_nome = $log['usua_alterou'] ?? '';
+
+        $contRequis = new Requisicao();
         $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['req_id'];
-        $campos[0][count($campos[0])] = $fields['req_data'];
-        $campos[0][count($campos[0])] = $fields['req_dataentrega'];
-        $campos[0][count($campos[0])] = $fields['tmo_id'];
-        $campos[0][count($campos[0])] = $fields['req_repetedias'];
-        $campos[0][count($campos[0])] = $fields['req_deporigem'];
-        $campos[0][count($campos[0])] = $fields['req_depdestino'];
-        $campos[0][count($campos[0])] = $fields['req_consdiaanterior'];
-        $campos[0][count($campos[0])] = $fields['req_medconsumodias'];
-        $campos[0][count($campos[0])] = $fields['req_meddias'];
-        $campos[0][count($campos[0])] = $fields['req_percseguranca'];
-        $campos[0][count($campos[0])] = $fields['pro_id'];
-        $campos[0][count($campos[0])] = $fields['req_observacao'];
-        $campos[0][count($campos[0])] = $fields['bt_carregar'];
+        $campos[0] = $contRequis->showCabecalho($requisicao);
 
-        $secao[1] = 'Produtos';
-        $campos[1][0] = '';
+        $entRequisicao    = new EntInspecaoProd((array) $requisicao, $show, 'conf');
 
-        $envr          = new MyCampo();
-        $envr->nome    = 'bt_envia';
-        $envr->id      = 'bt_envia';
-        $envr->i_cone  = '<div class="align-items-center py-1 text-start float-start font-weight-bold" style="">
-                            <i class="fa-regular fa-paper-plane" style="font-size: 2rem;" aria-hidden="true"></i></div>';
-        $envr->i_cone  .= '<div class="align-items-start txt-bt-manut">Enviar Requisição</div>';
-        $envr->place    = 'Enviar Requisição';
-        $envr->funcChan = 'enviarRequisicoes(1)';
-        $envr->classep  = 'btn-success bt-manut btn-sm mb-2 float-end';
-        $this->bt_envia = $envr->crBotao();
+        $produtos = $this->requisicao->getRequisicaoProdutos($id);
 
-        $this->data['botao'] = $this->bt_envia;
-        $this->data['title']     = 'Requisição';
-        $this->data['secoes']     = $secao;
-        $this->data['campos']     = $campos;
-        $this->data['destino']    = 'store';
-        $this->data['scripts']  = 'my_requisicao';
+        $filtrado = array_filter($produtos, function ($item) {
+            return ($item->rpa_atendida + $item->rpa_cancelada) == $item->rep_quantia;
+        });
+        $produtos = $filtrado;
+        $pro_ids = array_unique(array_map(fn($p) => $p->pro_id, $produtos));
 
-        $this->data['script']   = "<script>mostraOcultaCampo('req_consdiaanterior', 'N', 'req_medconsumodias,req_meddias');mudaCheck2opcoes('req_consdiaanterior', 'req_medconsumodias');atualizarEstadoBotaoSalvar();</script>";
+        $resultado = $produtos;
 
+        // Loop de tratamento visual e funcional de cada produto
+        for ($p = 0; $p < count($resultado); $p++) {
+            $prod = $resultado[$p];
+
+            // Inicializa flags padrão de conferência
+            $prod->pre_cbmisturador  ??= 'N';
+            $prod->pre_undmisturador ??= 'N';
+            $prod->pre_cbfabricante  ??= 'N';
+            $prod->pre_undfabricante ??= 'N';
+            $prod->pre_cblote        ??= 'N';
+            $prod->pre_undlote       ??= 'N';
+
+            $prod->bt_insvis = '';
+            if ($prod->cla_insvis == 'S' && $prod->cla_insvisconf == 'S') {
+                $bt_insvis = new MyCampo();
+                $bt_insvis->id = $bt_insvis->nome = 'bt_insvis';
+                $bt_insvis->classep  = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0';
+                $bt_insvis->i_cone   = "<i class='fab fa-searchengin'></i>";
+                $bt_insvis->label    = '';
+                $bt_insvis->place    = 'Inspeção';
+                $bt_insvis->funcChan = "gerarInspecao({$this->data['tel_id']}, {$prod->rep_id})";
+                $prod->bt_insvis = $bt_insvis->crBotao();
+
+                $okop[0] = 'Não';
+                $okop[1] = 'Sim';
+                $bt_ok = new MyCampo();
+                $bt_ok->id = $bt_ok->nome = 'bt_ok';
+                $bt_ok->classep  = 'btn btn-outline-success btn-sm border-0 mx-0 fs-0';
+                // $bt_ok->i_cone   = "<i class='fab fa-searchengin'></i>";
+                $bt_ok->label    = '';
+                $bt_ok->valor   = 0;
+                $bt_ok->opcoes   = $okop;
+                $bt_ok->place    = 'Inspeção';
+                $prod->bt_ok = $bt_ok->crCheckbox();
+            }
+            // $fieldsAten = $entRequisicao->defCamposProdutoAte($prod);
+            // $fieldsConf = $entRequisicao->defCamposProdutoConf($prod);
+
+            $prod->rpa_data         = data_br($prod->rpa_data);
+            $prod->rpa_data_conferencia = data_br($prod->rpa_data_conferencia);
+            $prod->saldo         = (int)$prod->rpa_atendida - (int)$prod->rpa_conferida;
+        }
+        // debug($resultado, true);
+        $campos[0][] = view('partials/pw_produtos_inspecao', ['produtos' => array_map(fn($p) => (array) $p, $resultado)]);
+
+        // Define dados principais da tela
+        // $this->data['title']       = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['desc_metodo'] = '';
+        $this->data['desc_edicao'] = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['destino']     = 'store';
+        $this->data['scripts']     = 'my_requisicao';
+        $this->data['secoes']      = $secao;
+        $this->data['campos']      = $campos;
+
+        // Define foco inicial no campo de código de barras
+        $this->data['script'] = "<SCRIPT>jQuery('#lot_codbar').focus();</SCRIPT>";
         echo view('vw_edicao', $this->data);
     }
 
-    public function show($id){
-        return redirect()->to('/Requisicao/show/'.$id);
-    }
-
-    public function edit($id, $show = false){
-        $this->confere($id, $show = true);
-    }
     /**
      * Atenndimento
      * atende
@@ -164,92 +209,121 @@ class InspecaoProd extends BaseController
      * @param mixed $id 
      * @return void
      */
-    public function confere($id, $show = true)
+    public function inspeciona()
     {
-        $requisicao = $this->requisicao->getRequisicao($id)[0];
-        
-        if (!$requisicao) {
-            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
-            return redirect()->to(site_url($this->data['controler']));
-        }
-        
-        // Montar campos como no add()
-        $fields = $this->requisicao->defCampos($requisicao, $show);
-        // debug($fields, true);
-        $secao[0] = 'Dados Gerais';
-        $campos[0][0] = $fields['req_id']; 
-        $campos[0][count($campos[0])] = $fields['req_data'];
-        $campos[0][count($campos[0])] = $fields['req_dataentrega'];
-        $campos[0][count($campos[0])] = $fields['tmo_id'];
-        $campos[0][count($campos[0])] = "<div class='col-6'>.</div>";
-        $campos[0][count($campos[0])] = $fields['lot_codbar'];
-        
-        $produtos = $this->requisicao->getRequisicaoProdutos($id);
-        // debug($produtos, true);
-        $filtrado = array_filter($produtos, function ($item) {
-            return ($item['rpa_atendida'] + $item['rpa_cancelada']) == $item['rep_quantia'];
-        });
-        $produtos = $filtrado;
-        $pro_ids = array_unique(array_column($produtos, 'pro_id'));
-        $dados_est_produto = $this->produtos->getProdutoEstoque($pro_ids, $requisicao['req_deporigem']);
-        // debug($dados_est_produto, true);
-        // Transformar $produtos em um array indexado por pro_id
-        $produtosIndexado = [];
-        foreach ($produtos as $param) {
-            $produtosIndexado[$param['pro_id']] = $param;
-        }
+        $request = service('request');
 
-        // Array para o resultado final
-        $resultado = [];
+        // Lê e decodifica o JSON recebido
+        $json = $request->getJSON(true); // true = como array associativo
+        // Agora você pode acessar normalmente:
+        $proId    = $json['pro_id'] ?? null;
+        $lotlote  = $json['lot_lote'] ?? null;
+        $reqId    = $json['req_id'] ?? null;
+        $telId    = $json['tel_id'] ?? null;
 
-        if(count($dados_est_produto) > 0){
-            foreach ($dados_est_produto as $itemEstoque) {
-                $pro_id = $itemEstoque['pro_id'];
+        $config['Leitura']  = true;
+        $config['Label']    = "Tela";
+        $config['DispForm'] = "col-6";
 
-                if (isset($produtosIndexado[$pro_id])) {
-                    // Mescla os dados de estoque + parâmetros (com todas as chaves)
-                    $resultado[] = array_merge($itemEstoque, $produtosIndexado[$pro_id]);
-                } else {
-                    // Se não existir parâmetro correspondente, adiciona só o estoque
-                    $resultado[] = $itemEstoque;
-                }
-            }
-        } else {
-            $resultado = $produtos;
-        }
-        // debug($resultado, true);
-        for ($p=0; $p < count($resultado); $p++) { 
-            $prod = $resultado[$p];
-            if(!isset($prod['pre_cbfabricante'])){
-                $resultado[$p]['pre_cbfabricante'] = 'N';
-                $resultado[$p]['pre_undfabricante'] = 'N';
-                $resultado[$p]['pre_cblote'] = 'N';
-                $resultado[$p]['pre_undlote'] = 'N';
-                $prod['pre_cbfabricante'] = 'N';
-                $prod['pre_undfabricante'] = 'N';
-                $prod['pre_cblote'] = 'N';
-                $prod['pre_undlote'] = 'N';
-            }
-            $fields = $this->requisicao->defCamposProdutoConf($prod);
-            $resultado[$p]['rpa_cancelada'] = $prod['rpa_cancelada'];
-            $resultado[$p]['rpa_atendida'] = $fields['rpa_atendida'];
-            $resultado[$p]['rpa_cancelada_val'] = $prod['rpa_cancelada'];
-            $resultado[$p]['rpa_atendida_val'] = $prod['rpa_atendida'];
-            $resultado[$p]['rpa_conferida'] = $fields['rpa_conferida'];
-            $resultado[$p]['saldo'] = intval($resultado[$p]['rpa_atendida']) - intval($resultado[$p]['rpa_conferida']);
-        }
-        // $secao[1] = 'Produtos';
-        $campos[0][count($campos[0])] = view('partials/pw_produtos_conferencia',['produtos' => $resultado]); // mesma estrutura do add()
+        $tel_id = criaSelectRelativo(
+            'cfg_tela',
+            'tel_id',
+            'tel_nome',
+            $telId,
+            1,
+            'oco_ocorrencia',
+            [],
+            $config
+        );
 
+        $config['Label'] = "Tipo de Ocorrência";
+        $config['Leitura'] = false;
+        $toc_oc = criaSelectRelativo(
+            'vw_oco_tpo_ocorrencia_relac',
+            'tpo_id',
+            'tpo_nome',
+            null,
+            1,
+            'oco_ocorrencia',
+            ['tel_id' => $telId],
+            $config
+        );
 
-        $this->data['title']     = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
-        $this->data['desc_metodo']     = ' Conferência de ';
-        $this->data['secoes']    = $secao;
-        $this->data['campos']    = $campos;
-        $this->data['destino']   = 'store'; // ou 'update' se você for criar
-        $this->data['scripts']   = 'my_requisicao';
+        $config['Label'] = "Subtipo de Ocorrência";
+        $config['Pai'] = "tpo_id";
+        $config['Urlbusca'] = base_url('Buscas/buscaSubtipoPorTipo');
 
-        echo view('vw_edicao', $this->data);
+        $mod_oc = criaSelectRelativo(
+            'vw_oco_subt_ocorrencia_relac',
+            'sut_id',
+            'sut_nome',
+            null,
+            2,
+            'oco_ocorrencia',
+            ['tel_id' => ''],
+            $config
+        );
+
+        $desc              = new MyCampo('oco_ocorrencia', 'oco_descricao');
+        $desc->valor       = (isset($dados['oco_descricao'])) ? $dados['oco_descricao'] : '';
+        $desc->obrigatorio = true;
+        $desc->dispForm    = 'col-6';
+        $descreva = $desc->crInput();
+
+        $qtd               = new MyCampo('oco_ocorrencia', 'oco_qtd');
+        $qtd->valor        = $dados['oco_qtd'] ?? 0;
+        $qtd->dispForm     = 'col-6';
+        $qtd->minimo       = 1;
+        $qtd->largura      = 10;
+        $qtd->size         = 3;
+        $qtd->maximo       = 999;
+        $qtd->obrigatorio  = true;
+        $quantia = $qtd->crInput();
+
+        // Instancia a entity
+        $dados['lot_lote'] = $lotlote;
+        $dados['req_id']   = $reqId;
+        $oco = new EntOcoOcorrencia($dados, true);
+
+        // Dados Gerais
+        $this->data['secoes']  = ['Dados Gerais'];
+
+        // define os campos
+        $this->data['campos']  = [[
+            $oco->campos['oco_data'],
+            $tel_id,
+            $oco->campos['lot_id'],
+            $oco->campos['lot_lote'],
+            $oco->campos['pro_id'],
+            $oco->campos['pro_despro'],
+            // $toc_oc,
+            $mod_oc,
+            $quantia,
+            // $descreva,
+        ]];
+        $this->data['destino'] = 'store';
+        $this->data['desc_metodo'] = 'Inspeção de Produtos';
+        $this->data['script'] = "<script>
+                                    var elemento = document.getElementById('lot_lote');
+                                    buscaLoteProduto(elemento,'" . base_url('/buscas/buscaProdutoporLote') . "')
+                                </script>";
+        $this->data['script'] .= "  <script>
+                                       jQuery(document).ready(function() {
+                                           var \$sut = jQuery('#sut_id');
+                                           if (\$sut.hasClass('selectpicker')) {
+                                               \$sut.selectpicker('destroy'); 
+                                               \$sut.removeAttr('title');     
+                                               \$sut.selectpicker();         
+                                           }
+                                       });
+                                    </script>";
+        $this->data['hidden'][] = [
+            'name'  => 'req_id',
+            'value' => $reqId
+        ];
+
+        // Renderiza a view
+        echo view('vw_edicao_modal', $this->data);
     }
 
     /**
@@ -291,10 +365,10 @@ class InspecaoProd extends BaseController
                         $nomeCampo = substr($campo, 0, -strlen("_$id"));
                         $dadosTemp[$nomeCampo] = $val;
                     }
-                    if($campo === "req_id"){
+                    if ($campo === "req_id") {
                         $dadosTemp[$campo] = $val;
                     }
-                    if($campo === "tmo_id"){
+                    if ($campo === "tmo_id") {
                         $dadosTemp[$campo] = $val;
                     }
                     // debug($dadosTemp);
@@ -313,7 +387,7 @@ class InspecaoProd extends BaseController
             }
         }
         // debug($dadosAgrupados, true);
-        if(count($dadosAgrupados) === 0){
+        if (count($dadosAgrupados) === 0) {
             $msg            = 7;
             session()->setFlashdata('msg', $msg);
             $ret['url'] = site_url($this->data['controler']);
@@ -360,20 +434,20 @@ class InspecaoProd extends BaseController
                     cache()->clean();
                     // debug($movs);
                     $movim = geraMovimentoRequisicoes($movs, $this->data, 'C');
-                    if($movim['status'] == 'Erro'){
+                    if ($movim['status'] == 'Erro') {
                         $ret['erro'] = true;
                         $ret['msg'] = $movim['mensagem'];
                         // debug($ret);
                     }
                 }
-                if(!$ret['erro']){
+                if (!$ret['erro']) {
                     $status = 5;
                     $dadosReq = [
                         'stt_id' => $status
                     ];
                     $this->requisicao->transStart();
                     $salvareq = $this->requisicao->update($postado['req_id'], $dadosReq);
-                    if($salvareq){
+                    if ($salvareq) {
                         $this->requisicaoate->transCommit();
                         $this->requisicao->transCommit();
 

@@ -148,7 +148,6 @@ $estoqueControllers = [
     'CfgEtiqueta',
     'AteRequisicao',
     'ConfRequisicao',
-    'Inspecao',
     'EtqProduto',
     'EtqMisturador',
     'EtqProdutoReq'
@@ -161,8 +160,21 @@ foreach ($estoqueControllers as $ctrl) {
         $routes->match(['get', 'post'], '(:any)', "Estoque\\$ctrl::$1", ['as' => "{$name}_match"]);
     });
 }
-
 $routes->get('AteRequisicao/GeraEtiqueta/(:num)/(:num)', 'Estoque\\AteRequisicao::GeraEtiqueta/$1/$2', ['as' => 'aterequisicao_GeraEtiqueta_match']);
+
+// Controladores de PréProcessamento
+$preProcesControllers = [
+    'InspecaoProd',
+];
+
+foreach ($preProcesControllers as $ctrl) {
+    $routes->group($ctrl, static function ($routes) use ($ctrl) {
+        $name = strtolower($ctrl);
+        $routes->get('/', "Preproces\\$ctrl::index", ['as' => "{$name}_index"]);
+        $routes->match(['get', 'post'], '(:any)', "Preproces\\$ctrl::$1", ['as' => "{$name}_match"]);
+    });
+}
+
 
 // Controladores de Produto
 $produtoControllers = [

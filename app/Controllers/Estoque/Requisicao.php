@@ -324,32 +324,13 @@ class Requisicao extends BaseController
             session()->setFlashdata('erromsg', 'Requisição não encontrada.');
             return redirect()->to(site_url($this->data['controler']));
         }
-
         $log = buscaLog('est_requisicao', $id);
         $requisicao->usu_nome = $log['usua_alterou'] ?? '';
 
-        // Montar campos como no add()
-        $ent = new EntRequisicao((array) $requisicao, true);
-        $fields = $ent->campos;
-
         $secao[0] = 'Dados Gerais';
-        $campos[0][] = $fields['req_id'];
-        $campos[0][] = $fields['req_data'];
-        $campos[0][] = $fields['req_dataentrega'];
-        $campos[0][] = $fields['tmo_id'];
-        $campos[0][] = "vazio2";
-        $campos[0][] = $fields['req_consdiaanterior'];
-        $campos[0][] = $fields['req_percseguranca'];
+        $campos[0] = $this->showCabecalho($requisicao);
 
-        if ($requisicao->req_consdiaanterior == 'N') {
-            $campos[0][] = $fields['req_medconsumodias'];
-            $campos[0][] = $fields['req_meddias'];
-        }
-
-        $campos[0][] = $fields['usu_nome'];
-        $campos[0][] = $fields['stt_nome'];
-        $campos[0][] = $fields['req_observacao'];
-
+        // $secao[1] = 'Produtos';
         $produtosreq = $this->requisicao->getRequisicaoProdutos($id);
         // debug($produtosreq);
 
@@ -426,7 +407,7 @@ class Requisicao extends BaseController
             'produtos' => $produtos
         ];
 
-        $campos[0][count($campos[0])] =
+        $campos[0][] =
             view('partials/pw_show_produtos_req', $data);
 
         $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT);
@@ -438,6 +419,32 @@ class Requisicao extends BaseController
         echo view('vw_edicao', $this->data);
     }
 
+    public function showCabecalho($requisicao)
+    {
+
+        // Montar campos como no add()
+        $ent = new EntRequisicao((array) $requisicao, true);
+        $fields = $ent->campos;
+
+        $campos[] = $fields['req_id'];
+        $campos[] = $fields['req_data'];
+        $campos[] = $fields['req_dataentrega'];
+        $campos[] = $fields['tmo_id'];
+        $campos[] = "vazio2";
+        $campos[] = $fields['req_consdiaanterior'];
+        $campos[] = $fields['req_percseguranca'];
+
+        if ($requisicao->req_consdiaanterior == 'N') {
+            $campos[] = $fields['req_medconsumodias'];
+            $campos[] = $fields['req_meddias'];
+        }
+
+        $campos[] = $fields['usu_nome'];
+        $campos[] = $fields['stt_nome'];
+        $campos[] = $fields['req_observacao'];
+
+        return $campos;
+    }
     /**
      * Edição
      * edit

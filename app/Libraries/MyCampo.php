@@ -550,7 +550,7 @@ class MyCampo
                 $auto = $largura;
             }
             $mb = '';
-            if($this->tipo == 'number'){
+            if ($this->tipo == 'number') {
                 $mb = 'mb-1';
             }
             $respf .= "<div class='input-group mt-0 $mb $hasvalid $disabled' style='width: $auto !important; max-width: $largura !important;'>";
@@ -1501,7 +1501,7 @@ class MyCampo
         $this->field = [
             'name'             => $this->nome,
             'id'               => $this->id,
-            'data-container'=>"body",
+            'data-container' => "body",
             'multiple'         => 'multiple',
             'data-live-search' => "true",
             'class'            => 'selectpicker form-control form-select show-tick',
@@ -1592,7 +1592,7 @@ class MyCampo
         $this->field = [
             'name'  => $this->nome,
             'id'    => $this->id,
-            'data-container'=>"body",
+            'data-container' => "body",
             'class' => ' form-control form-select selectpicker',
         ];
         if (! isset($this->size) || $this->size == '') {
@@ -1769,7 +1769,7 @@ class MyCampo
         $this->field = [
             'name'       => $this->nome,
             'id'         => $this->id,
-            'data-container'=>"body",
+            'data-container' => "body",
             'data-busca' => $this->urlbusca,
             'data-pai'   => $this->pai,
             'onfocus'    => "testa_dep('" . $this->pai . "')",
@@ -1811,7 +1811,7 @@ class MyCampo
         $this->field = [
             'name'             => $this->nome . '[]',
             'id'               => $this->id . '[]',
-            'data-container'=>"body",
+            'data-container' => "body",
             'data-busca'       => $this->urlbusca,
             'data-pai'         => $this->pai,
             'onfocus'          => "testa_dep('" . $this->pai . "')",

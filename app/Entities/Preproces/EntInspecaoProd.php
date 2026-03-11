@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Entities\Estoque;
+namespace App\Entities\Preproces;
 
 use App\Entities\Estoque\EntRequisicao;
 
-class EntInspecao extends EntRequisicao
+class EntInspecaoProd extends EntRequisicao
 {
     /**
      * Atributos da Requisição

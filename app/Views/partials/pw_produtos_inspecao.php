@@ -34,7 +34,7 @@ if (!isset($show)) {
                             <th>Data<br>Conferência</th>
                             <?
                             if (!$show) { ?>
-                                <th>Inspeção</th>
+                                <th>Conformidade</th>
                             <? } ?>
                         </tr>
                     </thead>
@@ -57,6 +57,7 @@ if (!isset($show)) {
                                     <input type='hidden' id='ctalt_<?= $produto["rep_id"] ?>' name='ctalt_<?= $produto["rep_id"] ?>' value='0'></input>
                                     <input type='hidden' id='ctafb_<?= $produto["rep_id"] ?>' name='ctafb_<?= $produto["rep_id"] ?>' value='0'></input>
                                     <input type='hidden' id='ctami_<?= $produto["rep_id"] ?>' name='ctami_<?= $produto["rep_id"] ?>' value='0'></input>
+                                    <input type='hidden' id='lotlote_<?= $produto["rep_id"] ?>' name='lotlote_<?= $produto["rep_id"] ?>' value='<?= $produto['lot_lote'] ?>'></input>
                                     <input type='hidden' id='proid_<?= $produto["rep_id"] ?>' name='proid_<?= $produto["rep_id"] ?>' value='<?= $produto['pro_id'] ?>'></input>
                                     <input type='hidden' id='repqtia_<?= $produto["rep_id"] ?>' name='repqtia_<?= $produto["rep_id"] ?>' value='<?= $produto['rep_quantia'] ?>'></input>
                                     <input type='hidden' id='qtdemb_<?= $produto["rep_id"] ?>' name='qtdemb_<?= $produto["rep_id"] ?>' value='<?= $produto['pro_qtdemb'] ?>'></input>
@@ -78,6 +79,7 @@ if (!isset($show)) {
                                 <? if (!$show) { ?>
                                     <td>
                                         <?= $produto['bt_insvis']; ?>
+                                        <?= $produto['bt_ok']; ?>
                                     </td>
                                 <? } ?>
                             </tr>

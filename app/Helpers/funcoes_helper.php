@@ -608,6 +608,7 @@ function buscaArquivos($pastaapp, $completo = true, $exceto = [])
         "Produt",
         "Ocorrencia",
         "Ocorre",
+        "Preproces",
         "public",
         "assets",
         "jscript"
