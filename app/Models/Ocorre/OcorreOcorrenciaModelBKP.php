@@ -8,7 +8,7 @@ use App\Libraries\MyCampo;
 use App\Models\Ocorre\OcorreModOcorrenciaModel;
 
 
-class OcorreOcorrenciaModel extends Model
+class OcorreOcorrenciaModelBKP extends Model
 {
     protected $DBGroup    = 'dbOcorrencia';
     protected $table      = 'oco_ocorrencia';

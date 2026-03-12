@@ -263,6 +263,10 @@ a:hover {
 /* border-radius: 0 10px 10px 10px; */
 /* } */
 
+#form_modal > .tab-content > .tab-pane {
+  height: 40vh;
+}
+
 .tab-content > .tab-pane {
   max-height: calc(100vh - 9rem) !important;
   overflow-x: hidden;

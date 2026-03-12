@@ -34,15 +34,14 @@ class OcorreOcorrenciaModel extends Model
     ];
 
     protected $validationRules = [
-        'oco_descricao' => 'required|max_length[50]|min_length[3]',
+        'oco_descricao' => 'max_length[50]|min_length[3]',
     ];
 
 
     protected $validationMessages = [
         'oco_descricao'   => [
-            'required'    => 'O campo Nome do Tipo da Ocorrência é Obrigatório',
-            'max_length'  => 'O Campo deve Conter no Máximo 50 Caracteres',
-            'min_length'  => 'O Campo Devente Conter no Minimo 3 Caracteres',
+            'max_length'  => 'O Descrição deve conter no Máximo 50 Caracteres',
+            'min_length'  => 'A Descrição deve conter no Minimo 3 Caracteres',
         ],
     ];
 
@@ -162,6 +161,19 @@ class OcorreOcorrenciaModel extends Model
         $builder->where('oco_id', $oco_id);
         $builder->orderBy('stt_ordem');
 
+        return $builder->get()->getResult();
+    }
+
+    public function getOcorrenciaReqProd($req, $prod)
+    {
+        $db = db_connect('dbOcorrencia');
+    
+        $builder = $db->table($this->view);
+        $builder->select('*');
+        $builder->where('req_id', $req);
+        $builder->where('pro_id', $prod);
+        $builder->orderBy('oco_data DESC');
+    
         return $builder->get()->getResult();
     }
 }

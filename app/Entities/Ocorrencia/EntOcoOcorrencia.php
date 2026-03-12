@@ -42,7 +42,7 @@ class EntOcoOcorrencia extends Entity
 
     public function __construct(?array $data = null, bool $show = false)
     {
-        parent::__construct($data);
+        parent::__construct($data); 
         $this->campos = $this->defCampos($show);
     }
 

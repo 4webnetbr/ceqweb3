@@ -127,4 +127,5 @@ class OcorreOcorrenciaModel extends Model
     
         return $builder->get()->getResult();
     }
+
 }

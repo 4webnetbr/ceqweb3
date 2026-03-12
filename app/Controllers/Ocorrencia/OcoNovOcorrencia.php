@@ -156,8 +156,8 @@ class OcoNovOcorrencia extends BaseController
         $ret = $this->ocorreNovOcorrenciaModel->salvarOcorrencia($dados);
 
          if (!($ret['erro'] ?? true)) {
-        session()->setFlashdata('msg', $ret['msg'] ?? 'Ocorrência gravada com sucesso!');
-    }
+            session()->setFlashdata('msg', $ret['msg'] ?? 'Ocorrência gravada com sucesso!');
+        }
     
         return $this->response->setJSON($ret);
     }

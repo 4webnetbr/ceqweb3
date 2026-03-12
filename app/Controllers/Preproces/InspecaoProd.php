@@ -9,6 +9,8 @@ use App\Entities\Preproces\EntInspecaoProd;
 use App\Libraries\MyCampo;
 use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
+use App\Models\Ocorre\OcorreModOcorrenciaModel;
+use App\Models\Ocorre\OcorreOcorrenciaModel;
 use App\Models\Produt\ProdutClasseModel;
 use App\Models\Produt\ProdutProdutoModel;
 
@@ -21,6 +23,7 @@ class InspecaoProd extends BaseController
     public $requisicaoate;
     public $classes;
     public $produtos;
+    public $ocorrencia;
     public $lote;
     public $busca;
     public $deposito;
@@ -38,6 +41,7 @@ class InspecaoProd extends BaseController
         $this->requisicaoate = new EstoquRequisicaoProdutoAtendimentoModel();
         $this->classes       = new ProdutClasseModel();
         $this->produtos      = new ProdutProdutoModel();
+        $this->ocorrencia    = new OcorreOcorrenciaModel();
 
         if ($this->data['erromsg'] != '') {
             $this->__erro();
@@ -234,7 +238,7 @@ class InspecaoProd extends BaseController
             $telId,
             1,
             'oco_ocorrencia',
-            [],
+            ['tel_id' => $telId],
             $config
         );
         $modProd = new ProdutProdutoModel();
@@ -259,10 +263,8 @@ class InspecaoProd extends BaseController
         );
 
         $desc              = new MyCampo('oco_ocorrencia', 'oco_descricao');
-        $desc->valor       = (isset($dados['oco_descricao'])) ? $dados['oco_descricao'] : '';
-        $desc->obrigatorio = true;
-        $desc->dispForm    = 'col-6';
-        $descreva = $desc->crInput();
+        $desc->valor       = 'Ocorrência gerada na Inspeção';
+        $descreva          = $desc->crOculto();
 
         $qtd               = new MyCampo('oco_ocorrencia', 'oco_qtd');
         $qtd->valor        = $dados['oco_qtd'] ?? 0;
@@ -279,6 +281,17 @@ class InspecaoProd extends BaseController
         $dados['req_id']   = $reqId;
         $oco = new EntOcoOcorrencia($dados, true);
 
+        $ocorretxt = '';
+        $jaregistradas = $this->ocorrencia->getOcorrenciaReqProd($reqId, $proId);
+        if($jaregistradas){
+            $ocorretxt = "<b>Inspeções já Registradas</b><br>";
+            // debug($jaregistradas, true);
+            foreach ($jaregistradas as $key => $value) {
+                $ocorretxt .= data_br($value->oco_data).' - Qtia: '.$value->oco_qtd.' - '.$value->sut_nome."<br>";
+            }
+            // echo $ocorretxt;
+            $this->data['campos'][] = $ocorretxt;
+        }
         // Dados Gerais
         $this->data['secoes']  = ['Dados Gerais'];
 
@@ -290,12 +303,13 @@ class InspecaoProd extends BaseController
             $oco->campos['lot_lote'],
             $oco->campos['pro_id'],
             $oco->campos['pro_despro'],
-            // $toc_oc,
             $mod_oc,
             $quantia,
-            // $descreva,
+            $descreva,
+            $ocorretxt
         ]];
-        $this->data['destino'] = 'store';
+
+        $this->data['destino'] = 'storeocor';
         $this->data['desc_metodo'] = 'Inspeção de Produtos';
         $this->data['script'] = "<script>
                                     var elemento = document.getElementById('lot_lote');
@@ -333,6 +347,79 @@ class InspecaoProd extends BaseController
 
     }
 
+    /**
+     * Gravação
+     * store
+     *
+     * @return void
+     */
+    public function storeocor()
+    {
+        $postado = $this->request->getPost();
+        // debug($postado, true);
+
+        try {
+            if (empty($postado['oco_id'])) {
+                unset($postado['oco_id']);
+            }
+
+            // SUBTIPO / STATUS
+            $modModel = new OcorreModOcorrenciaModel();
+            $subtipo = $modModel->getModOcorrencia((int)$postado['sut_id'])[0] ?? null;
+            // debug($subtipo, true);            
+            if ($subtipo){
+                $postado['tpo_id'] = $subtipo->tpo_id;
+                if($subtipo->sut_fina === 'S') {
+                    // FINALIZA AUTOMÁTICO
+                    $postado['stt_id'] = 29;
+                } else {
+                    $acao = $modModel->getAcaoConfigurada((int)$postado['sut_id']);
+                
+                    if (!$acao) {
+                        $postado['stt_id'] = 29;
+                    } elseif ((int)$acao->tpa_id === 12) {
+                        $postado['stt_id'] = 29;
+                    } else {
+                        $postado['stt_id'] = 28;
+                    }
+                    if ($acao) {
+                        $postado['tpa_id'] = $acao->tpa_id ?? null;
+                        $postado['tmo_id'] = $acao->tmo_id ?? null;
+                        // $postado['tel_id'] = $acao->tel_id ?? null;
+                    }
+                }
+            } else {
+                return $this->response->setJSON([
+                    'erro' => true,
+                    'msg'  => 'Subtipo de Ocorrência não encontrado'
+                ]);
+            }
+            // cria data se não veio do form
+            if (empty($postado['oco_data'])) {
+                $postado['oco_data'] = date('Y-m-d H:i:s');
+            }
+
+            // cria a entity
+
+            $entity = new EntOcoOcorrencia($postado);
+
+            if (!$this->ocorrencia->save($entity)) {
+                throw new \Exception(implode('<br>', $this->ocorrencia->errors()));
+            }
+
+            session()->setFlashdata('msg', 'Ocorrência gravada com sucesso!');
+
+            return $this->response->setJSON([
+                'erro' => false,
+                'url'  => site_url($this->data['controler'])
+            ]);
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'erro' => true,
+                'msg'  => $e->getMessage()
+            ]);
+        }
+    }
     /**
      * Gravação
      * store
