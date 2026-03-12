@@ -188,10 +188,10 @@
         jQuery("#form1").attr('data-alter', true);
     <?php endif; ?>
     // jQuery('.dependente').selectpicker(); // Abre o select
-    jQuery('.dependente').selectpicker('toggle'); // Abre o select
-    setTimeout(function() {
-        jQuery('.dependente').selectpicker('toggle'); // Fecha depois do tempo definido
-    }, 100);
+    // jQuery('.dependente').selectpicker('toggle'); // Abre o select
+    // setTimeout(function() {
+    //     jQuery('.dependente').selectpicker('toggle'); // Fecha depois do tempo definido
+    // }, 100);
 
     jQuery('.selectpicker').selectpicker('render');
 </script>

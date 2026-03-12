@@ -672,15 +672,30 @@ div.msgprocessando > div:last-child > div {
   background-color: var(--bs-info);
 }
 
-.bootstrap-select .dropdown-menu {
-  position: relative !important;
-  will-change: transform;
+.bootstrap-select .dropdown-menu.fixed-dropdown {
+  position: fixed !important;
   transform: none !important;
+  will-change: auto;
 }
 
 /* Remove o ::after do botão quando o select estiver desabilitado */
 .bootstrap-select.disabled .dropdown-toggle::after {
   display: none !important;
+}
+
+.selectpicker-selected-list {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  padding-left: 12px;
+  cursor: pointer;
+  max-height: 10rem;
+  overflow-y: auto;
+}
+
+.selectpicker-selected-list div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .dropdown-toggle[aria-expanded="false"]::after {
@@ -976,6 +991,10 @@ tr td {
 .dropdown-toggle.disabled,
 .dropdown.bootstrap-select.disabled {
   background-color: var(--bs-secondary-bg);
+}
+
+.dropdown.bootstrap-select {
+  border: var(--bs-border-width) solid var(--bs-border-color) !important;
 }
 
 .esconder {

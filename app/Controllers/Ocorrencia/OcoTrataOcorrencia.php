@@ -258,17 +258,17 @@ class OcoTrataOcorrencia extends BaseController
                     continue;
                 }
 
-                // MOVIMENTAÇÃO
-                if ((int)$acao->tpa_id === 3) {
+                // // MOVIMENTAÇÃO
+                // if ((int)$acao->tpa_id === 3) {
 
-                    // SE NÃO TEM DADOS NECESSÁRIOS: CONFIRMAÇÃO
-                    if (empty($postado['tmo_id']) || (int)($postado['oco_qtd'] ?? 0) <= 0) {
-                        return $this->response->setJSON([
-                            'erro' => true,
-                            'msg'  => 6
-                        ]);
-                    }
-                }
+                //     // SE NÃO TEM DADOS NECESSÁRIOS: CONFIRMAÇÃO
+                //     if (empty($postado['tmo_id']) || (int)($postado['oco_qtd'] ?? 0) <= 0) {
+                //         return $this->response->setJSON([
+                //             'erro' => true,
+                //             'msg'  => 6
+                //         ]);
+                //     }
+                // }
 
                 // ALTERAR STATUS
                 // debug($postado['stt_id'] ?? 'NÃO VEIO', true);

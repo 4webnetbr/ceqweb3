@@ -410,7 +410,7 @@ class Requisicao extends BaseController
         $campos[0][] =
             view('partials/pw_show_produtos_req', $data);
 
-        $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT).' '.fmtEtiquetaCor($requisicao->stt_cor, $requisicao->stt_nome, 1);
         $this->data['secoes']      = $secao;
         $this->data['campos']      = $campos;
         $this->data['destino']     = '';
@@ -421,8 +421,6 @@ class Requisicao extends BaseController
 
     public function showCabecalho($requisicao)
     {
-
-        // Montar campos como no add()
         $ent = new EntRequisicao((array) $requisicao, true);
         $fields = $ent->campos;
 
@@ -430,7 +428,7 @@ class Requisicao extends BaseController
         $campos[] = $fields['req_data'];
         $campos[] = $fields['req_dataentrega'];
         $campos[] = $fields['tmo_id'];
-        $campos[] = "vazio2";
+        $campos[] = $fields['req_depdestino'];
         $campos[] = $fields['req_consdiaanterior'];
         $campos[] = $fields['req_percseguranca'];
 
@@ -440,7 +438,23 @@ class Requisicao extends BaseController
         }
 
         $campos[] = $fields['usu_nome'];
-        $campos[] = $fields['stt_nome'];
+        // $campos[] = $fields['stt_nome'];
+        $campos[] = $fields['req_observacao'];
+
+        return $campos;
+    }
+
+    public function showCabecalhoSimples($requisicao)
+    {
+        $ent = new EntRequisicao((array) $requisicao, true);
+        $fields = $ent->campos;
+
+        $campos[] = $fields['req_id'];
+        $campos[] = $fields['req_data'];
+        $campos[] = $fields['req_dataentrega'];
+        $campos[] = $fields['tmo_id'];
+        $campos[] = $fields['req_depdestino'];
+        $campos[] = $fields['usu_nome'];
         $campos[] = $fields['req_observacao'];
 
         return $campos;

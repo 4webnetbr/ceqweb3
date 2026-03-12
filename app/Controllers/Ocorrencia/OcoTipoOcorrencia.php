@@ -35,6 +35,7 @@ class OcoTipoOcorrencia extends BaseController
             $this->__erro();
         }
     }
+    
     /**
      * Erro de Acesso
      * erro
@@ -43,6 +44,7 @@ class OcoTipoOcorrencia extends BaseController
     {
         echo view('vw_semacesso', $this->data);
     }
+
     /**
      * Tela de Abertura
      * index
@@ -53,6 +55,7 @@ class OcoTipoOcorrencia extends BaseController
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
     }
+
     /**
      * Listagem
      * lista
@@ -191,12 +194,13 @@ class OcoTipoOcorrencia extends BaseController
     public function edit($id)
     {
         $show = false;
-        try {
-            // Checa uso do tipo em outros bancos
-            $this->verificarUsoEmRelacionamentos('oco_tipo_ocorrencia', 'tpo_id', (int) $id);
-        } catch (\Exception $e) {
-            $show = true;
-        }
+
+        // verifica vinculos para edição ou não
+        $modocorrencia = new OcorreModOcorrenciaModel();
+        $show = $modocorrencia->possuiSubtipo($id);
+        // BUSCA DADOS 
+        $dados_TipoOcorrencia = $this->tipoocorrencia->getTipoOcorrencia($id);
+        $entity = new EntOcoTipoOcorre((array) $dados_TipoOcorrencia[0], $show);
 
         // BUSCA DADOS 
         $dados_TipoOcorrencia = $this->tipoocorrencia->getTipoOcorrencia($id);
@@ -228,7 +232,6 @@ class OcoTipoOcorrencia extends BaseController
                 $fields = $entity->defCamposTelasAplicaveis(
                     $dados_TelasAplicaveis[$c],
                     $c,
-                    $total,
                     $show
                 );
                 // debug($fields);
@@ -298,7 +301,6 @@ class OcoTipoOcorrencia extends BaseController
 
         // PERMISSÕES
         $secao[3] = 'Permissões';
-
         $fields3 = $entity->defPermissoes($dados_TipoOcorrencia[0]);
         $campos[3][0] = $fields3['prf_id'];
 

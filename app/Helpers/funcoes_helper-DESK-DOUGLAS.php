@@ -608,7 +608,6 @@ function buscaArquivos($pastaapp, $completo = true, $exceto = [])
         "Produt",
         "Ocorrencia",
         "Ocorre",
-        "Preproces",
         "public",
         "assets",
         "jscript"
@@ -733,20 +732,13 @@ function fmtEtiquetaCorBst($cor, $label = '')
  * @param mixed $cor
  * @return string
  */
-function fmtEtiquetaCor($cor, $label = '', $tipo = 0)
+function fmtEtiquetaCor($cor, $label = '')
 {
     if ($label == '') {
         $label = $cor;
     }
-    $py = 'py-1';
-    $mw = 'min-width:20ch;';
-    if ($tipo == 1) {
-        // sem pad vertical e sem min-width pra caber em qualquer espaço
-        $py = '';
-        $mw = '';
-    }
     $cortexto = getContrastYIQ(substr($cor, 1, strlen($cor)));
-    $ret = "<span style='background-color:$cor;color:$cortexto;border:1px solid $cortexto;$mw' class='px-3 $py d-inline-block rounded-pill text-center text-nowrap '>$label</span>";
+    $ret = "<span style='background-color:$cor;color:$cortexto;border:1px solid $cortexto;min-width:20ch' class='px-3 py-1 d-inline-block rounded rounded-4 text-center text-nowrap '>$label</span>";
     return $ret;
 }
 function getContrast50($hexcolor)
@@ -889,7 +881,6 @@ function criaSelectRelativo(
     $opcoes = [];
     // debug($opcoes, true);
     $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
-    // debug($nomeTabela);
     if ($nomeTabela != '') {
         // Detecta o DBGroup e o schema com base no nome da tabela
         $dicDados = new ConfigDicDadosModel();
@@ -902,48 +893,30 @@ function criaSelectRelativo(
         $builder = $db->table("{$schema}.{$nomeTabela}");
         // Verifica se a coluna 'prf_id' existe na tabela
         $fields = $db->getFieldNames("{$schema}.{$nomeTabela}");
-        // debug($fields);
 
         // verifica se existe um campo chamado prf_id e se não é a tabela cfg_perfil
         // se não for somente leitura filtra pelo perfil
         if (in_array('prf_id', $fields, true) && $nomeTabela != 'cfg_perfil' && !$configCampo['Leitura']) {
             $perfilId = session()->get('usu_perfil_id');
-            // debug($perfilId);
             // Se existe, aplica filtro WHERE
             $builder->like('prf_id', $perfilId);
-        }
-        // Verifica se existe algum campo que termina com "_ativo"
-        $campoAtivo = array_values(array_filter(
-            $fields,
-            fn(string $field): bool => str_ends_with($field, '_ativo')
-        ))[0] ?? null;
-
-        if ($campoAtivo !== null) {
-            $builder->where($campoAtivo, 'A');
         }
 
         // Continua com os campos desejados
         $builder->select([$campoChave, $campoNome]);
 
-        if (!empty($filtros)) {
-            foreach ($filtros as $campo => $valcampo) {
-
-                // aplica filtro somente se o campo existir na tabela
-                if ($db->fieldExists($campo, "$schema.$nomeTabela")) {
-
-                    if (is_array($valcampo)) {
-                        $builder->like($campo, $valcampo[0]);
-                    } else {
-                        $builder->where($campo, $valcampo);
-                    }
-                }
+        if (!empty($filtros) && array_is_list($filtros)) {
+            // só aplica where se a chave existir na tabela
+            $campoFiltro = array_key_first($filtros);
+            if ($db->fieldExists($campoFiltro, "$schema.$nomeTabela")) {
+                $builder->where($filtros);
             }
         }
 
         $builder->orderBy($campoNome);
         // Busca os dados (chave e nome)
         $dados = $builder->get()->getResultArray();
-        // debug($db->getLastQuery());
+        debug($db->getLastQuery());
 
         // $dados = filtrarPorPerfil($dados);
         $opcoes = array_column($dados, $campoNome, $campoChave);
@@ -954,23 +927,21 @@ function criaSelectRelativo(
     }
     // Cria o campo
     $campo = new MyCampo($entidade, $nomeCampo);
-    // debug($campo);
     if ($tipo != 2 && $tipo != 4) {
-        $opcoes = [null => $campo->place] + $opcoes;
+        $opcoes = [-1 => $campo->place] + $opcoes;
     }
-    if ($tipo == 2) {
-        $campo->place = '';
-    }
+    // if ($tipo == 2) {
+    //     $campo->place = '';
+    // }
 
+    debug($opcoes);
     // Define opções obrigatórias
-    // debug($opcoes);
     $campo->setOpcoes($opcoes);
 
     // Define valor e selecionado
     // Garante que $valor seja tratado corretamente
-
-    // debug($valor);
     if (is_array($valor)) {
+        // debug($valor, true);
         $valorStr = implode(',', $valor);
         $valorArr = $valor;
     } elseif (is_string($valor) && str_contains($valor, ',')) {
@@ -979,16 +950,6 @@ function criaSelectRelativo(
     } else {
         $valorStr = $valor ?? '-1';
         $valorArr = [$valor ?? '-1'];
-    }
-    if (count($opcoes) <= 2 && count($opcoes) > 0) {
-        // debug($opcoes, true);
-        if (count($opcoes) == 2) {
-            $valorStr = array_keys($opcoes)[1];
-            $valorArr = [$valorStr];
-        } else {
-            $valorStr = array_keys($opcoes)[0];
-            $valorArr = [$valorStr];
-        }
     }
 
     $campo->setValor($valorStr);
@@ -1003,15 +964,11 @@ function criaSelectRelativo(
     $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
     $configCampo['Obrigatorio'] = $configCampo['Obrigatorio'] ?? true;
     $configCampo['Largura']     = $configCampo['Largura'] ?? 40;
-    // if (!isset($configCampo['Hint']) || empty($configCampo['Hint'])) {
-    $configCampo['Hint']        = $configCampo['Hint'] ?? $configCampo['Label'] ?? $campo->hint ?? $campo->label;
-
 
 
     // Aplica outras configurações dinamicamente
     foreach ($configCampo as $metodo => $parametro) {
         $metodo = 'set' . ucfirst($metodo);
-        // debug($metodo . ' ' . $parametro);
         if (method_exists($campo, $metodo)) {
             $campo->$metodo($parametro);
         }
@@ -1043,12 +1000,18 @@ function criaSelectRelativo(
             $valorStr = $valor ?? '-1';
             $valorArr = [$valor ?? '-1'];
         }
-        if (isset($configCampo['Todos'])) {
-            $valorStr = 'Todos';
-        }
+        // if (is_array($valor)) {
+        //     $campo->valor = implode(',', $valor);
+        //     $campo->selecionado = $valor;
+        // } elseif (is_string($valor) && $valor !== '') {
+        //     $campo->valor = $valor;
+        //     $campo->selecionado = explode(',', $valor);
+        // } else {
+        //     $campo->valor = '';
+        //     $campo->selecionado = [];
+        // }
     } else {
         // select normal
-        // debug($valor, true);
         $campo->valor = (string) $valor;
     }
 

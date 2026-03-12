@@ -158,17 +158,24 @@ class ConfRequisicao extends BaseController
             return redirect()->to(site_url($this->data['controler']));
         }
 
+        $log = buscaLog('est_requisicao', $id);
+        $requisicao->usu_nome = $log['usua_alterou'] ?? '';
+
+        $contRequis = new Requisicao();
+        $secao[0] = 'Dados Gerais';
+        $campos[0] = $contRequis->showCabecalhoSimples($requisicao);
+
         // Montar campos como no add()
         $ent = new EntConfRequisicao((array) $requisicao, $show, 'conf');
         $fields = $ent->campos;
         // debug($fields, true);
 
-        $secao[0] = 'Dados Gerais';
-        $campos[0][] = $fields['req_id'];
-        $campos[0][] = $fields['req_data'];
-        $campos[0][] = $fields['req_dataentrega'];
-        $campos[0][] = $fields['tmo_id'];
-        $campos[0][] = "<div class='col-6'>.</div>";
+        // $secao[0] = 'Dados Gerais';
+        // $campos[0][] = $fields['req_id'];
+        // $campos[0][] = $fields['req_data'];
+        // $campos[0][] = $fields['req_dataentrega'];
+        // $campos[0][] = $fields['tmo_id'];
+        // $campos[0][] = "<div class='col-6'>.</div>";
         $campos[0][] = $fields['lot_codbar'];
 
         $produtos = $this->requisicao->getRequisicaoProdutos($id, 'conferencia');
@@ -334,10 +341,10 @@ class ConfRequisicao extends BaseController
         }
         unset($prod);
 
-        $campos[0][count($campos[0])] =
+        $campos[0][] =
             view('partials/pw_produtos_conferencia', ['produtos' => $resultado]);
-
-        $this->data['desc_edicao']       = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $campos[0][] = '</>';
+        $this->data['desc_edicao']       = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT).' '.fmtEtiquetaCor($requisicao->stt_cor, $requisicao->stt_nome, 1);
         $this->data['desc_metodo'] = ' ';
         $this->data['secoes'] = $secao;
         $this->data['campos'] = $campos;

@@ -1127,16 +1127,16 @@
     countSelectedText: function (numSelected, numTotal) {
       return numSelected == 1
         ? "{0} item selecionado"
-        : "{0} items selecionados";
+        : "{0} itens selecionados";
     },
     maxOptionsText: function (numAll, numGroup) {
       return [
         numAll == 1
           ? "Limit reached ({n} item max)"
-          : "Limit reached ({n} items max)",
+          : "Limit reached ({n} itens max)",
         numGroup == 1
           ? "Group limit reached ({n} item max)"
-          : "Group limit reached ({n} items max)",
+          : "Group limit reached ({n} itens max)",
       ];
     },
     selectAllText: "Todos",

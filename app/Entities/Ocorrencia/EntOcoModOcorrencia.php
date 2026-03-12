@@ -116,7 +116,7 @@ class EntOcoModOcorrencia extends Entity
         return $ret;
     }
 
-    public function defCamposTelasAplicaveis($dados = false, $pos = 0, $show = true)
+    public function defCamposTelasAplicaveis($dados = false, $pos = 0, $show = false)
     {
         $dados = (array) $dados;
 
@@ -380,22 +380,30 @@ class EntOcoModOcorrencia extends Entity
         if (!$dados || !is_object($dados)) {
             $dados = (object) [];
         }
+    
         $ret = [];
-
+    
         // PERMISSÕES
         $config = [];
         $config['Largura']  = 50;
-        $config['Leitura']  = true;
-
+        $config['Leitura']  = $show;
+        $config['Pai']      = 'tpo_id';
+        $config['Urlbusca'] = base_url('Buscas/buscaPerfilPorTipo');
+        $config['Todos']    = true;
+        if (!empty($dados->prf_id)) {
+            unset($config['Todos']);
+        }
+        
         $ret['prf_id'] = criaSelectRelativo(
-            'oco_moc_permissao',
-            'prf_id',
-            'prf_nome',
+            '',
+            '',
+            '',
             $dados->prf_id ?? '',
-            3,
-            'oco_moc_permissao',
+            4,
+            'oco_subt_ocorrencia_permissao',
             [],
-            $config
+            $config,
+            'prf_id'
         );
         return $ret;
     }

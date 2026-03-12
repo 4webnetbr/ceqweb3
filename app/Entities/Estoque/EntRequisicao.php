@@ -234,14 +234,14 @@ class EntRequisicao extends Entity
         $obsv->valor          = (isset($dados->req_observacao)) ? $dados->req_observacao : '';
         $obsv->leitura        = $show;
         $obsv->classep        = 'mb2';
-        $obsv->dispForm       = 'col-12';
+        $obsv->dispForm       = 'col-6';
         $ret['req_observacao']      = $obsv->crInput();
 
         // PRODUTO
         $config['Leitura']      = $show;
         $config['Obrigatorio']  = false;
         $config['Label']        = 'Produto';
-        $config['DispForm']     = 'col-12';
+        $config['DispForm']     = 'col-6';
         $config['Largura']      = 60;
         $config['Pai']          = 'req_depdestino';
         $config['Urlbusca']     = base_url('buscas/buscaProdutoDeposito');
@@ -298,11 +298,11 @@ class EntRequisicao extends Entity
         $stat->valor          = (isset($dados->stt_nome)) ? fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome) : '';
         $stat->id = $stat->nome        = 'stt_nome';
         $stat->label          = 'Status';
-        $stat->size           = 50;
-        $stat->largura        = 50;
-        $stat->dispForm       = 'col-4';
-        $stat->leitura      = true;
-        $ret['stt_nome']    = $stat->crShow();
+        // $stat->size           = 50;
+        // $stat->largura        = 50;
+        // $stat->dispForm       = 'col-4';
+        $stat->leitura        = true;
+        $ret['stt_nome']      = $stat->crShow();
 
         return $ret;
     }

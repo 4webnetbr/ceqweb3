@@ -807,6 +807,34 @@ class Buscas extends BaseController
         echo json_encode($ret);
     }
 
+    public function buscaPerfilPorTipo()
+    {
+        $ret = [];
+    
+        if ($_REQUEST['busca']) {
+    
+            $db = db_connect('dbOcorrencia');
+            $builder = $db->table('oco_tipo_ocorrencia_permissao p');
+            $builder->select('p.prf_id, c.prf_nome');
+            $builder->join(
+                'config_ceqweb_db.cfg_perfil c',
+                'c.prf_id = p.prf_id'
+            );
+            $builder->where('p.tpo_id', $_REQUEST['busca']);
+            $lst = $builder->get()->getResult();
+    
+            foreach ($lst as $l) {
+                $o = new \stdClass();
+                $o->id   = $l->prf_id;
+                $o->text = $l->prf_nome;
+                $ret[] = $o;
+            }
+        }
+
+        echo json_encode($ret);
+        exit;
+    }
+
     public function busca_campo_tela(?string $busca = null)
     {
         $ret  = [];

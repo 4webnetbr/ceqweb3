@@ -88,27 +88,45 @@ class OcorreOcorrenciaModel extends Model
     public function getListaCompleta()
     {
         $db = db_connect('dbOcorrencia');
-
-        $builder = $db->table($this->view);
-        $builder->select('*');
+    
+        $perfilId = session()->get('usu_perfil_id');
+    
+        $builder = $db->table($this->view . ' v');
+        $builder->select('v.*');
+    
+        $builder->join(
+            'oco_subt_ocorrencia_permissao perm',
+            "perm.sut_id = v.sut_id AND perm.prf_id = {$perfilId}",
+            'inner'
+        );
+    
+        $builder->groupBy('v.oco_id');
+    
         $builder->orderBy('stt_ordem');
-        $builder->orderBy('oco_id', 'ASC'); 
+        $builder->orderBy('oco_id', 'ASC');
+    
         return $builder->get()->getResult();
     }
 
     public function getListaPendente($stt_ids = [])
     {
         $db = db_connect('dbOcorrencia');
-
-        $builder = $db->table($this->view);
-        $builder->select('*');
-
+    
+        $perfilId = session()->get('usu_perfil_id');
+        $builder = $db->table($this->view . ' v');
+        $builder->distinct()->select('v.*');
+        $builder->join(
+            'oco_subt_ocorrencia_permissao perm',
+            "perm.sut_id = v.sut_id AND perm.prf_id = {$perfilId}",
+            'inner'
+        );
         if (!empty($stt_ids)) {
-            $builder->whereIn('stt_id', $stt_ids);
+            $builder->whereIn('v.stt_id', $stt_ids);
         }
-
-        $builder->orderBy('stt_ordem,oco_id desc');
-
+    
+        $builder->orderBy('v.stt_ordem');
+        $builder->orderBy('v.oco_id', 'DESC');
+    
         return $builder->get()->getResult();
     }
 

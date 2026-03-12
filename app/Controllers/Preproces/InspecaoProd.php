@@ -126,10 +126,10 @@ class InspecaoProd extends BaseController
         }
         $log = buscaLog('est_requisicao', $id);
         $requisicao->usu_nome = $log['usua_alterou'] ?? '';
-
+        // debug($requisicao, true);
         $contRequis = new Requisicao();
         $secao[0] = 'Dados Gerais';
-        $campos[0] = $contRequis->showCabecalho($requisicao);
+        $campos[0] = $contRequis->showCabecalhoSimples($requisicao);
 
         $entRequisicao    = new EntInspecaoProd((array) $requisicao, $show, 'conf');
 
@@ -156,10 +156,11 @@ class InspecaoProd extends BaseController
             $prod->pre_undlote       ??= 'N';
 
             $prod->bt_insvis = '';
+            $prod->bt_ok = '';
             if ($prod->cla_insvis == 'S' && $prod->cla_insvisconf == 'S') {
                 $bt_insvis = new MyCampo();
-                $bt_insvis->id = $bt_insvis->nome = 'bt_insvis';
-                $bt_insvis->classep  = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0';
+                $bt_insvis->id = $bt_insvis->nome = "bt_insvis[$p]";
+                $bt_insvis->classep  = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0 float-start';
                 $bt_insvis->i_cone   = "<i class='fab fa-searchengin'></i>";
                 $bt_insvis->label    = '';
                 $bt_insvis->place    = 'Inspeção';
@@ -169,13 +170,14 @@ class InspecaoProd extends BaseController
                 $okop[0] = 'Não';
                 $okop[1] = 'Sim';
                 $bt_ok = new MyCampo();
-                $bt_ok->id = $bt_ok->nome = 'bt_ok';
-                $bt_ok->classep  = 'btn btn-outline-success btn-sm border-0 mx-0 fs-0';
-                // $bt_ok->i_cone   = "<i class='fab fa-searchengin'></i>";
+                $bt_ok->id = $bt_ok->nome = "bt_ok[$p]";
+                $bt_ok->dispForm  = 'float-end';
+                $bt_ok->classep  = 'semmb';
                 $bt_ok->label    = '';
-                $bt_ok->valor   = 0;
-                $bt_ok->opcoes   = $okop;
+                $bt_ok->valor   = 1;
+                $bt_ok->selecionado   = '';
                 $bt_ok->place    = 'Inspeção';
+                $bt_ok->funcChan = "mostraOcultaCampo('bt_ok[$p]', '', 'bt_insvis[$p]');";
                 $prod->bt_ok = $bt_ok->crCheckbox();
             }
             // $fieldsAten = $entRequisicao->defCamposProdutoAte($prod);
@@ -191,7 +193,7 @@ class InspecaoProd extends BaseController
         // Define dados principais da tela
         // $this->data['title']       = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['desc_metodo'] = '';
-        $this->data['desc_edicao'] = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
+        $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT).' '.fmtEtiquetaCor($requisicao->stt_cor, $requisicao->stt_nome, 1);
         $this->data['destino']     = 'store';
         $this->data['scripts']     = 'my_requisicao';
         $this->data['secoes']      = $secao;
@@ -235,32 +237,24 @@ class InspecaoProd extends BaseController
             [],
             $config
         );
-
-        $config['Label'] = "Tipo de Ocorrência";
-        $config['Leitura'] = false;
-        $toc_oc = criaSelectRelativo(
-            'vw_oco_tpo_ocorrencia_relac',
-            'tpo_id',
-            'tpo_nome',
-            null,
-            1,
-            'oco_ocorrencia',
-            ['tel_id' => $telId],
-            $config
-        );
+        $modProd = new ProdutProdutoModel();
+        $dadosProd = $modProd->getProduto($proId)[0];
+        // debug($dadosProd, true);
 
         $config['Label'] = "Subtipo de Ocorrência";
-        $config['Pai'] = "tpo_id";
-        $config['Urlbusca'] = base_url('Buscas/buscaSubtipoPorTipo');
-
+        $config['Leitura'] = false;
+        $filtros = [
+            'tel_id' => [$json['tel_id']],
+            'cla_id' => [$dadosProd->cla_id],
+        ];
         $mod_oc = criaSelectRelativo(
             'vw_oco_subt_ocorrencia_relac',
             'sut_id',
             'sut_nome',
             null,
-            2,
+            1,
             'oco_ocorrencia',
-            ['tel_id' => ''],
+            $filtros,
             $config
         );
 

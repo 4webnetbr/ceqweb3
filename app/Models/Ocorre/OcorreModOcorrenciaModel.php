@@ -140,8 +140,8 @@ class OcorreModOcorrenciaModel extends Model
         $db = db_connect('dbOcorrencia');
 
         $builder = $db->table('oco_ocorrencia o');
-        $builder->select('o.oco_id');
-
+        $builder->select('o.oco_id');           
+        
         $builder->where('o.sut_id', $sut_id);
         $builder->where('o.stt_id', 28);
 
@@ -156,10 +156,22 @@ class OcorreModOcorrenciaModel extends Model
         $builder->select('s.*');
 
         $builder->where('s.tpo_id', $tpo_id);
-
+        $builder->where('sut_ativo', 'A');
         $builder->orderBy('s.sut_nome', 'ASC');
 
         return $builder->get()->getResult();
+    }
+
+    public function possuiSubtipo(int $tpo_id): bool
+    {
+        $db = db_connect('dbOcorrencia');
+    
+        $builder = $db->table('oco_subt_ocorrencia');
+        $builder->select('sut_id');
+        $builder->where('tpo_id', $tpo_id);
+        $builder->where('sut_ativo', 'A');
+    
+        return $builder->countAllResults() > 0;
     }
 
     public function getSubTipo(int $tpo_id): ?int
@@ -228,6 +240,18 @@ class OcorreModOcorrenciaModel extends Model
         $builder->where('s.sut_ativo', 'A');
 
         return $builder->countAllResults() > 0;
+    }
+
+    public function getPermissoesSubtipo($sut_id)
+    {
+        $db = db_connect('dbOcorrencia');
+    
+        $builder = $db->table('oco_subt_ocorrencia_permissao');
+        $builder->select('prf_id');
+    
+        $builder->where('sut_id', $sut_id);
+    
+        return $builder->get()->getResult();
     }
 
     public function getClassePorSubtipo(int $sut_id)

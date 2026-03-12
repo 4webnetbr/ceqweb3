@@ -35,6 +35,7 @@ class OcoModOcorrencia extends BaseController
             $this->__erro();
         }
     }
+
     /**
      * Erro de Acesso
      * erro
@@ -43,6 +44,7 @@ class OcoModOcorrencia extends BaseController
     {
         echo view('vw_semacesso', $this->data);
     }
+
     /**
      * Tela de Abertura
      * index
@@ -53,6 +55,7 @@ class OcoModOcorrencia extends BaseController
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
     }
+
     /**
      * ListagemF
      * lista
@@ -63,13 +66,13 @@ class OcoModOcorrencia extends BaseController
     {
         $campos = montaColunasCampos($this->data, 'sut_id');
         $dados_mdocor = $this->modocorrencia->getModOcorrencia();
-        // Monta o array de retorno no formato esperado pelo DataTable
         $mdocor = [
             'data' => montaListaColunasEnt($this->data, 'sut_id', $dados_mdocor, $campos[1]),
         ];
 
         echo json_encode($mdocor);
     }
+
     /**
      * Inclusão
      * add
@@ -102,6 +105,12 @@ class OcoModOcorrencia extends BaseController
         $displ[2] = 'tabela';
 
         $campos[2] = [];
+
+        // PERMISSÕES
+        $secao[3] = 'Permissões';
+        $dadosPerm = $dados_ModOcorrencia[0] ?? [];
+        $fields3 = $entity->defPermissoes($dadosPerm);
+        $campos[3][0] = $fields3['prf_id'];
 
         // Define dados da tela
         $this->data['secoes']  = $secao;
@@ -198,10 +207,9 @@ class OcoModOcorrencia extends BaseController
 
         // Cria a entity com os dados retornados
         // debug($dados_ModOcorrencia['cla_id'], true);
-        $entity = new EntOcoModOcorrencia($dados_ModOcorrencia, $show);
+        $entity = new EntOcoModOcorrencia($dados_ModOcorrencia);
 
-        // $fields = $entity->defCampos($show);
-        $fields = $entity->campos;
+        $fields = $entity->defCampos($show);
 
         // Dados Gerais
         $secao[0] = 'Dados Gerais';
@@ -215,9 +223,7 @@ class OcoModOcorrencia extends BaseController
         // Telas Aplicáveis
         $secao[1] = 'Telas Aplicaveis';
         $displ[1] = 'tabela';
-
         $sut_id   = (int) $dados_ModOcorrencia['sut_id'];
-
         $campos[1] = [];
 
         $dados_TelasAplicaveis = $this->modocorrencia->getTOTelasAplicaveis($sut_id);
@@ -227,12 +233,7 @@ class OcoModOcorrencia extends BaseController
             $total = count($dados_TelasAplicaveis);
 
             for ($c = 0; $c < $total; $c++) {
-                $fields = $entity->defCamposTelasAplicaveis(
-                    $dados_TelasAplicaveis[$c],
-                    $c,
-                    $total,
-                    $show
-                );
+                $fields = $entity->defCamposTelasAplicaveis($dados_TelasAplicaveis[$c], $c, $total, $show);
 
                 $campos[1][$c][] = $fields['mod_id'];
                 $campos[1][$c][] = $fields['tel_id'];
@@ -252,14 +253,7 @@ class OcoModOcorrencia extends BaseController
             $total = count($dados_Acao);
             // debug($dados_Acao, true);
             foreach ($dados_Acao as $c => $acao) {
-
-                $fields = $entity->defCamposAcao(
-                    $acao,
-                    $c,
-                    $total,
-                    'edit'
-                );
-
+                $fields  = $entity->defCamposAcao($acao, $c, $total, 'edit');
                 $clsMovi = $clsTela = $clsStat = 'd-none';
 
                 switch ((int) $acao->tpa_id) {
@@ -284,6 +278,14 @@ class OcoModOcorrencia extends BaseController
                 $campos[2][$c][] = $fields['bt_deltp'];
             }
         }
+
+        // PERMISSÕES
+        $secao[3] = 'Permissões';
+        $permissoes = $this->modocorrencia->getPermissoesSubtipo($id);
+        $dados_ModOcorrencia['prf_id'] = array_column($permissoes, 'prf_id');
+        $dadosPerm = (object) $dados_ModOcorrencia;
+        $fields3 = $entity->defPermissoes($dadosPerm);
+        $campos[3][0] = $fields3['prf_id'];
 
         // Define dados finais da tela
         $this->data['secoes']  = $secao;
@@ -326,6 +328,13 @@ class OcoModOcorrencia extends BaseController
         echo json_encode($ret);
     }
 
+    /**
+     * ATIVO
+     * & INATIVO
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function ativinativ($id, $tipo)
     {
         // debug([$id, $tipo], true);
@@ -387,8 +396,15 @@ class OcoModOcorrencia extends BaseController
         }
         // classes
         $classesSelecionadas = $postado['cla_id'] ?? [];
-        // debug($classesSelecionadas, true);
         unset($postado['cla_id']);
+        // permissões
+        if (isset($postado['prf_id']) && is_array($postado['prf_id'])) {
+            $perfis = [];
+            foreach ($postado['prf_id'] as $linha) {
+                $perfis[] = is_array($linha) ? $linha[0] : $linha;
+            }
+            $postado['prf_id'] = $perfis;
+        }
 
         try {
             $db->transBegin();
@@ -424,6 +440,7 @@ class OcoModOcorrencia extends BaseController
                 $this->common->deleteReg($grupo, 'oco_subt_ocorrencia_tela',   "sut_id = {$sut_id}");
                 $this->common->deleteReg($grupo, 'oco_subt_ocorrencia_campos', "sut_id = {$sut_id}");
                 $this->common->deleteReg($grupo, 'oco_subt_ocorrencia_classe', "sut_id = {$sut_id}");
+                $this->common->deleteReg($grupo, 'oco_subt_ocorrencia_permissao', "sut_id = {$sut_id}");
             }
             // debug($sut_id);
 
@@ -467,27 +484,23 @@ class OcoModOcorrencia extends BaseController
                     }
                 }
                 if (!empty($telas)) {
-                    // debug($telas);
                     $this->common->insertRegBatch($grupo, 'oco_subt_ocorrencia_tela', $telas);
                 }
             }
 
-
+            
             // CLASSES
-            if (!empty($classesSelecionadas)) {
-
+            if (!empty($classesSelecionadas)) {           
                 $classes = [];
 
                 foreach ($classesSelecionadas as $cla_id) {
-
                     if (!$cla_id) continue;
-
+            
                     $classes[] = [
                         'sut_id' => $sut_id,
                         'cla_id' => $cla_id
                     ];
                 }
-                // debug($classes, true);
                 if (!empty($classes)) {
                     $this->common->insertRegBatch(
                         $grupo,
@@ -524,6 +537,19 @@ class OcoModOcorrencia extends BaseController
                 if (!empty($campos)) {
                     $this->common->insertRegBatch($grupo, 'oco_subt_ocorrencia_campos', $campos);
                 }
+            }
+
+            // Permissões
+            if (!empty($postado['prf_id'])) {
+                $permissoes = [];
+                foreach ($postado['prf_id'] as $prf_id) {
+                    $permissoes[] = [
+                        'sut_id' => $sut_id,
+                        'prf_id' => $prf_id
+                    ];
+                }
+                $db->table('oco_subt_ocorrencia_permissao')->insertBatch($permissoes);
+                // debug($permissoes, true);
             }
 
             $db->transCommit();

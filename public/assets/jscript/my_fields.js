@@ -706,15 +706,13 @@ function mostraOcultaCampo(obj, regra, fields) {
   } else {
     nomecampo = obj;
   }
-  nomecampo = nomecampo.replaceAll("[", "\\[");
-  nomecampo = nomecampo.replaceAll("]", "\\]");
-  valor = jQuery('input[name="' + nomecampo + '"]:checked').val();
+  nomecampo = escIdColchetes(nomecampo);
+  valor = jQuery('input[name="' + nomecampo + '"]:checked').val() ?? "";
   campos = fields.split(",");
-  if (valor == regra) {
+  if (validarRegra(valor, regra)) {
     // MOSTRA O CAMPO
     jQuery.each(campos, function (key, value) {
-      value = value.replaceAll("[", "\\[");
-      value = value.replaceAll("]", "\\]");
+      value = escIdColchetes(value);
       div = "#ig_" + value;
       camp = "#" + value;
       if (
@@ -751,8 +749,7 @@ function mostraOcultaCampo(obj, regra, fields) {
   } else {
     // OCULTA O CAMPO
     jQuery.each(campos, function (key, value) {
-      value = value.replaceAll("[", "\\[");
-      value = value.replaceAll("]", "\\]");
+      value = escIdColchetes(value);
       div = "#ig_" + value;
       camp = "#" + value;
       if (
