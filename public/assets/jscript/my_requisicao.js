@@ -954,7 +954,14 @@ async function enviarAteRequisicoes(event) {
           lotok = false;
         }
       }
-      if (
+      msg = 0;
+      //NÃO SCANIEI NENHUM PRODUTO E SCANIEI OU FABRICANTE OU MISTURADOR
+      if (parseInt(aten) == 0 && parseInt(ctafab) > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        resposta = await boxAlert(40, true, "", false, 1, false);
+        return false;
+      } else if (
         (aten > 0 || ctafab > 0 || ctalot > 0 || canc > 0) &&
         (parseInt(saldo) > 0 || !lotok || !fabok)
       ) {

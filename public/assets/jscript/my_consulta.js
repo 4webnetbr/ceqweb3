@@ -477,7 +477,7 @@ function acertaCorStt(idBase, tipo = "ate") {
   var canc = parseInt(jQuery("#rpa_cancelada_" + idBase).val());
   var saldo = parseInt(jQuery("#sl_" + idBase).text());
   fabok = false;
-  lotok = false;
+  lotof = false;
   misok = false;
   if (tipo == "ate") {
     misok = true;
@@ -608,19 +608,29 @@ function acertaCorStt(idBase, tipo = "ate") {
   jQuery("#stt_" + idBase).addClass(fundo);
   jQuery("#stt_" + idBase).off("dblclick");
   if (fundo == "bg-warning") {
-    jQuery("#stt_" + idBase).on("dblclick", () => zerarConferencia(idBase));
+    jQuery("#stt_" + idBase).on("dblclick", () =>
+      zerarConferencia(idBase, tipo),
+    );
   }
 }
 
-function zerarConferencia(idBase) {
+function zerarConferencia(idBase, tipo) {
   jQuery("#ctafb_" + idBase).val(0);
   jQuery("#ctalt_" + idBase).val(0);
   jQuery("#ctami_" + idBase).val(0);
   jQuery("#rpa_conferida_" + idBase).val(0);
-  jQuery("#sl_" + idBase).text(
-    parseInt(jQuery("#rpa_atendida_" + idBase).val()),
-  );
-  acertaCorStt(idBase);
+  jQuery("#rpa_atendida_" + idBase).val(0);
+  if (tipo == "ate") {
+    jQuery("#sl_" + idBase).text(
+      parseInt(jQuery("#qt_" + idBase).text()) -
+        parseInt(jQuery("#rpa_cancelada_" + idBase).val()),
+    );
+  } else {
+    jQuery("#sl_" + idBase).text(
+      parseInt(jQuery("#rpa_atendida_" + idBase).val()),
+    );
+  }
+  acertaCorStt(idBase, tipo);
 }
 
 function extrairCodBarFab(str) {
