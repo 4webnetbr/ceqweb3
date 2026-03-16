@@ -87,30 +87,30 @@ class OcorreOcorrenciaModel extends Model
     public function getListaCompleta()
     {
         $db = db_connect('dbOcorrencia');
-    
+
         $perfilId = session()->get('usu_perfil_id');
-    
+
         $builder = $db->table($this->view . ' v');
         $builder->select('v.*');
-    
+
         $builder->join(
             'oco_subt_ocorrencia_permissao perm',
             "perm.sut_id = v.sut_id AND perm.prf_id = {$perfilId}",
             'inner'
         );
-    
+
         $builder->groupBy('v.oco_id');
-    
+
         $builder->orderBy('stt_ordem');
         $builder->orderBy('oco_id', 'ASC');
-    
+
         return $builder->get()->getResult();
     }
 
     public function getListaPendente($stt_ids = [])
     {
         $db = db_connect('dbOcorrencia');
-    
+
         $perfilId = session()->get('usu_perfil_id');
         $builder = $db->table($this->view . ' v');
         $builder->distinct()->select('v.*');
@@ -122,10 +122,10 @@ class OcorreOcorrenciaModel extends Model
         if (!empty($stt_ids)) {
             $builder->whereIn('v.stt_id', $stt_ids);
         }
-    
+
         $builder->orderBy('v.stt_ordem');
         $builder->orderBy('v.oco_id', 'DESC');
-    
+
         return $builder->get()->getResult();
     }
 
@@ -164,16 +164,17 @@ class OcorreOcorrenciaModel extends Model
         return $builder->get()->getResult();
     }
 
-    public function getOcorrenciaReqProd($req, $prod)
+    public function getOcorrenciaReqProd($req, $prod, $lote)
     {
         $db = db_connect('dbOcorrencia');
-    
+
         $builder = $db->table($this->view);
         $builder->select('*');
         $builder->where('req_id', $req);
         $builder->where('pro_id', $prod);
+        $builder->where('lot_lote', $lote);
         $builder->orderBy('oco_data DESC');
-    
+
         return $builder->get()->getResult();
     }
 }

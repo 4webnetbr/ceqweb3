@@ -735,7 +735,7 @@ function fmtEtiquetaCor($cor, $label = '')
         $label = $cor;
     }
     $cortexto = getContrastYIQ(substr($cor, 1, strlen($cor)));
-    $ret = "<span style='background-color:$cor;color:$cortexto;border:1px solid $cortexto' class='px-3 py-1 d-inline-block rounded rounded-4 text-center text-nowrap '>$label</span>";
+    $ret = "<span style='background-color:$cor;color:$cortexto;margin:0 auto;border:1px solid $cortexto' class='px-3 py-1 d-block rounded-pill text-center text-nowrap '>$label</span>";
     return $ret;
 }
 function getContrast50($hexcolor)

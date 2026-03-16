@@ -75,7 +75,7 @@ class OcorreTipoOcorrenciaModel extends Model
         // filtros existentes
         if ($somenteAtivos) {
             $builder->groupStart()
-                ->where('tpo_ativo', 'A');
+                    ->where('tpo_ativo', 'A');
             if ($tpo_id) {
                 $builder->orWhere('vw_oco_tpo_ocorrencia_relac.tpo_id', $tpo_id);
             }

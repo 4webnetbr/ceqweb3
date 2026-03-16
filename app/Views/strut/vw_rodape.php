@@ -15,16 +15,20 @@
   <!-- fim da div de mensagem -->
   <!-- div do status do servidor -->
 <!-- websocket status -->
-  <div id="stat_server" class="col-1 float-start d-block justify-content-center px-0"  role="button" title="Servidor Conectado" onclick="executa_php()">
+  <div id="stat_server" class="col-1 float-start d-block justify-content-center px-0 mt-1"  role="button" title="Servidor Conectado" onclick="executa_php()">
     <i class="fa-solid fa-satellite-dish antenaLeft"></i>
     
-    <div class="ws-link mx-1">
+    <div class="ws-link">
       <div class="packet packet-right"></div>
       <div class="packet packet-left"></div>
     </div>
     
     <i class="fa-solid fa-satellite-dish antenaRight"></i>
   </div>
+  <!-- div do identificador da tela -->
+  <div class="col-1 float-start d-block px-0"><?= $identificador; ?></div>
+</div>
+
   <!-- <div id="stat_server" class="col-1 float-start d-grid text-success cursor-pointer truck-icon pt-1" role="button" title="Servidor Conectado" onclick="executa_php()"> -->
     <!-- <i class="fa-solid fa-truck-moving"></i> -->
     <!-- <div class="ws-container">
@@ -33,31 +37,22 @@
       <i class="fa-solid fa-wifi"></i>
     </div> -->
   <!-- </div> -->
-  <!-- div do identificador da tela -->
-  <div class="col-1 float-start d-block px-0"><?= $identificador; ?></div>
-</div>
-
 
 <style>
 /* ocupa altura total do rodapé */
-
-
-.antenaLeft{
+.antenaLeft, .antenaRight{
   display: inline-block; /* necessário para transform funcionar corretamente */
+  float: inline-start;
   position: relative;
-  float: left;
   left: 0px;
-  top: 2px;
-    color: #0dcaf0;
+  color: #0dcaf0;
+  animation: antenaPulseLeft 1.2s linear infinite;
 }
 .antenaRight{
-  display: block;
     transform: scaleX(-1);
-    position: relative;
-    float: right;
-    right: 0px;
-    top: -8px;
     color: #198754;
+    left: -10px;
+    animation: antenaPulseRight 1.5s linear infinite;
 }
 
 /* ===================== */
@@ -65,18 +60,19 @@
 /* ===================== */
 
 .ws-link {
-    height: 10px;
-    background: rgba(0, 0, 0, .0);
+    display: inline-block;
+    float: inline-start;
     position: relative;
     overflow: hidden;
-    left: -10px;
-    /* width: 71%; */
-    top: 0px;
+    height: 10px;
+    background: rgba(0, 0, 0, .0);
+    left: -5px;
+    width: 65%;
 }
 
 .packet {
   position: absolute;
-  top: 2px;
+  /* top: 2px; */
   width: 20px;
   height: 98%;
   border-radius: 2px;
@@ -88,7 +84,7 @@
   width: 18px;
   height: 100%;
   background: linear-gradient(90deg, transparent, #0dcaf0);
-  animation: moveRight 1.2s linear infinite;
+  animation: moveRight 1.5s linear infinite;
 
   clip-path: polygon(
     0% 0%,
@@ -105,7 +101,7 @@
   width: 18px;
   height: 100%;
   background: linear-gradient(270deg, transparent, #198754);
-  animation: moveLeft 1.5s linear infinite;
+  animation: moveLeft 1.2s linear infinite;
 
   clip-path: polygon(
     15% 0%,
@@ -150,7 +146,24 @@
   0% { left: 100%; }
   100% { left: -20px; }
 }
+@keyframes antenaPulseLeft {
+  0%, 90% {
+    transform: scale(1);
+  }
 
+  100% {
+    transform: scale(1.15);
+  }
+}
+@keyframes antenaPulseRight {
+  0%, 90% {
+    transform: scaleX(-1);
+  }
+
+  100% {
+    transform: scaleX(-1.15);
+  }
+}
 @keyframes pulse {
   0%,100% { opacity: .3; }
   50% { opacity: 1; }

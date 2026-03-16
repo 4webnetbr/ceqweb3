@@ -127,7 +127,7 @@ class OcoOcorrencia extends BaseController
             $linha = montaListaColunasEnt($this->data, 'oco_id', [$nov], $campos[1]);
             $listaFinal[] = $linha[0];
         }
-        
+
         $ret->data = $listaFinal;
 
         return $this->response->setJSON($ret);
@@ -176,54 +176,32 @@ class OcoOcorrencia extends BaseController
         $dados->usu_nome = $log[$id]['usua_alterou'] ?? null;
         // Instancia a entity
         // debug($dados, true);
-        $oco    = new EntOcoOcorrencia((array) $dados, true);
-        $fields = $oco->campos;
 
         // dados gerais
         $secao = ['Dados Gerais'];
-
-        // define os campos
-        $campos[0] = [
-            $fields['oco_id'],
-            $fields['tpo_id'],
-            $fields['sut_id'],
-            $fields['oco_data'],
-            $fields['usu_nome'],
-            $fields['pro_id'],
-            $fields['cod_erp'],
-            $fields['cod_erp_show'],
-            $fields['lot_id'],
-            $fields['lot_lote'],
-            $fields['pro_despro'],
-            $fields['lot_validade_show'], 
-            $fields['lot_validade'],    
-            $fields['fab_nomFab'],    
-            $fields['lot_fabricante'],    
-            $fields['oco_qtd'],
-            $fields['oco_descricao'],
-        ];
-
-        $etiqueta = fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
+        $campos = $this->showCabecalho($dados);
+        // debug($campos, true);
 
         // BLOCO TELAS APLICÁVEIS
         $entity   = new EntOcoModOcorrencia((array) $dados);
         $modModel = new OcorreModOcorrenciaModel();
         $oco   = $this->ocorrencia->getOcorrencia($id);
-        $telas = array_map(fn($item) => (array) $item, 
+        $telas = array_map(
+            fn($item) => (array) $item,
             $modModel->getTOTelasAplicaveis($oco->sut_id)
         );
         // debug($telas, true);
-        
+
         if (!empty($telas)) {
-        
+
             $telasResultado = [];
             $total = count($telas);
-        
+
             for ($c = 0; $c < $total; $c++) {
                 $fields = $entity->defCamposTelasAplicaveis($telas[$c], $c, $total, true);
                 $telasResultado[] = $fields;
             }
-        
+
             $campos[0][] = view(
                 'partials/pw_telas_aplicaveis_ocorrencia',
                 [
@@ -257,12 +235,40 @@ class OcoOcorrencia extends BaseController
         }
 
         $this->data['title']       = 'Ocorrência';
-        $this->data['desc_edicao'] = ' Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' - ' .  $etiqueta;
+        $this->data['desc_edicao'] = ' Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' - ' .  fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
         $this->data['secoes']      = $secao;
         $this->data['campos']      = $campos;
         $this->data['destino']     = '';
 
         echo view('vw_edicao', $this->data);
+    }
+
+
+    public function showCabecalho($dados)
+    {
+        $oco    = new EntOcoOcorrencia((array) $dados, true);
+        $fields = $oco->campos;
+        // define os campos
+        $campos[] = [
+            $fields['oco_id'],
+            $fields['tpo_id'],
+            $fields['sut_id'],
+            $fields['oco_data'],
+            $fields['usu_nome'],
+            $fields['pro_id'],
+            $fields['cod_erp'],
+            $fields['cod_erp_show'],
+            $fields['lot_id'],
+            $fields['lot_lote'],
+            $fields['fab_nomFab'],
+            $fields['lot_validade_show'],
+            $fields['lot_validade'],
+            $fields['pro_despro'],
+            $fields['oco_qtd'],
+            $fields['oco_descricao'],
+        ];
+
+        return $campos;
     }
 
     public function edit($id)
@@ -348,7 +354,7 @@ class OcoOcorrencia extends BaseController
         $config['Label'] = "Subtipo de Ocorrência";
         $config['Pai'] = "tpo_id";
         $config['Urlbusca'] = base_url('Buscas/buscaSubtipoPorTipo');
-        
+
         $mod_oc = criaSelectRelativo(
             'vw_oco_subt_ocorrencia_relac',
             'sut_id',
@@ -359,7 +365,7 @@ class OcoOcorrencia extends BaseController
             ['tel_id' => ''],
             $config
         );
-        
+
         $desc              = new MyCampo('oco_ocorrencia', 'oco_descricao');
         $desc->valor       = (isset($dados['oco_descricao'])) ? $dados['oco_descricao'] : '';
         $desc->obrigatorio = true;
@@ -503,13 +509,13 @@ class OcoOcorrencia extends BaseController
             // SUBTIPO / STATUS
             $modModel = new OcorreModOcorrenciaModel();
             $subtipo = $modModel->getModOcorrencia((int)$postado['sut_id'])[0] ?? null;
-            
+
             if ($subtipo && $subtipo->sut_fina === 'S') {
                 // FINALIZA AUTOMÁTICO
                 $postado['stt_id'] = 29;
             } else {
                 $acao = $modModel->getAcaoConfigurada((int)$postado['sut_id']);
-            
+
                 if (!$acao) {
                     $postado['stt_id'] = 29;
                 } elseif ((int)$acao->tpa_id === 12) {

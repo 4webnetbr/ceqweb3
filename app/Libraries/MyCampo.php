@@ -1495,19 +1495,15 @@ class MyCampo
                 ? array_filter(explode(',', (string) $this->selecionado))
                 : [];
         }
-        $selpicker = 'selectpicker';
-        if($this->leitura){
-            $selpicker = '';
-        }
         $this->nome  = $this->nome . '[]';
         $this->id    = $this->id . '[]';
         $this->field = [
             'name'             => $this->nome,
             'id'               => $this->id,
-            'data-container' => "body",
+            'data-container'   => "body",
             'multiple'         => 'multiple',
             'data-live-search' => "true",
-            'class'            => "$selpicker form-control form-select show-tick",
+            'class'            => "selectpicker form-control form-select show-tick",
         ];
         if (! isset($this->size) || $this->size == '') {
             $this->size = -1;
@@ -1547,17 +1543,12 @@ class MyCampo
         if (! isset($this->selecionado)) {
             $this->selecionado = $this->valor;
         }
-        $selpicker = 'selectpicker';
-        if($this->leitura){
-            $selpicker = '';
-        }
-
         $resp = '';
 
         $this->field = [
             'name'  => $this->nome,
             'id'    => $this->id,
-            'class' => " form-control form-select $selpicker",
+            'class' => " form-control form-select selectpicker",
         ];
         if (! isset($this->size) || $this->size == '') {
             $this->size = -1;
@@ -1594,17 +1585,13 @@ class MyCampo
             $this->selecionado = $this->valor;
         }
 
-        $selpicker = 'selectpicker';
-        if($this->leitura){
-            $selpicker = '';
-        }
         $resp = '';
 
         $this->field = [
             'name'  => $this->nome,
             'id'    => $this->id,
             'data-container' => "body",
-            'class' => " form-control form-select $selpicker",
+            'class' => " form-control form-select selectpicker",
         ];
         if (! isset($this->size) || $this->size == '') {
             $this->size = -1;
@@ -1631,10 +1618,6 @@ class MyCampo
             $this->selecionado = $this->valor;
         }
 
-        $selpicker = 'selectpicker';
-        if($this->leitura){
-            $selpicker = '';
-        }
         $resp = '';
 
         $this->field = [
@@ -1642,7 +1625,7 @@ class MyCampo
             'list'  => 'bstColors',
             'name'  => $this->nome,
             'id'    => $this->id,
-            'class' => " form-control form-select form-color $selpicker",
+            'class' => " form-control form-select form-color selectpicker",
         ];
         if (! isset($this->size) || $this->size == '') {
             $this->size = -1;
@@ -1742,16 +1725,11 @@ class MyCampo
         if (! isset($this->selecionado)) {
             $this->selecionado = $this->valor;
         }
-        $selpicker = 'selectpicker';
-        if($this->leitura){
-            $selpicker = '';
-        }
-
         $this->field = [
             'name'       => $this->nome,
             'id'         => $this->id,
             'data-busca' => $this->urlbusca,
-            'class'      => "$this->classep form-control form-select selbusca $selpicker",
+            'class'      => "$this->classep form-control form-select selbusca selectpicker",
         ];
         if (! isset($this->size) || $this->size == '') {
             $this->size = -1;
@@ -1783,11 +1761,6 @@ class MyCampo
             $this->selecionado = $this->valor;
         }
 
-        $selpicker = 'selectpicker';
-        if($this->leitura){
-            $selpicker = '';
-        }
-
         $resp = '';
 
         $this->field = [
@@ -1797,7 +1770,7 @@ class MyCampo
             'data-busca' => $this->urlbusca,
             'data-pai'   => $this->pai,
             'onfocus'    => "testa_dep('" . $this->pai . "')",
-            'class'      => " form-control form-select dependente $selpicker",
+            'class'      => " form-control form-select dependente selectpicker",
         ];
 
         if (! isset($this->size) || $this->size == '') {
@@ -1828,24 +1801,19 @@ class MyCampo
         if (!isset($this->selecionado)) {
             $this->selecionado = $this->valor;
         }
-        $selpicker = 'selectpicker';
-        if($this->leitura){
-            $selpicker = '';
-        }
-
         $resp = '';
 
 
         $this->field = [
             'name'             => $this->nome . '[]',
             'id'               => $this->id . '[]',
-            'data-container' => "body",
+            'data-container'   => "body",
             'data-busca'       => $this->urlbusca,
             'data-pai'         => $this->pai,
             'onfocus'          => "testa_dep('" . $this->pai . "')",
             'multiple'         => 'multiple',
             'data-live-search' => "true",
-            'class'            => "$selpicker form-control form-select dependente show-tick",
+            'class'            => "form-control form-select dependente show-tick selectpicker",
         ];
 
         if (! isset($this->size) || $this->size == '') {

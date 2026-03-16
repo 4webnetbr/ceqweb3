@@ -147,6 +147,8 @@ class InspecaoProd extends BaseController
 
         $resultado = $produtos;
 
+        $verinsp = '';
+
         // Loop de tratamento visual e funcional de cada produto
         for ($p = 0; $p < count($resultado); $p++) {
             $prod = $resultado[$p];
@@ -162,6 +164,8 @@ class InspecaoProd extends BaseController
             $prod->bt_insvis = '';
             $prod->bt_ok = '';
             if ($prod->cla_insvis == 'S' && $prod->cla_insvisconf == 'S') {
+                $badge = "<span id='badgeinsp_{$prod->rep_id}' class='badgeinsp badge rounded-pill bg-warning p-1 fs-7'></span>";
+
                 $bt_insvis = new MyCampo();
                 $bt_insvis->id = $bt_insvis->nome = "bt_insvis[$p]";
                 $bt_insvis->classep  = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0 float-start';
@@ -169,7 +173,7 @@ class InspecaoProd extends BaseController
                 $bt_insvis->label    = '';
                 $bt_insvis->place    = 'Inspeção';
                 $bt_insvis->funcChan = "gerarInspecao({$this->data['tel_id']}, {$prod->rep_id})";
-                $prod->bt_insvis = $bt_insvis->crBotao();
+                $prod->bt_insvis = $badge . $bt_insvis->crBotao();
 
                 $okop[0] = 'Não';
                 $okop[1] = 'Sim';
@@ -190,6 +194,8 @@ class InspecaoProd extends BaseController
             $prod->rpa_data         = data_br($prod->rpa_data);
             $prod->rpa_data_conferencia = data_br($prod->rpa_data_conferencia);
             $prod->saldo         = (int)$prod->rpa_atendida - (int)$prod->rpa_conferida;
+
+            $verinsp .= "verificaInspecao(" . $prod->rep_id . "," . $prod->req_id . "," . $prod->pro_id . ",'" . $prod->lot_lote . "');";
         }
         // debug($resultado, true);
         $campos[0][] = view('partials/pw_produtos_inspecao', ['produtos' => array_map(fn($p) => (array) $p, $resultado)]);
@@ -197,17 +203,31 @@ class InspecaoProd extends BaseController
         // Define dados principais da tela
         // $this->data['title']       = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['desc_metodo'] = '';
-        $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT).' '.fmtEtiquetaCor($requisicao->stt_cor, $requisicao->stt_nome, 1);
+        $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' ' . fmtEtiquetaCor($requisicao->stt_cor, $requisicao->stt_nome, 1);
         $this->data['destino']     = 'store';
         $this->data['scripts']     = 'my_requisicao';
         $this->data['secoes']      = $secao;
         $this->data['campos']      = $campos;
+        $this->data['script']      = "<script>" . $verinsp . "</script>";
 
         // Define foco inicial no campo de código de barras
-        $this->data['script'] = "<SCRIPT>jQuery('#lot_codbar').focus();</SCRIPT>";
+        // $this->data['script'] = "<SCRIPT>jQuery('#lot_codbar').focus();</SCRIPT>";
         echo view('vw_edicao', $this->data);
     }
 
+
+    public function verificainspecao()
+    {
+        $ret['insp'] = '';
+        $requisicao = $_REQUEST['requisicao'];
+        $produto = $_REQUEST['produto'];
+        $lote = $_REQUEST['lote'];
+        $inspecoes = $this->ocorrencia->getOcorrenciaReqProd($requisicao, $produto, $lote);
+        if ($inspecoes) {
+            $ret['insp'] = count($inspecoes);
+        }
+        echo json_encode($ret);
+    }
     /**
      * Atenndimento
      * atende
@@ -226,6 +246,7 @@ class InspecaoProd extends BaseController
         $lotlote  = $json['lot_lote'] ?? null;
         $reqId    = $json['req_id'] ?? null;
         $telId    = $json['tel_id'] ?? null;
+        $indice    = $json['indice'] ?? null;
 
         $config['Leitura']  = true;
         $config['Label']    = "Tela";
@@ -262,6 +283,17 @@ class InspecaoProd extends BaseController
             $config
         );
 
+        $ind              = new MyCampo();
+        $ind->valor       = $indice;
+        $ind->id = $ind->nome = 'rep_id';
+        $rep_id          = $ind->crOculto();
+
+        $req              = new MyCampo();
+        $req->valor       = $reqId;
+        $req->id = $req->nome = 'req_id';
+        $req_id          = $req->crOculto();
+
+
         $desc              = new MyCampo('oco_ocorrencia', 'oco_descricao');
         $desc->valor       = 'Ocorrência gerada na Inspeção';
         $descreva          = $desc->crOculto();
@@ -282,12 +314,12 @@ class InspecaoProd extends BaseController
         $oco = new EntOcoOcorrencia($dados, true);
 
         $ocorretxt = '';
-        $jaregistradas = $this->ocorrencia->getOcorrenciaReqProd($reqId, $proId);
-        if($jaregistradas){
+        $jaregistradas = $this->ocorrencia->getOcorrenciaReqProd($reqId, $proId, $lotlote);
+        if ($jaregistradas) {
             $ocorretxt = "<b>Inspeções já Registradas</b><br>";
             // debug($jaregistradas, true);
             foreach ($jaregistradas as $key => $value) {
-                $ocorretxt .= data_br($value->oco_data).' - Qtia: '.$value->oco_qtd.' - '.$value->sut_nome."<br>";
+                $ocorretxt .= data_br($value->oco_data) . ' - Qtia: ' . $value->oco_qtd . ' - ' . $value->sut_nome . "<br>";
             }
             // echo $ocorretxt;
             $this->data['campos'][] = $ocorretxt;
@@ -299,6 +331,8 @@ class InspecaoProd extends BaseController
         $this->data['campos']  = [[
             $oco->campos['oco_data'],
             $tel_id,
+            $rep_id,
+            $req_id,
             $oco->campos['lot_id'],
             $oco->campos['lot_lote'],
             $oco->campos['pro_id'],
@@ -315,20 +349,10 @@ class InspecaoProd extends BaseController
                                     var elemento = document.getElementById('lot_lote');
                                     buscaLoteProduto(elemento,'" . base_url('/buscas/buscaProdutoporLote') . "')
                                 </script>";
-        $this->data['script'] .= "  <script>
-                                       jQuery(document).ready(function() {
-                                           var \$sut = jQuery('#sut_id');
-                                           if (\$sut.hasClass('selectpicker')) {
-                                               \$sut.selectpicker('destroy'); 
-                                               \$sut.removeAttr('title');     
-                                               \$sut.selectpicker();         
-                                           }
-                                       });
-                                    </script>";
-        $this->data['hidden'][] = [
-            'name'  => 'req_id',
-            'value' => $reqId
-        ];
+        // $this->data['hidden'][] = [
+        //     'name'  => 'req_id',
+        //     'value' => $reqId
+        // ];
 
         // Renderiza a view
         echo view('vw_edicao_modal', $this->data);
@@ -367,14 +391,14 @@ class InspecaoProd extends BaseController
             $modModel = new OcorreModOcorrenciaModel();
             $subtipo = $modModel->getModOcorrencia((int)$postado['sut_id'])[0] ?? null;
             // debug($subtipo, true);            
-            if ($subtipo){
+            if ($subtipo) {
                 $postado['tpo_id'] = $subtipo->tpo_id;
-                if($subtipo->sut_fina === 'S') {
+                if ($subtipo->sut_fina === 'S') {
                     // FINALIZA AUTOMÁTICO
                     $postado['stt_id'] = 29;
                 } else {
                     $acao = $modModel->getAcaoConfigurada((int)$postado['sut_id']);
-                
+
                     if (!$acao) {
                         $postado['stt_id'] = 29;
                     } elseif ((int)$acao->tpa_id === 12) {
@@ -408,6 +432,11 @@ class InspecaoProd extends BaseController
             }
 
             session()->setFlashdata('msg', 'Ocorrência gravada com sucesso!');
+            $msg[0] = $postado['rep_id'];
+            $msg[1] = $postado['req_id'];
+            $msg[2] = $postado['pro_id'];
+            $msg[3] = $postado['lot_lote'];
+            envia_msg_ws($this->data['controler'], $msg, 'NovaInspecao', session()->get('usu_id'), 1);
 
             return $this->response->setJSON([
                 'erro' => false,

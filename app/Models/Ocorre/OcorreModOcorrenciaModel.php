@@ -140,8 +140,8 @@ class OcorreModOcorrenciaModel extends Model
         $db = db_connect('dbOcorrencia');
 
         $builder = $db->table('oco_ocorrencia o');
-        $builder->select('o.oco_id');           
-        
+        $builder->select('o.oco_id');
+
         $builder->where('o.sut_id', $sut_id);
         $builder->where('o.stt_id', 28);
 
@@ -162,35 +162,23 @@ class OcorreModOcorrenciaModel extends Model
         return $builder->get()->getResult();
     }
 
-    public function possuiSubtipo(int $tpo_id): bool
+
+    public function getSubTipo($tpo_id)
     {
         $db = db_connect('dbOcorrencia');
-    
+
         $builder = $db->table('oco_subt_ocorrencia');
         $builder->select('sut_id');
+
         $builder->where('tpo_id', $tpo_id);
-        $builder->where('sut_ativo', 'A');
-    
-        return $builder->countAllResults() > 0;
-    }
 
-    public function getSubTipo(int $tpo_id): ?int
-    {
-        $db = db_connect('dbOcorrencia');
+        $row = $builder->get()->getResult();
 
-        $builder = $db->table('oco_subt_ocorrencia_acao s');
-        $builder->select('s.sut_id');
-
-        $builder->where('s.tpo_id', $tpo_id);
-        $builder->where('s.sut_nome', 'Nenhuma');
-
-        $row = $builder->get()->getRow();
-
-        return $row ? (int) $row->sut_id : null;
+        return $row;
     }
 
 
-    public function getTelaByTpoTpa(int $tpo_id, int $tpa_id): ?int
+    public function getTelaByTpoTpa(int $tpo_id, int $tpa_id)
     {
         $db = db_connect('dbOcorrencia');
 
@@ -245,12 +233,12 @@ class OcorreModOcorrenciaModel extends Model
     public function getPermissoesSubtipo($sut_id)
     {
         $db = db_connect('dbOcorrencia');
-    
+
         $builder = $db->table('oco_subt_ocorrencia_permissao');
         $builder->select('prf_id');
-    
+
         $builder->where('sut_id', $sut_id);
-    
+
         return $builder->get()->getResult();
     }
 

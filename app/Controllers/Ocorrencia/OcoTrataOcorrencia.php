@@ -128,30 +128,10 @@ class OcoTrataOcorrencia extends BaseController
         // debug($dados, true);
         $entoco    = new EntOcoOcorrencia((array) $dados, true);
         $fields = $entoco->campos;
+        $contOcorr = new OcoOcorrencia();
+        $secao[0] = 'Dados Gerais';
+        $campos = $contOcorr->showCabecalho($dados);
 
-        // dados gerais
-        $secao = ['Dados Gerais'];
-
-        // define os campos
-        $campos[0] = [
-            $fields['oco_id'],
-            $fields['tpo_id'],
-            $fields['sut_id'],
-            $fields['oco_data'],
-            $fields['usu_nome'],
-            $fields['pro_id'],
-            $fields['cod_erp'],
-            $fields['cod_erp_show'],
-            $fields['lot_id'],
-            $fields['lot_lote'],
-            $fields['pro_despro'],
-            $fields['lot_validade_show'],
-            $fields['lot_validade'],
-            $fields['fab_nomFab'],
-            $fields['lot_fabricante'],
-            $fields['oco_qtd'],
-            $fields['oco_descricao'],
-        ];
         $etiqueta = fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
 
         // BLOCO TELAS APLICAVEIS
@@ -217,7 +197,7 @@ class OcoTrataOcorrencia extends BaseController
         $this->data['campos']       = $campos;
         $this->data['destino']      = "store";
         $this->data['desc_metodo']  = '';
-        $this->data['script']  = '<script>jQuery("#form1").attr("data-alter", true);</script>';
+        $this->data['script']       = '<script>jQuery("#form1").attr("data-alter", true);</script>';
 
         echo view('vw_edicao', $this->data);
     }

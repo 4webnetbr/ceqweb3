@@ -1,12 +1,9 @@
 <?php
 
-use Config\Database;
-use App\Libraries\MyCampo;
 use App\Models\LogMonModel;
 use App\Models\Config\ConfigMenuModel;
 use App\Models\Config\ConfigTelaModel;
 use App\Models\Config\ConfigPerfilItemModel;
-use App\Models\Config\ConfigDicDadosModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 
 /**
@@ -739,18 +736,14 @@ function fmtEtiquetaCor($cor, $label = '', $tipo = 0)
         $label = $cor;
     }
     $py = 'py-1';
-    $di = 'd-table';
-    $mw = 'min-width:20ch;';
     if ($tipo == 1) {
-        // sem pad vertical e sem min-width pra caber em qualquer espaço
         $py = '';
-        $mw = '';
-        $di = 'd-inline-block';
     }
     $cortexto = getContrastYIQ(substr($cor, 1, strlen($cor)));
-    $ret = "<span style='background-color:$cor;color:$cortexto;margin:0 auto;border:1px solid $cortexto;$mw' class='px-3 $py $di rounded-pill text-center text-nowrap '>$label</span>";
+    $ret = "<span style='background-color:$cor;color:$cortexto;border:1px solid $cortexto' class='px-3 $py d-inline-block rounded-pill text-center text-nowrap '>$label</span>";
     return $ret;
 }
+
 function getContrast50($hexcolor)
 {
     return (hexdec($hexcolor) > 0xffffff / 2) ? 'black' : 'white';
@@ -839,21 +832,22 @@ function filtrarRequisicoesPorPerfil(array $dados_requis, ?int $perfilId = null)
     $tipomov = (new EstoquTipoMovimentacaoModel())->getTipoMovimentacao();
     $autorizacoes = array_column($tipomov, 'prf_id', 'tmo_id');
 
-    if ($perfilId === null) {
+    if (is_null($perfilId)) {
         $perfilId = session()->get('usu_perfil_id');
     }
+    // debug('Perfil '.$perfilId);
 
     foreach ($dados_requis as $key => $req) {
-
-        // ⚠️ agora é OBJETO
-        if (!isset($req->tmo_id)) {
+        if (!isset($req['tmo_id'])) {
             unset($dados_requis[$key]);
             continue;
         }
 
-        $tmo_id = $req->tmo_id;
+        $tmo_id = $req['tmo_id'];
+        // debug($tmo_id);
 
         if (!isset($autorizacoes[$tmo_id])) {
+            // debug('Tipo não encontrado nas autorizações');
             unset($dados_requis[$key]);
             continue;
         }
@@ -861,236 +855,15 @@ function filtrarRequisicoesPorPerfil(array $dados_requis, ?int $perfilId = null)
         $prf_autorizados = explode(',', $autorizacoes[$tmo_id]);
 
         if (!in_array($perfilId, $prf_autorizados)) {
+            // debug('Tipo não autorizado');
             unset($dados_requis[$key]);
             continue;
         }
     }
 
-    // reindexa para evitar buraco de índice
-    $dados_requis = array_values($dados_requis);
-
     usort($dados_requis, function ($a, $b) {
-        return intval($a->stt_ordem ?? 0) <=> intval($b->stt_ordem ?? 0);
+        return intval($a['stt_ordem']) - intval($b['stt_ordem']);
     });
-
+    // sort($dados_requis);
     return $dados_requis;
 };;
-
-
-function criaSelectRelativo(
-    string $nomeTabela,
-    string $campoChave = 'id',
-    string $campoNome = 'nome',
-    mixed $valor = null,
-    mixed $tipo = 1, // 1 select | 2 depende |3 multiple
-    string $entidade = '',
-    array $filtros = [],
-    array $configCampo = [],
-    string $nomeCampo = '' // Configurações adicionais para o MyCampo
-): string {
-    $opcoes = [];
-    // debug($opcoes, true);
-    $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
-    // debug($nomeTabela);
-    if ($nomeTabela != '') {
-        // Detecta o DBGroup e o schema com base no nome da tabela
-        $dicDados = new ConfigDicDadosModel();
-        $dbGrSche = $dicDados->getDbGroupAndSchema($nomeTabela);
-        $dbGroup = $dbGrSche['dbGroup'];
-        $schema = $dbGrSche['schema'];
-
-        // Conecta ao banco correto
-        $db = Database::connect($dbGroup);
-        $builder = $db->table("{$schema}.{$nomeTabela}");
-        // Verifica se a coluna 'prf_id' existe na tabela
-        $fields = $db->getFieldNames("{$schema}.{$nomeTabela}");
-        // debug($fields);
-
-        // verifica se existe um campo chamado prf_id e se não é a tabela cfg_perfil
-        // se não for somente leitura filtra pelo perfil
-        if (in_array('prf_id', $fields, true) && $nomeTabela != 'cfg_perfil' && !$configCampo['Leitura']) {
-            $perfilId = session()->get('usu_perfil_id');
-            // debug($perfilId);
-            // Se existe, aplica filtro WHERE
-            $builder->like('prf_id', $perfilId);
-        }
-        // Verifica se existe algum campo que termina com "_ativo"
-        $campoAtivo = array_values(array_filter(
-            $fields,
-            fn(string $field): bool => str_ends_with($field, '_ativo')
-        ))[0] ?? null;
-
-        if ($campoAtivo !== null) {
-            $builder->where($campoAtivo, 'A');
-        }
-
-        // Continua com os campos desejados
-        $builder->select([$campoChave, $campoNome]);
-
-        if (!empty($filtros)) {
-            foreach ($filtros as $campo => $valcampo) {
-
-                // aplica filtro somente se o campo existir na tabela
-                if ($db->fieldExists($campo, "$schema.$nomeTabela")) {
-
-                    if (is_array($valcampo)) {
-                        $builder->like($campo, $valcampo[0]);
-                    } else {
-                        $builder->where($campo, $valcampo);
-                    }
-                }
-            }
-        }
-
-        $builder->orderBy($campoNome);
-        // Busca os dados (chave e nome)
-        $dados = $builder->get()->getResultArray();
-        // debug($db->getLastQuery());
-
-        // $dados = filtrarPorPerfil($dados);
-        $opcoes = array_column($dados, $campoNome, $campoChave);
-        // $opcoes = [-1 => 'Todos os Produtos'] + $opcoes;
-        if ($nomeCampo == '') {
-            $nomeCampo = $campoChave;
-        }
-    }
-    // Cria o campo
-    $campo = new MyCampo($entidade, $nomeCampo);
-    // debug($tipo);
-    if ($tipo == 1) {
-        $opcoes = [null => $campo->place] + $opcoes;
-        // debug($opcoes);
-    }
-    // if ($tipo == 2) {
-    //     $campo->place = '';
-    // }
-
-    // Define opções obrigatórias
-    // debug($opcoes);
-    $campo->setOpcoes($opcoes);
-
-    // Define valor e selecionado
-    // Garante que $valor seja tratado corretamente
-
-    // debug($valor);
-    if (is_array($valor)) {
-        $valorStr = implode(',', $valor);
-        $valorArr = $valor;
-    } elseif (is_string($valor) && str_contains($valor, ',')) {
-        $valorStr = $valor;
-        $valorArr = explode(',', $valor);
-    } else {
-        $valorStr = $valor ?? '-1';
-        $valorArr = [$valor ?? '-1'];
-    }
-    if (count($opcoes) <= 2 && count($opcoes) > 0) {
-        // debug($opcoes, true);
-        if (count($opcoes) == 2) {
-            $valorStr = array_keys($opcoes)[1];
-            $valorArr = [$valorStr];
-        } else {
-            $valorStr = array_keys($opcoes)[0];
-            $valorArr = [$valorStr];
-        }
-    }
-
-    $campo->setValor($valorStr);
-    $campo->setSelecionado($valorArr);
-
-
-    // Se valor for passado, define leitura automática (caso config não sobrescreva)
-    if ($valor !== null && !isset($configCampo['Leitura'])) {
-        $campo->setLeitura(true);
-    }
-    $configCampo['DispForm']    = $configCampo['DispForm'] ?? ('col-6');
-    $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
-    $configCampo['Obrigatorio'] = $configCampo['Obrigatorio'] ?? true;
-    $configCampo['Largura']     = $configCampo['Largura'] ?? 40;
-    // if (!isset($configCampo['Hint']) || empty($configCampo['Hint'])) {
-    $configCampo['Hint']        = $configCampo['Hint'] ?? $configCampo['Label'] ?? $campo->hint ?? $campo->label;
-
-
-
-    // Aplica outras configurações dinamicamente
-    foreach ($configCampo as $metodo => $parametro) {
-        $metodo = 'set' . ucfirst($metodo);
-        // debug($metodo . ' ' . $parametro);
-        if (method_exists($campo, $metodo)) {
-            $campo->$metodo($parametro);
-        }
-    }
-
-    // debug($campo, true);
-    //  INFOTEXTO (compatível com MyCampo) 
-    if (!empty($configCampo['Infotexto'])) {
-        $campo->infotexto = $configCampo['Infotexto'];
-    }
-
-    if ($tipo === 3 && !str_ends_with($campo->nome, '[]')) {
-        $campo->nome .= '[]';
-    }
-
-    // AJUSTE PARA MULTIPLE
-    if ($tipo == 3 || $tipo == 4) {
-        // debug($valor);
-        // valor SEMPRE string (CSV)
-        if (is_array($valor)) {
-            // debug($valor, true);
-            $valorStr = implode(',', $valor);
-            $valorArr = $valor;
-        } elseif (is_string($valor) && str_contains($valor, ',')) {
-            $valorStr = $valor;
-            $valorArr = explode(',', $valor);
-            // debug($valorArr);
-        } else {
-            $valorStr = $valor ?? '-1';
-            $valorArr = [$valor ?? '-1'];
-        }
-        if (isset($configCampo['Todos'])) {
-            $valorStr = 'Todos';
-        }
-    } else {
-        // select normal
-        // debug($valor, true);
-        $campo->valor = (string) $valor;
-    }
-
-    $campo->setValor($valorStr);
-    $campo->setSelecionado($valorArr);
-
-    // debug($campo);
-
-    // Gera o campo conforme o tipo
-    return match ($tipo) {
-        4 => $campo->crDependeMultiplo(),
-        3 => $campo->crMultiple(),
-        2 => $campo->crDepende(),
-        1 => ($nomeTabela === 'cfg_cor') ? $campo->crSelectCor() : $campo->crSelect(),
-    };
-}
-
-
-function filtrarPorPerfil(array $dados, ?int $perfilId = null): array
-{
-    // Obtém o perfil do usuário da sessão, se não foi passado
-    if ($perfilId === null) {
-        $perfilId = session()->get('usu_perfil_id');
-    }
-
-    // Filtra os dados
-    $dados_filtrados = array_filter($dados, function ($item) use ($perfilId) {
-        // Suporta tanto objetos quanto arrays
-        $prf_id = is_object($item) ? ($item->prf_id ?? null) : ($item['prf_id'] ?? null);
-
-        // Pode conter múltiplos IDs separados por vírgula
-        if ($prf_id !== null) {
-            $ids = explode(',', (string) $prf_id);
-            return in_array($perfilId, array_map('intval', $ids));
-        }
-
-        return false;
-    });
-
-    // Reindexa os dados
-    return array_values($dados_filtrados);
-}

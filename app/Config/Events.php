@@ -32,7 +32,7 @@ Events::on('pre_system', static function () {
             ob_end_flush();
         }
 
-        ob_start(static fn ($buffer) => $buffer);
+        ob_start(static fn($buffer) => $buffer);
     }
 
     /*
@@ -52,28 +52,28 @@ Events::on('DBQuery', function ($query) {
 
     // Verifica se é INSERT ou UPDATE
     if (preg_match('/^(insert into|update|delete from) `?(\w+)`?/i', $sql, $matches)) {
-        log_message('info', "Sql ".$sql);
+        log_message('info', "Sql " . $sql);
         $tabelaAfetada = $matches[2]; // Nome da tabela
-        if(substr($tabelaAfetada,0,3) != 'cfg'){
-            log_message('info', "Tabela Afetada ".$tabelaAfetada);
+        if (substr($tabelaAfetada, 0, 3) != 'cfg') {
+            log_message('info', "Tabela Afetada " . $tabelaAfetada);
 
             // Buscar qual Model usa essa tabela
             $models = get_declared_classes();
             $modelEncontrado = null;
             $nomeModel = null;
-            log_message('info', "Models ".json_encode($tabelaAfetada));
+            log_message('info', "Models " . json_encode($tabelaAfetada));
             foreach ($models as $model) {
                 if (is_subclass_of($model, \CodeIgniter\Model::class)) {
                     $reflection = new \ReflectionClass($model);
-                    
+
                     // Ignora classes abstratas
                     if ($reflection->isAbstract()) {
                         continue;
                     }
-                    
+
                     // Instancia a Model e pega o nome da tabela
                     $instance = new $model();
-                    
+
                     if (property_exists($instance, 'table') && $instance->table === $tabelaAfetada) {
                         $modelEncontrado = $model;
                         $reflection = new \ReflectionClass($modelEncontrado);
@@ -83,7 +83,7 @@ Events::on('DBQuery', function ($query) {
                     }
                 }
             }
-            log_message('info', "Model Encontrada ".$nomeModel);
+            log_message('info', "Model Encontrada " . $nomeModel);
 
             if ($nomeModel) {
                 // Agora vamos buscar na tabela cfg_tela
@@ -92,13 +92,13 @@ Events::on('DBQuery', function ($query) {
                 $db = \Config\Database::connect();
                 $builder = $db->table('cfg_tela');
                 $result = $builder->select('tel_controler')
-                                ->where('tel_model', $nomeModel)
-                                ->get()
-                                ->getRow();
+                    ->where('tel_model', $nomeModel)
+                    ->get()
+                    ->getRow();
 
                 if ($result) {
                     $telController = $result->tel_controler;
-                    if($telController != ''){
+                    if ($telController != '') {
                         envia_msg_ws($telController, $telController, 'AtualizarControler', session()->get('usu_id'), 1);
                         log_message('info', "Tabela [$tabelaAfetada] atualizada. Model: [$modelEncontrado]. Controller: [$telController]");
                     }

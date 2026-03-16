@@ -309,17 +309,13 @@ class OcoModOcorrencia extends BaseController
         $ret = [];
 
         try {
-            // bloqueia se existir ocorrência vinculada
-            if ($this->modocorrencia->getUsoGestao((int)$id)) {
-                throw new \Exception('MSG_3');
-            }
+            // Checa uso do status em outros bancos
+            $this->verificarUsoEmRelacionamentos('oco_ocorrencia', 'sut_id', (int) $id);
 
-            // Soft delete do subtipo
+            // Soft delete
             $this->modocorrencia->delete($id);
-
             $ret['erro'] = false;
-            $ret['msg']  = 'Subtipo de Ocorrência excluída com sucesso!';
-            session()->setFlashdata('msg', $ret['msg']);
+            session()->setFlashdata('msg', 'Ocorrência Excluída com Sucesso');
         } catch (\Exception $e) {
             $ret['erro'] = true;
             $ret['msg']  = 3;

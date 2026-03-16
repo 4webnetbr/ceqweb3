@@ -35,7 +35,7 @@ class OcoTipoOcorrencia extends BaseController
             $this->__erro();
         }
     }
-    
+
     /**
      * Erro de Acesso
      * erro
@@ -197,18 +197,13 @@ class OcoTipoOcorrencia extends BaseController
 
         // verifica vinculos para edição ou não
         $modocorrencia = new OcorreModOcorrenciaModel();
-        $show = $modocorrencia->possuiSubtipo($id);
+        $temsubtipo = $modocorrencia->getSubTipo($id);
+
+        $show = count($temsubtipo) > 0 ?? true;
         // BUSCA DADOS 
         $dados_TipoOcorrencia = $this->tipoocorrencia->getTipoOcorrencia($id);
+        // debug($dados_TipoOcorrencia, true);
         $entity = new EntOcoTipoOcorre((array) $dados_TipoOcorrencia[0], $show);
-
-        // BUSCA DADOS 
-        $dados_TipoOcorrencia = $this->tipoocorrencia->getTipoOcorrencia($id);
-        // debug($dados_TipoOcorrencia);
-
-        // ENTITY
-        $entity = new EntOcoTipoOcorre((array) $dados_TipoOcorrencia[0], $show);
-        // debug($entity, true);
 
         // CAMPOS GERAIS
         $fields = $entity->campos;
@@ -226,34 +221,33 @@ class OcoTipoOcorrencia extends BaseController
         $dados_TelasAplicaveis = $this->tipoocorrencia->getTOTelasAplicaveis($id, $show);
 
         if (count($dados_TelasAplicaveis) > 0) {
-            $total = count($dados_TelasAplicaveis);
             for ($c = 0; $c < count($dados_TelasAplicaveis); $c++) {
                 // debug($dados_TelasAplicaveis[$c]);
-                $fields = $entity->defCamposTelasAplicaveis(
+                $fields2 = $entity->defCamposTelasAplicaveis(
                     $dados_TelasAplicaveis[$c],
                     $c,
                     $show
                 );
-                // debug($fields);
-                $campos[1][$c][] = $fields['mod_id'];
-                $campos[1][$c][] = $fields['tel_id'];
-                $campos[1][$c][] = $fields['tof_campo'];
+                // debug($fields, true);
+                $campos[1][$c][] = $fields2['mod_id'];
+                $campos[1][$c][] = $fields2['tel_id'];
+                $campos[1][$c][] = $fields2['tof_campo'];
                 if ($show) {
-                    $campos[1][$c][] = $fields['bt_addta'];
+                    $campos[1][$c][] = $fields2['bt_addta'];
                     $campos[1][$c][] = '';
                 } else {
-                    $campos[1][$c][] = $fields['bt_addta'];
-                    $campos[1][$c][] = $fields['bt_delta'];
+                    $campos[1][$c][] = $fields2['bt_addta'];
+                    $campos[1][$c][] = $fields2['bt_delta'];
                 }
             }
         } else {
-            $fields = $entity->defCamposTelasAplicaveis(false, 0, $show);
+            $fields2 = $entity->defCamposTelasAplicaveis(false, 0, $show);
 
-            $campos[1][0][] = $fields['mod_id'];
-            $campos[1][0][] = $fields['tel_id'];
-            $campos[1][0][] = $fields['tof_campo'];
-            $campos[1][0][] = $fields['bt_addta'];
-            $campos[1][0][] = $fields['bt_delta'];
+            $campos[1][0][] = $fields2['mod_id'];
+            $campos[1][0][] = $fields2['tel_id'];
+            $campos[1][0][] = $fields2['tof_campo'];
+            $campos[1][0][] = $fields2['bt_addta'];
+            $campos[1][0][] = $fields2['bt_delta'];
         }
 
         // AÇÕES
@@ -266,43 +260,43 @@ class OcoTipoOcorrencia extends BaseController
         if (count($dados_Acao) > 0) {
             for ($c = 0; $c < count($dados_Acao); $c++) {
 
-                $fields = $entity->defCamposAcao($dados_Acao[$c], $c, $show);
+                $fields3 = $entity->defCamposAcao($dados_Acao[$c], $c, $show);
 
-                $campos[2][$c][] = $fields['tpa_id'];
+                $campos[2][$c][] = $fields3['tpa_id'];
                 // debug(array_keys($dados_Acao[$c]), true);
 
                 $dnone = ($dados_Acao[$c]['tmo_id'] != 0) ? '' : 'd-none';
-                $campos[2][$c][] = "<div id='divmovi[$c]' class='$dnone row col-6'>" . $fields['tmo_id'] . "</div>";
+                $campos[2][$c][] = "<div id='divmovi[$c]' class='$dnone row col-6'>" . $fields3['tmo_id'] . "</div>";
 
                 $dnone = ($dados_Acao[$c]['tel_id'] != 0) ? '' : 'd-none';
-                $campos[2][$c][] = "<div id='divtela[$c]' class='$dnone row col-6'>" . $fields['mod_id'] . $fields['tel_id'] . "</div>";
+                $campos[2][$c][] = "<div id='divtela[$c]' class='$dnone row col-6'>" . $fields3['mod_id'] . $fields3['tel_id'] . "</div>";
 
                 $dnone = ($dados_Acao[$c]['stt_id'] != 0) ? '' : 'd-none';
-                $campos[2][$c][] = "<div id='divstat[$c]' class='$dnone row col-6'>" . $fields['stt_id'] . "</div>";
+                $campos[2][$c][] = "<div id='divstat[$c]' class='$dnone row col-6'>" . $fields3['stt_id'] . "</div>";
 
                 if ($show) {
                     $campos[2][$c][] = '';
                     $campos[2][$c][] = '';
                 } else {
-                    $campos[2][$c][] = $fields['bt_addtp'];
-                    $campos[2][$c][] = $fields['bt_deltp'];
+                    $campos[2][$c][] = $fields3['bt_addtp'];
+                    $campos[2][$c][] = $fields3['bt_deltp'];
                 }
             }
         } else {
-            $fields = $entity->defCamposAcao(false, 0, true);
+            $fields3 = $entity->defCamposAcao(false, 0, true);
 
-            $campos[2][0][] = $fields['tpa_id'];
-            $campos[2][0][] = "<div id='divmovi[0]' class='d-none row col-6'>" . $fields['tmo_id'] . "</div>";
-            $campos[2][0][] = "<div id='divtela[0]' class='d-none row col-6'>" . $fields['mod_id'] . $fields['tel_id'] . "</div>";
-            $campos[2][0][] = "<div id='divstat[0]' class='d-none row col-6'>" . $fields['stt_id'] . "</div>";
-            $campos[2][0][] = $fields['bt_addtp'];
-            $campos[2][0][] = $fields['bt_deltp'];
+            $campos[2][0][] = $fields3['tpa_id'];
+            $campos[2][0][] = "<div id='divmovi[0]' class='d-none row col-6'>" . $fields3['tmo_id'] . "</div>";
+            $campos[2][0][] = "<div id='divtela[0]' class='d-none row col-6'>" . $fields3['mod_id'] . $fields['tel_id'] . "</div>";
+            $campos[2][0][] = "<div id='divstat[0]' class='d-none row col-6'>" . $fields3['stt_id'] . "</div>";
+            $campos[2][0][] = $fields3['bt_addtp'];
+            $campos[2][0][] = $fields3['bt_deltp'];
         }
 
         // PERMISSÕES
         $secao[3] = 'Permissões';
-        $fields3 = $entity->defPermissoes($dados_TipoOcorrencia[0]);
-        $campos[3][0] = $fields3['prf_id'];
+        $fields4 = $entity->defPermissoes($dados_TipoOcorrencia[0]);
+        $campos[3][0] = $fields4['prf_id'];
 
         // VIEW
         $this->data['secoes']  = $secao;
@@ -329,22 +323,13 @@ class OcoTipoOcorrencia extends BaseController
         $ret = [];
 
         try {
-            // verifica somente subtipo
-            $existeSubtipo = $this->tipoocorrencia->db
-                ->table('oco_subt_ocorrencia')
-                ->where('tpo_id', (int) $id)
-                ->countAllResults();
-
-            if ($existeSubtipo > 0) {
-                throw new \Exception('MSG_3'); // possui subtipo vinculado
-            }
+            // Checa uso do status em outros bancos
+            $this->verificarUsoEmRelacionamentos('oco_subt_ocorrencia', 'tpo_id', (int) $id);
 
             // Soft delete
             $this->tipoocorrencia->delete($id);
-
             $ret['erro'] = false;
-            $ret['msg']  = 'Tipo de Ocorrência excluída com sucesso!';
-            session()->setFlashdata('msg', $ret['msg']);
+            session()->setFlashdata('msg', 'Ocorrência Excluída com Sucesso');
         } catch (\Exception $e) {
             $ret['erro'] = true;
             $ret['msg']  = 3;
