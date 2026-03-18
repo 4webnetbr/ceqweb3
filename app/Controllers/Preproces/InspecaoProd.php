@@ -7,6 +7,7 @@ use App\Controllers\Estoque\Requisicao;
 use App\Entities\Ocorrencia\EntOcoOcorrencia;
 use App\Entities\Preproces\EntInspecaoProd;
 use App\Libraries\MyCampo;
+use App\Models\CommonModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
 use App\Models\Ocorre\OcorreModOcorrenciaModel;
@@ -24,6 +25,7 @@ class InspecaoProd extends BaseController
     public $classes;
     public $produtos;
     public $ocorrencia;
+    public $common;
     public $lote;
     public $busca;
     public $deposito;
@@ -42,6 +44,7 @@ class InspecaoProd extends BaseController
         $this->classes       = new ProdutClasseModel();
         $this->produtos      = new ProdutProdutoModel();
         $this->ocorrencia    = new OcorreOcorrenciaModel();
+        $this->common        = new CommonModel();
 
         if ($this->data['erromsg'] != '') {
             $this->__erro();
@@ -75,7 +78,7 @@ class InspecaoProd extends BaseController
     {
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
-        $dados_requis = $this->requisicao->getRequisicaoLista(false, [25]);
+        $dados_requis = $this->requisicao->getRequisicaoLista(false, [24, 25]);
         $dados_requis = filtrarRequisicoesPorPerfil($dados_requis);
         // debug($dados_requis, true);
         if ($dados_requis) {
@@ -106,6 +109,7 @@ class InspecaoProd extends BaseController
         }
         // debug($dados_requis, true);
         $this->data['edicao'] = false;
+        $this->data['allconsulta'] = true;
         $requis = [
             'data' => montaListaColunasEnt($this->data, 'req_id', $dados_requis, $campos[1]),
         ];
@@ -138,20 +142,19 @@ class InspecaoProd extends BaseController
         $entRequisicao    = new EntInspecaoProd((array) $requisicao, $show, 'conf');
 
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
-
+        // debug($produtos);
         $filtrado = array_filter($produtos, function ($item) {
-            return ($item->rpa_atendida + $item->rpa_cancelada) == $item->rep_quantia;
+            return ($item->rpa_atendida + $item->rpa_cancelada) == $item->rep_quantia && $item->rpa_conferida > 0;
         });
-        $produtos = $filtrado;
-        $pro_ids = array_unique(array_map(fn($p) => $p->pro_id, $produtos));
+        // debug($filtrado, true);
+        // $produtos = $filtrado;
 
-        $resultado = $produtos;
+        $resultado = array_values($filtrado);
 
         $verinsp = '';
-
         // Loop de tratamento visual e funcional de cada produto
-        for ($p = 0; $p < count($resultado); $p++) {
-            $prod = $resultado[$p];
+        foreach ($resultado as $key => $value) {
+            $prod = $resultado[$key];
 
             // Inicializa flags padrão de conferência
             $prod->pre_cbmisturador  ??= 'N';
@@ -163,11 +166,11 @@ class InspecaoProd extends BaseController
 
             $prod->bt_insvis = '';
             $prod->bt_ok = '';
-            if ($prod->cla_insvis == 'S' && $prod->cla_insvisconf == 'S') {
+            if ($prod->cla_insvis == 'S' || $prod->cla_insvisconf == 'S') {
                 $badge = "<span id='badgeinsp_{$prod->rep_id}' class='badgeinsp badge rounded-pill bg-warning p-1 fs-7'></span>";
 
                 $bt_insvis = new MyCampo();
-                $bt_insvis->id = $bt_insvis->nome = "bt_insvis[$p]";
+                $bt_insvis->id = $bt_insvis->nome = "bt_insvis_$prod->rep_id";
                 $bt_insvis->classep  = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0 float-start';
                 $bt_insvis->i_cone   = "<i class='fab fa-searchengin'></i>";
                 $bt_insvis->label    = '';
@@ -175,17 +178,15 @@ class InspecaoProd extends BaseController
                 $bt_insvis->funcChan = "gerarInspecao({$this->data['tel_id']}, {$prod->rep_id})";
                 $prod->bt_insvis = $badge . $bt_insvis->crBotao();
 
-                $okop[0] = 'Não';
-                $okop[1] = 'Sim';
                 $bt_ok = new MyCampo();
-                $bt_ok->id = $bt_ok->nome = "bt_ok[$p]";
+                $bt_ok->id = $bt_ok->nome = "btok_$prod->rep_id";
                 $bt_ok->dispForm  = 'float-end';
                 $bt_ok->classep  = 'semmb';
                 $bt_ok->label    = '';
                 $bt_ok->valor   = 1;
                 $bt_ok->selecionado   = '';
                 $bt_ok->place    = 'Inspeção';
-                $bt_ok->funcChan = "mostraOcultaCampo('bt_ok[$p]', '', 'bt_insvis[$p]');";
+                $bt_ok->funcChan = "mostraOcultaCampo('btok_$prod->rep_id', '', 'bt_insvis_$prod->rep_id');";
                 $prod->bt_ok = $bt_ok->crCheckbox();
             }
             // $fieldsAten = $entRequisicao->defCamposProdutoAte($prod);
@@ -193,6 +194,7 @@ class InspecaoProd extends BaseController
 
             $prod->rpa_data         = data_br($prod->rpa_data);
             $prod->rpa_data_conferencia = data_br($prod->rpa_data_conferencia);
+            $prod->rpa_aprovada = (int)$prod->rpa_conferida;
             $prod->saldo         = (int)$prod->rpa_atendida - (int)$prod->rpa_conferida;
 
             $verinsp .= "verificaInspecao(" . $prod->rep_id . "," . $prod->req_id . "," . $prod->pro_id . ",'" . $prod->lot_lote . "');";
@@ -218,14 +220,43 @@ class InspecaoProd extends BaseController
 
     public function verificainspecao()
     {
-        $ret['insp'] = '';
+        $ret['insp'] = 0;
         $requisicao = $_REQUEST['requisicao'];
         $produto = $_REQUEST['produto'];
         $lote = $_REQUEST['lote'];
-        $inspecoes = $this->ocorrencia->getOcorrenciaReqProd($requisicao, $produto, $lote);
+        $filtro = [
+            'pro_id' => $produto,
+            'lot_lote' => $lote
+        ];
+        $inspecoes = $this->common->getRegFiltro('dbEstoque', 'est_requisicao_produto_ocorrencia', ['rpo_id', 'rpo_qtd'], $filtro);
         if ($inspecoes) {
-            $ret['insp'] = count($inspecoes);
+            $insp = 0;
+            foreach ($inspecoes as $key => $value) {
+                $insp += $value['rpo_qtd'];
+            }
+            $ret['insp'] = $insp;
         }
+        echo json_encode($ret);
+    }
+
+    public function excluiInspecao($id)
+    {
+
+        $filtro = [
+            'rpo_id' => $id,
+        ];
+        $inspecao = $this->common->getRegFiltro('dbEstoque', 'vw_est_requisicao_produto_ocorrencia_relac', ['rep_id', 'req_id', 'pro_id', 'lot_lote'], $filtro);
+        // debug($inspecao, true);
+        $msg[0] = $inspecao[0]['rep_id'];
+        $msg[1] = $inspecao[0]['req_id'];
+        $msg[2] = $inspecao[0]['pro_id'];
+        $msg[3] = $inspecao[0]['lot_lote'];
+
+        $exclui = $this->common->deleteReg('dbEstoque', 'est_requisicao_produto_ocorrencia', "rpo_id = $id");
+        $ret['erro'] = false;
+        $ret['msg'] = '';
+
+        envia_msg_ws($this->data['controler'], $msg, 'NovaInspecao', session()->get('usu_id'), 1);
         echo json_encode($ret);
     }
     /**
@@ -247,6 +278,7 @@ class InspecaoProd extends BaseController
         $reqId    = $json['req_id'] ?? null;
         $telId    = $json['tel_id'] ?? null;
         $indice    = $json['indice'] ?? null;
+        $qtde    = $json['qtdade'] ?? 0;
 
         $config['Leitura']  = true;
         $config['Label']    = "Tela";
@@ -304,7 +336,7 @@ class InspecaoProd extends BaseController
         $qtd->minimo       = 1;
         $qtd->largura      = 10;
         $qtd->size         = 3;
-        $qtd->maximo       = 999;
+        $qtd->maximo       = $qtde;
         $qtd->obrigatorio  = true;
         $quantia = $qtd->crInput();
 
@@ -314,12 +346,30 @@ class InspecaoProd extends BaseController
         $oco = new EntOcoOcorrencia($dados, true);
 
         $ocorretxt = '';
-        $jaregistradas = $this->ocorrencia->getOcorrenciaReqProd($reqId, $proId, $lotlote);
+        $filtro = [
+            'req_id' => $reqId,
+            'pro_id' => $proId,
+            'lot_lote' => $lotlote
+        ];
+        $jaregistradas = $this->common->getRegFiltro('dbEstoque', 'vw_est_requisicao_produto_ocorrencia_relac', ['rpo_id', 'rpo_data', 'rpo_qtd', 'sut_nome'], $filtro);
+
+        // $jaregistradas = $this->ocorrencia->getOcorrenciaReqProd($reqId, $proId, $lotlote);
         if ($jaregistradas) {
             $ocorretxt = "<b>Inspeções já Registradas</b><br>";
             // debug($jaregistradas, true);
+            $base_url = base_url($this->data['controler']);
             foreach ($jaregistradas as $key => $value) {
-                $ocorretxt .= data_br($value->oco_data) . ' - Qtia: ' . $value->oco_qtd . ' - ' . $value->sut_nome . "<br>";
+
+                $url_del = $base_url . '/excluiInspecao/' . $value['rpo_id'];
+                $bt_del = new MyCampo();
+                $bt_del->id = $bt_del->nome = "btexclui_$key";
+                $bt_del->classep  = 'btn btn-outline-danger btn-sm border-0 mx-0 fs-0';
+                $bt_del->i_cone   = "<i class='far fa-trash-alt'></i>";
+                $bt_del->label    = '';
+                $bt_del->place    = 'Excluir Inspeção';
+                $bt_del->funcChan = "excluiInspecao('{$url_del}')";
+                $btdel = $bt_del->crBotao();
+                $ocorretxt .= $btdel . ' - ' . data_br($value['rpo_data']) . ' - Qtia: ' . $value['rpo_qtd'] . ' - ' . $value['sut_nome'] . "<br>";
             }
             // echo $ocorretxt;
             $this->data['campos'][] = $ocorretxt;
@@ -409,7 +459,6 @@ class InspecaoProd extends BaseController
                     if ($acao) {
                         $postado['tpa_id'] = $acao->tpa_id ?? null;
                         $postado['tmo_id'] = $acao->tmo_id ?? null;
-                        // $postado['tel_id'] = $acao->tel_id ?? null;
                     }
                 }
             } else {
@@ -423,14 +472,23 @@ class InspecaoProd extends BaseController
                 $postado['oco_data'] = date('Y-m-d H:i:s');
             }
 
-            // cria a entity
+            $sql_oco = [
+                'tpo_id'        => $postado['tpo_id'],
+                'sut_id'        => $postado['sut_id'],
+                'tel_id'        => $postado['tel_id'],
+                'req_id'        => $postado['req_id'],
+                'rep_id'        => $postado['rep_id'],
+                'tpa_id'        => $postado['tpa_id'],
+                'rpo_descricao' => $postado['oco_descricao'],
+                'pro_id'        => $postado['pro_id'],
+                'lot_id'        => $postado['lot_id'],
+                'rpo_qtd'       => $postado['oco_qtd'],
+                'rpo_data'      => $postado['oco_data'],
+                'tmo_id'        => $postado['tmo_id']
+            ];
 
-            $entity = new EntOcoOcorrencia($postado);
 
-            if (!$this->ocorrencia->save($entity)) {
-                throw new \Exception(implode('<br>', $this->ocorrencia->errors()));
-            }
-
+            $oco_id = $this->common->insertReg('dbEstoque', 'est_requisicao_produto_ocorrencia', $sql_oco);
             session()->setFlashdata('msg', 'Ocorrência gravada com sucesso!');
             $msg[0] = $postado['rep_id'];
             $msg[1] = $postado['req_id'];
@@ -458,7 +516,7 @@ class InspecaoProd extends BaseController
     public function store()
     {
         $postado = $this->request->getPost();
-        // debug($postado, true);
+        debug($postado, true);
 
         $dadosAgrupados = [];
 

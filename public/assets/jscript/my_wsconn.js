@@ -18,13 +18,19 @@ jQuery(document).ready(function () {
 
     conn.onmessage = function (e) {
       var data = JSON.parse(e.data);
+      var msg = "";
       console.log("Recebi: " + data.tipo + " - " + data.msg);
+      if (Array.isArray(data.msg)) {
+        msg = data.msg[0];
+      } else if (typeof data.msg === "string") {
+        msg = data.msg;
+      }
 
       switch (data.tipo) {
         case "Entrou":
         case "Saiu":
         case "Login":
-          mostranoToast(data.msg);
+          mostranoToast(msg);
           break;
 
         case "Ativo":
@@ -40,7 +46,7 @@ jQuery(document).ready(function () {
           contador = 0;
           var usuario = jQuery("#usu_id").val();
           if (data.usuario == usuario) {
-            mostranoToast(data.msg); // ou outra ação
+            mostranoToast(msg); // ou outra ação
             verificaNotificacao();
           }
           break;
@@ -49,7 +55,7 @@ jQuery(document).ready(function () {
           contador = 0;
           var usuario = jQuery("#usu_id").val();
           if (data.usuario == usuario) {
-            mostranorodape(data.msg);
+            mostranorodape(msg);
           }
           break;
 
@@ -57,10 +63,12 @@ jQuery(document).ready(function () {
           let path = window.location.pathname;
           let segments = path.split("/").filter(Boolean);
           let lastSegment = segments[segments.length - 1];
-          if (segments.length === 1 && lastSegment === data.msg) {
+          if (segments.length === 1 && lastSegment === msg) {
             jQuery("#table").DataTable().ajax.reload(null, false);
           }
           break;
+        case "NovaInspecao":
+          verificaInspecao(data.msg[0], data.msg[1], data.msg[2], data.msg[3]);
       }
     };
 

@@ -1,26 +1,22 @@
-<style>
-    .tabela-pequena {
-        font-size: 10px;
-    }
-</style>
 <?
 if (!isset($show)) {
     $show = false;
 }
+// debug($produtos, true);
 ?>
 <div class="accordion" id="accProdutos">
     <div class="accordion-item">
-        <h2 class="accordion-header border border-bottom-1" id="headprod<?= $produtos[0]['req_id'] ?>">
-            <button class="accordion-button" type="button" data-bs-toggle="collapse"
-                data-bs-target="#collapseprod<?= $produtos[0]['req_id'] ?>" aria-expanded="false"
+        <h2 class="accordion-header" id="headprod<?= $produtos[0]['req_id'] ?>">
+            <button class="accordion-button" type="button" 
+                data-bs-target="#collapseprod<?= $produtos[0]['req_id'] ?>" aria-expanded="true"
                 aria-controls="collapseprod<?= $produtos[0]['req_id'] ?>" data-proid="<?= $produtos[0]['req_id'] ?>">
                 <div class='col-12 text-center'>Produtos</div>
             </button>
         </h2>
-        <div id="collapseprod<?= $produtos[0]['req_id'] ?>" class="accordion-collapse collapse show" aria-labelledby="headprod<?= $produtos[0]['req_id'] ?>" data-bs-parent="#accProdutos">
-            <div class="accordion-body p-1" style="max-height:49vh; height:49vh; overflow-y: auto">
-                <table class="table table-bordered table-sm text-center align-middle tabela-pequena">
-                    <thead class="table-light">
+        <div id="collapseprod<?= $produtos[0]['req_id'] ?>" class="accordion-collapse collapse show border border-2" aria-labelledby="headprod<?= $produtos[0]['req_id'] ?>" data-bs-parent="#accProdutos">
+            <div class="accordion-body p-0" style="max-height:49vh; height:auto;">
+                <table class="display table table-bordered table-sm table-striped table-hover text-center align-middle tabela-pequena">
+                    <thead class="table-info">
                         <tr>
                             <th>Cód.ERP</th>
                             <th>Descrição</th>
@@ -32,6 +28,7 @@ if (!isset($show)) {
                             <th>Data<br>Atendimento</th>
                             <th>Qtde.<br>Conferida</th>
                             <th>Data<br>Conferência</th>
+                            <th>Qtde<br>Aprovada</th>
                             <?
                             if (!$show) { ?>
                                 <th>Conformidade</th>
@@ -44,9 +41,6 @@ if (!isset($show)) {
                             $corleglote = 'border-secondary';
                         ?>
                             <tr id='<?= $produto["rep_id"] ?>'>
-                                <?
-                                if (!$show) { ?>
-                                <? } ?>
                                 <td>
                                     <input type='hidden' id='repid_<?= $produto["rep_id"] ?>' name='repid_<?= $produto["rep_id"] ?>' value='<?= $produto["rep_id"] ?>'></input>
                                     <input type='hidden' id='cbfab_<?= $produto["rep_id"] ?>' name='cbfab_<?= $produto["rep_id"] ?>' value='<?= $produto["pre_cbfabricante"] ?>'></input>
@@ -76,6 +70,7 @@ if (!isset($show)) {
                                 <td id='dat_<?= $produto["rep_id"] ?>'><?= $produto['rpa_data'] ?></td>
                                 <td id='cfe_<?= $produto["rep_id"] ?>'><?= $produto['rpa_conferida'] ?></td>
                                 <td id='dcf_<?= $produto["rep_id"] ?>'><?= $produto['rpa_data_conferencia'] ?></td>
+                                <td id='apr_<?= $produto["rep_id"] ?>'><?= $produto['rpa_aprovada'] ?></td>
                                 <? if (!$show) { ?>
                                     <td>
                                         <?= $produto['bt_insvis']; ?>

@@ -116,7 +116,7 @@ class OcoOcorrencia extends BaseController
         $listaFinal = [];
 
         foreach ($dados as $index => $nov) {
-            // SE TEM REQUISIÇÃO: NÃO PERMITE EDITAR/EXCLUIR
+            // SE TEM REQUISIÇÃO: NÃO PERMITE EDITAR e EXCLUIR
             if (!empty($nov->req_id)) {
                 $this->data['exclusao'] = false;
                 $this->data['edicao']   = false;
@@ -429,32 +429,32 @@ class OcoOcorrencia extends BaseController
     }
 
 
-    public function getProdutoLote()
-    {
-        // Recupera o código do lote enviado via POST
-        $codLote = $this->request->getPost('codLote');
-        // Valida se o lote foi informado
-        if (!$codLote) {
-            return $this->response->setJSON([
-                'erro' => 'Lote não informado'
-            ]);
-        }
+    // public function getProdutoLote()
+    // {
+    //     // Recupera o código do lote enviado via POST
+    //     $codLote = $this->request->getPost('codLote');
+    //     // Valida se o lote foi informado
+    //     if (!$codLote) {
+    //         return $this->response->setJSON([
+    //             'erro' => 'Lote não informado'
+    //         ]);
+    //     }
 
-        $dados = $this->produtLoteModel->getLoteSearch($codLote);
+    //     $dados = $this->produtLoteModel->getLoteSearch($codLote);
 
-        // Valida se o lote foi encontrado
-        if (!$dados || empty($dados)) {
-            return $this->response->setJSON([
-                'erro' => 'Lote não encontrado'
-            ]);
-        }
-        $lote = $dados[0];
+    //     // Valida se o lote foi encontrado
+    //     if (!$dados || empty($dados)) {
+    //         return $this->response->setJSON([
+    //             'erro' => 'Lote não encontrado'
+    //         ]);
+    //     }
+    //     $lote = $dados[0];
 
-        // Retorna a descrição do produto vinculada ao lote
-        return $this->response->setJSON([
-            'descpro' => $lote->pro_despro ?? '',
-        ]);
-    }
+    //     // Retorna a descrição do produto vinculada ao lote
+    //     return $this->response->setJSON([
+    //         'descpro' => $lote->pro_despro ?? '',
+    //     ]);
+    // }
 
 
 
@@ -462,7 +462,7 @@ class OcoOcorrencia extends BaseController
     {
         try {
 
-            $oco = $this->ocorrencia->find($id);
+            $oco = $this->ocorrencia->getOcorrencia($id);
 
             if (!$oco) {
                 throw new \Exception('Ocorrência não encontrada');

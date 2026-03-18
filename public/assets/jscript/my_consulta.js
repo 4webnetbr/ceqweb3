@@ -957,44 +957,25 @@ async function buscaLoteProduto(obj, url) {
   }
 }
 
-// function vinculaProdutoAoLote() {
-//   const loteSelect = document.getElementById("lot_id");
-//   const produtoInput = document.getElementById("lot_lote");
+async function verificaInspecao(indice, req, prod, lote) {
+  url = window.location.origin + "/InspecaoProd/verificainspecao";
+  dados = { requisicao: req, produto: prod, lote: lote };
+  const retornoAjax = await executaAjaxWait(url, "json", dados);
 
-//   if (!loteSelect || !produtoInput) return;
-
-//   loteSelect.addEventListener("change", function () {
-//     const codLote = this.value.trim();
-
-//     if (!codLote) {
-//       produtoInput.value = ""; // limpa
-//       return;
-//     }
-
-//     fetch(window.location.origin + "/OcoNovOcorrencia/getProdutoLote", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/x-www-form-urlencoded",
-//       },
-//       body: `codLote=${encodeURIComponent(codLote)}`,
-//     })
-//       .then((response) => response.json())
-//       .then((data) => {
-//         console.log('Resposta produto:', data);
-
-//         if (data.descpro) {
-//           produtoInput.value = data.descpro;
-//         } else {
-//           produtoInput.value = data.erro || "Produto não encontrado";
-//         }
-//       })
-//       .catch((error) => {
-//         console.error("Erro ao buscar produto do lote:", error);
-//         produtoInput.value = "Erro ao buscar produto";
-//       });
-//   });
-// }
-
-// document.addEventListener("DOMContentLoaded", function () {
-//   vinculaProdutoAoLote();
-// });
+  if (retornoAjax) {
+    insp = parseInt(retornoAjax.insp, 10) || 0;
+    if (insp > 0) {
+      jQuery("#badgeinsp_" + indice).text(insp);
+    } else {
+      jQuery("#badgeinsp_" + indice).text("");
+    }
+    var conf = parseInt(jQuery("#cfe_" + indice).text());
+    var apro = conf - insp;
+    jQuery("#apr_" + indice).text(apro);
+    if (insp > 0) {
+      jQuery("#btok_" + indice).addClass("d-none");
+    } else {
+      jQuery("#btok_" + indice).removeClass("d-none");
+    }
+  }
+}

@@ -670,7 +670,9 @@ function acertaDependente() {
 
   function atualizarTextoSelectpicker(select) {
     var selectedOptions = jQuery(select).find("option:selected");
-    var $button = jQuery(select).parent().find(".filter-option-inner-inner");
+    var $select = jQuery(select).parent();
+
+    $select.find(".selectpicker-selected-list").remove();
 
     if (selectedOptions.length > 1) {
       var list = selectedOptions
@@ -683,15 +685,48 @@ function acertaDependente() {
         })
         .get()
         .join("");
-      $button.html(list);
 
-      var altura = $button.outerHeight();
-
-      var $menu = jQuery(select).parent().find(".dropdown-menu").first();
-
-      $menu.css("top", -altura + "px !important");
+      var $lista = jQuery(
+        "<div class='selectpicker-selected-list'>" + list + "</div>",
+      );
+      $select.append($lista);
     }
   }
+
+  jQuery(document).on("click", ".selectpicker-selected-list", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    var $button = jQuery(this)
+      .closest(".bootstrap-select")
+      .find("button.dropdown-toggle");
+    $button.trigger("click");
+  });
+
+  // function atualizarTextoSelectpicker(select) {
+  //   var selectedOptions = jQuery(select).find("option:selected");
+  //   var $button = jQuery(select).parent().find(".filter-option-inner-inner");
+
+  //   if (selectedOptions.length > 1) {
+  //     var list = selectedOptions
+  //       .map(function () {
+  //         return (
+  //           "<div><i class='fas fa-check'></i> " +
+  //           jQuery(this).text() +
+  //           "</div>"
+  //         );
+  //       })
+  //       .get()
+  //       .join("");
+  //     $button.html(list);
+
+  //     var altura = $button.outerHeight();
+
+  //     var $menu = jQuery(select).parent().find(".dropdown-menu").first();
+
+  //     $menu.css("top", -altura + "px !important");
+  //   }
+  // }
 }
 /**
  * mostraOcultaCampo

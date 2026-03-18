@@ -122,18 +122,29 @@ class CommonModel extends Model
         return $ins_id;
     }
 
-    public function getPostsSearch($banco, $table, $fields, $limit, $start, $search, $col, $dir)
+    public function getRegFiltro($banco, $table, $fields, $filtros, $limit = false, $start = 0, $col = '', $dir = 'ASC')
     {
         $db = db_connect($banco);
         $builder = $db->table($table);
         $builder->select($fields);
-        if ($search != '') {
-            $builder->like($fields[0], $search);
-            for ($f = 1; $f < count($fields); $f++) {
-                $builder->orLike($fields[$f], $search);
+        if (!empty($filtros)) {
+            foreach ($filtros as $campo => $valcampo) {
+                // aplica filtro somente se o campo existir na tabela
+                if ($db->fieldExists($campo, "$table")) {
+                    if (is_array($valcampo)) {
+                        $builder->like($campo, $valcampo[0]);
+                    } else {
+                        $builder->where($campo, $valcampo);
+                    }
+                }
             }
         }
-        $builder->limit($limit, $start);
+        if ($limit) {
+            $builder->limit($limit, $start);
+        }
+        if ($col == '') {
+            $col = $fields[0];
+        }
         $builder->orderBy($col, $dir);
 
         $ret = $builder->get()->getResultArray();

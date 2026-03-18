@@ -1154,15 +1154,18 @@ async function copiar_requisicao(url) {
 async function gerarInspecao(tela, indice) {
   url = window.location.origin + "/InspecaoProd/inspeciona";
   telid = tela;
-  regid = jQuery("#req_id").val();
+  reqid = jQuery("#req_id").val();
   proid = jQuery("#proid_" + indice).val();
   lotlote = jQuery("#lotlote_" + indice).val();
+  qtdade = parseInt(jQuery("#apr_" + indice).text());
   titulo = "Gerar Inspeção";
   dados = JSON.stringify({
     pro_id: proid,
     lot_lote: lotlote,
-    req_id: regid,
+    req_id: reqid,
     tel_id: telid,
+    indice: indice,
+    qtdade: qtdade,
   });
   const retornoAjax = await executaAjaxWait(url, "html", dados);
   if (retornoAjax) {
@@ -1173,5 +1176,44 @@ async function gerarInspecao(tela, indice) {
     var myModal = new bootstrap.Modal(document.getElementById("myModal"), {});
     // document.onreadystatechange = function () {
     myModal.show();
+  }
+}
+
+async function excluiInspecao(url) {
+  const retornoAjax = await executaAjaxWait(url, "json");
+  const modalElement = document.querySelector(".modal.show");
+  if (modalElement) {
+    const modal = bootstrap.Modal.getInstance(modalElement);
+    modal.hide();
+  }
+}
+
+async function enviarInspecao(event) {
+  const requisicoes = [];
+  const form = document.getElementById("form1");
+  const jqForm = jQuery(form);
+
+  const trs = jQuery("tr").toArray();
+
+  const dados = {};
+  for (let tr of trs) {
+    if (tr.id != "" && tr.id != undefined) {
+      const idBase = parseInt(tr.id);
+      var confer = jQuery("#cfe_" + idBase).text();
+      var checkd = jQuery("#btok_" + idBase).is(":checked");
+      var aprova = jQuery("#apr_" + idBase).text();
+      if (parseInt(confer) != parseInt(aprova) || checkd) {
+        dados.confer = confer;
+        dados.aprova = aprova;
+      } else {
+        jqForm.append(`<input type="hidden" name="ins_parcial" value="1">`);
+      }
+      requisicoes.push(dados);
+    }
+  }
+  if (requisicoes.length > 0) {
+    return true;
+  } else {
+    return false;
   }
 }

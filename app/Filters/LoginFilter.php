@@ -62,7 +62,7 @@ class LoginFilter implements FilterInterface
                     Informe o Problema ao Administrador do Sistema!",
             ];
         } else {
-            $tela = $telaInfo[0];
+            $tela = (array) $telaInfo[0];
 
             $dadosTela = [
                 'modal' => $modal,
@@ -119,17 +119,6 @@ class LoginFilter implements FilterInterface
 
         if ($metodo === 'edit' && !strpbrk($permissao, 'E')) {
             return "<h2>Sem autorização para Editar <br>{$titulo}</h2><br>Solicite acesso ao Administrador do Sistema";
-        }
-
-        return '';
-    }
-
-    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
-    {
-        // Não utilizado
-    }
-}
-Administrador do Sistema";
         }
 
         return '';

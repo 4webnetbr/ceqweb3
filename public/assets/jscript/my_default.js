@@ -110,6 +110,12 @@ jQuery(document).ready(function () {
         desBloqueiaTela();
         return; // para aqui e não executa mais nada
       }
+    } else if (controller.toLowerCase() === "inspecaoprod") {
+      submeter = await enviarInspecao(event);
+      if (!submeter) {
+        desBloqueiaTela();
+        return; // para aqui e não executa mais nada
+      }
     } else {
       submeter = true;
     }

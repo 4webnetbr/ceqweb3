@@ -1,8 +1,3 @@
-<style>
-    .tabela-pequena {
-        font-size: 10px;
-    }
-</style>
 <?
 if (!isset($show)) {
     $show = false;
@@ -10,19 +5,17 @@ if (!isset($show)) {
 ?>
 <div class="accordion" id="accProdutos">
     <div class="accordion-item">
-        <div class="accordion-button text-center" type="button" data-bs-toggle="collapse"
-            data-bs-target="#collapseprod<?= $produtos[0] ?>" aria-expanded="false"
-            aria-controls="collapseprod<?= $produtos[0] ?>" data-proid="<?= $produtos[0] ?>">
-            <div class='col-12 text-center'>
-                <div class="accordion-header border border-bottom-1 " id="headprod<?= $produtos[0] ?>">
-                    Produtos
-                </div>
-            </div>
-        </div>
-        <div id="collapseprod<?= $produtos[0] ?>" class="accordion-collapse collapse show" aria-labelledby="headprod<?= $produtos[0] ?>" data-bs-parent="#accProdutos">
-            <div class="accordion-body p-1" style="max-height:49vh; height:auto; overflow-y: auto">
-                <table class="table table-sm text-center align-middle tabela-pequena table-bordered col-12 dataTable">
-                    <thead class="table-light">
+        <h2 class="accordion-header" id="headprod<?= $produtos[0] ?>">
+            <button class="accordion-button" type="button" 
+                data-bs-target="#collapseprod<?= $produtos[0] ?>" aria-expanded="true"
+                aria-controls="collapseprod<?= $produtos[0] ?>" data-proid="<?= $produtos[0] ?>">
+                <div class='col-12 text-center'>Produtos</div>
+            </button>
+        </h2>
+        <div id="collapseprod<?= $produtos[0] ?>" class="accordion-collapse collapse show border border-2" aria-labelledby="headprod<?= $produtos[0] ?>" data-bs-parent="#accProdutos">
+            <div class="accordion-body p-0" style="max-height:49vh; height:auto; overflow-y: auto">
+                <table class="display table table-bordered table-sm table-striped table-hover text-center align-middle tabela-pequena">
+                    <thead class="table-info">
                         <tr>
                             <?
                             for ($c = 0; $c < count($colunas); $c++) { ?>

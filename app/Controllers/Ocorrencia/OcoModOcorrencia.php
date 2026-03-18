@@ -307,20 +307,17 @@ class OcoModOcorrencia extends BaseController
     public function delete($id)
     {
         $ret = [];
-
+    
         try {
-            // Checa uso do status em outros bancos
-            $this->verificarUsoEmRelacionamentos('oco_ocorrencia', 'sut_id', (int) $id);
-
-            // Soft delete
+            $this->verificarUsoEmRelacionamentos('oco_subt_ocorrencia', 'sut_id', (int) $id);
             $this->modocorrencia->delete($id);
             $ret['erro'] = false;
-            session()->setFlashdata('msg', 'Ocorrência Excluída com Sucesso');
+            $ret['msg']  = 'Ocorrência Excluída com Sucesso';
         } catch (\Exception $e) {
             $ret['erro'] = true;
             $ret['msg']  = 3;
         }
-
+    
         echo json_encode($ret);
     }
 
