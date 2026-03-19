@@ -1189,13 +1189,11 @@ async function excluiInspecao(url) {
 }
 
 async function enviarInspecao(event) {
-  const requisicoes = [];
   const form = document.getElementById("form1");
   const jqForm = jQuery(form);
 
-  const trs = jQuery("tr").toArray();
-
-  const dados = {};
+  const trs = jQuery("tr.linha_produto").toArray();
+  var teminsp = false;
   for (let tr of trs) {
     if (tr.id != "" && tr.id != undefined) {
       const idBase = parseInt(tr.id);
@@ -1203,15 +1201,21 @@ async function enviarInspecao(event) {
       var checkd = jQuery("#btok_" + idBase).is(":checked");
       var aprova = jQuery("#apr_" + idBase).text();
       if (parseInt(confer) != parseInt(aprova) || checkd) {
-        dados.confer = confer;
-        dados.aprova = aprova;
+        teminsp = true;
+        jqForm.append(
+          `<input type="hidden" name="aprova_` +
+            idBase +
+            `" value="` +
+            aprova +
+            `">`,
+        );
       } else {
         jqForm.append(`<input type="hidden" name="ins_parcial" value="1">`);
       }
-      requisicoes.push(dados);
     }
   }
-  if (requisicoes.length > 0) {
+  if (teminsp) {
+    jQuery("#form1").attr("data-alter", true);
     return true;
   } else {
     return false;

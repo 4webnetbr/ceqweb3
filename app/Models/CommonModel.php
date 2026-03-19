@@ -145,8 +145,11 @@ class CommonModel extends Model
         if ($col == '') {
             $col = $fields[0];
         }
-        $builder->orderBy($col, $dir);
+        if($col != '*'){
+            $builder->orderBy($col, $dir);
+        }
 
+        // debug($builder->getCompiledSelect(), true);
         $ret = $builder->get()->getResultArray();
         // $sql = $this->db->getLastQuery();
         // debug($sql, false);

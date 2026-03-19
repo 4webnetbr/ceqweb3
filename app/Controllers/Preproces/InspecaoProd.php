@@ -78,7 +78,7 @@ class InspecaoProd extends BaseController
     {
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
-        $dados_requis = $this->requisicao->getRequisicaoLista(false, [24, 25]);
+        $dados_requis = $this->requisicao->getRequisicaoLista(false, [24, 25, 26]);
         $dados_requis = filtrarRequisicoesPorPerfil($dados_requis);
         // debug($dados_requis, true);
         if ($dados_requis) {
@@ -144,7 +144,7 @@ class InspecaoProd extends BaseController
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
         // debug($produtos);
         $filtrado = array_filter($produtos, function ($item) {
-            return ($item->rpa_atendida + $item->rpa_cancelada) == $item->rep_quantia && $item->rpa_conferida > 0;
+            return ($item->rpa_atendida + $item->rpa_cancelada) == $item->rep_quantia && $item->rpa_conferida > 0 && $item->rpa_aprovada == 0;
         });
         // debug($filtrado, true);
         // $produtos = $filtrado;
@@ -189,9 +189,6 @@ class InspecaoProd extends BaseController
                 $bt_ok->funcChan = "mostraOcultaCampo('btok_$prod->rep_id', '', 'bt_insvis_$prod->rep_id');";
                 $prod->bt_ok = $bt_ok->crCheckbox();
             }
-            // $fieldsAten = $entRequisicao->defCamposProdutoAte($prod);
-            // $fieldsConf = $entRequisicao->defCamposProdutoConf($prod);
-
             $prod->rpa_data         = data_br($prod->rpa_data);
             $prod->rpa_data_conferencia = data_br($prod->rpa_data_conferencia);
             $prod->rpa_aprovada = (int)$prod->rpa_conferida;
@@ -516,44 +513,47 @@ class InspecaoProd extends BaseController
     public function store()
     {
         $postado = $this->request->getPost();
-        debug($postado, true);
+        // debug($postado, true);
 
         $dadosAgrupados = [];
+        $parcial = false;
 
         foreach ($postado as $key => $value) {
             if (preg_match('/^repid_(\d+)$/', $key, $matches)) {
                 $id = $matches[1]; // Ex: 88, 89
                 // debug($id);
-                // Inicializa temporário para os dados desse ID
-                $dadosTemp = ['repid' => $value];
+                // OBJETO
+                $dadosTemp = new \stdClass();
+                $dadosTemp->repid = $value;
 
                 // Pega os campos relacionados ao mesmo ID
                 foreach ($postado as $campo => $val) {
                     if (str_ends_with($campo, "_$id") && $campo !== "repid_$id") {
                         $nomeCampo = substr($campo, 0, -strlen("_$id"));
-                        $dadosTemp[$nomeCampo] = $val;
+                        // debug($nomeCampo);
+                        $dadosTemp->$nomeCampo = $val;
                     }
                     if ($campo === "req_id") {
-                        $dadosTemp[$campo] = $val;
+                        $dadosTemp->req_id = $val;
                     }
                     if ($campo === "tmo_id") {
-                        $dadosTemp[$campo] = $val;
+                        $dadosTemp->tmo_id = $val;
                     }
-                    // debug($dadosTemp);
+                    if ($campo === "rpa_id") {
+                        $dadosTemp->rpa_id = $val;
+                    }
                 }
 
-                // Faz a verificação: repqtia == (rpa_cancelada + rpa_atendida)
-                $qtia        = (int)($dadosTemp['repqtia'] ?? 0);
-                $cancelada   = (int)($dadosTemp['rpa_cancelada'] ?? 0);
-                $atendida    = (int)($dadosTemp['rpa_atendida'] ?? 0);
-                $conferida    = (int)($dadosTemp['rpa_conferida'] ?? 0);
+                $aprovada  = (int)($dadosTemp->aprova ?? 0);
 
-                if ($atendida === $conferida) {
-                    // Somente adiciona se a condição for satisfeita
+                if ($aprovada > 0) {
                     $dadosAgrupados[$id] = $dadosTemp;
+                } else {
+                    $parcial = true;
                 }
             }
         }
+
         // debug($dadosAgrupados, true);
         if (count($dadosAgrupados) === 0) {
             $msg            = 7;
@@ -570,31 +570,54 @@ class InspecaoProd extends BaseController
 
             foreach ($dadosAgrupados as $campo => $val) {
                 $sql_save = [
-                    'rpa_conferida' => $val['rpa_conferida'],
-                    'rpa_data_conferencia' => date('Y-m-d H:i:s'),
+                    'rpa_aprovada' => $val->aprova,
+                    'rpa_data_inspecao' => date('Y-m-d H:i:s'),
                 ];
-                if (!$this->requisicaoate->update($val['repid'], $sql_save)) {
+                // debug($sql_save);
+                if (!$this->requisicaoate->update($val->rpaid, $sql_save)) {
                     $ret['erro'] = true;
-                    $ret['msg'] = 'Erro ao gravar a Conferência.';
+                    $ret['msg'] = 'Erro ao gravar a Inspeção.';
                     $this->requisicaoate->transRollback();
                     echo json_encode($ret);
                     return;
                 } else {
-                    // pega o movimento
-                    $idmov  = $val['tmo_id'];
-                    $qtia   = $val['rpa_atendida'];
-                    $conf   = $val['rpa_conferida'];
-                    $proid  = $val['proid'];
-                    $requisicao = $this->requisicao->getRequisicaoRep($val['repid'])[0];
-                    // cria os movimentos
-                    $movs[] = [ // A QUANTIDADE É A QUANTIDADE CONFERIDA
-                        'id'  => $idmov,
-                        'qt'  => $conf,
-                        'msg' => 'Conferência de Requisição',
-                        'pro_id' => $proid,
-                        'lot_lote' => $requisicao['lot_lote'],
-                        'lot_validade' => $requisicao['lot_validade'],
+                    $filtro = [
+                        'pro_id' => $val->proid,
+                        'lot_lote' => $val->lotlote
                     ];
+                    $ocorrencias = $this->common->getRegFiltro('dbEstoque', 'est_requisicao_produto_ocorrencia', ['*'], $filtro);
+                    // debug($ocorrencias,true);
+                    for ($o=0; $o < count($ocorrencias) ; $o++) {
+                        $result = [];
+
+                        foreach ($ocorrencias[0] as $key => $value) {
+                            $newKey = str_starts_with($key, 'rpo_')
+                                ? str_replace('rpo_', 'oco_', $key)
+                                : $key;
+
+                            $result[$newKey] = $value;
+                        }
+                        $result['stt_id'] = 28;
+                        // debug($result, true);
+                        $entity = new EntOcoOcorrencia($result);
+                        // debug($entity, true);
+                        $this->ocorrencia->save($entity);
+                    }
+                    // pega o movimento
+                    // $idmov  = $val['tmo_id'];
+                    // $qtia   = $val['rpa_atendida'];
+                    // $conf   = $val['rpa_conferida'];
+                    // $proid  = $val['proid'];
+                    // $requisicao = $this->requisicao->getRequisicaoRep($val['repid'])[0];
+                    // // cria os movimentos
+                    // $movs[] = [ // A QUANTIDADE É A QUANTIDADE CONFERIDA
+                    //     'id'  => $idmov,
+                    //     'qt'  => $conf,
+                    //     'msg' => 'Inspeção de Requisição',
+                    //     'pro_id' => $proid,
+                    //     'lot_lote' => $requisicao['lot_lote'],
+                    //     'lot_validade' => $requisicao['lot_validade'],
+                    // ];
                 }
             }
             if (!$ret['erro']) {
@@ -609,7 +632,7 @@ class InspecaoProd extends BaseController
                     }
                 }
                 if (!$ret['erro']) {
-                    $status = 5;
+                    $status = ($parcial) ? 26:27;
                     $dadosReq = [
                         'stt_id' => $status
                     ];
@@ -619,12 +642,12 @@ class InspecaoProd extends BaseController
                         $this->requisicaoate->transCommit();
                         $this->requisicao->transCommit();
 
-                        $ret['msg'] = 'Conferência gravada com sucesso!';
+                        $ret['msg'] = 'Inspeção gravada com sucesso!';
                         $ret['url'] = site_url($this->data['controler']);
                         session()->setFlashdata('msg', $ret['msg']);
                     } else {
                         $ret['erro'] = true;
-                        $ret['msg'] = 'Erro ao gravar a Conferência.';
+                        $ret['msg'] = 'Erro ao gravar a Inspeção.';
                         $this->requisicaoate->transRollback();
                     }
                 }

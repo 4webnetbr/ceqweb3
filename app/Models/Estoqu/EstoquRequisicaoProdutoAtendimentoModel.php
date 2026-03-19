@@ -26,7 +26,8 @@ class EstoquRequisicaoProdutoAtendimentoModel extends Model
             'rpa_data',
             'rpa_conferida',
             'rpa_data_conferencia',
-
+            'rpa_aprovada',
+            'rpa_data_inspecao'
     ];
 
     // protected $deletedField  = 'req_excluido';
