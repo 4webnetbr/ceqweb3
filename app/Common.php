@@ -483,7 +483,7 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
             $bt_con->id = $bt_con->nome = 'bt_show';
             $bt_con->classep = 'btn btn-outline-info btn-sm border-0 mx-0 fs-0';
             $bt_con->i_cone = "<i class='far fa-eye'></i>";
-            $bt_con->place = "Consulta";
+            $bt_con->place = "Consultar";
             $bt_con->funcChan = "redireciona('{$url_con}',event)";
             $edit = $bt_con->crBotao();
         }

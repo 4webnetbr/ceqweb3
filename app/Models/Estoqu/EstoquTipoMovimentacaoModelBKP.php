@@ -190,6 +190,7 @@ class EstoquTipoMovimentacaoModel extends Model
     }
 
 
+
     public function defCampos($dados = false, $show = false)
     {
         $ret = [];

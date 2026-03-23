@@ -2,19 +2,21 @@
 
 namespace App\Controllers\Estoque;
 
-use App\Libraries\MyCampo;
-use App\Controllers\BuscasSapiens;
 use App\Controllers\BaseController;
-use App\Models\Produt\ProdutLoteModel;
-use App\Entities\Estoque\EntRequisicao;
-use App\Models\Produt\ProdutClasseModel;
-use App\Models\Produt\ProdutProdutoModel;
-use App\Models\Estoqu\EstoquDepositoModel;
+use App\Controllers\BuscasSapiens;
 use App\Entities\Estoque\EntConfRequisicao;
-use App\Models\Estoqu\EstoquRequisicaoModel;
+use App\Entities\Estoque\EntRequisicao;
 use App\Entities\Ocorrencia\EntOcoOcorrencia;
-use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
+use App\Libraries\MyCampo;
+use App\Models\CommonModel;
+use App\Models\Estoqu\EstoquDepositoModel;
+use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
+use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
+use App\Models\Ocorre\OcorreOcorrenciaModel;
+use App\Models\Produt\ProdutClasseModel;
+use App\Models\Produt\ProdutLoteModel;
+use App\Models\Produt\ProdutProdutoModel;
 
 class ConfRequisicao extends BaseController
 {
@@ -25,6 +27,8 @@ class ConfRequisicao extends BaseController
     public $requisicaoate;
     public $classes;
     public $produtos;
+    public $ocorrencia;
+    public $common;
     public $lote;
     public $busca;
     public $deposito;
@@ -46,6 +50,8 @@ class ConfRequisicao extends BaseController
         $this->busca        = new BuscasSapiens();
         $this->deposito     = new EstoquDepositoModel();
         $this->lote         = new ProdutLoteModel();
+        $this->ocorrencia    = new OcorreOcorrenciaModel();
+        $this->common        = new CommonModel();
 
         if ($this->data['erromsg'] != '') {
             $this->__erro();
@@ -151,12 +157,14 @@ class ConfRequisicao extends BaseController
      */
     public function confere($id, $show = true)
     {
-        $requisicao = $this->requisicao->getRequisicao($id)[0];
+        $requisicao = $this->requisicao->getRequisicao($id);
 
         if (!$requisicao) {
-            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
-            return redirect()->to(site_url($this->data['controler']));
+            return redirectWithError($this->data['controler'],41);
+            // session()->setFlashdata('erromsg', 'Requisição não encontrada.');
+            // return redirect()->to(site_url($this->data['controler']));
         }
+        $requisicao = $requisicao[0];
 
         $log = buscaLog('est_requisicao', $id);
         $requisicao->usu_nome = $log['usua_alterou'] ?? '';
@@ -255,7 +263,6 @@ class ConfRequisicao extends BaseController
             $bt_oco->classep  = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0';
             $bt_oco->i_cone   = "<i class='fa-solid fa-exclamation-triangle'></i>";
             $bt_oco->label    = '';
-            // $bt_oco->attrdata = ['data-id' => ];
             $bt_oco->place    = 'Gerar Ocorrência';
             $bt_oco->funcChan = "gerarOcorrencia({$this->data['tel_id']}, {$prod->rep_id})";
             $btoco = $bt_oco->crBotao();
@@ -267,10 +274,16 @@ class ConfRequisicao extends BaseController
             $resultado[$p]->bt_insvis       = "";
 
             if ($prod->cla_insvis == 'S' && $prod->cla_insvisconf == 'S') {
-                $resultado[$p]->bt_insvis = "<button class='btn btn-outline-black btn-sm border-0 mx-0 fs-0' 
-                    data-mdb-toggle='tooltip' data-mdb-placement='top' 
-                    title='Inspeção Visual'>
-                    <i class='fa-solid fa-magnifying-glass-arrow-right'></i></button>";
+                $bt_insvis = new MyCampo();
+                $bt_insvis->id = $bt_insvis->nome = 'bt_insvis';
+                $bt_insvis->classep  = 'btn btn-outline-black btn-sm border-0 mx-0 fs-0';
+                $bt_insvis->i_cone   = "<i class='fa-solid fa-magnifying-glass-arrow-right'></i>";
+                $bt_insvis->label    = '';
+                $bt_insvis->place    = 'Inspeção Visual';
+                // FIXADO TEL_ID 48 TELA DE INSPEÇÃO
+                $bt_insvis->funcChan = "gerarInspecao(48, {$prod->rep_id})";
+                $btinsvis = $bt_insvis->crBotao();
+                $resultado[$p]->bt_insvis = $btinsvis;
             }
 
             $fields = $ent->defCamposProdutoConf($prod);
@@ -344,7 +357,7 @@ class ConfRequisicao extends BaseController
         $campos[0][] =
             view('partials/pw_produtos_conferencia', ['produtos' => $resultado]);
         $campos[0][] = '</>';
-        $this->data['desc_edicao']       = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT).' '.fmtEtiquetaCor($requisicao->stt_cor, $requisicao->stt_nome, 1);
+        $this->data['desc_edicao']       = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' ' . fmtEtiquetaCor($requisicao->stt_cor, $requisicao->stt_nome, 1);
         $this->data['desc_metodo'] = ' ';
         $this->data['secoes'] = $secao;
         $this->data['campos'] = $campos;
@@ -437,28 +450,6 @@ class ConfRequisicao extends BaseController
             $movs = [];
 
             foreach ($dadosAgrupados as $campo => $val) {
-                // debug($val, true);
-                // if ($val->rpa_conferida < $val->rpa_atendida) {
-                //     // GERA OCORRENCIA
-                //     $oco = [
-                //         'pro_id'   => $val->proid,
-                //         'lot_id'   => $val->proid,
-                //         'tpo_id'   => 'integer',
-                //         'sut_id'   => 'integer',
-                //         'tpa_id'   => 'integer',
-                //         'oco_qtd'  => 'integer',
-                //         'stt_id'   => 'integer',
-                //         'tmo_id'   => 'integer',
-                //         'req_id'   => 'integer',
-
-                //     ];
-                //     $entity = new EntOcoOcorrencia($oco);
-                //     // debug($entity->stt_id);
-
-                //     if (!$this->ocorrencia->save($entity)) {
-                //         // throw new \Exception(implode('<br>', $this->ocorrencia->errors()));
-                //     }
-                // }
                 $sql_save = [
                     'rpa_conferida' => $val->rpa_conferida,
                     'rpa_data_conferencia' => date('Y-m-d H:i:s'),
@@ -477,7 +468,30 @@ class ConfRequisicao extends BaseController
                     echo json_encode($ret);
                     return;
                 } else {
+                    $filtro = [
+                        'req_id' => $val->req_id,
+                        'pro_id' => $val->proid,
+                        'lot_lote' => $val->lotlote
+                    ];
+                    $ocorrencias = $this->common->getRegFiltro('dbEstoque', 'est_requisicao_produto_ocorrencia', ['*'], $filtro);
+                    // debug($ocorrencias, true);
+                    for ($o = 0; $o < count($ocorrencias); $o++) {
+                        $result = [];
 
+                        foreach ($ocorrencias[0] as $key => $value) {
+                            $newKey = str_starts_with($key, 'rpo_')
+                                ? str_replace('rpo_', 'oco_', $key)
+                                : $key;
+
+                            $result[$newKey] = $value;
+                        }
+                        $result['stt_id'] = 28;
+                        // debug($result);
+                        $entity = new EntOcoOcorrencia($result);
+                        // debug($entity, true);
+                        $this->ocorrencia->save($entity);
+                    }
+                    // $ret['erro'] = true;
                     $idmov = $val->tmo_id;
                     $conf  = $val->rpa_conferida;
                     $proid = $val->proid;
@@ -501,6 +515,11 @@ class ConfRequisicao extends BaseController
                     $status = 24; //conferida parcial
                 }
                 $dadosReq = ['stt_id' => $status];
+
+                // VERIFICAR SE OS PRODUTOS DA REQUISIÇÃO EXIGEM INSPEÇÃO VISUAL E SE AINDA NÃO FOI REALIZADO
+                // CASO TODOS OS PRODUTOS, JA TENHAM SIDO FEITOS INSPEÇÃO VISUAL OU NÃO EXIJAM INSPEÇÃO VISUAL
+                // O STATUS DA REQUISIÇÃO PASSA A SER CONCLUÍDA
+
 
                 $this->requisicao->transStart();
                 $salvareq = $this->requisicao->update($postado['req_id'], $dadosReq);

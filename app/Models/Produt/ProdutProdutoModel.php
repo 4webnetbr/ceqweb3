@@ -240,7 +240,7 @@ class ProdutProdutoModel extends Model
     public function getProdutoEstoqueCeqweb($pro_id = false, $deposito = false)
     {
         $db = db_connect('dbProduto');
-        $builder = $db->table('vw_pro_est_ceq_relac');
+        $builder = $db->table('vw_pro_ceq_est_relac');
 
         $builder->select('*');
 

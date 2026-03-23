@@ -156,14 +156,12 @@ class TipoMovimentacao extends BaseController
      */
     public function edit($id, $show = false)
     {
-        $dados_tmov = $this->tpmov->getTipoMovimentacao($id)[0];
-
+        $dados_tmov = $this->tpmov->getTipoMovimentacao($id);
 
         if (!$dados_tmov) {
-            return view('errors/vw_semregistro', [
-                'mensagem' => 'Tipo de Movimentação não encontrado'
-            ]);
+            return redirectWithError($this->data['controler'],41);
         }
+        $dados_tmov = $dados_tmov[0];
 
         $entity = new EntTipoMovimentacao((array) $dados_tmov);
 

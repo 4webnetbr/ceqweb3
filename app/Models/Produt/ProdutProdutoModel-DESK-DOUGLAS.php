@@ -228,9 +228,9 @@ class ProdutProdutoModel extends Model
         }
 
         if ($deposito) {
-            $builder->like('dep_codDep', $deposito);
+            $builder->like('prc_deposito', $deposito);
         }
-        // debug($builder->getCompiledSelect());
+        debug($builder->getCompiledSelect());
         // $cs = $builder->getCompiledSelect();
         $ret = $builder->get()->getResult();
 

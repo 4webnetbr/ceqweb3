@@ -144,9 +144,10 @@ class CfgPerfil extends BaseController
         $dados = $this->perfil->getPerfil($id);
 
         if (!$dados) {
-            return view('errors/vw_semregistro', [
-                'mensagem' => 'Perfil não encontrado'
-            ]);
+            return redirectWithError($this->data['controler'],41);
+            // return view('errors/vw_semregistro', [
+            //     'mensagem' => 'Perfil não encontrado'
+            // ]);
         }
 
         $ePerfil = new EntCfgPerfil((array) $dados);

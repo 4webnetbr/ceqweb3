@@ -1158,6 +1158,9 @@ async function gerarInspecao(tela, indice) {
   proid = jQuery("#proid_" + indice).val();
   lotlote = jQuery("#lotlote_" + indice).val();
   qtdade = parseInt(jQuery("#apr_" + indice).text());
+  if (isNaN(qtdade)) {
+    qtdade = parseInt(jQuery("#rpa_conferida_" + indice).val());
+  }
   titulo = "Gerar Inspeção";
   dados = JSON.stringify({
     pro_id: proid,
@@ -1188,7 +1191,7 @@ async function excluiInspecao(url) {
   }
 }
 
-async function enviarInspecao(event) {
+function enviarInspecao(event) {
   const form = document.getElementById("form1");
   const jqForm = jQuery(form);
 
@@ -1202,6 +1205,7 @@ async function enviarInspecao(event) {
       var aprova = jQuery("#apr_" + idBase).text();
       if (parseInt(confer) != parseInt(aprova) || checkd) {
         teminsp = true;
+        jqForm.find('input[name="aprova_' + idBase + "]").remove();
         jqForm.append(
           `<input type="hidden" name="aprova_` +
             idBase +
@@ -1209,8 +1213,6 @@ async function enviarInspecao(event) {
             aprova +
             `">`,
         );
-      } else {
-        jqForm.append(`<input type="hidden" name="ins_parcial" value="1">`);
       }
     }
   }

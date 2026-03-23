@@ -120,14 +120,16 @@ class Inspecao extends BaseController
     public function inspprodutos($id, $show = true)
     {
         // Busca a requisição no banco e pega o primeiro registro retornado
-        $requisicaoRaw = $this->requisicao->getRequisicao($id)[0];
-        $requisicao    = new EntInspecao((array) $requisicaoRaw, $show, 'conf');
+        $requisicao = $this->requisicao->getRequisicao($id);
 
-        // Validação de segurança caso a requisição não exista
         if (!$requisicao) {
-            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
-            return redirect()->to(site_url($this->data['controler']));
+            return redirectWithError($this->data['controler'],41);
+            // session()->setFlashdata('erromsg', 'Requisição não encontrada.');
+            // return redirect()->to(site_url($this->data['controler']));
         }
+        $requisicaoRaw = $requisicao[0];
+
+        $requisicao    = new EntInspecao((array) $requisicaoRaw, $show, 'conf');
 
         // OBJETOS
         $secao  = new \stdClass();
@@ -224,14 +226,17 @@ class Inspecao extends BaseController
     public function inspeciona($id, $show = true)
     {
         // Busca a requisição no banco e pega o primeiro registro retornado
-        $requisicaoRaw = $this->requisicao->getRequisicao($id)[0];
+        $requisicao = $this->requisicao->getRequisicao($id);
+
+        if (!$requisicao) {
+            return redirectWithError($this->data['controler'],41);
+            // session()->setFlashdata('erromsg', 'Requisição não encontrada.');
+            // return redirect()->to(site_url($this->data['controler']));
+        }
+        $requisicaoRaw = $requisicao[0];
+
         $requisicao    = new EntInspecao((array) $requisicaoRaw, $show, 'conf');
 
-        // Validação de segurança caso a requisição não exista
-        if (!$requisicao) {
-            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
-            return redirect()->to(site_url($this->data['controler']));
-        }
 
         // OBJETOS
         $secao  = new \stdClass();

@@ -107,7 +107,8 @@ Class CfgMensagem extends BaseController
     
         // Caso não encontre, lança exceção
         if (!$men) {
-            throw new \Exception('Impressora não encontrada');
+            return redirectWithError($this->data['controler'],41);
+            // throw new \Exception('Impressora não encontrada');
         }
     
         // Define campos conforme modo edição/visualização
@@ -180,10 +181,11 @@ Class CfgMensagem extends BaseController
         $mensagens = $this->mensagem->getMensagensCache();
     
         if (!isset($mensagens[$id])) {
-            return $this->response->setJSON([
-                'erro' => true,
-                'msg'  => 'Mensagem não encontrada'
-            ]);
+            return redirectWithError($this->data['controler'],41);
+            // return $this->response->setJSON([
+            //     'erro' => true,
+            //     'msg'  => 'Mensagem não encontrada'
+            // ]);
         }
         $men = $mensagens[$id];
     

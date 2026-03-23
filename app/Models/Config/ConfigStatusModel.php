@@ -74,7 +74,6 @@ class ConfigStatusModel extends Model
             $builder->where('stt_id', $stt_id);
             return $builder->get()->getFirstRow();
         }
-    
         return $builder->get()->getResult();
     }
 
@@ -115,6 +114,7 @@ class ConfigStatusModel extends Model
         if ($stt_id) {
             $builder->where("stt_id", $stt_id);
         }
+        $builder->where("stt_ativo", 'A');
         $ret = $builder->get()->getResultArray();
 
         return $ret;

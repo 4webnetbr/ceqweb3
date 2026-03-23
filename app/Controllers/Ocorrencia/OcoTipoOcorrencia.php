@@ -335,7 +335,13 @@ class OcoTipoOcorrencia extends BaseController
         echo json_encode($ret);
     }
 
-
+    /**
+     * Ativar e Inativar
+     * ativnativ
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function ativinativ($id, $tipo)
     {
         // debug([$id, $tipo], true);

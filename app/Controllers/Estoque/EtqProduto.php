@@ -2,16 +2,17 @@
 
 namespace App\Controllers\Estoque;
 
-use App\Controllers\BuscasSapiens;
 use App\Controllers\BaseController;
-use App\Models\Produt\ProdutLoteModel;
+use App\Controllers\BuscasSapiens;
 use App\Entities\Estoque\EntRequisicao;
-use App\Models\Produt\ProdutClasseModel;
-use App\Models\Produt\ProdutProdutoModel;
+use App\Libraries\MyCampo;
 use App\Models\Estoqu\EstoquDepositoModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
-use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
+use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
+use App\Models\Produt\ProdutClasseModel;
+use App\Models\Produt\ProdutLoteModel;
+use App\Models\Produt\ProdutProdutoModel;
 
 class EtqProduto extends BaseController
 {
@@ -118,12 +119,14 @@ class EtqProduto extends BaseController
      */
     public function Etiqueta($id)
     {
-        $requisicao = $this->requisicao->getRequisicao($id)[0];
+        $requisicao = $this->requisicao->getRequisicao($id);
 
         if (!$requisicao) {
-            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
-            return redirect()->to(site_url($this->data['controler']));
+            return redirectWithError($this->data['controler'],41);
+            // session()->setFlashdata('erromsg', 'Requisição não encontrada.');
+            // return redirect()->to(site_url($this->data['controler']));
         }
+        $requisicao = $requisicao[0];
         $ent    = new EntRequisicao((array) $requisicao, true);
 
         $fields = $ent->campos;
@@ -154,7 +157,7 @@ class EtqProduto extends BaseController
             'start',
             'start',
             'end',
-            'end',
+            'center d-flex justify-content-center',
             'center',
             'center',
         ];
@@ -166,10 +169,26 @@ class EtqProduto extends BaseController
 
                 $rep_id = $prod->rep_id;
                 $qtia = $prod->rep_quantia;
-                $url_ati = base_url($this->data['controler'] . '/GeraEtiqueta/' . $rep_id . '/' . $qtia);
+                $url_ati = base_url($this->data['controler'] . '/GeraEtiqueta/' . $rep_id);
                 $imprimir =
                     "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
-                    data-mdb-placement='top' title='Imprimir Etiqueta' onclick='geraEiquetaProd(\"" . $url_ati . "\")'><i class='fas fa-print'></i></button>";
+                    data-mdb-placement='top' title='Imprimir Etiqueta' onclick='geraEiquetaProd(\"" . $url_ati . "\",\"rep_quantia_$p\")'><i class='fas fa-print'></i></button>";
+
+                $qtd               = new MyCampo();
+                $qtd->valor        = $prod->rep_quantia;
+                $qtd->tipo        = 'number';
+                $qtd->label        = '';
+                $qtd->id = $qtd->nome = "rep_quantia_" . $p;
+                $qtd->dispForm     = 'col-6';
+                $qtd->minimo       = 1;
+                $qtd->step         = 1;
+                $qtd->largura      = 20;
+                $qtd->size         = 3;
+                $qtd->maximo       = $prod->rep_quantia;
+                $qtd->obrigatorio  = true;
+                $qtd->classep  = 'semmb';
+                $quantia = $qtd->crInput();
+
                 $item = [];
                 $item[0] = $rep_id;
                 $item[count($item)] = $prod->pro_codpro;
@@ -177,7 +196,7 @@ class EtqProduto extends BaseController
                 $item[count($item)] = $prod->fab_apeFab;
                 $item[count($item)] = $prod->lot_lote;
                 $item[count($item)] = $prod->rep_quantia;
-                $item[count($item)] = $prod->rep_quantia;
+                $item[count($item)] = $quantia;
                 $item[count($item)] = $prod->etiq_cor;
                 $item[count($item)] = $imprimir;
                 $produtos[count($produtos)] = $item;

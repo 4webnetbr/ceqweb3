@@ -124,9 +124,10 @@ class CfgStatus extends BaseController
         // debug($dados, true);
 
         if (!$dados) {
-            return view('errors/vw_semregistro', [
-                'mensagem' => 'Status não encontrado'
-            ]);
+            return redirectWithError($this->data['controler'],41);
+            // return view('errors/vw_semregistro', [
+            //     'mensagem' => 'Status não encontrado'
+            // ]);
         }
 
         $estatus = new EntCfgStatus((array) $dados);
@@ -188,7 +189,7 @@ class CfgStatus extends BaseController
                 $dad_atin = [
                     'stt_ativo' => 'I'
                 ];
-                $this->verificarUsoEmRelacionamentos('cfg_status', 'stt_id', (int) $id);
+                // $this->verificarUsoEmRelacionamentos('cfg_status', 'stt_id', (int) $id);
             }
 
             $this->status->update($id, $dad_atin);

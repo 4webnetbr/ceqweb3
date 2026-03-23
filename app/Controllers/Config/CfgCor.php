@@ -157,8 +157,9 @@ class CfgCor extends BaseController
         $cor = $this->cores->getCores($id); // ✅ Entity
 
         if (!$cor) {
-            $this->data['erromsg'] = '<h2>Cor não encontrada</h2>';
-            echo view('vw_semacesso', $this->data);
+            return redirectWithError($this->data['controler'],41);
+            // $this->data['erromsg'] = '<h2>Cor não encontrada</h2>';
+            // echo view('vw_semacesso', $this->data);
         } else {
             $cor->campos = $cor->defCampos($show);
 

@@ -126,12 +126,12 @@ class InspecaoProd extends BaseController
 
     public function edit($id, $show = true)
     {
-        $requisicao = $this->requisicao->getRequisicao($id)[0];
+        $requisicao = $this->requisicao->getRequisicao($id);
 
         if (!$requisicao) {
-            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
-            return redirect()->to(site_url($this->data['controler']));
+            return redirectWithError($this->data['controler'],41);
         }
+        $requisicao = $requisicao[0];
         $log = buscaLog('est_requisicao', $id);
         $requisicao->usu_nome = $log['usua_alterou'] ?? '';
         // debug($requisicao, true);
@@ -185,7 +185,7 @@ class InspecaoProd extends BaseController
                 $bt_ok->label    = '';
                 $bt_ok->valor   = 1;
                 $bt_ok->selecionado   = '';
-                $bt_ok->place    = 'Inspeção';
+                $bt_ok->place    = 'Inspeção OK';
                 $bt_ok->funcChan = "mostraOcultaCampo('btok_$prod->rep_id', '', 'bt_insvis_$prod->rep_id');";
                 $prod->bt_ok = $bt_ok->crCheckbox();
             }
@@ -194,23 +194,31 @@ class InspecaoProd extends BaseController
             $prod->rpa_aprovada = (int)$prod->rpa_conferida;
             $prod->saldo         = (int)$prod->rpa_atendida - (int)$prod->rpa_conferida;
 
-            $verinsp .= "verificaInspecao(" . $prod->rep_id . "," . $prod->req_id . "," . $prod->pro_id . ",'" . $prod->lot_lote . "');";
+            $filtro = [
+                'pro_id' => $prod->pro_id,
+                'lot_lote' => $prod->lot_lote
+            ];
+            $inspecoes = $this->common->getRegFiltro('dbEstoque', 'est_requisicao_produto_ocorrencia', ['rpo_id', 'rpo_qtd'], $filtro);
+            if ($inspecoes) {
+                $insp = 0;
+                foreach ($inspecoes as $key => $value) {
+                    $this->excluiInspecao($value['rpo_id']);
+                }
+            }
+            // $verinsp .= "verificaInspecao(" . $prod->rep_id . "," . $prod->req_id . "," . $prod->pro_id . ",'" . $prod->lot_lote . "');";
         }
         // debug($resultado, true);
         $campos[0][] = view('partials/pw_produtos_inspecao', ['produtos' => array_map(fn($p) => (array) $p, $resultado)]);
 
         // Define dados principais da tela
-        // $this->data['title']       = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['desc_metodo'] = '';
         $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' ' . fmtEtiquetaCor($requisicao->stt_cor, $requisicao->stt_nome, 1);
         $this->data['destino']     = 'store';
         $this->data['scripts']     = 'my_requisicao';
         $this->data['secoes']      = $secao;
         $this->data['campos']      = $campos;
-        $this->data['script']      = "<script>" . $verinsp . "</script>";
 
         // Define foco inicial no campo de código de barras
-        // $this->data['script'] = "<SCRIPT>jQuery('#lot_codbar').focus();</SCRIPT>";
         echo view('vw_edicao', $this->data);
     }
 
@@ -293,20 +301,42 @@ class InspecaoProd extends BaseController
         );
         $modProd = new ProdutProdutoModel();
         $dadosProd = $modProd->getProduto($proId)[0];
-        // debug($dadosProd, true);
+
+        $config['Label'] = "Tipo de Ocorrência";
+        $config['Leitura'] = false;
+        $filtros = [
+            'tel_id' => [$telId],
+            'cla_id' => [$dadosProd->cla_id],
+        ];
+        $toc_oc = criaSelectRelativo(
+            'vw_oco_tpo_ocorrencia_relac',
+            'tpo_id',
+            'tpo_nome',
+            null,
+            1,
+            'oco_ocorrencia',
+            $filtros,
+            $config
+        );
+
 
         $config['Label'] = "Subtipo de Ocorrência";
         $config['Leitura'] = false;
-        $filtros = [
-            'tel_id' => [$json['tel_id']],
-            'cla_id' => [$dadosProd->cla_id],
-        ];
+        $config['Pai'] = "tpo_id";
+        $config['Urlbusca'] = base_url('Buscas/buscaSubtipoPorTipo');
+
+        // $filtros = [
+        //     'tel_id' => [$json['tel_id']],
+        //     'cla_id' => [$dadosProd->cla_id],
+        // ];
+        $filtros = [];
+        // debug($filtros, true);
         $mod_oc = criaSelectRelativo(
             'vw_oco_subt_ocorrencia_relac',
             'sut_id',
             'sut_nome',
             null,
-            1,
+            2,
             'oco_ocorrencia',
             $filtros,
             $config
@@ -376,18 +406,19 @@ class InspecaoProd extends BaseController
 
         // define os campos
         $this->data['campos']  = [[
-            $oco->campos['oco_data'],
             $tel_id,
-            $rep_id,
-            $req_id,
+            $toc_oc,
             $oco->campos['lot_id'],
             $oco->campos['lot_lote'],
+            $mod_oc,
             $oco->campos['pro_id'],
             $oco->campos['pro_despro'],
-            $mod_oc,
             $quantia,
+            $oco->campos['oco_data'],
             $descreva,
-            $ocorretxt
+            $ocorretxt,
+            $req_id,
+            $rep_id,
         ]];
 
         $this->data['destino'] = 'storeocor';
@@ -443,9 +474,11 @@ class InspecaoProd extends BaseController
                 if ($subtipo->sut_fina === 'S') {
                     // FINALIZA AUTOMÁTICO
                     $postado['stt_id'] = 29;
+                    $postado['tpa_id'] = null;
+                    $postado['tmo_id'] = null;
                 } else {
                     $acao = $modModel->getAcaoConfigurada((int)$postado['sut_id']);
-
+                    // debug($acao);
                     if (!$acao) {
                         $postado['stt_id'] = 29;
                     } elseif ((int)$acao->tpa_id === 12) {
@@ -453,10 +486,10 @@ class InspecaoProd extends BaseController
                     } else {
                         $postado['stt_id'] = 28;
                     }
-                    if ($acao) {
-                        $postado['tpa_id'] = $acao->tpa_id ?? null;
-                        $postado['tmo_id'] = $acao->tmo_id ?? null;
-                    }
+                    // if ($acao) {
+                    $postado['tpa_id'] = $acao->tpa_id ?? null;
+                    $postado['tmo_id'] = $acao->tmo_id ?? null;
+                    // }
                 }
             } else {
                 return $this->response->setJSON([
@@ -544,9 +577,9 @@ class InspecaoProd extends BaseController
                     }
                 }
 
-                $aprovada  = (int)($dadosTemp->aprova ?? 0);
+                $aprovada  = (int)($dadosTemp->aprova ?? -1);
 
-                if ($aprovada > 0) {
+                if ($aprovada > -1) {
                     $dadosAgrupados[$id] = $dadosTemp;
                 } else {
                     $parcial = true;
@@ -586,8 +619,8 @@ class InspecaoProd extends BaseController
                         'lot_lote' => $val->lotlote
                     ];
                     $ocorrencias = $this->common->getRegFiltro('dbEstoque', 'est_requisicao_produto_ocorrencia', ['*'], $filtro);
-                    // debug($ocorrencias,true);
-                    for ($o=0; $o < count($ocorrencias) ; $o++) {
+                    // debug($ocorrencias, true);
+                    for ($o = 0; $o < count($ocorrencias); $o++) {
                         $result = [];
 
                         foreach ($ocorrencias[0] as $key => $value) {
@@ -632,7 +665,7 @@ class InspecaoProd extends BaseController
                     }
                 }
                 if (!$ret['erro']) {
-                    $status = ($parcial) ? 26:27;
+                    $status = ($parcial) ? 26 : 5;
                     $dadosReq = [
                         'stt_id' => $status
                     ];

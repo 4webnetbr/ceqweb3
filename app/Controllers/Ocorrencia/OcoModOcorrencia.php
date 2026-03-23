@@ -192,12 +192,12 @@ class OcoModOcorrencia extends BaseController
     public function edit($id)
     {
         $show = false;
-        try {
-            // Checa uso do tipo em outros bancos
-            $this->verificarUsoEmRelacionamentos('oco_subt_ocorrencia', 'sut_id', (int) $id);
-        } catch (\Exception $e) {
-            $show = true;
-        }
+        // try {
+        //     // Checa uso do tipo em outros bancos
+        //     $this->verificarUsoEmRelacionamentos('oco_subt_ocorrencia', 'sut_id', (int) $id);
+        // } catch (\Exception $e) {
+        //     $show = true;
+        // }
 
         // Busca os dados do Modelo de Ocorrência pelo ID
         $dados_ModOcorrencia = (array) $this->modocorrencia->getModOcorrencia($id)[0];
@@ -307,7 +307,7 @@ class OcoModOcorrencia extends BaseController
     public function delete($id)
     {
         $ret = [];
-    
+
         try {
             $this->verificarUsoEmRelacionamentos('oco_subt_ocorrencia', 'sut_id', (int) $id);
             $this->modocorrencia->delete($id);
@@ -317,7 +317,7 @@ class OcoModOcorrencia extends BaseController
             $ret['erro'] = true;
             $ret['msg']  = 3;
         }
-    
+
         echo json_encode($ret);
     }
 
@@ -481,14 +481,14 @@ class OcoModOcorrencia extends BaseController
                 }
             }
 
-            
+
             // CLASSES
-            if (!empty($classesSelecionadas)) {           
+            if (!empty($classesSelecionadas)) {
                 $classes = [];
 
                 foreach ($classesSelecionadas as $cla_id) {
                     if (!$cla_id) continue;
-            
+
                     $classes[] = [
                         'sut_id' => $sut_id,
                         'cla_id' => $cla_id

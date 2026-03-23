@@ -57,9 +57,10 @@ class CfgModulo extends BaseController
         $mod = $this->modulo->find($id);
 
         if (!$mod) {
-            return view('errors/registro_nao_encontrado', [
-                'mensagem' => 'Módulo não encontrado'
-            ]);
+            return redirectWithError($this->data['controler'],41);
+            // return view('errors/registro_nao_encontrado', [
+            //     'mensagem' => 'Módulo não encontrado'
+            // ]);
         }
 
         $mod->campos = $mod->defCampos($show);

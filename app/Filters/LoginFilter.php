@@ -62,7 +62,7 @@ class LoginFilter implements FilterInterface
                     Informe o Problema ao Administrador do Sistema!",
             ];
         } else {
-            $tela = (array) $telaInfo[0];
+            $tela = $telaInfo[0];
 
             $dadosTela = [
                 'modal' => $modal,

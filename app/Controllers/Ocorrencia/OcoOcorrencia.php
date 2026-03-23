@@ -3,14 +3,15 @@
 namespace App\Controllers\Ocorrencia;
 
 use App\Controllers\BaseController;
+use App\Entities\Ocorrencia\EntOcoModOcorrencia;
 use App\Entities\Ocorrencia\EntOcoOcorrencia;
 use App\Entities\Ocorrencia\EntOcoTratativa;
-use App\Entities\Ocorrencia\EntOcoModOcorrencia;
 use App\Libraries\MyCampo;
 use App\Models\CommonModel;
 use App\Models\Ocorre\OcorreModOcorrenciaModel;
 use App\Models\Ocorre\OcorreOcorrenciaModel;
 use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
+use App\Models\Produt\ProdutProdutoModel;
 use App\Traits\ForeignKeyUsageChecker;
 
 class OcoOcorrencia extends BaseController
@@ -48,7 +49,13 @@ class OcoOcorrencia extends BaseController
         echo view('vw_semacesso', $this->data);
     }
 
-
+    /**
+     * Tela de abertura
+     * index
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function index()
     {
         $this->data['colunas']   = montaColunasLista($this->data, 'oco_id');
@@ -56,7 +63,13 @@ class OcoOcorrencia extends BaseController
         echo view('vw_lista', $this->data);
     }
 
-
+    /**
+     * Tela de listagem
+     * lista
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function lista()
     {
         $campos = montaColunasCampos($this->data, 'oco_id');
@@ -133,6 +146,13 @@ class OcoOcorrencia extends BaseController
         return $this->response->setJSON($ret);
     }
 
+    /**
+     * inclusão
+     * add
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function add()
     {
         // Instancia a entity
@@ -162,6 +182,13 @@ class OcoOcorrencia extends BaseController
         echo view('vw_edicao', $this->data);
     }
 
+    /**
+     * Visualização
+     * show
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function show($id)
     {
         $dados = $this->ocorrencia->getOcorrencia($id);
@@ -169,7 +196,7 @@ class OcoOcorrencia extends BaseController
 
         // Valida se a ocorrência existe
         if (!$dados) {
-            throw new \Exception('Ocorrência não encontrada');
+            return redirectWithError($this->data['controler'],41);
         }
 
         $log = buscaLogTabela('oco_ocorrencia', [$id]);
@@ -235,7 +262,7 @@ class OcoOcorrencia extends BaseController
         }
 
         $this->data['title']       = 'Ocorrência';
-        $this->data['desc_edicao'] = ' Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' - ' .  fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
+        $this->data['desc_edicao'] = ' Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' - ' .  fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
         $this->data['secoes']      = $secao;
         $this->data['campos']      = $campos;
         $this->data['destino']     = '';
@@ -243,7 +270,13 @@ class OcoOcorrencia extends BaseController
         echo view('vw_edicao', $this->data);
     }
 
-
+    /**
+     * visualização cabeçalho
+     * showCabecalho
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function showCabecalho($dados)
     {
         $oco    = new EntOcoOcorrencia((array) $dados, true);
@@ -271,6 +304,13 @@ class OcoOcorrencia extends BaseController
         return $campos;
     }
 
+    /**
+     * Edição
+     * edit
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function edit($id)
     {
         // Busca a ocorrência pelo ID
@@ -278,7 +318,7 @@ class OcoOcorrencia extends BaseController
 
         // Valida se a ocorrência existe
         if (!$dados) {
-            throw new \Exception('Ocorrência não encontrada');
+            return redirectWithError($this->data['controler'],41);
         }
 
         // Instancia a entity
@@ -311,6 +351,13 @@ class OcoOcorrencia extends BaseController
         echo view('vw_edicao', $this->data);
     }
 
+    /**
+     * Model
+     * addOutraTela
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function addOutraTela()
     {
         $request = service('request');
@@ -337,9 +384,16 @@ class OcoOcorrencia extends BaseController
             [],
             $config
         );
+        $modProd = new ProdutProdutoModel();
+        $dadosProd = $modProd->getProduto($proId)[0];
 
         $config['Label'] = "Tipo de Ocorrência";
         $config['Leitura'] = false;
+        $filtros = [
+            'tel_id' => [$telId],
+            'cla_id' => [$dadosProd->cla_id],
+        ];
+
         $toc_oc = criaSelectRelativo(
             'vw_oco_tpo_ocorrencia_relac',
             'tpo_id',
@@ -347,7 +401,7 @@ class OcoOcorrencia extends BaseController
             null,
             1,
             'oco_ocorrencia',
-            ['tel_id' => $telId],
+            $filtros,
             $config
         );
 
@@ -457,7 +511,13 @@ class OcoOcorrencia extends BaseController
     // }
 
 
-
+    /**
+     * Exclusão
+     * delete
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function delete($id)
     {
         try {
@@ -491,11 +551,25 @@ class OcoOcorrencia extends BaseController
         }
     }
 
+    /**
+     * Finalização da tratativa
+     * finalizar
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function finalizar($id)
     {
         return redirect()->to('/OcoTrataOcorrencia/finalizar/' . $id);
     }
 
+    /**
+     * Gravação
+     * store
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function store()
     {
         $postado = $this->request->getPost();

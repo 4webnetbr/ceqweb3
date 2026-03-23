@@ -4,7 +4,7 @@
     }
 </style>
 
-<div class="accordion" id="accTelas">
+<div class="accordion" id="accProdutos">
     <div class="accordion-item">
 
         <h2 class="accordion-header border border-bottom-1" id="headtela<?= $oco_id ?>">
@@ -14,8 +14,7 @@
                 data-bs-target="#collapsetela<?= $oco_id ?>"
                 aria-expanded="true"
                 aria-controls="collapsetela<?= $oco_id ?>">
-
-                Telas Aplicáveis
+                <div class='col-12 text-center'>Telas Aplicáveis</div>
             </button>
         </h2>
 
@@ -24,10 +23,10 @@
             aria-labelledby="headtela<?= $oco_id ?>"
             data-bs-parent="#accTelas">
 
-            <div class="accordion-body p-2">
+            <div class="accordion-body p-0">
 
                 <table class="table table-bordered table-sm align-middle">
-                    <thead class="table-light">
+                    <thead class="table-info">
                         <tr>
                             <th>Detalhes</th>
                         </tr>

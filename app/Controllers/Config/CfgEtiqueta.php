@@ -169,9 +169,10 @@ class CfgEtiqueta extends BaseController
 
         // Caso não encontre, lança exceção
         if (!$dados) {
-            return view('errors/vw_semregistro', [
-                'mensagem' => 'Etiqueta não encontrada'
-            ]);
+            return redirectWithError($this->data['controler'],41);
+            // return view('errors/vw_semregistro', [
+            //     'mensagem' => 'Etiqueta não encontrada'
+            // ]);
         }
         $eetiq = new EntCfgEtiqueta((array) $dados);
         $fields = $eetiq->campos;

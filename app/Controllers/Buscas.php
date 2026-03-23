@@ -472,7 +472,7 @@ class Buscas extends BaseController
         $ret = [];
 
         if ($_REQUEST['busca']) {
-            $produtos = (new ProdutProdutoModel())->getProdutoEstoque(false, $_REQUEST['busca']);
+            $produtos = (new ProdutProdutoModel())->getProdutoEstoqueCeqweb(false, $_REQUEST['busca']);
             // debug($produtos, true);
             if (empty($produtos)) {
                 $o = new \stdClass();
@@ -810,9 +810,9 @@ class Buscas extends BaseController
     public function buscaPerfilPorTipo()
     {
         $ret = [];
-    
+
         if ($_REQUEST['busca']) {
-    
+
             $db = db_connect('dbOcorrencia');
             $builder = $db->table('oco_tipo_ocorrencia_permissao p');
             $builder->select('p.prf_id, c.prf_nome');
@@ -822,7 +822,7 @@ class Buscas extends BaseController
             );
             $builder->where('p.tpo_id', $_REQUEST['busca']);
             $lst = $builder->get()->getResult();
-    
+
             foreach ($lst as $l) {
                 $o = new \stdClass();
                 $o->id   = $l->prf_id;

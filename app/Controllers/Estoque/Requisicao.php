@@ -233,14 +233,17 @@ class Requisicao extends BaseController
      */
     public function copy($id)
     {
-        $requisicao = $this->requisicao->getRequisicao($id)[0];
+        $requisicao = $this->requisicao->getRequisicao($id);
         if (!$requisicao) {
-            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
+            $ret['erro'] = true;
+            $ret['msg']  = 41; // ou código personalizado, se preferir
+            session()->setFlashdata('msg', 41);
             return redirect()->to(site_url($this->data['controler']));
         }
+        $requisicao = $requisicao[0];
 
         $tmo_id = $requisicao->tmo_id;
-        $tipos_mov = $this->tipomovimentacao->getTipoMovimentacao($tmo_id);
+        $tipos_mov = $this->tipomovimentacao->getTipoMovimentacaoParaRequisicao($tmo_id);
         $tipos_mov = filtrarPorPerfil($tipos_mov);
         if (count($tipos_mov) == 0) {
             $ret['erro'] = true;
@@ -248,12 +251,10 @@ class Requisicao extends BaseController
             session()->setFlashdata('msg', 36);
             return redirect()->to(site_url($this->data['controler']));
         } else {
-            // unset($requisicao->req_id);
             $requisicao->req_data = date('Y-m-d H:i:s');
             $requisicao->req_dataentrega = '';
 
             // Montar campos como no add()
-            // debug($requisicao, true);
             $ent = new EntRequisicao((array) $requisicao, true, 'copy');
             $fields = $ent->campos;
 
@@ -318,12 +319,13 @@ class Requisicao extends BaseController
      */
     public function show($id)
     {
-        $requisicao = $this->requisicao->getRequisicao($id)[0];
+        $requisicao = $this->requisicao->getRequisicao($id);
 
         if (!$requisicao) {
-            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
-            return redirect()->to(site_url($this->data['controler']));
+            return redirectWithError(previous_url(),41);
         }
+        $requisicao = $requisicao[0];
+
         $log = buscaLog('est_requisicao', $id);
         $requisicao->usu_nome = $log['usua_alterou'] ?? '';
 
@@ -348,11 +350,15 @@ class Requisicao extends BaseController
             'Caixas',
             'Multiplica',
             '% Seg',
-            'Requisição',
-            'Cancelada',
-            'Atendida',
-            'Saldo',
-            'Conferida',
+            'Requisitado',
+            'Cancelado',
+            'Atendido',
+            'Data Atend.',
+            'Conferido',
+            'Data Confer.',
+            'Aprovado',
+            'Data Inspec.',
+            // 'Saldo',
         ];
         $alinha = [
             'center',
@@ -366,8 +372,11 @@ class Requisicao extends BaseController
             'end',
             'end',
             'end',
+            'center',
             'end',
+            'center',
             'end',
+            'center',
         ];
 
         $produtos = [];
@@ -393,9 +402,13 @@ class Requisicao extends BaseController
                 $produto[]  = $prod->rep_quantia ?? null;
                 $produto[]  = $prod->rpa_cancelada ?? null;
                 $produto[]  = $prod->rpa_atendida ?? null;
-                $produto[] = ($prod->rep_quantia ?? 0) - (($prod->rpa_atendida ?? 0) + ($prod->rpa_cancelada ?? 0));
+                $produto[]  = data_br($prod->rpa_data) ?? null;
                 $produto[]  = $prod->rpa_conferida ?? null;
+                $produto[]  = data_br($prod->rpa_data_conferencia) ?? null;
+                $produto[]  = $prod->rpa_aprovada ?? null;
+                $produto[]  = data_br($prod->rpa_data_inspecao) ?? null;
 
+                $produto[] = ($prod->rep_quantia ?? 0) - (($prod->rpa_atendida ?? 0) + ($prod->rpa_cancelada ?? 0));
                 $produtos[] = $produto;
             }
         }
@@ -410,7 +423,7 @@ class Requisicao extends BaseController
         $campos[0][] =
             view('partials/pw_show_produtos_req', $data);
 
-        $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT).' '.fmtEtiquetaCor($requisicao->stt_cor, $requisicao->stt_nome, 1);
+        $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' ' . fmtEtiquetaCor($requisicao->stt_cor, $requisicao->stt_nome, 1);
         $this->data['secoes']      = $secao;
         $this->data['campos']      = $campos;
         $this->data['destino']     = '';
@@ -472,9 +485,11 @@ class Requisicao extends BaseController
         $requis = $this->requisicao->getRequisicao($id);
 
         if (!$requis) {
-            return view('errors/vw_semregistro', [
-                'mensagem' => 'Requisição não encontrada'
-            ]);
+            return redirectWithError($this->data['controler'],41);
+
+            // return view('errors/vw_semregistro', [
+            //     'mensagem' => 'Requisição não encontrada'
+            // ]);
         }
 
         // debug((array) $requis);
@@ -545,9 +560,11 @@ class Requisicao extends BaseController
         $requis = $this->requisicao->getRequisicao($id);
 
         if (!$requis) {
-            return view('errors/vw_semregistro', [
-                'mensagem' => 'Requisição não encontrada'
-            ]);
+            return redirectWithError($this->data['controler'],41);
+
+            // return view('errors/vw_semregistro', [
+            //     'mensagem' => 'Requisição não encontrada'
+            // ]);
         }
         $status = $requis[0]->stt_id;
 
@@ -583,6 +600,7 @@ class Requisicao extends BaseController
         // === Parâmetros recebidos ===
         $reqid         = trim($req->reqid ?? '');
         $proid         = $req->proid ?? '';
+        // debug($proid, true);
         // if (is_array($proid)) {
         //     $proid = implode(',', array_map('trim', $proid));
         // } else {

@@ -172,12 +172,14 @@ class AteRequisicao extends BaseController
      */
     public function atende($id, $show = true)
     {
-        $requisicao = $this->requisicao->getRequisicao($id)[0];
+        $requisicao = $this->requisicao->getRequisicao($id);
 
         if (!$requisicao) {
-            session()->setFlashdata('erromsg', 'Requisição não encontrada.');
-            return redirect()->to(site_url($this->data['controler']));
+            return redirectWithError($this->data['controler'],41);
+            // session()->setFlashdata('erromsg', 'Requisição não encontrada.');
+            // return redirect()->to(site_url($this->data['controler']));
         }
+        $requisicao = $requisicao[0];
 
         $log = buscaLog('est_requisicao', $id);
         $requisicao->usu_nome = $log['usua_alterou'] ?? '';

@@ -103,7 +103,8 @@ Class CfgImpressora extends BaseController
     
         // Caso não encontre, lança exceção
         if (!$impr) {
-            throw new \Exception('Impressora não encontrada');
+            return redirectWithError($this->data['controler'],41);
+            // throw new \Exception('Impressora não encontrada');
         }
     
         // Define campos conforme modo edição/visualização

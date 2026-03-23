@@ -40,7 +40,13 @@ class OcoTrataOcorrencia extends BaseController
         echo view('vw_semacesso', $this->data);
     }
 
-
+    /**
+     * Tela de abertura
+     * index
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function index()
     {
         $this->data['colunas']   = montaColunasLista($this->data, 'oco_id');
@@ -49,7 +55,13 @@ class OcoTrataOcorrencia extends BaseController
         echo view('vw_lista', $this->data);
     }
 
-
+    /**
+     * Tela de listagem
+     * lista
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function lista()
     {
         // Monta definição dos campos da listagem
@@ -106,12 +118,25 @@ class OcoTrataOcorrencia extends BaseController
         ]);
     }
 
+    /**
+     * visualização
+     * show
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function show($id)
     {
         return redirect()->to('/OcoOcorrencia/show/' . $id);
     }
 
-
+    /**
+     * finalização da tratativa
+     * finalizar
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function finalizar($id)
     {
         $dados = $this->ocorrencia->getOcorrencia($id);
@@ -119,7 +144,7 @@ class OcoTrataOcorrencia extends BaseController
 
         // Valida se a ocorrência existe
         if (!$dados) {
-            throw new \Exception('Ocorrência não encontrada');
+            return redirectWithError($this->data['controler'],41);
         }
 
         $log = buscaLogTabela('oco_ocorrencia', [$id]);
@@ -189,9 +214,8 @@ class OcoTrataOcorrencia extends BaseController
             );
         }
 
-
-        // // CONFIG VIEW
-        $this->data['desc_edicao'] = ' Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' - ' . $etiqueta;
+        // CONFIG VIEW
+        $this->data['desc_edicao'] = ' Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' - ' . $etiqueta;
 
         $this->data['secoes']       = $secao;
         $this->data['campos']       = $campos;
@@ -202,6 +226,13 @@ class OcoTrataOcorrencia extends BaseController
         echo view('vw_edicao', $this->data);
     }
 
+    /**
+     * Gravação
+     * store
+     *
+     * @param mixed $id 
+     * @return void
+     */
     public function store()
     {
         // debug('ENTROU NO STORE');

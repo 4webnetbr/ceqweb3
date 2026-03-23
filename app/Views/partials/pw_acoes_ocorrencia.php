@@ -4,7 +4,7 @@
     }
 </style>
 
-<div class="accordion" id="accAcoes">
+<div class="accordion" id="accProdutos">
     <div class="accordion-item">
 
         <h2 class="accordion-header border border-bottom-1" id="headacao<?= $oco_id ?>">
@@ -14,8 +14,7 @@
                 data-bs-target="#collapseacao<?= $oco_id ?>"
                 aria-expanded="true"
                 aria-controls="collapseacao<?= $oco_id ?>">
-
-                Ações
+                <div class='col-12 text-center'>Ações</div>
             </button>
         </h2>
 
@@ -24,10 +23,10 @@
              aria-labelledby="headacao<?= $oco_id ?>"
              data-bs-parent="#accAcoes">
 
-            <div class="accordion-body p-2">
+            <div class="accordion-body p-0">
 
                 <table class="table table-bordered table-sm align-middle">
-                    <thead class="table-light">
+                    <thead class="table-info">
                         <tr>
                             <th>Detalhes</th>
                         </tr>

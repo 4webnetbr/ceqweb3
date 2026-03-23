@@ -912,7 +912,8 @@ function criaSelectRelativo(
             $perfilId = session()->get('usu_perfil_id');
             // debug($perfilId);
             // Se existe, aplica filtro WHERE
-            $builder->like('prf_id', $perfilId);
+            $builder->where("FIND_IN_SET($perfilId, prf_id) >", 0, false);
+            // $builder->like('prf_id', $perfilId);
         }
         // Verifica se existe algum campo que termina com "_ativo"
         $campoAtivo = array_values(array_filter(
@@ -934,7 +935,8 @@ function criaSelectRelativo(
                 if ($db->fieldExists($campo, "$schema.$nomeTabela")) {
 
                     if (is_array($valcampo)) {
-                        $builder->like($campo, $valcampo[0]);
+                        // $builder->like($campo, $valcampo[0]);
+                        $builder->where("FIND_IN_SET($valcampo[0], $campo) >", 0, false);
                     } else {
                         $builder->where($campo, $valcampo);
                     }
@@ -945,7 +947,9 @@ function criaSelectRelativo(
         $builder->orderBy($campoNome);
         // Busca os dados (chave e nome)
         $dados = $builder->get()->getResultArray();
-        // debug($db->getLastQuery());
+        // if ($nomeTabela == 'vw_oco_tpo_ocorrencia_relac') {
+        //     debug($db->getLastQuery(), false);
+        // }
 
         // $dados = filtrarPorPerfil($dados);
         $opcoes = array_column($dados, $campoNome, $campoChave);
