@@ -445,8 +445,8 @@ input[type="date"].form-control {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #90a4ae;
-  opacity: 0.5;
+  background-color: rgba(144, 164, 174, 0.5);
+  backdrop-filter: blur(3px) grayscale(0.7);
   /* cor do background que vai ocupar o body */
   z-index: 1000;
   /* z-index para jogar para frente e sobrepor tudo */
@@ -992,6 +992,7 @@ div {
 /* e os modais do bootbox acima do próprio backdrop */
 .bootbox.modal {
   z-index: 5005 !important;
+  backdrop-filter: blur(3px) grayscale(0.7);
 }
 
 tr td {

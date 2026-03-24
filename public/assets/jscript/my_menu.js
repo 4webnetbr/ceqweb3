@@ -93,22 +93,48 @@ function atualizaMenu() {
       jQuery("#show_user").toggleClass("active");
     });
 
-  jQuery(".content, .titulo")
-    .off("click")
-    .on("click", function () {
-      if (jQuery("#show_user").hasClass("active")) {
-        jQuery("#show_user").toggleClass("active");
-        if (!menuaberto) {
-          jQuery(".sidebar").toggleClass("active");
-        }
-      }
-      if (jQuery("#show_ajuda").hasClass("show")) {
-        jQuery("#bt_ajuda").trigger("click");
-      }
-      if (jQuery("#show_notifica").hasClass("show")) {
-        jQuery("#bt_notifica").trigger("click");
-      }
-    });
+  // jQuery(".content, .title, .titulo")
+  //   .off("click")
+  //   .on("click", function (e) {
+  //     // Ignora cliques nos botões internos
+  //     if (jQuery(e.target).closest("#bt_ajuda, #bt_notifica").length) {
+  //       return;
+  //     }
+  //     if (jQuery("#show_user").hasClass("active")) {
+  //       jQuery("#show_user").toggleClass("active");
+  //       if (!menuaberto) {
+  //         jQuery(".sidebar").toggleClass("active");
+  //       }
+  //     }
+  //     if (jQuery("#show_ajuda").hasClass("show")) {
+  //       jQuery("#bt_ajuda").triggerHandler("click");
+  //     }
+  //     if (jQuery("#show_notifica").hasClass("show")) {
+  //       jQuery("#bt_notifica").trigger("click");
+  //     }
+  //   });
+
+  function closeAllOverlays() {
+    jQuery("#show_user").removeClass("active");
+    jQuery("#show_ajuda, #show_notifica").removeClass("show");
+
+    if (!menuaberto) {
+      jQuery(".sidebar").removeClass("active");
+    }
+  }
+
+  jQuery(document).on("click", function (e) {
+    const $target = jQuery(e.target);
+
+    if (
+      $target.closest("#show_user, #show_ajuda, #show_notifica").length ||
+      $target.closest("#bt_user, #bt_ajuda, #bt_notifica").length
+    ) {
+      return;
+    }
+
+    closeAllOverlays();
+  });
 
   jQuery(".sidebar")
     .off("mouseenter mouseleave")
@@ -122,7 +148,7 @@ function atualizaMenu() {
         if (!menuaberto && !jQuery("#show_user").hasClass("active")) {
           jQuery(".sidebar").toggleClass("active");
         }
-      }
+      },
     );
 
   jQuery(".bt-manut.add")
@@ -133,7 +159,7 @@ function atualizaMenu() {
       },
       function () {
         jQuery(this).find(".txt-bt-manut").addClass("d-none");
-      }
+      },
     );
 
   jQuery(".manutencao")
@@ -147,7 +173,7 @@ function atualizaMenu() {
       },
       function () {
         jQuery(".manut").toggleClass("active");
-      }
+      },
     );
 
   jQuery("#menuaberto").prop("checked", menuaberto);
@@ -372,7 +398,7 @@ function buscaMenu(busca) {
 
   // Filtra os itens dentro do menu
   jQuery(
-    "#accordionMenu .nav-dropdown-menu, #accordionMenu .accordion-item"
+    "#accordionMenu .nav-dropdown-menu, #accordionMenu .accordion-item",
   ).each(function () {
     const $item = jQuery(this);
     const textoItem = $item.text().trim().toLowerCase();

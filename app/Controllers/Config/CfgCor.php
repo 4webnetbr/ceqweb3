@@ -158,23 +158,21 @@ class CfgCor extends BaseController
 
         if (!$cor) {
             return redirectWithError($this->data['controler'],41);
-            // $this->data['erromsg'] = '<h2>Cor não encontrada</h2>';
-            // echo view('vw_semacesso', $this->data);
-        } else {
-            $cor->campos = $cor->defCampos($show);
-
-            $this->data['secoes']  = ['Dados Gerais'];
-            $this->data['campos']  = [[
-                $cor->campos['cor_id'],
-                $cor->campos['cor_nome'],
-                $cor->campos['cor_valorrgb']
-            ]];
-
-            $this->data['destino']    = 'store';
-
-            $this->data['log'] = buscaLog('cfg_cor', $id);
-            echo view('vw_edicao', $this->data);
         }
+        $cor->campos = $cor->defCampos($show);
+
+        $this->data['secoes']  = ['Dados Gerais'];
+        $this->data['campos']  = [[
+            $cor->campos['cor_id'],
+            $cor->campos['cor_nome'],
+            $cor->campos['cor_valorrgb']
+        ]];
+
+        $this->data['destino']    = 'store';
+
+        $this->data['log'] = buscaLog('cfg_cor', $id);
+        echo view('vw_edicao', $this->data);
+        
     }
     /**
      * Exclusão

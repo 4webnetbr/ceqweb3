@@ -132,7 +132,7 @@ class MyCampo
         $dicionario = new ConfigDicDadosModel();
         // debug($tabela.' '.$campo);
         $dados_campo = $dicionario->getDetalhesCampo($tabela, $campo);
-        // debug($dados_campo);
+        // debug($dados_campo, true);
         if (count($dados_campo)) {
             $dad_camp = $dados_campo[0];
 
