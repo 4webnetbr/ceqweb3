@@ -49,6 +49,7 @@ class ConfigDicDadosModel extends Model
         $builder->orderBy('table_name', 'ASC');
 
         $ret = $builder->get()->getResultArray();
+        debug($builder->getLastQuery());
 
         $this->DBGroup          = 'dbProduto';
         $db      = db_connect($this->DBGroup);
@@ -260,16 +261,30 @@ class ConfigDicDadosModel extends Model
 
     function getDbGroupAndSchema(?string $nome_tabela): array
     {
-        $prefixMap = [
-            'vw_est' => ['dbGroup' => 'dbEstoque',    'schema' => 'estoque_db'],
-            'est'    => ['dbGroup' => 'dbEstoque',    'schema' => 'estoque_db'],
-            'vw_oco' => ['dbGroup' => 'dbOcorrencia', 'schema' => 'ocorrencia_db'],
-            'oco'    => ['dbGroup' => 'dbOcorrencia', 'schema' => 'ocorrencia_db'],
-            'vw_pro' => ['dbGroup' => 'dbProduto',    'schema' => 'produto_db'],
-            'pro'    => ['dbGroup' => 'dbProduto',    'schema' => 'produto_db'],
-            'vw_cfg' => ['dbGroup' => 'default',      'schema' => 'config_ceqweb_db'],
-            'cfg'    => ['dbGroup' => 'default',      'schema' => 'config_ceqweb_db'],
-        ];
+        $url = base_url();
+        if (ENVIRONMENT === 'development') {
+            $prefixMap = [
+                'vw_est' => ['dbGroup' => 'dbEstoque',    'schema' => 'estoque_db'],
+                'est'    => ['dbGroup' => 'dbEstoque',    'schema' => 'estoque_db'],
+                'vw_oco' => ['dbGroup' => 'dbOcorrencia', 'schema' => 'ocorrencia_db'],
+                'oco'    => ['dbGroup' => 'dbOcorrencia', 'schema' => 'ocorrencia_db'],
+                'vw_pro' => ['dbGroup' => 'dbProduto',    'schema' => 'produto_db'],
+                'pro'    => ['dbGroup' => 'dbProduto',    'schema' => 'produto_db'],
+                'vw_cfg' => ['dbGroup' => 'default',      'schema' => 'config_ceqweb_db'],
+                'cfg'    => ['dbGroup' => 'default',      'schema' => 'config_ceqweb_db'],
+            ];
+        } else {
+            $prefixMap = [
+                'vw_est' => ['dbGroup' => 'dbEstoque',    'schema' => 'prd_estoque_db'],
+                'est'    => ['dbGroup' => 'dbEstoque',    'schema' => 'prd_estoque_db'],
+                'vw_oco' => ['dbGroup' => 'dbOcorrencia', 'schema' => 'prd_ocorrencia_db'],
+                'oco'    => ['dbGroup' => 'dbOcorrencia', 'schema' => 'prd_ocorrencia_db'],
+                'vw_pro' => ['dbGroup' => 'dbProduto',    'schema' => 'prd_produto_db'],
+                'pro'    => ['dbGroup' => 'dbProduto',    'schema' => 'prd_produto_db'],
+                'vw_cfg' => ['dbGroup' => 'default',      'schema' => 'prd_config_ceqweb_db'],
+                'cfg'    => ['dbGroup' => 'default',      'schema' => 'prd_config_ceqweb_db'],
+            ];
+        }
 
         // Ordem de verificação: prefixos maiores primeiro para evitar conflito (ex: vw_est vs est)
         $prefixes = ['vw_est', 'vw_oco', 'vw_pro', 'vw_cfg', 'est', 'oco', 'pro', 'cfg'];

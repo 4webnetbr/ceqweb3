@@ -34,6 +34,7 @@ class CommonModel extends Model
         $db = db_connect($grupo);
         $builder = $db->table($table);
         $insert_id = $builder->insert($data);
+        (new LogMonModel())->insertLog($this->table, 'Incluído', $data['id'], $data['data']);
 
         return $insert_id;
     }

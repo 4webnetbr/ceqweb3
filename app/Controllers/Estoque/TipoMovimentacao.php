@@ -159,7 +159,7 @@ class TipoMovimentacao extends BaseController
         $dados_tmov = $this->tpmov->getTipoMovimentacao($id);
 
         if (!$dados_tmov) {
-            return redirectWithError($this->data['controler'],41);
+            return redirectWithError($this->data['controler'], 41);
         }
         $dados_tmov = $dados_tmov[0];
 
@@ -294,16 +294,18 @@ class TipoMovimentacao extends BaseController
                 $dad_atin = [
                     'tmo_ativo' => 'A'
                 ];
+                $msg = "Tipo de Movimentação Ativado com Sucesso";
             } else {
                 $dad_atin = [
                     'tmo_ativo' => 'I'
                 ];
                 $this->verificarUsoEmRelacionamentos('est_tipo_movimentacao', 'tmo_id', (int) $id);
+                $msg = "Tipo de Movimentação Inativado com Sucesso";
             }
             $this->tpmov->update($id, $dad_atin);
             $ret['erro'] = false;
-            session()->setFlashdata('msg', 'Tipo de Movimentação Excluída com Sucesso');
-            $ret['msg']  = 'Tipo de Movimentação Excluída com Sucesso';
+            session()->setFlashdata('msg', $msg);
+            $ret['msg']  = $msg;
             cache()->clean();
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
             $ret['erro'] = true;

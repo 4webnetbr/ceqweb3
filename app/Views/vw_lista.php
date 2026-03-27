@@ -17,11 +17,11 @@
   <div class="table-responsive col-12">
     <table id="table" class="display compact table table-sm table-info table-striped table-hover table-borderless col-12">
       <thead class="table-default col-12 overflow-x-auto">
-        <tr class=' w-100'>
+        <tr class=' w-100' style='min-height:49px; height:49px;'>
           <?
           for ($c = 0; $c < sizeof($colunas); $c++) {
-            echo "<th class='text-center text-nowrap'>
-                  <h5>$colunas[$c]</h5>                
+            echo "<th class='text-center align-middle text-wrap'>
+                  <h5 class='m-0'>$colunas[$c]</h5>                
                   </th>";
           }
           ?>
@@ -47,17 +47,17 @@
   montaListaDados('table', '<?= $url_lista; ?>');
   salvaPagina();
 </script>
-  <?
-  $modal = session()->getFlashdata('modal');
+<?
+$modal = session()->getFlashdata('modal');
 
-  if ($modal) {
-    $link  = $modal;  
-    $titu = session()->getFlashdata('modal-title');
-    $chave = session()->getFlashdata('chave');
-    $script = session()->getFlashdata('script');
-    echo "<script>{$script}</script>";
-  }
-  ?>
-  
+if ($modal) {
+  $link  = $modal;
+  $titu = session()->getFlashdata('modal-title');
+  $chave = session()->getFlashdata('chave');
+  $script = session()->getFlashdata('script');
+  echo "<script>{$script}</script>";
+}
+?>
+
 
 <?= $this->endSection(); ?>

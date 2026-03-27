@@ -1,10 +1,9 @@
 <?php
-
 namespace App\Controllers;
 
+use App\Libraries\Campos;
 use App\Models\Config\ConfigDicDadosModel;
 use App\Models\LogMonModel;
-use App\Controllers\BaseController;
 
 class Logger extends BaseController
 {
@@ -26,13 +25,12 @@ class Logger extends BaseController
         echo view('vw_semacesso', $this->data);
     }
 
-    public function index($tabela, $registro)
-    {
+    public function show($tabela, $registro)
+    { 
         $logs      = new LogMonModel();
         $dicionario = new ConfigDicDadosModel();
 
         $logId = $logs->get_logs_all($tabela, $registro);
-        // debug($logId, true);
         $dados = [];
         if ($logId) {
             $campos = $logId[0]->log_dados;
@@ -66,7 +64,7 @@ class Logger extends BaseController
         }
         asort($dados);
         $this->data['dados'] = $dados;
-        $this->data['desc_metodo'] = '';
+        $this->data['desc_metodo'] = 'Consulta Log';
         $this->data['destino'] = '';
         // debug($dados);
 

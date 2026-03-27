@@ -93,10 +93,10 @@ class CfgPerfil extends BaseController
         $ent = new EntCfgPerfil();
 
         $secao[0] = 'Dados Gerais';
-        $campos[0][0][0] = $ent->prf_id;
-        $campos[0][0][1] = $ent->prf_nome;
-        $campos[0][0][2] = $ent->prf_dashboard;
-        $campos[0][0][3] = $ent->prf_descricao;
+        $campos[0][0][] = $ent->campos['prf_id'];
+        $campos[0][0][] = $ent->campos['prf_nome'];
+        $campos[0][0][] = $ent->campos['prf_dashboard'];
+        $campos[0][0][] = $ent->campos['prf_descricao'];
 
         $secao[1] = 'Permissões';
         $itens = montaListaTelas();
@@ -109,26 +109,26 @@ class CfgPerfil extends BaseController
                 $ctm++;
                 $modu = $itens[$mn]->mod_id;
                 $ent->defCamposPermissoes(0, $modu, $itens[$mn]);
-                $campos2[1][$modu][$cti][0] = $ent->pit_modu;
-                $campos2[1][$modu][$cti][1] = $ent->pit_tela;
-                $campos2[1][$modu][$cti][2] = $ent->pit_all;
-                $campos2[1][$modu][$cti][3] = $ent->pit_consulta;
-                $campos2[1][$modu][$cti][4] = $ent->pit_adicao;
-                $campos2[1][$modu][$cti][5] = $ent->pit_edicao;
-                $campos2[1][$modu][$cti][6] = $ent->pit_exclusao;
-                $campos2[1][$modu][$cti][7] = $ent->pit_notifica;
+                $campos2[1][$modu][$cti][0] = $ent->camposPermissoes['pit_modu'];
+                $campos2[1][$modu][$cti][1] = $ent->camposPermissoes['pit_tela'];
+                $campos2[1][$modu][$cti][2] = $ent->camposPermissoes['pit_all'];
+                $campos2[1][$modu][$cti][3] = $ent->camposPermissoes['pit_consulta'];
+                $campos2[1][$modu][$cti][4] = $ent->camposPermissoes['pit_adicao'];
+                $campos2[1][$modu][$cti][5] = $ent->camposPermissoes['pit_edicao'];
+                $campos2[1][$modu][$cti][6] = $ent->camposPermissoes['pit_exclusao'];
+                $campos2[1][$modu][$cti][7] = $ent->camposPermissoes['pit_notifica'];
             }
             $cti++;
             $item = $itens[$mn]->tel_id;
             $ent->defCamposPermissoes($item, $modu, $itens[$mn]);
-            $campos2[1][$modu][$cti][0] = $ent->pit_modu;
-            $campos2[1][$modu][$cti][1] = $ent->pit_tela;
-            $campos2[1][$modu][$cti][2] = $ent->pit_all;
-            $campos2[1][$modu][$cti][3] = $ent->pit_consulta;
-            $campos2[1][$modu][$cti][4] = $ent->pit_adicao;
-            $campos2[1][$modu][$cti][5] = $ent->pit_edicao;
-            $campos2[1][$modu][$cti][6] = $ent->pit_exclusao;
-            $campos2[1][$modu][$cti][7] = $ent->pit_notifica;
+            $campos2[1][$modu][$cti][0] = $ent->camposPermissoes['pit_modu'];
+            $campos2[1][$modu][$cti][1] = $ent->camposPermissoes['pit_tela'];
+            $campos2[1][$modu][$cti][2] = $ent->camposPermissoes['pit_all'];
+            $campos2[1][$modu][$cti][3] = $ent->camposPermissoes['pit_consulta'];
+            $campos2[1][$modu][$cti][4] = $ent->camposPermissoes['pit_adicao'];
+            $campos2[1][$modu][$cti][5] = $ent->camposPermissoes['pit_edicao'];
+            $campos2[1][$modu][$cti][6] = $ent->camposPermissoes['pit_exclusao'];
+            $campos2[1][$modu][$cti][7] = $ent->camposPermissoes['pit_notifica'];
         }
 
         $this->data['secoes']  = $secao;
@@ -144,7 +144,7 @@ class CfgPerfil extends BaseController
         $dados = $this->perfil->getPerfil($id);
 
         if (!$dados) {
-            return redirectWithError($this->data['controler'],41);
+            return redirectWithError($this->data['controler'], 41);
             // return view('errors/vw_semregistro', [
             //     'mensagem' => 'Perfil não encontrado'
             // ]);

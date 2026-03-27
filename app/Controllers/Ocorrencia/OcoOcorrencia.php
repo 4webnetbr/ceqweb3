@@ -73,31 +73,15 @@ class OcoOcorrencia extends BaseController
     public function lista()
     {
         $campos = montaColunasCampos($this->data, 'oco_id');
-
         $dados = $this->ocorrencia->getListaCompleta();
         // debug($dados, true);
-        $oco_ids_assoc = array_map(fn($o) => $o->oco_id, $dados);
-
-        $log = buscaLogTabela('oco_ocorrencia', $oco_ids_assoc);
         $base_url = base_url('OcoTrataOcorrencia');
 
 
         foreach ($dados as $nov) {
 
-            $usuLog = $log[$nov->oco_id]['usua_alterou'] ?? '';
-
-            // Gerado por (sempre)
-            $nov->usu_nome = $usuLog;
-
-            // Finalizado por (somente se FINALIZADA)
-            if ((int)$nov->stt_id === 30) {
-                $nov->usu_fina = $usuLog;
-            } else {
-                $nov->usu_fina = '';
-            }
-
+            // finalizado por e gerado por:
             $nov->acao_person = [];
-
 
             // Botão imprimir
             if (trim($nov->stt_nome ?? '') !== 'Pendente') {
@@ -196,7 +180,7 @@ class OcoOcorrencia extends BaseController
 
         // Valida se a ocorrência existe
         if (!$dados) {
-            return redirectWithError($this->data['controler'],41);
+            throw new \Exception('Ocorrência não encontrada');
         }
 
         $log = buscaLogTabela('oco_ocorrencia', [$id]);
@@ -318,7 +302,7 @@ class OcoOcorrencia extends BaseController
 
         // Valida se a ocorrência existe
         if (!$dados) {
-            return redirectWithError($this->data['controler'],41);
+            throw new \Exception('Ocorrência não encontrada');
         }
 
         // Instancia a entity
@@ -607,6 +591,7 @@ class OcoOcorrencia extends BaseController
             if (empty($postado['oco_data'])) {
                 $postado['oco_data'] = date('Y-m-d H:i:s');
             }
+            $postado['usu_criou'] = session()->get('usu_id');
 
             // cria a entity
             $entity = new EntOcoOcorrencia($postado);

@@ -149,10 +149,8 @@ class Produto extends BaseController
     {
         $dados = $this->produtos->getListaProduto($id)[0] ?? null;
 
-        if (!$dados) {
-            return view('errors/vw_semregistro', [
-                'mensagem' => 'Status não encontrado'
-            ]);
+        if (!$dados || ($dados->stt_edicao == 'N' && $show == false)) {
+            return redirectWithError($this->data['controler'], 41);
         }
 
         // Se produto está em status inicial, envia para aprovação
@@ -300,7 +298,13 @@ class Produto extends BaseController
         $this->data['destino']      = 'store';
         $this->data['script']       = $script;
         $this->data['desc_edicao']  = $dados->pro_codpro . " - " . $dados->pro_despro . " - " . fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
-        $this->data['log']          = buscaLog('pro_produto', $id);
+        
+        $this->data['log']          = array_merge(
+                                        buscaLog('pro_sap_produto', $id),
+                                        buscaLog('pro_ceq_produto', $id),
+                                        buscaLog('pro_est_produto', $id)
+                                    );
+        
         return view('vw_edicao', $this->data);
     }
 

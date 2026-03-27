@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Controllers\Config;
 
@@ -7,7 +7,7 @@ use App\Controllers\BaseController;
 use App\Models\Config\ConfigMensagemModel;
 use App\Entities\Config\EntCfgMensagem;
 
-Class CfgMensagem extends BaseController
+class CfgMensagem extends BaseController
 {
     public $data      = [];
     public $permissao = '';
@@ -16,18 +16,19 @@ Class CfgMensagem extends BaseController
 
     public function __construct()
     {
-		$this->data       = session()->getFlashdata('dados_tela');
+        $this->data       = session()->getFlashdata('dados_tela');
         $this->permissao  = $this->data['permissao'];
         $this->common     = new CommonModel();
-		$this->mensagem   = new ConfigMensagemModel();
+        $this->mensagem   = new ConfigMensagemModel();
 
         // Caso exista erro de permissão, bloqueia acesso
         if ($this->data['erromsg'] != '') {
             $this->__erro();
         }
-	}
+    }
 
-    function __erro(){
+    function __erro()
+    {
         echo view('vw_semacesso', $this->data);
     }
 
@@ -40,15 +41,8 @@ Class CfgMensagem extends BaseController
         $this->data['colunas']   = montaColunasLista($this->data, 'msg_id,');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
-
-        // $this->mensagem->getMensagensCache();    
-        // echo '<pre>';
-        // echo 'CACHE cfg_mensagens_obj: ';
-        // var_dump(cache()->get('cfg_mensagens_obj') ? 'SIM' : 'NAO');
-        // echo '</pre>';
-        // exit;
     }
-    
+
 
     /**
      * Listagem
@@ -59,17 +53,17 @@ Class CfgMensagem extends BaseController
     public function lista()
     {
         // Monta campos da listagem
-            $campos = montaColunasCampos($this->data, 'msg_id');
-            $dados_tela = $this->mensagem->getMensagem();
-            $this->data['exclusao'] = false;
+        $campos = montaColunasCampos($this->data, 'msg_id');
+        $dados_tela = $this->mensagem->getMensagem();
+        $this->data['exclusao'] = false;
 
-            // Estrutura padrão para DataTable
-            $mensagem = [
-                'data' => montaListaColunasEnt($this->data, 'msg_id', $dados_tela, $campos[1]),
-            ];
+        // Estrutura padrão para DataTable
+        $mensagem = [
+            'data' => montaListaColunasEnt($this->data, 'msg_id', $dados_tela, $campos[1]),
+        ];
 
-            // Cache da listagem
-            cache()->save('mensagem', $mensagem, 60000);
+        // Cache da listagem
+        cache()->save('mensagem', $mensagem, 60000);
         echo json_encode($mensagem);
     }
 
@@ -77,7 +71,7 @@ Class CfgMensagem extends BaseController
     {
         // Cria entity vazia
         $men = new EntCfgMensagem();
-    
+
         // Dados Gerais
         $this->data['secoes']     = ['Dados Gerais'];
         $this->data['campos']     = [[
@@ -86,16 +80,17 @@ Class CfgMensagem extends BaseController
             $men->campos['msg_tipo'],
             $men->campos['msg_cor'],
             $men->campos['msg_mensagem']
-            ]];
+        ]];
         // Define método de gravação
         $this->data['destino']    = 'store';
-    
+
         // Exibe view normal ou modal
         echo view($modal ? 'vw_edicao_modal' : 'vw_edicao', $this->data);
     }
 
 
-    public function show($id){
+    public function show($id)
+    {
         $this->edit($id, true);
     }
 
@@ -104,13 +99,13 @@ Class CfgMensagem extends BaseController
     {
         // Busca mensagem pelo ID
         $men = $this->mensagem->find($id);
-    
+
         // Caso não encontre, lança exceção
         if (!$men) {
-            return redirectWithError($this->data['controler'],41);
+            return redirectWithError($this->data['controler'], 41);
             // throw new \Exception('Impressora não encontrada');
         }
-    
+
         // Define campos conforme modo edição/visualização
         $men->campos = $men->defCampos($show);
 
@@ -122,11 +117,11 @@ Class CfgMensagem extends BaseController
             $men->campos['msg_tipo'],
             $men->campos['msg_cor'],
             $men->campos['msg_mensagem']
-            ]];
+        ]];
         $this->data['destino']    = 'store';
         // Histórico de alterações
         $this->data['log']     = buscaLog('cfg_impressora', $id);
-    
+
         echo view('vw_edicao', $this->data);
     }
 
@@ -140,7 +135,6 @@ Class CfgMensagem extends BaseController
             $ret['erro'] = false;
             cache()->delete('cfg_mensagens_obj');
             session()->setFlashdata('msg', 'Mensagem Excluída com Sucesso');
-
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException) {
             // Erro por relacionamento com outros cadastros
             $ret['erro'] = true;
@@ -150,7 +144,7 @@ Class CfgMensagem extends BaseController
         echo json_encode($ret);
     }
 
-   public function ativinativ($id, $tipo)
+    public function ativinativ($id, $tipo)
     {
         if ($tipo == 1) {
             $dad_atin = ['msg_ativo' => 'A'];
@@ -158,17 +152,16 @@ Class CfgMensagem extends BaseController
             $dad_atin = ['msg_ativo' => 'I'];
         }
         $ret = [];
-    
+
         try {
             $this->mensagem->update($id, $dad_atin);
-    
+
             cache()->delete('cfg_mensagens_obj');
-    
+
             $ret['erro'] = false;
             $ret['msg']  = 'Mensagem Alterada com Sucesso';
-    
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException) {
-    
+
             $ret['erro'] = true;
             $ret['msg']  = 'Não foi possível Alterar a Mensagem, Verifique!';
         }
@@ -179,16 +172,16 @@ Class CfgMensagem extends BaseController
     public function getMensagemAjax(int $id)
     {
         $mensagens = $this->mensagem->getMensagensCache();
-    
+
         if (!isset($mensagens[$id])) {
-            return redirectWithError($this->data['controler'],41);
+            return redirectWithError($this->data['controler'], 41);
             // return $this->response->setJSON([
             //     'erro' => true,
             //     'msg'  => 'Mensagem não encontrada'
             // ]);
         }
         $men = $mensagens[$id];
-    
+
         return $this->response->setJSON([
             'id'     => $men->msg_id,
             'titulo' => $men->msg_titulo,
@@ -240,6 +233,5 @@ Class CfgMensagem extends BaseController
             }
         }
         echo json_encode($ret);
-    } 
-
+    }
 }

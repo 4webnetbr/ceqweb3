@@ -530,22 +530,9 @@ function carregamentos_iniciais() {
     }
   });
 
-  // jQuery("input, textarea").on("keydown", function (e) {
-  //   if (e.which === 13) {
-  //     // 13 é o código da tecla Enter
-  //     console.log("Enter detectado após leitura do código de barras.");
-  //     e.preventDefault(); // impede o submit
-  //     e.stopPropagation();
-  //     jQuery(this).blur();
-  //     // aqui você pode tratar o valor lido
-  //   }
-  // });
-  // Aplica a todos os selects múltiplos com selectpicker
-
   jQuery("input, textarea").on("keyup", function (e) {
     var id = jQuery(this)[0].id;
-    id = id.replace("[", "\\[");
-    id = id.replace("]", "\\]");
+    id = escIdColchetes(id);
     var tam = jQuery(this)[0].maxLength;
     var dig = jQuery(this)[0].value.length;
     tdiv = dig + "/" + tam;
@@ -580,16 +567,21 @@ function carregamentos_iniciais() {
 
   // VERIFICA SE O CAMPO SOFREU ALTERNATES E CASO POSITIVO, ALTERA A VARIAVE data-alter PARA VERDADEIRO
   // ISSO PODE SER USADO NA SAÍDA DO FORMULÁRIO, PARA TESTAR SE HOUVE ALTERAÇÕES NOS DADOS
+  jQuery(document).on("input change", "input, textarea, select", function () {
+    jQuery(this).closest("form").attr("data-alter", "true");
+    console.log("Alterou");
+  });
+
   jQuery("body").on("keyup change", "input,select,textarea", function (event) {
     valorigem = this.getAttribute("data-valor");
     if (this.tagName == "SELECT") {
       valorigem = this.getAttribute("data-selec");
     }
-    if (valorigem != jQuery(this).val().toString()) {
-      this.setAttribute("data-alter", true);
-      jQuery("#form1").attr("data-alter", true);
-      console.log("Alterou");
-    }
+    // if (valorigem != jQuery(this).val().toString()) {
+    //   this.setAttribute("data-alter", true);
+    //   jQuery("#form1").attr("data-alter", true);
+    //   console.log("Alterou");
+    // }
     if (this.validity.valid) {
       nid = jQuery(this)[0].id;
       jQuery("[id='" + nid + "-fival']").removeClass("d-block");
@@ -702,31 +694,6 @@ function acertaDependente() {
       .find("button.dropdown-toggle");
     $button.trigger("click");
   });
-
-  // function atualizarTextoSelectpicker(select) {
-  //   var selectedOptions = jQuery(select).find("option:selected");
-  //   var $button = jQuery(select).parent().find(".filter-option-inner-inner");
-
-  //   if (selectedOptions.length > 1) {
-  //     var list = selectedOptions
-  //       .map(function () {
-  //         return (
-  //           "<div><i class='fas fa-check'></i> " +
-  //           jQuery(this).text() +
-  //           "</div>"
-  //         );
-  //       })
-  //       .get()
-  //       .join("");
-  //     $button.html(list);
-
-  //     var altura = $button.outerHeight();
-
-  //     var $menu = jQuery(select).parent().find(".dropdown-menu").first();
-
-  //     $menu.css("top", -altura + "px !important");
-  //   }
-  // }
 }
 /**
  * mostraOcultaCampo
@@ -1124,8 +1091,6 @@ function seleciona_item(id, texto, obj) {
 function exclui_campo(objdest, obj) {
   jQuery(obj).closest(".row").remove();
   jQuery("#form1").attr("data-alter", true);
-  // indice = parseInt(obj.getAttribute('data-index'));
-  // jQuery(obj).parents().eq(2).remove()
   acerta_botoes_rep(objdest);
 }
 
@@ -1757,11 +1722,8 @@ function busca_dependente(obj, id_dep, url_busca, selec) {
   $select.selectpicker("val", aSelec);
   // acertaDependente();
 
-  // Define seleção e atualiza visual do selectpicker
-  // $select.selectpicker("val", aSelec);
-
   // Fecha o dropdown programaticamente
-  $select.parent().find(".dropdown-toggle").dropdown("toggle"); // se aberto, fecha
+  // $select.parent().find(".dropdown-toggle").dropdown("toggle"); // se aberto, fecha
 }
 
 /**

@@ -2,18 +2,19 @@
 
 namespace App\Controllers\Estoque;
 
-use App\Libraries\MyCampo;
-use App\Controllers\BuscasSapiens;
 use App\Controllers\BaseController;
-use App\Models\Produt\ProdutLoteModel;
-use App\Entities\Estoque\EntRequisicao;
-use App\Models\Produt\ProdutClasseModel;
-use App\Models\Produt\ProdutProdutoModel;
+use App\Controllers\BuscasSapiens;
 use App\Entities\Estoque\EntAteRequisicao;
+use App\Entities\Estoque\EntRequisicao;
+use App\Libraries\MyCampo;
 use App\Models\Estoqu\EstoquDepositoModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
-use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
+use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
+use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
+use App\Models\Produt\ProdutClasseModel;
+use App\Models\Produt\ProdutLoteModel;
+use App\Models\Produt\ProdutProdutoModel;
 
 class AteRequisicao extends BaseController
 {
@@ -21,6 +22,7 @@ class AteRequisicao extends BaseController
     public $permissao = '';
     public $requisicao;
     public $reqproduto;
+    public $tipomovimentacao;
     public $reqprodutoate;
     public $classes;
     public $produtos;
@@ -45,6 +47,7 @@ class AteRequisicao extends BaseController
         $this->busca         = new BuscasSapiens();
         $this->deposito      = new EstoquDepositoModel();
         $this->lote          = new ProdutLoteModel();
+        $this->tipomovimentacao    = new EstoquTipoMovimentacaoModel();
 
         if ($this->data['erromsg'] != '') {
             $this->__erro();
@@ -175,7 +178,7 @@ class AteRequisicao extends BaseController
         $requisicao = $this->requisicao->getRequisicao($id);
 
         if (!$requisicao) {
-            return redirectWithError($this->data['controler'],41);
+            return redirectWithError($this->data['controler'], 41);
             // session()->setFlashdata('erromsg', 'Requisição não encontrada.');
             // return redirect()->to(site_url($this->data['controler']));
         }
@@ -312,7 +315,7 @@ class AteRequisicao extends BaseController
 
             $scripti = "<SCRIPT>jQuery('#lot_codbar').focus();</SCRIPT>";
 
-            $this->data['desc_edicao']       = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT).' '.fmtEtiquetaCor($requisicao->stt_cor, $requisicao->stt_nome, 1);
+            $this->data['desc_edicao']       = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' ' . fmtEtiquetaCor($requisicao->stt_cor, $requisicao->stt_nome, 1);
             $this->data['desc_metodo'] = ' ';
             $this->data['secoes']      = $secao;
             $this->data['campos']      = $campos;
@@ -432,9 +435,8 @@ class AteRequisicao extends BaseController
             }
 
             if (!$ret['erro']) {
-
                 if ($qtiaatendida == 0 && !$temprodutopendente) {
-                    $status = 7;
+                    $status = 7; // CANCELADA
                 } else {
                     $saldos = $this->reqprodutoate->getSaldoRequisicao($postado['req_id']);
                     $sald   = 0;
@@ -446,6 +448,16 @@ class AteRequisicao extends BaseController
 
                     if ($sald > 0) {
                         $status = 21;
+                    } else {
+                        $insvis = retornaInsVis($postado['req_id']);
+                        $tipomov = $this->tipomovimentacao->getTipoMovimentacao($postado['tmo_id'])[0];
+
+                        if ($tipomov->tmo_conferencia == 'N') {
+                            $status = 25; // Conferida
+                            if ($insvis == 'N') {
+                                $status = 5; // Concluída
+                            }
+                        }
                     }
                 }
 
@@ -455,6 +467,53 @@ class AteRequisicao extends BaseController
                 $salvareq = $this->requisicao->update($postado['req_id'], $dadosReq);
 
                 if ($salvareq) {
+                    $produtosreq = $this->requisicao->getRequisicaoProdutos($postado['req_id']);
+                    if ($status == 25) {
+                        foreach ($produtosreq as $val) {
+                            $sql_save = [
+                                'rep_id'        => $val->rep_id,
+                                'pro_id'        => $val->pro_id,
+                                'rpa_cancelada' => 0,
+                                'rpa_atendida'  => $val->rep_quantia,
+                                'rpa_conferida'  => $val->rep_quantia,
+                                'rpa_data'      => date('Y-m-d H:i:s'),
+                                'rpa_data_conferencia'      => date('Y-m-d H:i:s'),
+                            ];
+                            $ate = $this->reqprodutoate
+                                ->getProdutoRequisicaoAtendimento($val->repid, $val->proid);
+
+                            if ($ate) {
+                                $salva = $this->reqprodutoate->update($ate[0]['rpa_id'], $sql_save);
+                            } else {
+                                $salva = $this->reqprodutoate->insert($sql_save);
+                            }
+
+                            // TODO CRIAR MOVIMENTAÇÃO DE ESTOQUE
+                        }
+                    } else if ($status == 5) {
+                        foreach ($produtosreq as $val) {
+                            $sql_save = [
+                                'rep_id'        => $val->rep_id,
+                                'pro_id'        => $val->pro_id,
+                                'rpa_cancelada' => 0,
+                                'rpa_atendida'  => $val->rep_quantia,
+                                'rpa_conferida'  => $val->rep_quantia,
+                                'rpa_aprovada'  => $val->rep_quantia,
+                                'rpa_data'      => date('Y-m-d H:i:s'),
+                                'rpa_data_conferencia'      => date('Y-m-d H:i:s'),
+                                'rpa_data_inspecao'      => date('Y-m-d H:i:s'),
+                            ];
+                            $ate = $this->reqprodutoate
+                                ->getProdutoRequisicaoAtendimento($val->rep_id, $val->pro_id);
+
+                            if ($ate) {
+                                $salva = $this->reqprodutoate->update($ate[0]['rpa_id'], $sql_save);
+                            } else {
+                                $salva = $this->reqprodutoate->insert($sql_save);
+                            }
+                            // TODO CRIAR MOVIMENTAÇÃO DE ESTOQUE
+                        }
+                    }
                     $this->reqprodutoate->transCommit();
                     $this->requisicao->transCommit();
 

@@ -791,6 +791,21 @@ function ativInativ(url, registro, ativo) {
   boxAlert(msg, false, url, false, 4, true, tit);
 }
 
+const cache = {};
+
+async function getMensagem(id) {
+  if (cache[id]) {
+    return cache[id];
+  }
+
+  const response = await fetch(`${window.location.origin}/mensagem/${id}`);
+  const data = await response.json();
+
+  cache[id] = data;
+
+  return data;
+}
+
 /**
  * boxAlert
  * Cria um box de Alerta para o Usuário
@@ -821,39 +836,40 @@ async function boxAlert(
 
   if (!isNaN(msg)) {
     // mensagem por ID do array msg_cfg
-    const msg_id = msg_cfg[+msg - 1];
-    if (msg_id) {
-      msg = msg_id.msg_mensagem;
-      tipo = msg_id.msg_tipo;
-      cor = msg_id.msg_cor;
+    const msgvar = await getMensagem(msg);
+    // const msg_id = msg_cfg[+msg - 1];
+    if (msgvar) {
+      msg = msgvar.msg_mensagem;
+      tipo = msgvar.msg_tipo;
+      cor = msgvar.msg_cor;
 
       if (tipo === "P") {
         titulo =
           '<h3><i class="fa-solid fa-circle-question fa-lg"></i><span class="mx-2">' +
-          msg_id.msg_titulo +
+          msgvar.msg_titulo +
           "</span></h3>";
         confirma = true;
       } else if (tipo === "A") {
         titulo =
           '<h3><i class="fa-solid fa-circle-exclamation fa-lg"></i><span class="mx-2">' +
-          msg_id.msg_titulo +
+          msgvar.msg_titulo +
           "</span></h3>";
         tipo = 1; // mantém comportamento original
       } else if (tipo === "E") {
         titulo =
           '<h3><i class="fa-solid fa-circle-xmark fa-lg"></i><span class="mx-2">' +
-          msg_id.msg_titulo +
+          msgvar.msg_titulo +
           "</span></h3>";
         erro = true;
       } else if (tipo === "I") {
         titulo =
           '<h3><i class="fa-solid fa-circle-info fa-lg"></i><span class="mx-2">' +
-          msg_id.msg_titulo +
+          msgvar.msg_titulo +
           "</span></h3>";
       } else if (tipo === "S") {
         titulo =
           '<h3><i class="fa-regular fa-circle-question fa-lg"></i><span class="mx-2">' +
-          msg_id.msg_titulo +
+          msgvar.msg_titulo +
           "</span></h3>";
       }
     }

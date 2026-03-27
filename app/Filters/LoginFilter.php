@@ -2,14 +2,14 @@
 
 namespace App\Filters;
 
-use App\Models\Config\ConfigMensagemModel;
-use App\Models\Config\ConfigMenuModel;
+// use App\Models\Config\ConfigMensagemModel;
+// use App\Models\Config\ConfigMenuModel;
 use App\Models\Config\ConfigPerfilItemModel;
 use App\Models\Config\ConfigTelaModel;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
-use Config\Services;
+// use Config\Services;
 
 class LoginFilter implements FilterInterface
 {
@@ -38,11 +38,11 @@ class LoginFilter implements FilterInterface
         $metodo = $segments[1] ?? 'index';
 
         // ✅ Carrega mensagens apenas uma vez por sessão
-        if (!$session->has('msg_cfg')) {
-            $msgModel = new ConfigMensagemModel();
-            $mensagens = $msgModel->getMensagemId();
-            $session->set(['msg_cfg' => $mensagens]);
-        }
+        // if (!$session->has('msg_cfg')) {
+        //     $msgModel = new ConfigMensagemModel();
+        //     $mensagens = $msgModel->getMensagemId();
+        //     $session->set(['msg_cfg' => $mensagens]);
+        // }
 
         $perfilId = $session->get('usu_perfil_id');
         $tipoUsuario = $session->get('usu_tipo');
@@ -62,7 +62,7 @@ class LoginFilter implements FilterInterface
                     Informe o Problema ao Administrador do Sistema!",
             ];
         } else {
-            $tela = $telaInfo[0];
+            $tela = (array) $telaInfo[0];
 
             $dadosTela = [
                 'modal' => $modal,

@@ -16,6 +16,7 @@ use App\Models\Config\ConfigEtiquetaModel;
 use App\Models\Estoqu\EstoquDepositoModel;
 use App\Models\Ocorre\OcorreTipoAcaoModel;
 use App\Models\Config\ConfigImpressoraModel;
+use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Produt\ProdutIngredienteModel;
 use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
@@ -914,5 +915,19 @@ class Buscas extends BaseController
             echo json_encode($ret);
         }
         exit;
+    }
+
+    public function buscaProdutoRequisicao($requis)
+    {
+        $ret = [];
+
+        $produtos = (new EstoquRequisicaoModel)->getRequisicaoProdutos($requis);
+        debug($produtos, true);
+        if (!empty($produtos)) {
+            $ret = $produtos;
+        }
+        // debug($ret);
+
+        echo json_encode($ret);
     }
 }

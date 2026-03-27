@@ -1,13 +1,22 @@
 <?php
 
-use Config\Database;
 use App\Libraries\MyCampo;
-use App\Models\LogMonModel;
-use App\Models\Config\ConfigMenuModel;
-use App\Models\Config\ConfigTelaModel;
-use App\Models\Config\ConfigPerfilItemModel;
 use App\Models\Config\ConfigDicDadosModel;
+use App\Models\Config\ConfigMenuModel;
+use App\Models\Config\ConfigPerfilItemModel;
+use App\Models\Config\ConfigTelaModel;
+use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
+use App\Models\LogMonModel;
+use Config\Database;
+
+/**
+ * funcExemplo
+ * é só um exemplo de função todas as funções devem seguir essa estrutura e terminar com ;; 2 ponto e vírgula
+ * @param string $nomeTela
+ * @return array
+ */
+function funcExemplo(string $nomeTela) {};;
 
 /**
  * detalhesTela
@@ -703,53 +712,61 @@ function recursivo($caminho, $dirName, $diretoriosPermitidos, $arquivosPermitido
  */
 function fmtEtiquetaCorBst($cor, $label = '')
 {
-    $cores["bg-primary"] = "&nbsp";
-    $texto['bg-primary'] = 'text-black';
-    $cores['bg-secondary'] = "&nbsp";
-    $texto['bg-secondary'] = 'text-white';
-    $cores['bg-success'] = "&nbsp";
-    $texto['bg-success'] = 'text-black';
-    $cores['bg-danger'] = "&nbsp";
-    $texto['bg-danger'] = 'text-black';
-    $cores['bg-warning'] = "&nbsp";
-    $texto['bg-warning'] = 'text-black';
-    $cores['bg-info'] = "&nbsp";
-    $texto['bg-info'] = 'text-black';
-    $cores['bg-dark'] = "&nbsp";
-    $texto['bg-dark'] = 'text-white';
-    $cores['bg-white'] = "&nbsp";
-    $texto['bg-white'] = 'text-black';
-    if ($label == '') {
-        $label = $cores[$cor];
-    }
+    if (substr($cor, 0, 1) == '#') {
+        return fmtEtiquetaCor($cor, $label);
+    } else {
+        $cores["bg-primary"] = "&nbsp";
+        $texto['bg-primary'] = 'text-black';
+        $cores['bg-secondary'] = "&nbsp";
+        $texto['bg-secondary'] = 'text-white';
+        $cores['bg-success'] = "&nbsp";
+        $texto['bg-success'] = 'text-black';
+        $cores['bg-danger'] = "&nbsp";
+        $texto['bg-danger'] = 'text-black';
+        $cores['bg-warning'] = "&nbsp";
+        $texto['bg-warning'] = 'text-black';
+        $cores['bg-info'] = "&nbsp";
+        $texto['bg-info'] = 'text-black';
+        $cores['bg-dark'] = "&nbsp";
+        $texto['bg-dark'] = 'text-white';
+        $cores['bg-white'] = "&nbsp";
+        $texto['bg-white'] = 'text-black';
+        if ($label == '') {
+            $label = $cores[$cor];
+        }
 
-    $ret = "<span class='$cor $texto[$cor] px-3 py-1 w-100 d-inline-block rounded rounded-4 text-center text-black text-nowrap'>$label</span>";
-    return $ret;
+        $ret = "<span class='$cor $texto[$cor] px-3 py-1 w-100 d-inline-block rounded rounded-4 text-center text-black text-nowrap'>$label</span>";
+        return $ret;
+    }
 }
 
 /**
  * fmtEtiquetaCorBst
  * Formata a Etiqueta de Cor do Bootstrap
- * @param mixed $cor
+ * @param mixed $cor 
  * @return string
  */
 function fmtEtiquetaCor($cor, $label = '', $tipo = 0)
 {
-    if ($label == '') {
-        $label = $cor;
+    if (substr($cor, 0, 1) != '#') {
+        return fmtEtiquetaCorBst($cor, $label);
+    } else {
+        if ($label == '') {
+            $label = $cor;
+        }
+        $py = 'py-1';
+        $di = 'd-table';
+        $mw = 'min-width:20ch;';
+        if ($tipo == 1) {
+            // sem pad vertical e sem min-width pra caber em qualquer espaço
+            $py = '';
+            $mw = '';
+            $di = 'd-inline-block';
+        }
+        $cortexto = getContrastYIQ(substr($cor, 1, strlen($cor)));
+        $ret = "<span style='background-color:$cor;color:$cortexto;margin:0 auto;border:1px solid $cortexto;$mw' class='px-3 $py $di rounded-pill text-center text-nowrap '>$label</span>";
+        return $ret;
     }
-    $py = 'py-1';
-    $di = 'd-table';
-    $mw = 'min-width:20ch;';
-    if ($tipo == 1) {
-        // sem pad vertical e sem min-width pra caber em qualquer espaço
-        $py = '';
-        $mw = '';
-        $di = 'd-inline-block';
-    }
-    $cortexto = getContrastYIQ(substr($cor, 1, strlen($cor)));
-    $ret = "<span style='background-color:$cor;color:$cortexto;margin:0 auto;border:1px solid $cortexto;$mw' class='px-3 $py $di rounded-pill text-center text-nowrap '>$label</span>";
-    return $ret;
 }
 function getContrast50($hexcolor)
 {
@@ -819,13 +836,6 @@ function isValidDate($date, $format = 'Y-m-d')
     return $d && $d->format($format) === $date;
 }
 
-/**
- * funcExemplo
- * é só um exemplo de função
- * @param string $nomeTela
- * @return array
- */
-function funcExemplo(string $nomeTela) {};;
 
 /**
  * Filtra array de requisições com base nas autorizações por perfil.
@@ -957,6 +967,7 @@ function criaSelectRelativo(
         if ($nomeCampo == '') {
             $nomeCampo = $campoChave;
         }
+        // debug($opcoes);
     }
     // Cria o campo
     $campo = new MyCampo($entidade, $nomeCampo);
@@ -1097,4 +1108,31 @@ function filtrarPorPerfil(array $dados, ?int $perfilId = null): array
 
     // Reindexa os dados
     return array_values($dados_filtrados);
+}
+
+function retornaInsVis($req)
+{
+    $produtos = (new EstoquRequisicaoModel)->getRequisicaoProdutos($req);
+    $temS = false;
+    $temN = false;
+
+    foreach ($produtos as $produto) {
+        if ($produto->cla_insvis === 'S') {
+            $temS = true;
+        } elseif ($produto->cla_insvis === 'N') {
+            $temN = true;
+        }
+
+        if ($temS && $temN) {
+            break;
+        }
+    }
+
+    $resultado = match (true) {
+        $temS && !$temN => 'S',
+        !$temS && $temN => 'N',
+        default => 'M',
+    };
+
+    return $resultado;
 }

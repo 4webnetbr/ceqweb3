@@ -74,6 +74,7 @@ class EntCfgUsuario extends Entity
         $perfil->opcoes      = $perfis;
         $perfil->selecionado = $dados->prf_id ?? '';
         $perfil->valor       = $dados->prf_id ?? '';
+        $perfil->largura       = 50;
         if ($leitura) {
             $perfil->infotop = 'Para alterar o Perfil, solicite ao Gestor do Sistema';
         }
@@ -94,6 +95,7 @@ class EntCfgUsuario extends Entity
         $dash->opcoes      = $telas;
         $dash->valor       = $dados->usu_dashboard ?? '';
         $dash->selecionado = $dash->valor;
+        $dash->largura       = 50;
         $this->usu_dashboard = $dash->crSelect();
 
         $nova_senha = new MyCampo('cfg_usuario', 'usu_senha');

@@ -1,8 +1,7 @@
-<?=$this->extend('templates/default_template')?>
-<?=$this->section('header');?>
-<?=view('strut/vw_titulo');?>
-<?//=view('strut/vw_header');?>
-<?=$this->endSection();?>
+<?= $this->extend('templates/default_template') ?>
+<?= $this->section('header'); ?>
+<?= view('strut/vw_titulo'); ?>
+<?= $this->endSection(); ?>
 
 <?=$this->section('menu');?>
   <?=view('strut/vw_menu');?>
@@ -54,9 +53,11 @@
         <?php
           $anterior = [];
           $atual    = $dad['dados'][0];
+          echo "<div class='row'>";
           echo "<div class='card col-4 float-start d-inline card-header bg-info-subtle'>Campo</div>";
           echo "<div class='card col-4 float-start d-inline card-header bg-info-subtle'>Anterior</div>";
           echo "<div class='card col-4 float-start d-inline card-header bg-info-subtle'>Salvo</div>";
+          echo "</div>";
           $anterior = [];
           if($ant < count($dados)){
             $anterior = $dados[$ant]['dados'][0];

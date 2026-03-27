@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controllers;
+namespace App\Controllers\Micro;
 
 use App\Models\MicrobAnaliseModel;
 use App\Models\ProdutProdutoModel;
@@ -31,7 +31,7 @@ class WorkAnalise extends BaseController
 
         $saldoestFiltrado = array_filter($saldoest, function ($item) {
             return !(($item->codigoLote === 'N/A' && $item->estoqueDeposito == 0) ||
-                     ($item->codigoLote !== 'N/A' && $item->quantidadeEstoque == 0));
+                ($item->codigoLote !== 'N/A' && $item->quantidadeEstoque == 0));
         });
 
         $saldoestArr = array_map(fn($obj) => (array) $obj, array_values($saldoestFiltrado));

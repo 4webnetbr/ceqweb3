@@ -129,7 +129,7 @@ class InspecaoProd extends BaseController
         $requisicao = $this->requisicao->getRequisicao($id);
 
         if (!$requisicao) {
-            return redirectWithError($this->data['controler'],41);
+            return redirectWithError($this->data['controler'], 41);
         }
         $requisicao = $requisicao[0];
         $log = buscaLog('est_requisicao', $id);
@@ -547,6 +547,12 @@ class InspecaoProd extends BaseController
     {
         $postado = $this->request->getPost();
         // debug($postado, true);
+        $requisicao = $this->requisicao->getRequisicao($postado['req_id'])[0];
+        $mudastatus = true;
+        if ($requisicao->stt_id == 21 || $requisicao->stt_id == 24) { // ATENDIDA PARCIAL NÃO MUDA STATUS
+            $mudastatus = false;
+            $status = $requisicao->stt_id;
+        }
 
         $dadosAgrupados = [];
         $parcial = false;
@@ -665,7 +671,9 @@ class InspecaoProd extends BaseController
                     }
                 }
                 if (!$ret['erro']) {
-                    $status = ($parcial) ? 26 : 5;
+                    if ($mudastatus) {
+                        $status = ($parcial) ? 26 : 5;
+                    }
                     $dadosReq = [
                         'stt_id' => $status
                     ];

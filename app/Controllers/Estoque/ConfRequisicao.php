@@ -160,7 +160,7 @@ class ConfRequisicao extends BaseController
         $requisicao = $this->requisicao->getRequisicao($id);
 
         if (!$requisicao) {
-            return redirectWithError($this->data['controler'],41);
+            return redirectWithError($this->data['controler'], 41);
             // session()->setFlashdata('erromsg', 'Requisição não encontrada.');
             // return redirect()->to(site_url($this->data['controler']));
         }
@@ -390,7 +390,14 @@ class ConfRequisicao extends BaseController
     public function store()
     {
         $postado = $this->request->getPost();
-        // debug($postado);
+        // debug($postado, true);
+        $requisicao = $this->requisicao->getRequisicao($postado['req_id'])[0];
+        $mudastatus = true;
+        if ($requisicao->stt_id == 21) { // ATENDIDA PARCIAL NÃO MUDA STATUS
+            $mudastatus = false;
+            $status = 21;
+        }
+
 
         $dadosAgrupados = [];
         $parcial = false;
@@ -510,21 +517,39 @@ class ConfRequisicao extends BaseController
             }
 
             if (!$ret['erro']) {
-                $status = 25;
-                if ($parcial) {
-                    $status = 24; //conferida parcial
+                if ($mudastatus) {
+                    $status = 25;
+                    if ($parcial) {
+                        $status = 24; //conferida parcial
+                    } else {
+                        $insvis = retornaInsVis($postado['req_id']);
+                        if ($insvis == 'N') {
+                            $status = 5; // Concluída
+                        }
+                    }
+                    $dadosReq = ['stt_id' => $status];
+
+                    // VERIFICAR SE OS PRODUTOS DA REQUISIÇÃO EXIGEM INSPEÇÃO VISUAL E SE AINDA NÃO FOI REALIZADO
+                    // CASO TODOS OS PRODUTOS, JA TENHAM SIDO FEITOS INSPEÇÃO VISUAL OU NÃO EXIJAM INSPEÇÃO VISUAL
+                    // O STATUS DA REQUISIÇÃO PASSA A SER CONCLUÍDA
+                    $this->requisicao->transStart();
+                    $salvareq = $this->requisicao->update($postado['req_id'], $dadosReq);
+                } else {
+                    $salvareq = true;
                 }
-                $dadosReq = ['stt_id' => $status];
-
-                // VERIFICAR SE OS PRODUTOS DA REQUISIÇÃO EXIGEM INSPEÇÃO VISUAL E SE AINDA NÃO FOI REALIZADO
-                // CASO TODOS OS PRODUTOS, JA TENHAM SIDO FEITOS INSPEÇÃO VISUAL OU NÃO EXIJAM INSPEÇÃO VISUAL
-                // O STATUS DA REQUISIÇÃO PASSA A SER CONCLUÍDA
-
-
-                $this->requisicao->transStart();
-                $salvareq = $this->requisicao->update($postado['req_id'], $dadosReq);
 
                 if ($salvareq) {
+                    $produtosreq = $this->requisicao->getRequisicaoProdutos($postado['req_id']);
+                    if ($status == 5) {
+                        foreach ($produtosreq as $val) {
+                            $sql_save = [
+                                'rpa_aprovada'  => $val->rep_quantia,
+                                'rpa_data_inspecao'      => date('Y-m-d H:i:s'),
+                            ];
+                            $atualizar = $this->requisicaoate->update($val->rpaid, $sql_save);
+                            // TODO CRIAR MOVIMENTAÇÃO DE ESTOQUE
+                        }
+                    }
                     $this->requisicaoate->transCommit();
                     $this->requisicao->transCommit();
                     $ret['msg'] = 'Conferência gravada com sucesso!';

@@ -268,20 +268,20 @@ a:hover {
 }
 
 .tab-content > .tab-pane {
-  max-height: calc(100vh - 9rem) !important;
   overflow-x: hidden;
   overflow-y: visible;
   height: auto;
-  padding-bottom: 2rem !important;
-  border-radius: 0 15px 15px 15px;
   transition: height 0.2s ease;
+  border-radius: 0 15px 15px 15px;
+  max-height: calc(100vh - 8.5rem) !important;
+  /* padding-bottom: 2rem !important; */
   /* min-height: 80vh; */
 }
 
 .tab-content-prin > .tab-pane-prin {
   max-height: 90vh;
-  overflow: hidden;
-  min-height: 90vh;
+  /* overflow: hidden; */
+  /* min-height: 90vh; */
 }
 
 .tab-content > .tab-pane.show,
@@ -989,6 +989,9 @@ div {
   z-index: 5000 !important;
 }
 
+.modal-content {
+  box-shadow: 0px 0px 4px 1px var(--bs-blue-dark);
+}
 /* e os modais do bootbox acima do próprio backdrop */
 .bootbox.modal {
   z-index: 5005 !important;
@@ -1030,20 +1033,6 @@ tr td {
   background-color: var(--bs-blue-dark) !important;
   box-shadow: inset 0 calc(-1 * var(--bs-accordion-border-width)) 0
     var(--bs-accordion-border-color) #dee2e6;
-}
-
-.tabela-pequena {
-  font-size: 10px;
-  margin: 0 !important;
-}
-
-/* 
- * Define o tamanho da fonte como 12px para o corpo (tbody) de todas as tabelas
- * do DataTables que NÃO possuem a classe 'tabela_pequena'.
- * Tabelas com a classe 'tabela_pequena' mantêm sua configuração original (ex: 10px).
- */
-table.dataTable:not(.tabela_pequena) tbody {
-  font-size: 12px;
 }
 
 .accordion-body,

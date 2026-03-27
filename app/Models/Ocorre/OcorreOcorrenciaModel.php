@@ -31,6 +31,8 @@ class OcorreOcorrenciaModel extends Model
         'stt_id',
         'tmo_id',
         'oco_justi',
+        'usu_criou',
+        'usu_fina',
     ];
 
     protected $validationRules = [
@@ -87,23 +89,12 @@ class OcorreOcorrenciaModel extends Model
     public function getListaCompleta()
     {
         $db = db_connect('dbOcorrencia');
-
-        $perfilId = session()->get('usu_perfil_id');
-
-        $builder = $db->table($this->view . ' v');
-        $builder->select('v.*');
-
-        $builder->join(
-            'oco_subt_ocorrencia_permissao perm',
-            "perm.sut_id = v.sut_id AND perm.prf_id = {$perfilId}",
-            'inner'
-        );
-
-        $builder->groupBy('v.oco_id');
-
+    
+        $builder = $db->table($this->view);
+        $builder->select('*');
         $builder->orderBy('stt_ordem');
         $builder->orderBy('oco_id', 'ASC');
-
+    
         return $builder->get()->getResult();
     }
 

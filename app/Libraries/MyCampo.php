@@ -1682,18 +1682,21 @@ class MyCampo
 
         $resp = '';
 
+
         $this->field = [
-            // 'type'          => 'color',
-            // 'list'          => 'sisColors',
             'name'  => $this->nome,
             'id'    => $this->id,
-            'class' => ' form-control form-select form-color ',
+            'data-container' => "body",
+            'class' => ' form-control form-select form-color selectpicker',
         ];
         if (! isset($this->size) || $this->size == '') {
             $this->size = -1;
         }
         $this->propriedades();
+        // debug($this->field['placeholder']);
         $this->field['placeholder'] = str_replace('Informe', 'Selecione', $this->field['placeholder']);
+        // $this->field['placeholder'] = str_replace('Selecione', '-Selecione', $this->field['placeholder']);
+        // debug($this->field['placeholder']);
 
         $campo = form_dropdown($this->field, $this->opcoes, $this->selecionado);
         // debug($campo);
@@ -1701,7 +1704,10 @@ class MyCampo
         foreach ($this->opcoes as $key => $valor) {
             $pos1 = strpos($valor, "-");
             $rgb  = substr($valor, 0, $pos1 - 1);
-            $nome = substr($valor, $pos1 + 1);
+            $nome = substr($valor, $pos1);
+            if (substr($rgb, 0, 1) == '#') {
+                $nome = substr($valor, $pos1 + 1);
+            }
             $cor  = fmtEtiquetaCor($rgb, $nome);
             $campo .= "jQuery(\"#$this->id option[value='" . $key . "']\").attr('data-content',\"$cor\");";
         }

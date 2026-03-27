@@ -322,7 +322,7 @@ class Requisicao extends BaseController
         $requisicao = $this->requisicao->getRequisicao($id);
 
         if (!$requisicao) {
-            return redirectWithError(previous_url(),41);
+            return redirectWithError(previous_url(), 41);
         }
         $requisicao = $requisicao[0];
 
@@ -334,7 +334,7 @@ class Requisicao extends BaseController
 
         // $secao[1] = 'Produtos';
         $produtosreq = $this->requisicao->getRequisicaoProdutos($id);
-        // debug($produtosreq);
+        // debug($produtosreq); 
 
         $pro_ids = array_unique(array_map(
             fn($p) => $p->pro_id,
@@ -485,7 +485,7 @@ class Requisicao extends BaseController
         $requis = $this->requisicao->getRequisicao($id);
 
         if (!$requis) {
-            return redirectWithError($this->data['controler'],41);
+            return redirectWithError($this->data['controler'], 41);
 
             // return view('errors/vw_semregistro', [
             //     'mensagem' => 'Requisição não encontrada'
@@ -560,7 +560,7 @@ class Requisicao extends BaseController
         $requis = $this->requisicao->getRequisicao($id);
 
         if (!$requis) {
-            return redirectWithError($this->data['controler'],41);
+            return redirectWithError($this->data['controler'], 41);
 
             // return view('errors/vw_semregistro', [
             //     'mensagem' => 'Requisição não encontrada'
@@ -756,7 +756,7 @@ class Requisicao extends BaseController
             // DESCONTA O RESTANTE DO CONSUMO DO PRODUTO ATUAL
             if ($codPro === $codproant) {
                 $prodArr['pro_primeiro']        = 2; // não é mais o primeiiro lote do produto
-                if ((int)$produtoAnterior['pro_consumo_proximo'] > 0) {
+                if (isset($produtoAnterior['pro_consumo_proximo']) && (int)$produtoAnterior['pro_consumo_proximo'] > 0) {
                     $prodArr['pro_consumo_proximo']         = $produtoAnterior['pro_consumo_proximo'];
                 } else {
                     $prodArr['pro_consumo_proximo']         = 0;
@@ -1244,17 +1244,41 @@ class Requisicao extends BaseController
             $db->transCommit();
             $db->transComplete();
         }
-        // verifica se é atendimento automaticp
         if ($status == 4) {
+            $insvis = retornaInsVis($req_id);
             $tipomov = $this->tipomovimentacao->getTipoMovimentacao($postado['tmo_id'])[0];
-            // debug($tipomov, true);
-            if ($tipomov->tmo_conferencia == 'N') {
-                $dadosReq = [
-                    'stt_id' => 5
-                ];
-                $db->transBegin();
-                $this->requisicao->update($req_id, $dadosReq);
-                $produtosreq = $this->requisicao->getRequisicaoProdutos($req_id);
+            // debug($insvis, true);
+            $status = 4;
+            if ($tipomov->tmo_atendeautomatico == 'S') {
+                $status = 18; // Atendida
+                if ($tipomov->tmo_conferencia == 'N') {
+                    $status = 25; // Conferida
+                    if ($insvis == 'N') {
+                        $status = 5; // Concluída
+                    }
+                }
+            }
+
+            $dadosReq = [
+                'stt_id' => $status
+            ];
+            $db->transBegin();
+            $this->requisicao->update($req_id, $dadosReq);
+            $produtosreq = $this->requisicao->getRequisicaoProdutos($req_id);
+            if ($status == 18) {
+                foreach ($produtosreq as $val) {
+                    $sql_save = [
+                        'rep_id'        => $val->rep_id,
+                        'pro_id'        => $val->pro_id,
+                        'rpa_cancelada' => 0,
+                        'rpa_atendida'  => $val->rep_quantia,
+                        'rpa_data'      => date('Y-m-d H:i:s'),
+                    ];
+
+                    $salva = $this->reqprodutoate->insert($sql_save);
+                    // TODO CRIAR MOVIMENTAÇÃO DE ESTOQUE
+                }
+            } else if ($status == 25) {
                 foreach ($produtosreq as $val) {
                     $sql_save = [
                         'rep_id'        => $val->rep_id,
@@ -1267,31 +1291,27 @@ class Requisicao extends BaseController
                     ];
 
                     $salva = $this->reqprodutoate->insert($sql_save);
+                    // TODO CRIAR MOVIMENTAÇÃO DE ESTOQUE
                 }
-                $db->transCommit();
-                // TODO CRIAR MOVIMENTAÇÃO DE ESTOQUE
-
-            } else if ($tipomov->tmo_atendeautomatico == 'S') {
-                // ATENDE AUTOMÁTICO, STATUS = 18 = ATENDIDA
-                $dadosReq = [
-                    'stt_id' => 18
-                ];
-                $db->transBegin();
-                $this->requisicao->update($req_id, $dadosReq);
-                $produtosreq = $this->requisicao->getRequisicaoProdutos($req_id);
+            } else if ($status == 5) {
                 foreach ($produtosreq as $val) {
                     $sql_save = [
                         'rep_id'        => $val->rep_id,
                         'pro_id'        => $val->pro_id,
                         'rpa_cancelada' => 0,
                         'rpa_atendida'  => $val->rep_quantia,
+                        'rpa_conferida'  => $val->rep_quantia,
+                        'rpa_aprovada'  => $val->rep_quantia,
                         'rpa_data'      => date('Y-m-d H:i:s'),
+                        'rpa_data_conferencia'      => date('Y-m-d H:i:s'),
+                        'rpa_data_inspecao'      => date('Y-m-d H:i:s'),
                     ];
 
                     $salva = $this->reqprodutoate->insert($sql_save);
+                    // TODO CRIAR MOVIMENTAÇÃO DE ESTOQUE
                 }
-                $db->transCommit();
             }
+            $db->transCommit();
         }
         $ret['msg'] = "$vezes Requisição(ões) gravada(s) com sucesso!";
         $ret['url'] = site_url($this->data['controler']);

@@ -375,7 +375,11 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
             // debug($fields[$f], false);
             if ($fields[$f] == 'stt_nome') {
                 // debug('aqui');
-                $retor[$fields[$f]] = fmtEtiquetaCorBst($retor['stt_cor'], $retor[$fields[$f]]);
+                if (substr($retor['stt_cor'], 0, 1) == '#') {
+                    $retor[$fields[$f]] = fmtEtiquetaCor($retor['stt_cor'], $retor[$fields[$f]]);
+                } else {
+                    $retor[$fields[$f]] = fmtEtiquetaCorBst($retor['stt_cor'], $retor[$fields[$f]]);
+                }
             } else {
                 if ($retor[$fields[$f]] != null && $retor[$fields[$f]] != '') {
                     $data = DateTime::createFromFormat('Y-m-d H:i:s', $retor[$fields[$f]]);
@@ -567,7 +571,11 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
             } elseif (is_numeric($valor) && $field != $chave && is_int($valor)) {
                 $linha[] = "<div class='text-end'>" . $valor . "</div>";
             } elseif (str_contains($field, 'msg_cor')) {
-                $linha[] = fmtEtiquetaCorBst($valor);
+                if (substr($valor, 0, 1) == '#') {
+                    $linha[] = fmtEtiquetaCor($valor);
+                } else {
+                    $linha[] = fmtEtiquetaCorBst($valor);
+                }
             } else {
                 $linha[] = $valor;
             }

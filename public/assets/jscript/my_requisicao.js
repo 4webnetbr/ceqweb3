@@ -289,7 +289,7 @@ async function carregarProdutos(url, aba, obj) {
 
   if (!deporigem || !depdestino) {
     boxAlert(
-      "Informe o Depósito de Origem e o Depósito de Destino",
+      "Informe o Tipo de Movimentação",
       true,
       "",
       true,

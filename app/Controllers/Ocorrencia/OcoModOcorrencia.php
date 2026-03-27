@@ -181,7 +181,6 @@ class OcoModOcorrencia extends BaseController
         exit;
     }
 
-
     /**
      * Edição
      * edit
@@ -296,7 +295,6 @@ class OcoModOcorrencia extends BaseController
         echo view('vw_edicao', $this->data);
     }
 
-
     /**
      * Exclusão
      * delete
@@ -385,7 +383,7 @@ class OcoModOcorrencia extends BaseController
         }
         //finalização automática
         if (is_array($postado['sut_fina'] ?? null)) {
-            $postado['sut_fina'] = $postado['sut_fina'][0];
+            $postado['sut_fina'] = $postado['sut_fina'][0];  
         }
         // classes
         $classesSelecionadas = $postado['cla_id'] ?? [];

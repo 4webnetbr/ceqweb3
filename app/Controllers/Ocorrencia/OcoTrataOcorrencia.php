@@ -144,7 +144,7 @@ class OcoTrataOcorrencia extends BaseController
 
         // Valida se a ocorrência existe
         if (!$dados) {
-            return redirectWithError($this->data['controler'],41);
+            throw new \Exception('Ocorrência não encontrada');
         }
 
         $log = buscaLogTabela('oco_ocorrencia', [$id]);
@@ -272,7 +272,7 @@ class OcoTrataOcorrencia extends BaseController
                 // // MOVIMENTAÇÃO
                 // if ((int)$acao->tpa_id === 3) {
 
-                //     // SE NÃO TEM DADOS NECESSÁRIOS: CONFIRMAÇÃO
+                //     // CONFIRMAÇÃO DE MOVIMENTAÇÃO, MSG 6
                 //     if (empty($postado['tmo_id']) || (int)($postado['oco_qtd'] ?? 0) <= 0) {
                 //         return $this->response->setJSON([
                 //             'erro' => true,
@@ -298,7 +298,7 @@ class OcoTrataOcorrencia extends BaseController
                     // OCORRÊNCIA = SEMPRE FINALIZADA
                     $this->ocorrencia->update($oco->oco_id, [
                         'stt_id'       => 30,
-                        'usu_fina'     => session()->get('usu_nome'),
+                        'usu_fina'     => session()->get('usu_id'),
                         'oco_data_fim' => date('Y-m-d H:i:s')
                     ]);
 
@@ -319,7 +319,7 @@ class OcoTrataOcorrencia extends BaseController
 
             // FINALIZA 
             $postado['stt_id']       = $novoStt ?? 30;
-            $postado['usu_fina']     = session()->get('usu_nome');
+            $postado['usu_fina']     = session()->get('usu_id');
             $postado['oco_data_fim'] = date('Y-m-d H:i:s');
 
             unset(

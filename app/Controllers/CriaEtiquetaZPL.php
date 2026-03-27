@@ -700,31 +700,31 @@ class CriaEtiquetaZPL extends BaseController
         }
         $camp = $this->etiquetaCampo->getEtiquetaCampo($etq_id);
         $printers = new ConfigImpressoraModel();
-        $impr = $printers->getImpressoraId($imp_id);
-        $this->ipZebra = trim($impr[0]['imp_ip']);
-        $this->portaZebra = intval($impr[0]['imp_porta']);
-        $nomeimpressora = $impr[0]['imp_nome'];
+        $impr = $printers->getImpressora($imp_id);
+        $this->ipZebra = trim($impr->imp_ip);
+        $this->portaZebra = intval($impr->imp_porta);
+        $nomeimpressora = $impr->imp_nome;
 
         $etq = $etiq[0];
-        $this->largura    = (float) $etq['let_largura'];
-        $this->altura     = (float) $etq['let_altura'];
-        $this->esquerda   = (float) $etq['let_marg_esquerda'];
-        $this->direita    = (float) $etq['let_marg_direita'];
-        $this->topo       = (float) $etq['let_marg_superior'];
-        $this->rodape     = (float) $etq['let_marg_inferior'];
-        $this->horizontal = (float) $etq['let_distancia_h'];
-        $this->vertical   = (float) $etq['let_distancia_v'];
-        $this->colunas    = (int)   $etq['let_colunas'];
-        $this->linhas     = (int)   $etq['let_linhas'];
+        $this->largura    = (float) $etq->let_largura;
+        $this->altura     = (float) $etq->let_altura;
+        $this->esquerda   = (float) $etq->let_marg_esquerda;
+        $this->direita    = (float) $etq->let_marg_direita;
+        $this->topo       = (float) $etq->let_marg_superior;
+        $this->rodape     = (float) $etq->let_marg_inferior;
+        $this->horizontal = (float) $etq->let_distancia_h;
+        $this->vertical   = (float) $etq->let_distancia_v;
+        $this->colunas    = (int)   $etq->let_colunas;
+        $this->linhas     = (int)   $etq->let_linhas;
 
         // Busca o LOTE completo (mesma fonte de dados)
         if ($chave === false || $chave == 'false') {
             $fields = array_column($camp, 'etc_campo');
-            $telid  = $etq['tel_id'];
+            $telid  = $etq->tel_id;
             $telas  = $this->tela->getTelaId($telid)[0] ?? null;
 
-            if ($telas && !empty($telas['tel_model'])) {
-                $model = $telas['tel_model'];
+            if ($telas && !empty($telas->tel_model)) {
+                $model = $telas->tel_model;
                 $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
                 $view   = $model_atual->view;
                 if (isset($model_atual->viewoutra)) {
