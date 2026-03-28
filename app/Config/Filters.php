@@ -23,6 +23,7 @@ class Filters extends BaseConfig
         'secureheaders' => SecureHeaders::class,
         'loginFilter'   => \App\Filters\LoginFilter::class,
         'limpezaAuto'   => \App\Filters\LimpezaAutomatica::class,
+        'accessLog'     => \App\Filters\AccessLogFilter::class,
     ];
 
     /**
@@ -67,6 +68,21 @@ class Filters extends BaseConfig
         ],
         'after' => [
             'toolbar',
+            'accessLog'=> [
+                'except' => [
+                    'server',
+                    'server/*',
+                    'notifica',
+                    'notifica/*',
+                    'mensagem',
+                    'mensagem/*',
+                    'wsceqweb',
+                    'wsceqweb/*',
+                    'workanalise',
+                    'workanalise/*',
+                ]
+            ],
+
             // 'honeypot',
             // 'secureheaders',
         ],

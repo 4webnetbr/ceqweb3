@@ -21,6 +21,21 @@ use CodeIgniter\Exceptions\FrameworkException;
  * Example:
  *      Events::on('create', [$myInstance, 'myMethod']);
  */
+Events::on('access:log', static function (array $data): void {
+
+    /** @var \App\Services\AccessLogService $service */
+    $service = service('accessLog');
+
+    $service->insertAccessLog(
+        userId: $data['log_id_usuario'] ?? null,
+        userName: $data['log_usuario'] ?? null,
+        screen: $data['log_tela'] ?? '',
+        method: $data['log_metodo'] ?? '',
+        record: $data['log_registro'] ?? null,
+        userIp: $data['log_ip'] ?? null,
+        userAgent: $data['log_user_agent'] ?? null
+    );
+});
 
 Events::on('pre_system', static function () {
     if (ENVIRONMENT !== 'testing') {

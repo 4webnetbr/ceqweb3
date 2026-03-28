@@ -463,6 +463,11 @@ input[type="date"].form-control {
   z-index: 2000;
 }
 
+.tabela-pequena {
+  font-size: 10px;
+  margin: 0 !important;
+}
+
 table.dataTable.table-info > thead.table-default th {
   background-color: var(--bs-blue-dark);
   color: white;

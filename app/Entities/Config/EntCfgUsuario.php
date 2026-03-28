@@ -10,10 +10,24 @@ use App\Models\Config\ConfigTelaModel;
 
 class EntCfgUsuario extends Entity
 {
-    public $campos = [];
+    protected $attributes = [
+        'usu_id'        => null,,
+        'usu_nome'        => null,,
+        'usu_login'        => null,,
+        'usu_senha'        => null,,
+        'usu_email'        => null,,
+        'prf_id'        => null,,
+        'usu_status'        => null,,
+        'usu_dashboard'        => null,,
+        'usu_ativo'        => 'A',
 
-    protected $perfilModel;
-    protected $telaModel;
+    ];
+
+    protected $datamap  = [];
+    protected $dates    = ['usu_excluido'];
+    protected $casts    = [];
+
+    public array $campos = [];
 
     public function __construct($data = null, bool $show = false)
     {
@@ -22,10 +36,6 @@ class EntCfgUsuario extends Entity
         }
 
         parent::__construct($data);
-
-        $this->perfilModel = new ConfigPerfilModel();
-        $this->telaModel   = new ConfigTelaModel();
-
         $this->defCampos($data, false, $show);
     }
 
@@ -62,41 +72,39 @@ class EntCfgUsuario extends Entity
         $login->valor       = $dados->usu_login ?? '';
         $this->usu_login    = $login->crInput();
 
-        $perfis = array_column(
-            $this->perfilModel->getPerfil(),
+        $config['Obrigatorio'] = true;
+        $config['Leitura'] = $leitura;
+        $config['Largura'] = 50;
+        if ($leitura) {
+            $config['infotop'] = 'Para alterar o Perfil, solicite ao Gestor do Sistema';
+        }
+
+        $this->usu_perfil = criaSelectRelativo(
+            'cfg_perfil',
+            'prf_id',
             'prf_nome',
-            'prf_id'
+            $dados->prf_id ?? '',
+            1,
+            'cfg_usuario',
+            [],
+            $config
         );
 
-        $perfil = new MyCampo('cfg_usuario', 'prf_id');
-        $perfil->leitura     = $leitura;
-        $perfil->obrigatorio = true;
-        $perfil->opcoes      = $perfis;
-        $perfil->selecionado = $dados->prf_id ?? '';
-        $perfil->valor       = $dados->prf_id ?? '';
-        $perfil->largura       = 50;
         if ($leitura) {
-            $perfil->infotop = 'Para alterar o Perfil, solicite ao Gestor do Sistema';
-        }
-        $this->usu_perfil = $perfil->crSelect();
-
-        $ttelas = $this->telaModel->getTelaId();
-        $telas  = [];
-        foreach ($ttelas as $tel) {
-
-            if (is_array($tel)) {
-                $tel = (object) $tel;
-            }
-            $telas[$tel->tel_id] = $tel->tel_nome;
+            $config['infotop'] = 'Para alterar o DashBoard, solicite ao Gestor do Sistema';
         }
 
-        $dash = new MyCampo('cfg_usuario', 'usu_dashboard');
-        $dash->obrigatorio = false;
-        $dash->opcoes      = $telas;
-        $dash->valor       = $dados->usu_dashboard ?? '';
-        $dash->selecionado = $dash->valor;
-        $dash->largura       = 50;
-        $this->usu_dashboard = $dash->crSelect();
+        $this->usu_dashboard = criaSelectRelativo(
+            'vw_cfg_tela_relac',
+            'tel_id',
+            'tel_nome',
+            $dados->usu_dashboard ?? '',
+            1,
+            'cfg_usuario',
+            [],
+            $config,
+            'usu_dashboard'
+        );
 
         $nova_senha = new MyCampo('cfg_usuario', 'usu_senha');
         $nova_senha->tipo        = 'password';
@@ -117,6 +125,14 @@ class EntCfgUsuario extends Entity
         $contra_senha->valor       = '';
         $contra_senha->funcBlur = "compara_senha('contra_senha','usu_senha')";
         $this->usu_contra_senha    = $contra_senha->crInput();
+
+        $opcat = ['A' => 'Ativo', 'I' => 'Inativo'];
+
+        $ativ = new MyCampo('cfg_usuario', 'usu_ativo');
+        $ativ->valor = $dados['usu_ativo'] ?? 'A';
+        $ativ->selecionado = $ativ->valor;
+        $ativ->opcoes = $opcat;
+        $this->usu_ativo = $ativ->cr2opcoes();
 
         $avatar = new Campos();
         $avatar->objeto       = 'imagem';

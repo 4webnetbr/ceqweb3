@@ -70,6 +70,7 @@ class CfgStatus extends BaseController
             // debug($ent);
         }
 
+        $this->data['exclusao'] = false;
         echo json_encode([
             'data' => montaListaColunasEnt($this->data, 'stt_id', $dados, 'stt_nome')
         ]);
@@ -124,7 +125,7 @@ class CfgStatus extends BaseController
         // debug($dados, true);
 
         if (!$dados) {
-            return redirectWithError($this->data['controler'],41);
+            return redirectWithError($this->data['controler'], 41);
             // return view('errors/vw_semregistro', [
             //     'mensagem' => 'Status não encontrado'
             // ]);

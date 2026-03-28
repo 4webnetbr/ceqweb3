@@ -168,7 +168,8 @@ class LogMonModel
 				'log_tabela'        => $tabela,
 				'log_operacao'      => $operacao,
 				'log_id_registro'   => strval($registro),
-				'log_id_usuario'    => session()->get('usu_nome'),
+				'log_id_usuario'    => session()->get('usu_id'),
+				'log_usuario'    	=> session()->get('usu_nome'),
 				'log_data'          => date('Y-m-d H:i:s'),
 				'log_dados'         => $dados
 			];

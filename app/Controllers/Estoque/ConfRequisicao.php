@@ -197,7 +197,7 @@ class ConfRequisicao extends BaseController
 
 
         $dados_est_produto = $this->produtos
-            ->getProdutoEstoqueCeqweb($pro_ids, $requisicao->req_depdestino);
+            ->getProdutoEstoque($pro_ids, $requisicao->req_depdestino);
 
         // debug($dados_est_produto, true);
         // debug($dados_est_produto);

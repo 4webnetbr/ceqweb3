@@ -19,14 +19,15 @@ class ConfigUsuarioModel extends Model
     protected $useSoftDeletes   = true;
 
     protected $allowedFields    = [
-        'usu_id', 
+        'usu_id',
         'usu_nome',
         'usu_login',
         'usu_senha',
         'usu_email',
         'prf_id',
         'usu_status',
-        'usu_dashboard'               
+        'usu_dashboard',
+        'usu_ativo'
     ];
 
     protected $deletedField  = 'usu_excluido';
@@ -72,6 +73,7 @@ class ConfigUsuarioModel extends Model
         $builder = $db->table('vw_cfg_usuario_relac');
         $builder->select('*');
         $builder->where($data);
+        $builder->where('usu_ativo', 'A');
         $ret = $builder->get()->getResult();
         // debug($this->db->getLastQuery());
 
@@ -94,6 +96,7 @@ class ConfigUsuarioModel extends Model
         if ($id) {
             $builder->where('usu_id', $id);
         }
+        $builder->orderBy('usu_ativo');
         $ret = $builder->get()->getResult();
         // debug($this->db->getLastQuery(), false);
         return $ret;
@@ -115,6 +118,7 @@ class ConfigUsuarioModel extends Model
         $builder = $db->table('vw_cfg_usuario_relac');
         $builder->select('*');
         $builder->like($array);
+        $builder->orderBy('usu_ativo');
         $ret = $builder->get()->getResult();
         // debug($this->db->getLastQuery(), false);
         return $ret;

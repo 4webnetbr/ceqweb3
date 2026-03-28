@@ -5,6 +5,7 @@ use App\Models\Config\ConfigDicDadosModel;
 use App\Models\Config\ConfigMenuModel;
 use App\Models\Config\ConfigPerfilItemModel;
 use App\Models\Config\ConfigTelaModel;
+use App\Models\Config\ConfigUsuarioModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 use App\Models\LogMonModel;
@@ -465,7 +466,15 @@ function buscaLog($tabela, $registro)
     if ($logId) {
         foreach ($logId as $document) {
             $operacao    = $document->log_operacao;
+            $user_id     = $document->log_id_usuario;
             $user_nam    = $document->log_id_usuario;
+            if (isset($document->log_usuario)) {
+                $user_nam    = $document->log_usuario;
+            } else {
+                if (filter_var($document->log_id_usuario, FILTER_VALIDATE_INT)) {
+                    $user_nam = (new ConfigUsuarioModel())->getUsuarioId($user_id)[0]->usu_nome ?? '';
+                }
+            }
             $data_alt    = data_br($document->log_data);
         }
         if ($operacao != '') {
@@ -499,7 +508,15 @@ function buscaLogTabela($tabela, $registros)
         foreach ($logId as $document) {
             // debug($document, true);
             $operacao    = $document->last_record->log_operacao;
+            $user_id     = $document->last_record->log_id_usuario;
             $user_nam    = $document->last_record->log_id_usuario;
+            if (isset($document->last_record->log_usuario)) {
+                $user_nam    = $document->last_record->log_usuario;
+            } else {
+                if (filter_var($document->last_record->log_id_usuario, FILTER_VALIDATE_INT)) {
+                    $user_nam = (new ConfigUsuarioModel())->getUsuarioId($user_id)[0]->usu_nome ?? '';
+                }
+            }
             $registro    = $document->last_record->log_id_registro;
             $data_alt    = data_br($document->last_record->log_data);
             if ($operacao != '') {
@@ -712,6 +729,9 @@ function recursivo($caminho, $dirName, $diretoriosPermitidos, $arquivosPermitido
  */
 function fmtEtiquetaCorBst($cor, $label = '')
 {
+    if ($cor == '' || str_contains($cor, 'Selecione')) {
+        $cor = 'bg-white';
+    }
     if (substr($cor, 0, 1) == '#') {
         return fmtEtiquetaCor($cor, $label);
     } else {
@@ -735,7 +755,8 @@ function fmtEtiquetaCorBst($cor, $label = '')
             $label = $cores[$cor];
         }
 
-        $ret = "<span class='$cor $texto[$cor] px-3 py-1 w-100 d-inline-block rounded rounded-4 text-center text-black text-nowrap'>$label</span>";
+
+        $ret = "<span style='margin:0 auto;min-width:20ch' class='$cor $texto[$cor] px-3 py-1 d-table rounded-pill text-center text-nowrap'>$label</span>";
         return $ret;
     }
 }

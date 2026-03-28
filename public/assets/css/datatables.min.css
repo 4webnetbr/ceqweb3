@@ -296,11 +296,6 @@ table.dataTable {
   overflow: hidden;
 }
 
-.tabela-pequena {
-  font-size: 10px;
-  margin: 0 !important;
-}
-
 /* 
  * Define o tamanho da fonte como 12px para o corpo (tbody) de todas as tabelas
  * do DataTables que NÃO possuem a classe 'tabela_pequena'.

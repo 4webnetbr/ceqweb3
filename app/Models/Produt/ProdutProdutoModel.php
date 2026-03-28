@@ -228,7 +228,8 @@ class ProdutProdutoModel extends Model
         }
 
         if ($deposito) {
-            $builder->like('dep_codDep', $deposito);
+            $builder->where("FIND_IN_SET('$deposito', dep_codDep) >", 0);
+            // $builder->like('dep_codDep', $deposito);
         }
         // debug($builder->getCompiledSelect());
         // $cs = $builder->getCompiledSelect();
@@ -251,7 +252,9 @@ class ProdutProdutoModel extends Model
         }
 
         if ($deposito) {
-            $builder->like('prc_deposito', $deposito);
+            $builder->where("FIND_IN_SET($deposito, prc_deposito) >", 0);
+
+            // $builder->like('prc_deposito', $deposito);
         }
         $builder->groupBy('pro_codpro');
         return $builder->get()->getResult();

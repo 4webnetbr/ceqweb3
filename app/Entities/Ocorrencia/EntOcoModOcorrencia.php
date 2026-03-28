@@ -380,30 +380,29 @@ class EntOcoModOcorrencia extends Entity
         if (!$dados || !is_object($dados)) {
             $dados = (object) [];
         }
-    
+
         $ret = [];
-    
+
         // PERMISSÕES
         $config = [];
         $config['Largura']  = 50;
         $config['Leitura']  = $show;
-        $config['Pai']      = 'tpo_id';
-        $config['Urlbusca'] = base_url('Buscas/buscaPerfilPorTipo');
+        // $config['Pai']      = 'tpo_id';
+        // $config['Urlbusca'] = base_url('Buscas/buscaPerfilPorTipo');
         $config['Todos']    = true;
         if (!empty($dados->prf_id)) {
             unset($config['Todos']);
         }
-        
+
         $ret['prf_id'] = criaSelectRelativo(
-            '',
-            '',
-            '',
+            'cfg_perfil',
+            'prf_id',
+            'prf_nome',
             $dados->prf_id ?? '',
-            4,
+            1,
             'oco_subt_ocorrencia_permissao',
             [],
-            $config,
-            'prf_id'
+            $config
         );
         return $ret;
     }

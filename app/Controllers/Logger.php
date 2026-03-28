@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use App\Libraries\Campos;
 use App\Models\Config\ConfigDicDadosModel;
+use App\Models\Config\ConfigUsuarioModel;
 use App\Models\LogMonModel;
 
 class Logger extends BaseController
@@ -29,6 +30,7 @@ class Logger extends BaseController
     { 
         $logs      = new LogMonModel();
         $dicionario = new ConfigDicDadosModel();
+        $usuario = new ConfigUsuarioModel();
 
         $logId = $logs->get_logs_all($tabela, $registro);
         $dados = [];
@@ -45,6 +47,9 @@ class Logger extends BaseController
                 $dad = [];
                 $dad['operacao']      = $document->log_operacao;
                 $dad['usua_alterou']  = $document->log_id_usuario;
+                if(filter_var($document->log_id_usuario, FILTER_VALIDATE_INT)){
+                    $dad['usua_alterou']  = $usuario->getUsuarioId(filter_var($document->log_id_usuario, FILTER_VALIDATE_INT))[0]->usu_nome;
+                } 
                 $dad['data_alterou']  = data_br($document->log_data);
                 $dad['dados'] = [];
                 $field = [];

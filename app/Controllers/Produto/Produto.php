@@ -298,13 +298,9 @@ class Produto extends BaseController
         $this->data['destino']      = 'store';
         $this->data['script']       = $script;
         $this->data['desc_edicao']  = $dados->pro_codpro . " - " . $dados->pro_despro . " - " . fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
-        
-        $this->data['log']          = array_merge(
-                                        buscaLog('pro_sap_produto', $id),
-                                        buscaLog('pro_ceq_produto', $id),
-                                        buscaLog('pro_est_produto', $id)
-                                    );
-        
+
+        $this->data['log']          = buscaLog('pro_sap_produto', $id);
+
         return view('vw_edicao', $this->data);
     }
 
@@ -327,7 +323,7 @@ class Produto extends BaseController
                     'stt_id'    => 20
                 ];
                 $msg = "Produto Inativado com Sucesso";
-                $this->verificarUsoEmRelacionamentos('pro_sap_produto', 'pro_id', (int) $id);
+                // $this->verificarUsoEmRelacionamentos('pro_sap_produto', 'pro_id', (int) $id);
             }
             $this->produtos->update($id, $dad_atin);
             $ret['erro'] = false;
@@ -436,10 +432,15 @@ class Produto extends BaseController
         $db = Database::connect();
         $db->transBegin();
 
+        $ativo = 'I';
+        if ($aprova === 3) {
+            $ativo = 'A';
+        }
         try {
             $sql_aprova = [
                 'pro_id'                => $pro_id,
                 'stt_id'                => $aprova,
+                'pro_ativo'             => $ativo,
                 'cla_id'                => $cla_id,
                 'pro_codbar_fabricante' => $postado['pro_codbar_fabricante'] ?? null,
                 'pro_informacoes'       => $postado['pro_informacoes'] ?? null,
@@ -449,7 +450,7 @@ class Produto extends BaseController
                 throw new \Exception('Erro ao atualizar o status do produto.');
             }
             if ($aprova === 3 && !empty($cla_id)) {
-                $dadosclasse = $this->classe->getClassePorId($cla_id);
+                $dadosclasse = $this->classe->getClasse($cla_id);
                 if ($dadosclasse && $dadosclasse->cla_micro === 'N') {
                     $sql_lote = ['stt_id' => 9];
                     $this->common->updateReg('dbProduto', 'pro_sap_lote', "lot_codpro = '" . $pro_codpro . "'", $sql_lote);

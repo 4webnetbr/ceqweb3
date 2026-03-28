@@ -166,12 +166,12 @@ class TipoMovimentacao extends BaseController
         $entity = new EntTipoMovimentacao((array) $dados_tmov);
 
 
-        try {
-            // Checa uso do tipo em outros bancos
-            $this->verificarUsoEmRelacionamentos('est_tipo_movimentacao', 'tmo_id', (int) $dados_tmmm[$c]->tmo_id);
-        } catch (\Exception $e) {
-            $show = true;
-        }
+        // try {
+        //     // Checa uso do tipo em outros bancos
+        //     $this->verificarUsoEmRelacionamentos('est_tipo_movimentacao', 'tmo_id', (int) $dados_tmmm[$c]->tmo_id);
+        // } catch (\Exception $e) {
+        //     $show = true;
+        // }
         // se precisar respeitar $show:
         $fields = $entity->defCampos($show);
 

@@ -194,11 +194,6 @@ class AteRequisicao extends BaseController
         $entReq = new EntAteRequisicao();
         $fields = $entReq->defCampos($requisicao, $show);
         // // debug($fields, true);
-        // $secao[0] = 'Dados Gerais';
-        // $campos[0][0] = $fields['req_id'];
-        // $campos[0][count($campos[0])] = $fields['req_data'];
-        // $campos[0][count($campos[0])] = $fields['req_dataentrega'];
-        // $campos[0][count($campos[0])] = $fields['tmo_id'];
         $campos[0][] = "<div class='col-6'>.</div>";
         $campos[0][] = $fields['lot_codbar'];
 

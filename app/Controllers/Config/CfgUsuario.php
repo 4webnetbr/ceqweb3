@@ -58,16 +58,17 @@ class CfgUsuario extends BaseController
     public function lista()
     {
         // Busca usuários
-        if (!$usuarios = cache('usuarios')) {
-            $dados_usuario = $this->usuario->getUsuarioId();
+        // if (!$usuarios = cache('usuarios')) {
+        $dados_usuario = $this->usuario->getUsuarioId();
 
-            // Estrutura padrão do DataTable
-            $usuarios = [
-                'data' => montaListaColunasEnt($this->data, 'usu_id', $dados_usuario, 'usu_nome'),
-            ];
-            // Cache curto devido a possíveis alterações frequentes
-            cache()->save('usuarios', $usuarios, 30);
-        }
+        // Estrutura padrão do DataTable
+        $this->data['exclusao'] = false;
+        $usuarios = [
+            'data' => montaListaColunasEnt($this->data, 'usu_id', $dados_usuario, 'usu_nome'),
+        ];
+        // Cache curto devido a possíveis alterações frequentes
+        cache()->save('usuarios', $usuarios, 30);
+        // }
 
         echo json_encode($usuarios);
     }
@@ -75,7 +76,7 @@ class CfgUsuario extends BaseController
     public function add()
     {
         $usuarioEnt = new EntCfgUsuario(null, false);
-    
+
         // Dados Gerais
         $secao[0] = 'Dados Gerais';
         $campos[0][0] = $usuarioEnt->usu_id;
@@ -85,15 +86,15 @@ class CfgUsuario extends BaseController
         $campos[0][4] = $usuarioEnt->usu_nova_senha;
         $campos[0][5] = $usuarioEnt->usu_perfil;
         $campos[0][6] = $usuarioEnt->usu_dashboard;
-    
+
         // Avatar
         $secao[1] = 'Avatar';
         $campos[1][0] = $usuarioEnt->usu_avatar;
-    
+
         $this->data['secoes']  = $secao;
         $this->data['campos'] = $campos;
         $this->data['destino'] = 'store';
-    
+
         // Limpa o login automaticamente ao carregar a tela
         $this->data['script'] = '<script>
             document.addEventListener("DOMContentLoaded", function () {
@@ -104,20 +105,21 @@ class CfgUsuario extends BaseController
                 }
             });
         </script>';
-    
+
         echo view('vw_edicao', $this->data);
     }
 
-    public function show($id){
+    public function show($id)
+    {
         $this->edit($id, true);
     }
 
     public function edit($id, $show = false)
     {
         $dados_usuario = $this->usuario->getUsuarioId($id, $show)[0];
-    
+
         $usuEnt = new EntCfgUsuario($dados_usuario, $show);
-    
+
         $secao[0] = 'Dados Gerais';
         $campos[0][] = $usuEnt->usu_id;
         $campos[0][] = $usuEnt->usu_nome;
@@ -126,17 +128,17 @@ class CfgUsuario extends BaseController
         $campos[0][] = $usuEnt->usu_nova_senha;
         $campos[0][] = $usuEnt->usu_perfil;
         $campos[0][] = $usuEnt->usu_dashboard;
-    
+
         $secao[1] = 'Avatar';
         $campos[1][] = $usuEnt->usu_avatar;
-    
+
         $this->data['desc_edicao'] = $dados_usuario->usu_nome;
         $this->data['secoes']      = $secao;
         $this->data['campos']      = $campos;
         $this->data['destino']     = 'store';
-    
+
         $this->data['log'] = buscaLog('cfg_usuario', $id);
-    
+
         echo view('vw_edicao', $this->data);
     }
 
@@ -145,11 +147,11 @@ class CfgUsuario extends BaseController
         // guarda página anterior
         $anterior['anterior'] = $_SERVER['HTTP_REFERER'] ?? '';
         session()->set($anterior);
-    
+
         // busca usuário
         $dados_usuario = $this->usuario->getUsuarioId($id)[0];
         $usuarioEnt = new EntCfgUsuario($dados_usuario, true);
-    
+
         $secao[0] = 'Dados Gerais';
         $campos[0][0] = $usuarioEnt->usu_id;
         $campos[0][1] = $usuarioEnt->usu_nome;
@@ -159,17 +161,46 @@ class CfgUsuario extends BaseController
         $campos[0][5] = $usuarioEnt->usu_contra_senha;
         $campos[0][6] = "<span id='msg_senha' class='text-danger bg-warning'></span>";
         $campos[0][7] = $usuarioEnt->usu_perfil;
-    
+
         $secao[1] = 'Avatar';
         $campos[1][0] = $usuarioEnt->usu_avatar;
-    
+
         $this->data['secoes']      = $secao;
         $this->data['campos']      = $campos;
         $this->data['destino']     = 'store';
         $this->data['desc_metodo'] = 'Alteração de Senha de';
-    
+
         echo view('vw_edicao', $this->data);
     }
+
+    public function ativinativ($id, $tipo)
+    {
+        $ret = [];
+        try {
+            if ($tipo == 1) {
+                $dad_atin = [
+                    'usu_ativo' => 'A'
+                ];
+            } else {
+                $dad_atin = [
+                    'usu_ativo' => 'I'
+                ];
+            }
+            $this->usuario->update($id, $dad_atin);
+            $ret['erro'] = false;
+            session()->setFlashdata('msg', 'Usuário Alterada com Sucesso');
+            $ret['msg']  = 'Usuário Alterado com Sucesso';
+            cache()->clean();
+        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+            $ret['erro'] = true;
+            $ret['msg']  = 14;
+        } catch (\Exception $e) {
+            $ret['erro'] = true;
+            $ret['msg']  = 14; // ou código personalizado, se preferir
+        }
+        echo json_encode($ret);
+    }
+
 
     public function delete($id)
     {
@@ -202,7 +233,8 @@ class CfgUsuario extends BaseController
         echo json_encode($ret);
     }
 
-	public function store() {
+    public function store()
+    {
         $dados = $this->request->getPost();
         if (isset($dados['usu_senha'])) {
             if ($dados['usu_senha'] == '') {
@@ -238,6 +270,5 @@ class CfgUsuario extends BaseController
             session()->setFlashdata('msg', $ret['msg']);
         }
         echo json_encode($ret);
-	}
-
+    }
 }

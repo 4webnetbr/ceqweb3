@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\LogMonModel;
 use CodeIgniter\Model;
 
 class CommonModel extends Model
@@ -34,7 +35,16 @@ class CommonModel extends Model
         $db = db_connect($grupo);
         $builder = $db->table($table);
         $insert_id = $builder->insert($data);
-        (new LogMonModel())->insertLog($this->table, 'Incluído', $data['id'], $data['data']);
+        $key = null;
+
+        foreach ($data as $k => $v) {
+            if (str_ends_with($k, '_id')) {
+                $key = $k;
+                break;
+            }
+        }
+
+        (new LogMonModel())->insertLog($table, 'Incluído', (int) $data[$key], $data);
 
         return $insert_id;
     }
@@ -62,6 +72,19 @@ class CommonModel extends Model
         $builder = $db->table($table);
         $builder->where($chave);
         $update_id = $builder->update($data);
+        // $key = array_find_key($data, fn($k) => str_ends_with($k, '_id'));
+        // debug($data);
+        $key = null;
+
+        foreach ($data as $k => $v) {
+            if (str_ends_with($k, '_id')) {
+                $key = $k;
+                break;
+            }
+        }
+
+        // debug($key, true);
+        (new LogMonModel())->insertLog($table, 'Alteração', (int) $data[$key], $data);
 
         return $update_id;
     }

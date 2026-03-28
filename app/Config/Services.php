@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Services\AccessLogService;
 use CodeIgniter\Config\BaseService;
 
 /**
@@ -29,4 +30,13 @@ class Services extends BaseService
      *     return new \CodeIgniter\Example();
      * }
      */
+    public static function accessLog(bool $getShared = true): AccessLogService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('accessLog');
+        }
+
+        return new \App\Services\AccessLogService();
+    }
 }
+

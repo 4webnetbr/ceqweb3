@@ -3,6 +3,7 @@ jQuery.noConflict();
 // variável globas de retono da função executaAjax
 var retornoAjax;
 var executandoAjax = false;
+
 jQuery(document).ready(function () {
   // Gera ou recupera um identificador único para a guia
   if (!sessionStorage.getItem("tabId")) {
@@ -346,7 +347,7 @@ function rgbToHex(rgb) {
     : "#000000";
 }
 
-function showToast(message, isAlert = false) {
+async function showToast(message, isAlert = false) {
   let msg_id = null;
   let titulo = "Informação";
   let corpo = message;
@@ -358,17 +359,19 @@ function showToast(message, isAlert = false) {
   let tituloHTML = `${icone} ${titulo}`;
 
   if (!isNaN(message)) {
-    msg_id = msg_cfg[parseInt(message) - 1];
-    if (msg_id) {
-      titulo = msg_id.msg_titulo || titulo;
-      corpo = msg_id.msg_mensagem || corpo;
-      tituloHTML = msg_id.msg_desc_tipo || `${icone} ${titulo}`;
-      if (msg_id.msg_cor) {
-        if (msg_id.msg_cor.startsWith("#")) {
-          fundo = msg_id.msg_cor;
+    const msgvar = await getMensagem(message);
+
+    // msg_id = msg_cfg[parseInt(message) - 1];
+    if (msgvar) {
+      titulo = msgvar.msg_titulo || titulo;
+      corpo = msgvar.msg_mensagem || corpo;
+      tituloHTML = msgvar.msg_desc_tipo || `${icone} ${titulo}`;
+      if (msgvar.msg_cor) {
+        if (msgvar.msg_cor.startsWith("#")) {
+          fundo = msgvar.msg_cor;
           classeFundo = "";
         } else {
-          classeFundo = msg_id.msg_cor;
+          classeFundo = msgvar.msg_cor;
           fundo = null; // será determinado via CSS real
         }
       }

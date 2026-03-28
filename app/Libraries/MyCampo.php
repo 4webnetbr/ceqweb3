@@ -656,7 +656,7 @@ class MyCampo
         $this->field['placeholder']      = isset($this->place) ? $this->place : "";
         $this->field['label']            = isset($this->label) ? $this->label : "";
         $this->field['hint']             = isset($this->hint) ? $this->hint : "";
-        $this->field['autocomplete']     = 'off';
+        $this->field['autocomplete']     = 'new-generation';
         if ($this->ordem > -1 && $this->objeto != 'cr2opcoes') {
             $this->field['data-index'] = $this->ordem;
         }

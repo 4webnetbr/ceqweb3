@@ -728,8 +728,9 @@ async function carregarProdutos(url, aba, obj) {
         }
         if (motivo > 0) {
           // const mensagem = `${motivos.join(' ')}.`;
-          msg_id = msg_cfg[motivo - 1];
-          const mensagem = msg_id.msg_mensagem;
+          const msgvar = await getMensagem(msg);
+          // msg_id = msg_cfg[motivo - 1];
+          const mensagem = msgvar.msg_mensagem;
           mostranoToast(motivo, true);
         }
         // }

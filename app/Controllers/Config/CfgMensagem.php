@@ -58,6 +58,7 @@ class CfgMensagem extends BaseController
         $this->data['exclusao'] = false;
 
         // Estrutura padrão para DataTable
+        $this->data['exclusao'] = false;
         $mensagem = [
             'data' => montaListaColunasEnt($this->data, 'msg_id', $dados_tela, $campos[1]),
         ];
