@@ -114,6 +114,7 @@ $cfgControllers = [
     'CfgFuncoes',
     'CfgPerfil',
     'CfgUsuario',
+    'CfgLoguser',
     'CfgMensagem',
     'CfgStatus',
     'CfgLayoutEtiq',

@@ -10,6 +10,9 @@ if (!isset($desc_edicao)) {
 if (strlen($ajuda) > 5) {
   $mostra_ajuda = true;
 }
+session()->set('log_titulo', $desc_metodo. " " . $title ?? null);
+session()->set('log_detalhe', $desc_edicao ?? null);
+
 // }
 ?>
 <div id='title' class='title col-12 px-lg-4 px-1 bg-danger-subtle '>

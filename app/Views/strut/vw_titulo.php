@@ -36,7 +36,8 @@ if ($metodo == 'index' || $metodo == '') {
 if (strlen($ajuda) > 5) {
   $mostra_ajuda = true;
 }
-
+session()->set('log_titulo', $desc_metodo. " " . $title ?? null);
+session()->set('log_detalhe', $desc_edicao ?? null);
 // }
 ?>
 <div id='title' class='title col-12 px-lg-4 px-1 bg-danger-subtle float-start d-inline flex-nowrap' style="overflow-x: auto;overflow-y: hidden;font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;">

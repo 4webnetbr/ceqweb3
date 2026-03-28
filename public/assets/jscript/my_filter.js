@@ -154,3 +154,25 @@ function removeLinhas(idTabela, indice = 1) {
       .remove();
   }
 }
+
+/**
+ * buscaSaldo
+ * Processa a busca de Saldos de Estoque
+ */
+async function buscaLogUser() {
+  // bloqueiaTela();
+  var usuario = jQuery("#usu_id").val();
+  if (usuario == "") {
+    boxAlert("Informe o Usuário", false, "", true, 1, false, "Alerta");
+    return;
+  }
+  var periodo = jQuery.trim(jQuery("#log_periodo").val());
+  urlBusca = "CfgLogUser/lista";
+  dados = { usuario: usuario, periodo: periodo };
+  try {
+    const retornoAjax = await executaAjaxWait(urlBusca, "json", dados);
+    montaListaSaldo(retornoAjax);
+  } catch (error) {
+    console.log("Erro na requisição AJAX:", error);
+  }
+}

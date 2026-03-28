@@ -33,7 +33,9 @@ Events::on('access:log', static function (array $data): void {
         method: $data['log_metodo'] ?? '',
         record: $data['log_registro'] ?? null,
         userIp: $data['log_ip'] ?? null,
-        userAgent: $data['log_user_agent'] ?? null
+        userAgent: $data['log_user_agent'] ?? null,
+        titulo: $data['log_titulo'] ?? null,
+        detalhe: $data['log_detalhe'] ?? null
     );
 });
 

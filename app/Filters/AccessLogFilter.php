@@ -45,57 +45,36 @@ final class AccessLogFilter implements FilterInterface
         $router = service('router');
         $controller = class_basename($router->controllerName());
         $method     = $router->methodName();
+        $params = $router->params();
+        $id = $params[0] ?? null;
+        $id = is_numeric($id) ? (int) $id : null;
+
+        $session = session();
+
+        $titulo  = $session->get('log_titulo');
+        $detalhe = $session->get('log_detalhe');
+
+        // limpa depois de usar (IMPORTANTE)
+        $session->remove('log_titulo');
+        $session->remove('log_detalhe');
+        $agent = $request->getUserAgent();
+        $browser = $agent->getBrowser();
+        $version = $agent->getVersion();
+        $platform = $agent->getPlatform();
 
         Events::trigger('access:log', [
             'log_id_usuario' => $session->get('usu_id'),
             'log_usuario'    => $session->get('usu_nome'),
             'log_tela'       => $controller,
             'log_metodo'     => $method,
-            'log_registro'   => $this->extractRegistro($request),
+            'log_titulo'     => $titulo,
+            'log_detalhe'    => $detalhe,
+            'log_registro'   => $id,
             'log_ip'         => $request->getIPAddress(),
-            'log_user_agent' => $request->getUserAgent()
+            'log_user_agent' => 'Sistema: '.$platform.' - Navegador: '.$browser.' - Vs:'.$version,
         ]);
     }
 
-    private function extractRegistro(\CodeIgniter\HTTP\RequestInterface $request): array|null
-    {
-        $registro = [];
-
-        // 1. Parâmetros da URL (ex: /cliente/edit/15)
-        $segments = $request->getUri()->getSegments();
-
-        if (!empty($segments)) {
-            $last = end($segments);
-
-            // se for número, assume como ID
-            if (is_numeric($last)) {
-                $registro['id'] = (int) $last;
-            }
-        }
-
-        // 2. Query string (?status=ativo)
-        $query = $request->getGet();
-
-        if (!empty($query)) {
-            $registro['query'] = $query;
-        }
-
-        // 3. Body (POST/PUT)
-        if (in_array($request->getMethod(), ['post', 'put'], true)) {
-
-            $post = $request->getPost();
-
-            if (!empty($post)) {
-
-                // 🔐 remove campos sensíveis
-                unset($post['senha'], $post['password']);
-
-                $registro['body'] = $post;
-            }
-        }
-
-        return !empty($registro) ? $registro : null;
-    }
 
     private function shouldSkip(RequestInterface $request): bool
     {

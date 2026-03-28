@@ -163,16 +163,6 @@ class Login extends BaseController
                     'ismobile'      => $mobile
                 ];
                 $session->set($newdata);
-                // ✅ DISPARA EVENTO DE LOGIN AQUI
-                Events::trigger('access:log', [
-                    'log_id_usuario' => $log_config[0]->usu_id,
-                    'log_usuario'    => $log_config[0]->usu_nome,
-                    'log_tela'       => 'login',
-                    'log_metodo'     => 'LOGIN',
-                    'log_registro'   => null,
-                    'log_ip'         => $this->request->getIPAddress(),
-                    'log_user_agent' => $agent->getAgentString(),
-                ]);
 
                 $usuarioId = $log_config[0]->usu_id ?? null;
 

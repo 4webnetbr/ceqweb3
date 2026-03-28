@@ -11,14 +11,14 @@ use App\Models\Config\ConfigTelaModel;
 class EntCfgUsuario extends Entity
 {
     protected $attributes = [
-        'usu_id'        => null,,
-        'usu_nome'        => null,,
-        'usu_login'        => null,,
-        'usu_senha'        => null,,
-        'usu_email'        => null,,
-        'prf_id'        => null,,
-        'usu_status'        => null,,
-        'usu_dashboard'        => null,,
+        'usu_id'        => null,
+        'usu_nome'        => null,
+        'usu_login'        => null,
+        'usu_senha'        => null,
+        'usu_email'        => null,
+        'prf_id'        => null,
+        'usu_status'        => null,
+        'usu_dashboard'        => null,
         'usu_ativo'        => 'A',
 
     ];
@@ -129,7 +129,7 @@ class EntCfgUsuario extends Entity
         $opcat = ['A' => 'Ativo', 'I' => 'Inativo'];
 
         $ativ = new MyCampo('cfg_usuario', 'usu_ativo');
-        $ativ->valor = $dados['usu_ativo'] ?? 'A';
+        $ativ->valor = $dados->usu_ativo ?? 'A';
         $ativ->selecionado = $ativ->valor;
         $ativ->opcoes = $opcat;
         $this->usu_ativo = $ativ->cr2opcoes();

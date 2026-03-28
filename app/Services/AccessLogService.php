@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Libraries\MongoDb;
-use MongoDB\BSON\UTCDateTime;
 use MongoDB\Driver\BulkWrite;
 use MongoDB\Driver\Exception\Exception as MongoException;
 use Throwable;
@@ -28,18 +27,22 @@ final class AccessLogService
         ?string $userName,
         string $screen,
         string $method,
-        array $record = null,
-        string $userIp = null,
-        string $userAgent = null
+        ?int $record = null,
+        ?string $userIp = null,
+        ?string $userAgent = null,
+        ?string $titulo = null,
+        ?string $detalhe = null
     ): bool {
         try {
             $document = [
                 'log_id_usuario' => $userId,
                 'log_usuario'    => $userName,
-                'log_data'       => new UTCDateTime(),
+                'log_data'       => date('Y-m-d H:i:s'),
                 'log_tela'       => $screen,
                 'log_metodo'     => $method,
                 'log_registro'   => $record,
+                'log_titulo'     => $titulo,
+                'log_detalhe'    => $detalhe,
                 'log_ip'         => $userIp,
                 'log_user_agent' => $userAgent,
             ];

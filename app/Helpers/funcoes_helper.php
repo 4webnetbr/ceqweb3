@@ -939,7 +939,7 @@ function criaSelectRelativo(
 
         // verifica se existe um campo chamado prf_id e se não é a tabela cfg_perfil
         // se não for somente leitura filtra pelo perfil
-        if (in_array('prf_id', $fields, true) && $nomeTabela != 'cfg_perfil' && !$configCampo['Leitura']) {
+        if (in_array('prf_id', $fields, true) && $nomeTabela != 'cfg_perfil' && $nomeTabela != 'cfg_usuario' && !$configCampo['Leitura']) {
             $perfilId = session()->get('usu_perfil_id');
             // debug($perfilId);
             // Se existe, aplica filtro WHERE
@@ -978,7 +978,7 @@ function criaSelectRelativo(
         $builder->orderBy($campoNome);
         // Busca os dados (chave e nome)
         $dados = $builder->get()->getResultArray();
-        // if ($nomeTabela == 'vw_oco_tpo_ocorrencia_relac') {
+        // if ($nomeTabela == 'cfg_usuario') {
         //     debug($db->getLastQuery(), false);
         // }
 
@@ -992,7 +992,7 @@ function criaSelectRelativo(
     }
     // Cria o campo
     $campo = new MyCampo($entidade, $nomeCampo);
-    // debug($tipo);
+    debug($campo);
     if ($tipo == 1) {
         $opcoes = [null => $campo->place] + $opcoes;
         // debug($opcoes);
