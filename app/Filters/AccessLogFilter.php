@@ -43,20 +43,17 @@ final class AccessLogFilter implements FilterInterface
         }
 
         $router = service('router');
+        $logContext = service('logContext');
+
         $controller = class_basename($router->controllerName());
         $method     = $router->methodName();
         $params = $router->params();
         $id = $params[0] ?? null;
         $id = is_numeric($id) ? (int) $id : null;
 
-        $session = session();
+        $titulo  = $logContext->get('titulo');
+        $detalhe = $logContext->get('detalhe');
 
-        $titulo  = $session->get('log_titulo');
-        $detalhe = $session->get('log_detalhe');
-
-        // limpa depois de usar (IMPORTANTE)
-        $session->remove('log_titulo');
-        $session->remove('log_detalhe');
         $agent = $request->getUserAgent();
         $browser = $agent->getBrowser();
         $version = $agent->getVersion();
@@ -71,17 +68,13 @@ final class AccessLogFilter implements FilterInterface
             'log_detalhe'    => $detalhe,
             'log_registro'   => $id,
             'log_ip'         => $request->getIPAddress(),
-            'log_user_agent' => 'Sistema: '.$platform.' - Navegador: '.$browser.' - Vs:'.$version,
+            'log_user_agent' => 'Sistema: '.$platform.'<br>Navegador: '.$browser.' - '.$version,
         ]);
     }
 
 
     private function shouldSkip(RequestInterface $request): bool
     {
-        // if ($request->isAJAX()) {
-        //     return true;
-        // }
-
         $path = trim($request->getUri()->getPath(), '/');
 
         foreach ($this->excludedPrefixes as $prefix) {

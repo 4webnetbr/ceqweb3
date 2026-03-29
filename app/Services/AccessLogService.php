@@ -37,7 +37,7 @@ final class AccessLogService
             $document = [
                 'log_id_usuario' => $userId,
                 'log_usuario'    => $userName,
-                'log_data'       => date('Y-m-d H:i:s'),
+                'log_data'       => new \MongoDB\BSON\UTCDateTime(),
                 'log_tela'       => $screen,
                 'log_metodo'     => $method,
                 'log_registro'   => $record,

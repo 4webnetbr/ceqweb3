@@ -232,6 +232,13 @@ function data_db($data_br)
     return implode('-', array_reverse(explode('/', $data_br)));
 }
 
+function mongoDateToBr($utcDate): string
+{
+    return $utcDate
+        ->toDateTime()
+        ->setTimezone(new \DateTimeZone('America/Sao_Paulo'))
+        ->format('d/m/Y H:i:s');
+}
 /**
  * dif_tempo
  * Retorna diferença entre data-hora inicial e data-hora final
@@ -990,9 +997,39 @@ function criaSelectRelativo(
         }
         // debug($opcoes);
     }
+
     // Cria o campo
     $campo = new MyCampo($entidade, $nomeCampo);
-    debug($campo);
+
+    // Se valor for passado, define leitura automática (caso config não sobrescreva)
+    if ($valor !== null && !isset($configCampo['Leitura'])) {
+        $campo->setLeitura(true);
+    }
+    $configCampo['DispForm']    = $configCampo['DispForm'] ?? ('col-6');
+    $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
+    $configCampo['Obrigatorio'] = $configCampo['Obrigatorio'] ?? true;
+    $configCampo['Largura']     = $configCampo['Largura'] ?? 40;
+    // if (!isset($configCampo['Hint']) || empty($configCampo['Hint'])) {
+    $configCampo['Hint']        = $configCampo['Hint'] ?? $configCampo['Label'] ?? $campo->hint ?? $campo->label;
+
+    // Aplica outras configurações dinamicamente
+    foreach ($configCampo as $metodo => $parametro) {
+        $metodo = 'set' . ucfirst($metodo);
+        // debug($metodo . ' ' . $parametro);
+        if (method_exists($campo, $metodo)) {
+            $campo->$metodo($parametro);
+        }
+    }
+
+    // debug($campo, true);
+    //  INFOTEXTO (compatível com MyCampo) 
+    if (!empty($configCampo['Infotexto'])) {
+        $campo->infotexto = $configCampo['Infotexto'];
+    }
+
+    if ($tipo === 3 && !str_ends_with($campo->nome, '[]')) {
+        $campo->nome .= '[]';
+    }
     if ($tipo == 1) {
         $opcoes = [null => $campo->place] + $opcoes;
         // debug($opcoes);
@@ -1032,39 +1069,6 @@ function criaSelectRelativo(
 
     $campo->setValor($valorStr);
     $campo->setSelecionado($valorArr);
-
-
-    // Se valor for passado, define leitura automática (caso config não sobrescreva)
-    if ($valor !== null && !isset($configCampo['Leitura'])) {
-        $campo->setLeitura(true);
-    }
-    $configCampo['DispForm']    = $configCampo['DispForm'] ?? ('col-6');
-    $configCampo['Leitura']     = $configCampo['Leitura'] ?? false;
-    $configCampo['Obrigatorio'] = $configCampo['Obrigatorio'] ?? true;
-    $configCampo['Largura']     = $configCampo['Largura'] ?? 40;
-    // if (!isset($configCampo['Hint']) || empty($configCampo['Hint'])) {
-    $configCampo['Hint']        = $configCampo['Hint'] ?? $configCampo['Label'] ?? $campo->hint ?? $campo->label;
-
-
-
-    // Aplica outras configurações dinamicamente
-    foreach ($configCampo as $metodo => $parametro) {
-        $metodo = 'set' . ucfirst($metodo);
-        // debug($metodo . ' ' . $parametro);
-        if (method_exists($campo, $metodo)) {
-            $campo->$metodo($parametro);
-        }
-    }
-
-    // debug($campo, true);
-    //  INFOTEXTO (compatível com MyCampo) 
-    if (!empty($configCampo['Infotexto'])) {
-        $campo->infotexto = $configCampo['Infotexto'];
-    }
-
-    if ($tipo === 3 && !str_ends_with($campo->nome, '[]')) {
-        $campo->nome .= '[]';
-    }
 
     // AJUSTE PARA MULTIPLE
     if ($tipo == 3 || $tipo == 4) {

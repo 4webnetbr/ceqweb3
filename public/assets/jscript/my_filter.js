@@ -56,6 +56,31 @@ function montaListaSaldo(dados) {
   dtResult("table");
 }
 
+function montaListaLogs(dados) {
+  jQuery("#table").DataTable().destroy();
+  removeLinhas("table", 0);
+
+  linha = "";
+  descri = "";
+  for (var index in dados) {
+    item = dados[index];
+    descri = item.titulo + "<br>" + item.detalhe;
+
+    linha = linha + "<tr>";
+    linha = linha + "<td class='align-middle'>" + item.data + "</td>";
+    linha = linha + "<td class='align-middle'>" + item.usuario + "</td>";
+    linha = linha + "<td class='align-middle'>" + item.tela + "</td>";
+    linha = linha + "<td class='align-middle'>" + item.metodo + "</td>";
+    linha = linha + "<td class='align-middle'>" + item.registro + "</td>";
+    linha = linha + "<td class='align-middle'>" + descri + "</td>";
+    linha = linha + "<td class='align-middle'>" + item.acesso + "</td>";
+    linha = linha + "<td class='align-middle'>" + item.ip + "</td>";
+    linha = linha + "</tr>";
+  }
+  jQuery("#table tbody").append(linha);
+  dtResult("table");
+}
+
 function dtResult(tabela) {
   // monta o Datable
   var table = jQuery("#" + tabela).DataTable({
@@ -76,6 +101,24 @@ function dtResult(tabela) {
         },
       },
       buttons: [
+        {
+          extend: "searchBuilder",
+          text: '<i class="fas fa-filter" aria-hidden="true"></i>',
+          titleAttr: "Filtrar",
+          config: {
+            text: '<i class="fas fa-filter" aria-hidden="true"></i>',
+            id: "bt_filtro",
+            columns: [":not(.acao)", ":visible"],
+            defaultCondition: "Igual",
+          },
+          preDefined: {
+            criteria: [
+              {
+                condition: "Igual",
+              },
+            ],
+          },
+        },
         {
           extend: "excelHtml5",
           text: '<i class="far fa-file-excel" aria-hidden="true"></i>',
@@ -161,18 +204,25 @@ function removeLinhas(idTabela, indice = 1) {
  */
 async function buscaLogUser() {
   // bloqueiaTela();
-  var usuario = jQuery("#usu_id").val();
-  if (usuario == "") {
-    boxAlert("Informe o Usuário", false, "", true, 1, false, "Alerta");
-    return;
-  }
-  var periodo = jQuery.trim(jQuery("#log_periodo").val());
-  urlBusca = "CfgLogUser/lista";
-  dados = { usuario: usuario, periodo: periodo };
-  try {
-    const retornoAjax = await executaAjaxWait(urlBusca, "json", dados);
-    montaListaSaldo(retornoAjax);
-  } catch (error) {
-    console.log("Erro na requisição AJAX:", error);
+  var usuario = jQuery("#log_usuario").val();
+  if (usuario == "" || usuario == null) {
+    boxAlert("Informe o Usuário", true, "", true, 1, false, "Alerta");
+  } else {
+    var periodo = jQuery.trim(jQuery("#log_periodo").val());
+    var startDate = periodo.substr(0, 10); //jQuery("#periodo").data('daterangepicker').startDate.format('DD/MM/YYYY');
+    var endDate = periodo.substr(-10); //jQuery("#periodo").data('daterangepicker').endDate.format('DD/MM / YYYY');
+    urlBusca = "CfgLoguser/lista";
+    dados = {
+      usuario: usuario,
+      periodo: periodo,
+      inicio: startDate,
+      fim: endDate,
+    };
+    try {
+      const retornoAjax = await executaAjaxWait(urlBusca, "json", dados);
+      montaListaLogs(retornoAjax);
+    } catch (error) {
+      console.log("Erro na requisição AJAX:", error);
+    }
   }
 }

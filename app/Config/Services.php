@@ -38,5 +38,14 @@ class Services extends BaseService
 
         return new \App\Services\AccessLogService();
     }
+
+    public static function logContext(bool $getShared = true): \App\Libraries\LogContext
+    {
+        if ($getShared) {
+            return static::getSharedInstance('logContext');
+        }
+
+        return new \App\Libraries\LogContext();
+    }    
 }
 

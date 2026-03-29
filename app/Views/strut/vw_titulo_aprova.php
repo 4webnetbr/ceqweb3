@@ -10,10 +10,10 @@ if (!isset($desc_edicao)) {
 if (strlen($ajuda) > 5) {
   $mostra_ajuda = true;
 }
-session()->set('log_titulo', $desc_metodo. " " . $title ?? null);
-session()->set('log_detalhe', $desc_edicao ?? null);
+$logContext = service('logContext');
 
-// }
+$logContext->set('titulo', $desc_metodo . " " . $title);
+$logContext->set('detalhe', $desc_edicao);
 ?>
 <div id='title' class='title col-12 px-lg-4 px-1 bg-danger-subtle '>
   <div class='titulo col-lg-6 col-7 float-start text-nowrap'>

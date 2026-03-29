@@ -72,6 +72,8 @@ class Filters extends BaseConfig
                 'except' => [
                     'server',
                     'server/*',
+                    'buscas',
+                    'buscas/*',
                     'notifica',
                     'notifica/*',
                     'mensagem',

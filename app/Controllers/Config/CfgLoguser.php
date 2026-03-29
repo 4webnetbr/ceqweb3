@@ -1,10 +1,13 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Controllers\Config;
 
 use App\Controllers\BaseController;
+use App\Libraries\MongoDb;
 use App\Libraries\MyCampo;
 use App\Models\Config\ConfigUsuarioModel;
+use MongoDB\Driver\Query;
 
 class CfgLoguser extends BaseController
 {
@@ -12,6 +15,10 @@ class CfgLoguser extends BaseController
     public $permissao = '';
     public $periodo;
     public $usuario;
+
+	private $database = 'MongoDB';
+	private $collection = 'logs_acesso';
+	private $conn;
 
     /**
      * Construtor da Tela
@@ -22,6 +29,8 @@ class CfgLoguser extends BaseController
         $this->data      = session()->getFlashdata('dados_tela');
         $this->permissao = $this->data['permissao'];
         $this->usuario   = new ConfigUsuarioModel();
+		$mongodb = new MongoDb();
+		$this->conn = $mongodb->getConn();
 
         if ($this->data['erromsg'] != '') {
             $this->__erro();
@@ -49,8 +58,8 @@ class CfgLoguser extends BaseController
         $campos[0][] = $fields->log_usuario;
         $campos[0][] = $fields->log_btbu;
     
-        $colunas = ['Data', 'Tela', 'Método', 'Descrição', 'IP', 'Acesso'];
-    
+        
+        $colunas = ['Data', 'Usuário', 'Tela', 'Ação','Registro', 'Descrição', 'Acesso','IP'];
         $this->data['secoes']  = $secao;
         $this->data['campos']  = $campos;
         $this->data['colunas'] = $colunas;
@@ -65,9 +74,70 @@ class CfgLoguser extends BaseController
      */
     public function lista()
     {
-        // $vars = $_REQUEST;
-        // $dep = trim($vars['codDep']);
-        // $pro = trim($vars['codPro']);
+		$filtro  		= $this->request->getPost();
+		$usuario        = $filtro['usuario'];
+		$periodo        = $filtro['periodo'];
+		$inicio         = $filtro['inicio'];
+		$fim            = $filtro['fim'];
+        $dataIni        = data_db($inicio);
+        $dataFim        = data_db($fim);
+
+        $tz = new \DateTimeZone('America/Sao_Paulo');
+
+        // data inicial
+        $dataIniObj = new \DateTime($dataIni, $tz);
+        $dataIniObj->setTime(0, 0, 0);
+
+        // data final (dia seguinte, exclusivo)
+        $dataFimObj = new \DateTime($dataFim, $tz);
+        $dataFimObj->setTime(23, 59, 59);
+
+        $filter = [];
+        
+        $filter['log_id_usuario'] = (string) $usuario;
+        $filter['log_data'] = [
+            '$gte' => new \MongoDB\BSON\UTCDateTime($dataIniObj->getTimestamp() * 1000),
+            '$lt'  => new \MongoDB\BSON\UTCDateTime($dataFimObj->getTimestamp() * 1000),
+        ];
+            
+        $options = [
+            'sort' => ['log_data' => 1]
+        ];
+        $query = new \MongoDB\Driver\Query($filter, $options);
+
+        $rows = $this->conn->executeQuery($this->database . '.' . $this->collection, $query);
+        
+        $dados = [];
+
+        $map = [
+            'index'  => 'Carregou',
+            'lista'  => 'Listou',
+            'add'    => 'Criou Novo',
+            'show'   => 'Visualizou',
+            'store'  => 'Gravou',
+            'edit'   => 'Alteração',
+            'ativinativ' => 'Ativou/Inativou',
+            'delete' => 'Excluiu',
+            'logon' => 'Entrou no Sistema',
+        ];
+
+
+        foreach ($rows as $row) {
+            $dados[] = [
+                'data'     => mongoDateToBr($row->log_data),
+                'usuario'  => $row->log_usuario ?? '',
+                'tela'     => $row->log_tela ?? '',
+                'metodo'   => $map[$row->log_metodo] ?? ucfirst($row->log_metodo) ?? '',
+                'titulo'   => $row->log_titulo ?? '',
+                'detalhe'  => $row->log_detalhe ?? '',
+                'registro'  => $row->log_registro ?? '',
+                'ip'       => $row->log_ip ?? null,
+                'acesso'       => $row->log_user_agent ?? null,
+                ];
+        }
+        
+        echo json_encode($dados);
+                
         // if ($pro == '') {
         //     $pro = false;
         // }
@@ -148,7 +218,6 @@ class CfgLoguser extends BaseController
         //         }
         //     }
         // }
-        // echo json_encode($estoques);
     }
 
     public function defCampos()
@@ -167,16 +236,17 @@ class CfgLoguser extends BaseController
             'usu_nome',
             null,
             1,
-            'CfgLoguser',
+            'cfg_usuario',
             [],
-            $config
+            $config,
+            'log_usuario'
         );
 
         // PERÍODO
         $peri               = new MyCampo();
         $peri->objeto       = 'input';
-        $peri->id           = 'periodo';
-        $peri->nome         = 'periodo';
+        $peri->id           = 'log_periodo';
+        $peri->nome         = 'log_periodo';
         $peri->label        = 'Período';
         $peri->obrigatorio  = true;
         $peri->size         = 30;
