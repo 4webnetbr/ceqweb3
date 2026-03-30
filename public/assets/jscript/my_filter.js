@@ -70,9 +70,9 @@ function montaListaLogs(dados) {
     linha = linha + "<td class='align-middle'>" + item.data + "</td>";
     linha = linha + "<td class='align-middle'>" + item.usuario + "</td>";
     linha = linha + "<td class='align-middle'>" + item.tela + "</td>";
+    linha = linha + "<td class='align-middle'>" + descri + "</td>";
     linha = linha + "<td class='align-middle'>" + item.metodo + "</td>";
     linha = linha + "<td class='align-middle'>" + item.registro + "</td>";
-    linha = linha + "<td class='align-middle'>" + descri + "</td>";
     linha = linha + "<td class='align-middle'>" + item.acesso + "</td>";
     linha = linha + "<td class='align-middle'>" + item.ip + "</td>";
     linha = linha + "</tr>";

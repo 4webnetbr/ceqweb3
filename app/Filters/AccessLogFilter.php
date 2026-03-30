@@ -58,6 +58,7 @@ final class AccessLogFilter implements FilterInterface
         $browser = $agent->getBrowser();
         $version = $agent->getVersion();
         $platform = $agent->getPlatform();
+        $ambiente = ENVIRONMENT;
 
         Events::trigger('access:log', [
             'log_id_usuario' => $session->get('usu_id'),
@@ -68,7 +69,8 @@ final class AccessLogFilter implements FilterInterface
             'log_detalhe'    => $detalhe,
             'log_registro'   => $id,
             'log_ip'         => $request->getIPAddress(),
-            'log_user_agent' => 'Sistema: '.$platform.'<br>Navegador: '.$browser.' - '.$version,
+            'log_user_agent' => $platform.'<br>'.$browser.' - '.$version,
+            'log_ambiente'   => $ambiente,
         ]);
     }
 

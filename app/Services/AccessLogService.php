@@ -31,7 +31,8 @@ final class AccessLogService
         ?string $userIp = null,
         ?string $userAgent = null,
         ?string $titulo = null,
-        ?string $detalhe = null
+        ?string $detalhe = null,
+        ?string $ambiente = null
     ): bool {
         try {
             $document = [
@@ -45,6 +46,7 @@ final class AccessLogService
                 'log_detalhe'    => $detalhe,
                 'log_ip'         => $userIp,
                 'log_user_agent' => $userAgent,
+                'log_ambiente'   => $ambiente,
             ];
 
             $bulk = new BulkWrite();

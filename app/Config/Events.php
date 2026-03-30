@@ -21,6 +21,24 @@ use CodeIgniter\Exceptions\FrameworkException;
  * Example:
  *      Events::on('create', [$myInstance, 'myMethod']);
  */
+
+Events::on('post_controller', static function () {
+
+    $request = service('request');
+    $ctx     = service('logContext');
+
+    // pega os dados globais do request (setados pelo CI internamente)
+    $data = $request->getVar();
+
+    if (!is_array($data)) {
+        return;
+    }
+
+    if (!empty($data['desc_edicao'])) {
+        $ctx->set('detalhe', $data['desc_edicao']);
+    }
+});
+
 Events::on('access:log', static function (array $data): void {
 
     /** @var \App\Services\AccessLogService $service */
@@ -35,7 +53,8 @@ Events::on('access:log', static function (array $data): void {
         userIp: $data['log_ip'] ?? null,
         userAgent: $data['log_user_agent'] ?? null,
         titulo: $data['log_titulo'] ?? null,
-        detalhe: $data['log_detalhe'] ?? null
+        detalhe: $data['log_detalhe'] ?? null,
+        ambiente: $data['log_ambiente'] ?? null
     );
 });
 

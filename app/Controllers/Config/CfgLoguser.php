@@ -59,7 +59,7 @@ class CfgLoguser extends BaseController
         $campos[0][] = $fields->log_btbu;
     
         
-        $colunas = ['Data', 'Usuário', 'Tela', 'Ação','Registro', 'Descrição', 'Acesso','IP'];
+        $colunas = ['Data', 'Usuário', 'Tela', 'Descrição', 'Ação','Registro', 'Acesso','IP'];
         $this->data['secoes']  = $secao;
         $this->data['campos']  = $campos;
         $this->data['colunas'] = $colunas;
@@ -137,87 +137,6 @@ class CfgLoguser extends BaseController
         }
         
         echo json_encode($dados);
-                
-        // if ($pro == '') {
-        //     $pro = false;
-        // }
-
-        // $estoques = [];
-        // // $produt = new SoapSapiens();
-        // if (trim($vars['codDep']) != '') {
-        //     $busca = new BuscasSapiens();
-        //     $saldoest = $busca->buscaEstoqueDeposito($dep, $pro);
-        //     if (is_object($saldoest)) {
-        //         // Converte objeto em array
-        //         $dep = $saldoest;
-        //         // debug($dep);
-        //         if (($dep->codigoLote == 'N/A' && $dep->estoqueDeposito > 0) ||
-        //             ($dep->codigoLote != 'N/A' && $dep->quantidadeEstoque > 0)
-        //         ) {
-        //             if ($this->produto->getProdutoCod($dep->codigoProduto)) {
-        //                 $lote = [
-        //                     'codDep'      => $dep->codigoDeposito,
-        //                     'Coderp'      => $dep->codigoProduto,
-        //                     'DescProduto' => $dep->descricaoProduto,
-        //                     'Produto'     => $dep->codigoProduto . ' - ' . $dep->descricaoProduto,
-        //                     'lote'        => $dep->codigoLote,
-        //                     'validade'    => $dep->validade,
-        //                     'validadeord' => data_db($dep->validade),
-        //                     'entrada'     => $dep->entrada,
-        //                     'entradaord'  => data_db($dep->entrada),
-        //                     'und'         => $dep->unidmedida,
-        //                 ];
-        //                 if ($dep->codigoLote == 'N/A') {
-        //                     $lote['saldo'] = $dep->estoqueDeposito;
-        //                     $lote['validade']    = '';
-        //                     $lote['validadeord'] = '';
-        //                     $lote['entrada']     = '';
-        //                     $lote['entradaord']  = '';
-        //                 } else {
-        //                     $lote['saldo'] = $dep->quantidadeEstoque;
-        //                 }
-        //                 array_push($estoques, $lote);
-        //             }
-        //         }
-        //     } else {
-        //         // debug($saldoest, true);
-
-        //         $total = 0;
-        //         for ($d = 0; $d < sizeof($saldoest); $d++) {
-        //             $dep = $saldoest[$d];
-        //             // debug($dep);
-        //             if ($this->produto->getProdutoCod($dep->codigoProduto)) {
-        //                 if (($dep->codigoLote == 'N/A' && $dep->estoqueDeposito > 0) ||
-        //                     ($dep->codigoLote != 'N/A' && $dep->quantidadeEstoque > 0)
-        //                 ) {
-        //                     // debug($dep, true);
-        //                     $lote = [
-        //                         'codDep'      => $dep->codigoDeposito,
-        //                         'Coderp'      => $dep->codigoProduto,
-        //                         'DescProduto' => $dep->descricaoProduto,
-        //                         'Produto'     => $dep->codigoProduto . ' - ' . $dep->descricaoProduto,
-        //                         'lote'        => $dep->codigoLote,
-        //                         'validade'    => $dep->validade,
-        //                         'validadeord' => data_db($dep->validade),
-        //                         'entrada'     => $dep->entrada,
-        //                         'entradaord'  => data_db($dep->entrada),
-        //                         'und'         => $dep->unidmedida,
-        //                     ];
-        //                     if ($dep->codigoLote == 'N/A') {
-        //                         $lote['saldo'] = $dep->estoqueDeposito;
-        //                         $lote['validade']    = '';
-        //                         $lote['validadeord'] = '';
-        //                         $lote['entrada']     = '';
-        //                         $lote['entradaord']  = '';
-        //                     } else {
-        //                         $lote['saldo'] = $dep->quantidadeEstoque;
-        //                     }
-        //                     array_push($estoques, $lote);
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
     }
 
     public function defCampos()

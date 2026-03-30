@@ -64,6 +64,24 @@ class LoginFilter implements FilterInterface
         } else {
             $tela = (array) $telaInfo[0];
 
+            $titulo = match (strtolower($metodo)) {
+                'index'  => "Acessou a tela de {$tela['tel_nome']}",
+                'lista'  => "Listou {$tela['tel_nome']}",
+                'show'   => "Visualizou {$tela['tel_nome']}",
+                'add'    => "Novo Cadastro de {$tela['tel_nome']}",
+                'store'  => "Gravação de {$tela['tel_nome']}",
+                'edit'   => "Alteração de {$tela['tel_nome']}",
+                'update' => "Atualização de {$tela['tel_nome']}",
+                'delete' => "Exclusão de {$tela['tel_nome']}",
+                'ordena' => "Ordenação de {$tela['tel_nome']}",
+                'ativinativ' => "Ativação/Inativação de {$tela['tel_nome']}",
+                default  => "{$tela['tel_nome']}::{$metodo}",
+            };
+
+            $logContext = service('logContext');
+
+            $logContext->set('titulo', $titulo);
+
             $dadosTela = [
                 'modal' => $modal,
                 'tel_id' => $tela['tel_id'],
