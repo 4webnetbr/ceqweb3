@@ -3,13 +3,13 @@
 namespace App\Controllers\Ocorrencia;
 
 use App\Controllers\BaseController;
-use App\Entities\Ocorrencia\EntOcoModOcorrencia;
 use App\Entities\Ocorrencia\EntOcoOcorrencia;
+use App\Entities\Ocorrencia\EntOcoSubtOcorrencia;
 use App\Entities\Ocorrencia\EntOcoTratativa;
 use App\Libraries\MyCampo;
 use App\Models\CommonModel;
-use App\Models\Ocorre\OcorreModOcorrenciaModel;
 use App\Models\Ocorre\OcorreOcorrenciaModel;
+use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
 use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
 use App\Models\Produt\ProdutProdutoModel;
 use App\Traits\ForeignKeyUsageChecker;
@@ -20,7 +20,7 @@ class OcoOcorrencia extends BaseController
 
     public $data = [];
     public $modelTipo;
-    public $modelMod;
+    public $modelSubt;
     public $ocorrencia;
     public $produtLoteModel;
     public $common;
@@ -32,7 +32,7 @@ class OcoOcorrencia extends BaseController
         $this->permissao = $this->data['permissao'];
 
         $this->modelTipo  = new OcorreTipoOcorrenciaModel();
-        $this->modelMod   = new OcorreModOcorrenciaModel();
+        $this->modelSubt   = new OcorreSubtOcorrenciaModel();
         $this->ocorrencia = new OcorreOcorrenciaModel();
         $this->common     = new CommonModel();
 
@@ -191,36 +191,7 @@ class OcoOcorrencia extends BaseController
         // dados gerais
         $secao = ['Dados Gerais'];
         $campos = $this->showCabecalho($dados);
-        // debug($campos, true);
-
-        // BLOCO TELAS APLICÁVEIS
-        $entity   = new EntOcoModOcorrencia((array) $dados);
-        $modModel = new OcorreModOcorrenciaModel();
-        $oco   = $this->ocorrencia->getOcorrencia($id);
-        $telas = array_map(
-            fn($item) => (array) $item,
-            $modModel->getTOTelasAplicaveis($oco->sut_id)
-        );
-        // debug($telas, true);
-
-        if (!empty($telas)) {
-
-            $telasResultado = [];
-            $total = count($telas);
-
-            for ($c = 0; $c < $total; $c++) {
-                $fields = $entity->defCamposTelasAplicaveis($telas[$c], $c, $total, true);
-                $telasResultado[] = $fields;
-            }
-
-            $campos[0][] = view(
-                'partials/pw_telas_aplicaveis_ocorrencia',
-                [
-                    'telas'  => $telasResultado,
-                    'oco_id' => $id
-                ]
-            );
-        }
+        // debug($campos);
 
         // BLOCO DAS AÇÕES 
         $entity = new EntOcoTratativa($dados, true);
@@ -244,8 +215,32 @@ class OcoOcorrencia extends BaseController
                 ]
             );
         }
+        // BLOCO TELAS APLICÁVEIS
+        $entity   = new EntOcoSubtOcorrencia((array) $dados);
+        $telas = array_map(
+            fn($item) => (array) $item,
+            $this->modelSubt->getTOTelasAplicaveis($dados->sut_id)
+        );
+        // debug($telas, true);
 
-        $this->data['title']       = 'Ocorrência';
+        if (!empty($telas)) { 
+            $telasResultado = [];
+            $total = count($telas);
+
+            for ($c = 0; $c < $total; $c++) {
+                $fields = $entity->defCamposTelasAplicaveis($telas[$c], $c, $total, true);
+                $telasResultado[] = $fields;
+            }
+
+            $campos[0][] = view(
+                'partials/pw_telas_aplicaveis_ocorrencia',
+                [
+                    'telas'  => $telasResultado,
+                    'oco_id' => $id
+                ]
+            );
+        }
+
         $this->data['desc_edicao'] = ' Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' - ' .  fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
         $this->data['secoes']      = $secao;
         $this->data['campos']      = $campos;
@@ -565,8 +560,8 @@ class OcoOcorrencia extends BaseController
             }
 
             // SUBTIPO / STATUS
-            $modModel = new OcorreModOcorrenciaModel();
-            $subtipo = $modModel->getModOcorrencia((int)$postado['sut_id'])[0] ?? null;
+            $modModel = new OcorreSubtOcorrenciaModel();
+            $subtipo = $modModel->getSubtOcorrencia((int)$postado['sut_id'])[0] ?? null;
 
             if ($subtipo && $subtipo->sut_fina === 'S') {
                 // FINALIZA AUTOMÁTICO

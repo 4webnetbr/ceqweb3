@@ -5,7 +5,7 @@ namespace App\Entities\Ocorrencia;
 use CodeIgniter\Entity\Entity;
 use App\Libraries\MyCampo;
 use App\Models\Config\ConfigStatusModel;
-use App\Models\Ocorre\OcorreModOcorrenciaModel;
+use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 use App\Models\Produt\ProdutLoteModel;
 use App\Models\Produt\ProdutProdutoModel;
@@ -245,7 +245,7 @@ class EntOcoTratativa extends Entity
         // TELA
         if ((int)$dados->tpa_id === 2) {
 
-            $mod = new OcorreModOcorrenciaModel();
+            $mod = new OcorreSubtOcorrenciaModel();
             $opc = [];
 
             foreach ($mod->getTelas() as $tel) {

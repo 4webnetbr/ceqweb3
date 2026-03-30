@@ -26,12 +26,12 @@
             <div class="accordion-body p-0">
 
                 <table class="table table-bordered table-sm align-middle">
-                    <thead class="table-info">
+                    <!-- <thead class="table-info">
                         <tr>
                             <th>Detalhes</th>
                         </tr>
                     </thead>
-
+ -->
                     <tbody>
 
                         <?php foreach ($acoes as $acao): ?>

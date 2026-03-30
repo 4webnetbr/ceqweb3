@@ -5,18 +5,18 @@ namespace App\Controllers\Ocorrencia;
 use App\Models\CommonModel;
 use App\Controllers\BaseController;
 use App\Traits\ForeignKeyUsageChecker;
-use App\Models\Ocorre\OcorreModOcorrenciaModel;
-use App\Entities\Ocorrencia\EntOcoModOcorrencia;
+use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
+use App\Entities\Ocorrencia\EntOcoSubtOcorrencia;
 use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
 
-class OcoModOcorrencia extends BaseController
+class OcoSubtOcorrencia extends BaseController
 {
     use ForeignKeyUsageChecker;
 
     public $data = [];
     public $permissao = '';
     public $tipoocorrencia;
-    public $modocorrencia;
+    public $subtocorrencia;
     public $common;
 
     /**
@@ -27,7 +27,7 @@ class OcoModOcorrencia extends BaseController
     {
         $this->data           = session()->getFlashdata('dados_tela');
         $this->permissao      = $this->data['permissao'];
-        $this->modocorrencia  = new OcorreModOcorrenciaModel();
+        $this->subtocorrencia  = new OcorreSubtOcorrenciaModel();
         $this->common         = new CommonModel();
 
 
@@ -65,7 +65,7 @@ class OcoModOcorrencia extends BaseController
     public function lista()
     {
         $campos = montaColunasCampos($this->data, 'sut_id');
-        $dados_mdocor = $this->modocorrencia->getModOcorrencia();
+        $dados_mdocor = $this->subtocorrencia->getSubtOcorrencia();
         $mdocor = [
             'data' => montaListaColunasEnt($this->data, 'sut_id', $dados_mdocor, $campos[1]),
         ];
@@ -82,7 +82,7 @@ class OcoModOcorrencia extends BaseController
     public function add()
     {
         // Instancia a entity do Modelo de Ocorrência
-        $entity = new EntOcoModOcorrencia();
+        $entity = new EntOcoSubtOcorrencia();
         $fields = $entity->campos;
 
         // Dados Gerais
@@ -108,7 +108,7 @@ class OcoModOcorrencia extends BaseController
 
         // PERMISSÕES
         $secao[3] = 'Permissões';
-        $dadosPerm = $dados_ModOcorrencia[0] ?? [];
+        $dadosPerm = $dados_SubtOcorrencia[0] ?? [];
         $fields3 = $entity->defPermissoes($dadosPerm);
         $campos[3][0] = $fields3['prf_id'];
 
@@ -132,7 +132,7 @@ class OcoModOcorrencia extends BaseController
         $campo = [];
         $ttipo  = new OcorreTipoOcorrenciaModel();
         $ttelas = $ttipo->getTOTelasAplicaveis($tipo);
-        $entity = new EntOcoModOcorrencia();
+        $entity = new EntOcoSubtOcorrencia();
 
         for ($t = 0; $t < sizeof($ttelas); $t++) {
             $total = sizeof($ttelas);
@@ -160,7 +160,7 @@ class OcoModOcorrencia extends BaseController
         $campo = [];
         $tipoAcaoModel  = new OcorreTipoOcorrenciaModel();
         $tacao          = $tipoAcaoModel->getTOAcao($tpo_id);
-        $entity = new EntOcoModOcorrencia();
+        $entity = new EntOcoSubtOcorrencia();
 
         // Gera campos da ação
 
@@ -199,14 +199,14 @@ class OcoModOcorrencia extends BaseController
         // }
 
         // Busca os dados do Modelo de Ocorrência pelo ID
-        $dados_ModOcorrencia = (array) $this->modocorrencia->getModOcorrencia($id)[0];
-        $classes = $this->modocorrencia->getClassePorSubtipo($id);
+        $dados_SubtOcorrencia = (array) $this->subtocorrencia->getSubtOcorrencia($id)[0];
+        $classes = $this->subtocorrencia->getClassePorSubtipo($id);
         // debug($classes, true);
-        $dados_ModOcorrencia['cla_id'] = array_column($classes, 'cla_id');
+        $dados_SubtOcorrencia['cla_id'] = array_column($classes, 'cla_id');
 
         // Cria a entity com os dados retornados
-        // debug($dados_ModOcorrencia['cla_id'], true);
-        $entity = new EntOcoModOcorrencia($dados_ModOcorrencia);
+        // debug($dados_SubtOcorrencia['cla_id'], true);
+        $entity = new EntOcoSubtOcorrencia($dados_SubtOcorrencia);
 
         $fields = $entity->defCampos($show);
 
@@ -222,10 +222,10 @@ class OcoModOcorrencia extends BaseController
         // Telas Aplicáveis
         $secao[1] = 'Telas Aplicaveis';
         $displ[1] = 'tabela';
-        $sut_id   = (int) $dados_ModOcorrencia['sut_id'];
+        $sut_id   = (int) $dados_SubtOcorrencia['sut_id'];
         $campos[1] = [];
 
-        $dados_TelasAplicaveis = $this->modocorrencia->getTOTelasAplicaveis($sut_id);
+        $dados_TelasAplicaveis = $this->subtocorrencia->getTOTelasAplicaveis($sut_id);
 
         // debug($dados_TelasAplicaveis, true);
         if (count($dados_TelasAplicaveis) > 0) {
@@ -246,7 +246,7 @@ class OcoModOcorrencia extends BaseController
         $secao[2]   = 'Ações';
         $displ[2]   = 'tabela';
         $campos[2]  = [];
-        $dados_Acao = $this->modocorrencia->getTOAcao($id);
+        $dados_Acao = $this->subtocorrencia->getTOAcao($id);
 
         if (!empty($dados_Acao)) {
             $total = count($dados_Acao);
@@ -280,16 +280,16 @@ class OcoModOcorrencia extends BaseController
 
         // PERMISSÕES
         $secao[3] = 'Permissões';
-        $permissoes = $this->modocorrencia->getPermissoesSubtipo($id);
-        $dados_ModOcorrencia['prf_id'] = array_column($permissoes, 'prf_id');
-        $dadosPerm = (object) $dados_ModOcorrencia;
+        $permissoes = $this->subtocorrencia->getPermissoesSubtipo($id);
+        $dados_SubtOcorrencia['prf_id'] = array_column($permissoes, 'prf_id');
+        $dadosPerm = (object) $dados_SubtOcorrencia;
         $fields3 = $entity->defPermissoes($dadosPerm);
         $campos[3][0] = $fields3['prf_id'];
 
         // Define dados finais da tela
         $this->data['secoes']  = $secao;
         $this->data['campos']  = $campos;
-        $this->data['desc_edicao']   = $dados_ModOcorrencia['sut_nome'];
+        $this->data['desc_edicao']   = $dados_SubtOcorrencia['sut_nome'];
         $this->data['displ']   = $displ;
         $this->data['destino'] = 'store';
         echo view('vw_edicao', $this->data);
@@ -308,7 +308,7 @@ class OcoModOcorrencia extends BaseController
 
         try {
             $this->verificarUsoEmRelacionamentos('oco_subt_ocorrencia', 'sut_id', (int) $id);
-            $this->modocorrencia->delete($id);
+            $this->subtocorrencia->delete($id);
             $ret['erro'] = false;
             $ret['msg']  = 'Ocorrência Excluída com Sucesso';
         } catch (\Exception $e) {
@@ -339,7 +339,7 @@ class OcoModOcorrencia extends BaseController
                 ];
             } else {
                 // INATIVAR
-                if ($this->modocorrencia->getUsoGestao((int) $id)) {
+                if ($this->subtocorrencia->getUsoGestao((int) $id)) {
                     throw new \Exception('MSG_14'); // possui ocorrência vinculada
                 }
 
@@ -348,7 +348,7 @@ class OcoModOcorrencia extends BaseController
                 ];
             }
 
-            $this->modocorrencia->update($id, $dad_atin);
+            $this->subtocorrencia->update($id, $dad_atin);
 
             $ret['erro'] = false;
             $ret['msg']  = 'Subtipo de ocorrência alterado com sucesso';
@@ -401,29 +401,29 @@ class OcoModOcorrencia extends BaseController
             $db->transBegin();
 
             // Verifica unicidade
-            $exists = $this->common->verificaUnico($this->modocorrencia, 'sut_nome', $postado['sut_nome'], 'sut_id', $postado['sut_id']);
+            $exists = $this->common->verificaUnico($this->subtocorrencia, 'sut_nome', $postado['sut_nome'], 'sut_id', $postado['sut_id']);
             if ($exists > 0) {
                 throw new \Exception('MSG_8');
             }
 
             // Salvar Tipo de Ocorrência (principal)
-            if (!$this->modocorrencia->save($postado)) {
-                throw new \Exception(implode('<br>', $this->modocorrencia->errors()));
+            if (!$this->subtocorrencia->save($postado)) {
+                throw new \Exception(implode('<br>', $this->subtocorrencia->errors()));
             }
 
             if (empty($postado['sut_id'])) {
                 unset($postado['sut_id']);
 
-                $this->modocorrencia->insert($postado);
-                $sut_id = $this->modocorrencia->getInsertID();
+                $this->subtocorrencia->insert($postado);
+                $sut_id = $this->subtocorrencia->getInsertID();
             } else {
                 $sut_id = (int)$postado['sut_id'];
-                $this->modocorrencia->update($sut_id, $postado);
+                $this->subtocorrencia->update($sut_id, $postado);
             }
 
             // Recupera ID do tipo (novo ou existente)
             if (!isset($postado['sut_id']) || empty($postado['sut_id'])) {
-                $sut_id = $this->modocorrencia->getInsertID();
+                $sut_id = $this->subtocorrencia->getInsertID();
             } else {
                 $sut_id = $postado['sut_id'];
                 // Se for update, apaga os registros relacionados

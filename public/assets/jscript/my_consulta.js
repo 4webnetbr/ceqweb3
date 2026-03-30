@@ -848,7 +848,7 @@ function acertaSaldoConf(obj) {
 function carregaTelaAcaoTipo(obj) {
   tipo = obj.value;
   objdest = "telas_aplicaveis";
-  url = window.location.origin + "/OcoModOcorrencia/addCampoTa/" + tipo + "/0";
+  url = window.location.origin + "/OcoSubtOcorrencia/addCampoTa/" + tipo + "/0";
   retornoAjax = false;
   executaAjax(url, "json");
   if (retornoAjax) {
@@ -887,7 +887,7 @@ function carregaAcaoTipo(obj) {
   let tipo = obj.value;
   let objdest = "acoes";
   let url =
-    window.location.origin + "/OcoModOcorrencia/addCampoTp/" + tipo + "/0";
+    window.location.origin + "/OcoSubtOcorrencia/addCampoTp/" + tipo + "/0";
 
   retornoAjax = false;
   executaAjax(url, "json");

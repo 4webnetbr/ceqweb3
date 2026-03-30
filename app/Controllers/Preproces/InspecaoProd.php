@@ -10,7 +10,7 @@ use App\Libraries\MyCampo;
 use App\Models\CommonModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
-use App\Models\Ocorre\OcorreModOcorrenciaModel;
+use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
 use App\Models\Ocorre\OcorreOcorrenciaModel;
 use App\Models\Produt\ProdutClasseModel;
 use App\Models\Produt\ProdutProdutoModel;
@@ -466,8 +466,8 @@ class InspecaoProd extends BaseController
             }
 
             // SUBTIPO / STATUS
-            $modModel = new OcorreModOcorrenciaModel();
-            $subtipo = $modModel->getModOcorrencia((int)$postado['sut_id'])[0] ?? null;
+            $modModel = new OcorreSubtOcorrenciaModel();
+            $subtipo = $modModel->getSubtOcorrencia((int)$postado['sut_id'])[0] ?? null;
             // debug($subtipo, true);            
             if ($subtipo) {
                 $postado['tpo_id'] = $subtipo->tpo_id;

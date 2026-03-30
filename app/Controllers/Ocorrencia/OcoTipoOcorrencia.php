@@ -7,7 +7,7 @@ use App\Controllers\BaseController;
 use App\Traits\ForeignKeyUsageChecker;
 use App\Models\CommonModel;
 use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
-use App\Models\Ocorre\OcorreModOcorrenciaModel;
+use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
 
 class OcoTipoOcorrencia extends BaseController
 {
@@ -196,8 +196,8 @@ class OcoTipoOcorrencia extends BaseController
         $show = false;
 
         // verifica vinculos para edição ou não
-        $modocorrencia = new OcorreModOcorrenciaModel();
-        $temsubtipo = $modocorrencia->getSubTipo($id);
+        $subtocorrencia = new OcorreSubtOcorrenciaModel();
+        $temsubtipo = $subtocorrencia->getSubTipo($id);
 
         $show = count($temsubtipo) > 0 ?? true;
         // BUSCA DADOS 
@@ -355,7 +355,7 @@ class OcoTipoOcorrencia extends BaseController
                 ];
             } else {
                 // INATIVAR
-                $subtipoModel = new OcorreModOcorrenciaModel();
+                $subtipoModel = new OcorreSubtOcorrenciaModel();
 
                 if ($subtipoModel->getSubtipoAtivo((int) $id)) {
                     throw new \Exception('MSG_14');

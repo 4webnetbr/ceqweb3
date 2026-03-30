@@ -20,7 +20,7 @@ use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Produt\ProdutIngredienteModel;
 use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
-use App\Models\Ocorre\OcorreModOcorrenciaModel;
+use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
 
 class Buscas extends BaseController
 {
@@ -722,7 +722,7 @@ class Buscas extends BaseController
         if ($busca) {
 
             // Model correto para SUBTIPO
-            $subtipoModel = new OcorreModOcorrenciaModel();
+            $subtipoModel = new OcorreSubtOcorrenciaModel();
 
             // Método coerente com o que está buscando
             $lst = $subtipoModel->getSubtipoPorTipos($busca);
@@ -753,8 +753,8 @@ class Buscas extends BaseController
         $ret = [];
 
         if ($_REQUEST['busca']) {
-            $subtipos = new OcorreModOcorrenciaModel();
-            $lst = $subtipos->getModOcorrenciaPorTipo($_REQUEST['busca']);
+            $subtipos = new OcorreSubtOcorrenciaModel();
+            $lst = $subtipos->getSubtOcorrenciaPorTipo($_REQUEST['busca']);
             if (empty($lst)) {
                 $o = new \stdClass();
                 $o->id   = -1;

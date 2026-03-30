@@ -35,7 +35,7 @@ $routes->match(['GET', 'POST'], '/Login/(:any)', 'Login::$1', ['as' => 'loginlog
 $routes->get('home_config', 'Config\\Home_config::index', ['as' => 'home_config_index']);
 $routes->get('WorkAnalise', 'WorkAnalise::index', ['as' => 'workanalise_index']);
 
-$routes->get('OcoModOcorrencia/getInfoTipoOcorrencia/(:num)', 'Ocorrencia\OcoModOcorrencia::getInfoTipoOcorrencia/$1');
+$routes->get('OcoSubtOcorrencia/getInfoTipoOcorrencia/(:num)', 'Ocorrencia\OcoSubtOcorrencia::getInfoTipoOcorrencia/$1');
 $routes->get('OcoOcorrencia', 'Ocorrencia\OcoOcorrencia::index');
 $routes->post('ocorrencia/get-produto-lote', 'Ocorrencia\OcoOcorrencia::getProdutoPorLote');
 
@@ -218,9 +218,9 @@ $routes->group('OcoTipoOcorrencia', static function ($routes) {
     $routes->get('/', 'Ocorrencia\\OcoTipoOcorrencia::index', ['as' => 'ocotipoocorrencia_index']);
     $routes->match(['GET', 'POST'], '(:any)', 'Ocorrencia\\OcoTipoOcorrencia::$1', ['as' => 'ocotipoocorrencia_match']);
 });
-$routes->group('OcoModOcorrencia', static function ($routes) {
-    $routes->get('/', 'Ocorrencia\\OcoModOcorrencia::index', ['as' => 'ocomodocorrencia_index']);
-    $routes->match(['GET', 'POST'], '(:any)', 'Ocorrencia\\OcoModOcorrencia::$1', ['as' => 'ocomodcorrencia_match']);
+$routes->group('OcoSubtOcorrencia', static function ($routes) {
+    $routes->get('/', 'Ocorrencia\\OcoSubtOcorrencia::index', ['as' => 'ocosubtocorrencia_index']);
+    $routes->match(['GET', 'POST'], '(:any)', 'Ocorrencia\\OcoSubtOcorrencia::$1', ['as' => 'ocosubtcorrencia_match']);
 });
 $routes->group('OcoOcorrencia', static function ($routes) {
     $routes->get('/', 'Ocorrencia\\OcoOcorrencia::index', ['as' => 'ocorrencia_index']);

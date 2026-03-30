@@ -4,10 +4,10 @@ namespace App\Controllers\Ocorrencia;
 
 use App\Entities\Ocorrencia\EntOcoTratativa;
 use App\Entities\Ocorrencia\EntOcoOcorrencia;
-use App\Entities\Ocorrencia\EntOcoModOcorrencia;
+use App\Entities\Ocorrencia\EntOcoSubtOcorrencia;
 use App\Controllers\BaseController;
 use App\Models\Ocorre\OcorreOcorrenciaModel;
-use App\Models\Ocorre\OcorreModOcorrenciaModel;
+use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
 use App\Models\Ocorre\OcorreTrataOcorrenciaModel;
 use App\Models\Produt\ProdutProdutoModel;
 
@@ -160,8 +160,8 @@ class OcoTrataOcorrencia extends BaseController
         $etiqueta = fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
 
         // BLOCO TELAS APLICAVEIS
-        $entity   = new EntOcoModOcorrencia((array) $dados);
-        $sutModel = new OcorreModOcorrenciaModel();
+        $entity   = new EntOcoSubtOcorrencia((array) $dados);
+        $sutModel = new OcorreSubtOcorrenciaModel();
         $telas = $sutModel->getTOTelasAplicaveis($dados->sut_id);
         // debug($telas, true);
 
@@ -263,7 +263,7 @@ class OcoTrataOcorrencia extends BaseController
             foreach ($acaoSelecionada as $tpaId) {
 
                 $tpaId = (int)$tpaId;
-                $acao = (new OcorreModOcorrenciaModel())->getAcaoPorId($tpaId, $oco->sut_id);
+                $acao = (new OcorreSubtOcorrenciaModel())->getAcaoPorId($tpaId, $oco->sut_id);
 
                 if (!$acao) {
                     continue;
