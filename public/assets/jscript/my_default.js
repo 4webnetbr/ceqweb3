@@ -254,10 +254,8 @@ jQuery(document).ready(function () {
             var myModalEl = document.getElementById("myModal");
             var modal = bootstrap.Modal.getInstance(myModalEl);
             modal.hide();
-            jQuery(".toast-body").html(retornoAjax.msg);
-            texto = jQuery(".toast-body").html();
-            if (jQuery.trim(texto) != "") {
-              mostranoToast(texto, true);
+            if (retornoAjax.msg != "") {
+              mostranoToast(retornoAjax.msg, retornoAjax.erro);
             }
           }
         }
@@ -794,7 +792,7 @@ function ativInativ(url, registro, ativo) {
   boxAlert(msg, false, url, false, 4, true, tit);
 }
 
-const cache = {};
+var cache = {};
 
 async function getMensagem(id) {
   if (cache[id]) {

@@ -9,81 +9,82 @@ jQuery(document).ready(function () {
 });
 
 function carregamentos_iniciais() {
-  var start = moment().subtract(1, "month");
-  var end = moment();
+  if (window.moment) {
+    var start = moment().subtract(1, "month");
+    var end = moment();
 
-  function setValue($el, start, end) {
-    $el.val(start.format("DD/MM/YYYY") + " - " + end.format("DD/MM/YYYY"));
+    function setValue($el, start, end) {
+      $el.val(start.format("DD/MM/YYYY") + " - " + end.format("DD/MM/YYYY"));
+    }
+
+    jQuery(".daterange").daterangepicker(
+      {
+        alwaysShowCalendars: true,
+        startDate: start,
+        endDate: end,
+        autoUpdateInput: false, // deixamos false para poder limpar no "Não Considerar"
+        ranges: {
+          Hoje: [moment(), moment()],
+          Ontem: [moment().subtract(1, "days"), moment().subtract(1, "days")],
+          "Não Considerar": [moment().subtract(1, "year"), moment()], // apenas gatilho
+          "Últimos 7 dias": [moment().subtract(6, "days"), moment()],
+          "Últimos 30 dias": [moment().subtract(29, "days"), moment()],
+          "Mês atual": [moment().startOf("month"), moment().endOf("month")],
+          "Mês anterior": [
+            moment().subtract(1, "month").startOf("month"),
+            moment().subtract(1, "month").endOf("month"),
+          ],
+          "Últimos 12 meses": [moment().subtract(12, "months"), moment()],
+          "Últimos 18 meses": [moment().subtract(18, "months"), moment()],
+        },
+        locale: {
+          format: "DD/MM/YYYY",
+          customRangeLabel: "Período",
+          applyLabel: "Aplicar",
+          cancelLabel: "Limpar",
+          daysOfWeek: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"],
+          monthNames: [
+            "Janeiro",
+            "Fevereiro",
+            "Março",
+            "Abril",
+            "Maio",
+            "Junho",
+            "Julho",
+            "Agosto",
+            "Setembro",
+            "Outubro",
+            "Novembro",
+            "Dezembro",
+          ],
+        },
+      },
+      function (start, end, label) {
+        const $input = jQuery(this.element);
+
+        if (label === "Não Considerar") {
+          $input.val("Não Considerar").trigger("change"); // range nulo
+          return;
+        }
+
+        setValue($input, start, end);
+        $input.trigger("change");
+      },
+    );
+
+    // valor inicial (últimos 30 dias)
+    jQuery("#resolvido.daterange").val("Não Considerar");
+    jQuery(".daterange")
+      .not("#aberto")
+      .each(function () {
+        if (this.id == "resolvido") {
+          start = moment().subtract(10, "years");
+          end = moment();
+        }
+        setValue(jQuery(this), start, end);
+        jQuery(this).trigger("change");
+      });
   }
-
-  jQuery(".daterange").daterangepicker(
-    {
-      alwaysShowCalendars: true,
-      startDate: start,
-      endDate: end,
-      autoUpdateInput: false, // deixamos false para poder limpar no "Não Considerar"
-      ranges: {
-        Hoje: [moment(), moment()],
-        Ontem: [moment().subtract(1, "days"), moment().subtract(1, "days")],
-        "Não Considerar": [moment().subtract(1, "year"), moment()], // apenas gatilho
-        "Últimos 7 dias": [moment().subtract(6, "days"), moment()],
-        "Últimos 30 dias": [moment().subtract(29, "days"), moment()],
-        "Mês atual": [moment().startOf("month"), moment().endOf("month")],
-        "Mês anterior": [
-          moment().subtract(1, "month").startOf("month"),
-          moment().subtract(1, "month").endOf("month"),
-        ],
-        "Últimos 12 meses": [moment().subtract(12, "months"), moment()],
-        "Últimos 18 meses": [moment().subtract(18, "months"), moment()],
-      },
-      locale: {
-        format: "DD/MM/YYYY",
-        customRangeLabel: "Período",
-        applyLabel: "Aplicar",
-        cancelLabel: "Limpar",
-        daysOfWeek: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"],
-        monthNames: [
-          "Janeiro",
-          "Fevereiro",
-          "Março",
-          "Abril",
-          "Maio",
-          "Junho",
-          "Julho",
-          "Agosto",
-          "Setembro",
-          "Outubro",
-          "Novembro",
-          "Dezembro",
-        ],
-      },
-    },
-    function (start, end, label) {
-      const $input = jQuery(this.element);
-
-      if (label === "Não Considerar") {
-        $input.val("Não Considerar").trigger("change"); // range nulo
-        return;
-      }
-
-      setValue($input, start, end);
-      $input.trigger("change");
-    },
-  );
-
-  // valor inicial (últimos 30 dias)
-  jQuery("#resolvido.daterange").val("Não Considerar");
-  jQuery(".daterange")
-    .not("#aberto")
-    .each(function () {
-      if (this.id == "resolvido") {
-        start = moment().subtract(10, "years");
-        end = moment();
-      }
-      setValue(jQuery(this), start, end);
-      jQuery(this).trigger("change");
-    });
-
   var temNumero = /[0-9]/;
   var temMaiusc = /[A-Z]/;
   var temMinusc = /[a-z]/;
@@ -1668,9 +1669,9 @@ function altera_index(obj, ind_a, ind_n) {
  *
  */
 function acerta_botoes_rep(repete, pos = -1) {
-  if (repete.startsWith("acoes")) {
-    return;
-  }
+  // if (repete.startsWith("acoes")) {
+  //   return;
+  // }
 
   let repetepos = repete;
   if (pos >= 0) {

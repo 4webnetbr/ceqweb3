@@ -95,6 +95,8 @@ class TipoMovimentacao extends BaseController
         $campos[0][]  = $fields->tmo_estoquepadrao;
         $campos[0][]  = 'vazio2';
         $campos[0][]  = $fields->tmo_requisicao;
+        $campos[0][] = 'vazio2';
+        $campos[0][] = $fields->tmo_gestaoestoque;
 
         $secao[1] = 'Movimentações';
         $displ[1] = 'tabela';
@@ -190,6 +192,8 @@ class TipoMovimentacao extends BaseController
         $campos[0][] = $fields->tmo_estoquepadrao;
         $campos[0][] = 'vazio2';
         $campos[0][] = $fields->tmo_requisicao;
+        $campos[0][] = 'vazio2';
+        $campos[0][] = $fields->tmo_gestaoestoque;
 
         $secao[1] = 'Movimentações';
         $displ[1] = 'tabela';
@@ -350,6 +354,7 @@ class TipoMovimentacao extends BaseController
                 'tmo_transacao_erp_saida'   => $postado['tmo_transacao_erp_saida'],
                 'tmo_entrefiliais'          => $postado['tmo_entrefiliais'],
                 'tmo_estoquepadrao'         => $postado['tmo_estoquepadrao'],
+                'tmo_gestaoestoque'         => $postado['tmo_gestaoestoque'],
                 'tmo_ativo'                 => empty($postado['tmo_id']) ? 'A' : ($postado['tmo_ativo'] ?? 'A'),
             ];
             if ($this->tpmov->save($sql_tmo)) {

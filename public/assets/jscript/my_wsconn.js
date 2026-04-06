@@ -74,6 +74,7 @@ jQuery(document).ready(function () {
 
     conn.onclose = function (e) {
       jQuery("#stat_server").addClass("parado");
+      jQuery("#rodape").addClass("parado");
       jQuery("#stat_server").prop("title", "Servidor Desconectado");
       console.log("Conexão fechada. Tentando reconectar...");
 

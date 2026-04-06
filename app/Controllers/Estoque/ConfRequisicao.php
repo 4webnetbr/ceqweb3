@@ -208,7 +208,7 @@ class ConfRequisicao extends BaseController
             $produtosIndexado[$param->pro_id] = $param;
         }
 
-        // debug(count($produtosIndexado));
+        // debug($produtosIndexado);
         // Array para o resultado final
         $resultado = [];
 
@@ -235,7 +235,7 @@ class ConfRequisicao extends BaseController
         // debug(count($resultado));
         for ($p = 0; $p < count($resultado); $p++) {
             $prod = $resultado[$p];
-            // debug($prod, true);qs
+            // debug($prod, true);
             $val_cancelada  = $prod->rpa_cancelada  ?? 0;
             $val_atendida   = $prod->rpa_atendida   ?? 0;
             $val_conferida  = $prod->rpa_conferida  ?? 0;
@@ -517,21 +517,26 @@ class ConfRequisicao extends BaseController
             }
 
             if (!$ret['erro']) {
+                $faltagravar = false;
                 if ($mudastatus) {
                     $status = 25;
                     if ($parcial) {
                         $status = 24; //conferida parcial
                     } else {
+                        // VERIFICAR SE OS PRODUTOS DA REQUISIÇÃO EXIGEM INSPEÇÃO VISUAL E SE AINDA NÃO FOI REALIZADO
+                        // CASO TODOS OS PRODUTOS, JA TENHAM SIDO FEITOS INSPEÇÃO VISUAL OU NÃO EXIJAM INSPEÇÃO VISUAL
+                        // O STATUS DA REQUISIÇÃO PASSA A SER CONCLUÍDA
                         $insvis = retornaInsVis($postado['req_id']);
-                        if ($insvis == 'N') {
+                        if (!$insvis->temS) {
                             $status = 5; // Concluída
                         }
+                        if ($insvis->temN) {
+                            $status = 5;
+                            $faltagravar = true; // Concluída mas precisa gravar a inspeção
+                        }
                     }
-                    $dadosReq = ['stt_id' => $status];
 
-                    // VERIFICAR SE OS PRODUTOS DA REQUISIÇÃO EXIGEM INSPEÇÃO VISUAL E SE AINDA NÃO FOI REALIZADO
-                    // CASO TODOS OS PRODUTOS, JA TENHAM SIDO FEITOS INSPEÇÃO VISUAL OU NÃO EXIJAM INSPEÇÃO VISUAL
-                    // O STATUS DA REQUISIÇÃO PASSA A SER CONCLUÍDA
+                    $dadosReq = ['stt_id' => $status];
                     $this->requisicao->transStart();
                     $salvareq = $this->requisicao->update($postado['req_id'], $dadosReq);
                 } else {
@@ -540,13 +545,13 @@ class ConfRequisicao extends BaseController
 
                 if ($salvareq) {
                     $produtosreq = $this->requisicao->getRequisicaoProdutos($postado['req_id']);
-                    if ($status == 5) {
+                    if ($status == 5 && $faltagravar) {
                         foreach ($produtosreq as $val) {
                             $sql_save = [
-                                'rpa_aprovada'  => $val->rep_quantia,
+                                'rpa_aprovada'  => -1,
                                 'rpa_data_inspecao'      => date('Y-m-d H:i:s'),
                             ];
-                            $atualizar = $this->requisicaoate->update($val->rpaid, $sql_save);
+                            $atualizar = $this->requisicaoate->update($val->rpa_id, $sql_save);
                             // TODO CRIAR MOVIMENTAÇÃO DE ESTOQUE
                         }
                     }

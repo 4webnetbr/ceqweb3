@@ -727,10 +727,6 @@ async function carregarProdutos(url, aba, obj) {
           }
         }
         if (motivo > 0) {
-          // const mensagem = `${motivos.join(' ')}.`;
-          const msgvar = await getMensagem(msg);
-          // msg_id = msg_cfg[motivo - 1];
-          const mensagem = msgvar.msg_mensagem;
           mostranoToast(motivo, true);
         }
         // }
@@ -1061,10 +1057,7 @@ async function enviarConfRequisicoes(event) {
         // SCANIEI PELO MENOS 1 PRODUTO
         if (parseInt(saldo) > 0) {
           msg = 9;
-        } else if (
-          parseInt(saldo) == 0 &&
-          ((!fabok && parseInt(ctafab) > 0) || (!misok && parseInt(ctamis) > 0))
-        ) {
+        } else if (parseInt(saldo) == 0 && (!fabok || !misok)) {
           msg = 38;
         }
       }

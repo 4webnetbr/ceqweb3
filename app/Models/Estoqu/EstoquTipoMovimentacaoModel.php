@@ -32,6 +32,7 @@ class EstoquTipoMovimentacaoModel extends Model
         'tmo_ativo',
         'tmo_excluido',
         'tmo_estoquepadrao',
+        'tmo_gestaoestoque',
         'tmo_requisicao',
 
     ];
@@ -176,14 +177,13 @@ class EstoquTipoMovimentacaoModel extends Model
         $db = db_connect('dbEstoque');
         $builder = $db->table('vw_est_tipo_movimentacao_relac_lista');
         $builder->select('*');
-    
+
         if ($tmo_id) {
             $builder->where('tmo_id', $tmo_id);
         }
         $builder->where('tmo_requisicao', 'S');
         $builder->orderBy('tmo_ativo, tmo_nome');
-    
+
         return $builder->get()->getResultArray();
     }
-
 }

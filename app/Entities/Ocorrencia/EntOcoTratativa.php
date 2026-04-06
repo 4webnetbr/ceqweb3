@@ -185,7 +185,7 @@ class EntOcoTratativa extends Entity
         $ret['tpa_nome'] = $acao->crInput();
 
         // JUSTIFICAR
-        if ((int)$dados->tpa_id === 5) {
+        if ((int)$dados->tpa_tipo === 1) {
             $justi = new MyCampo('oco_ocorrencia', 'oco_justi');
             $justi->valor       = $dados->oco_justi ?? '';
             $justi->obrigatorio = true;

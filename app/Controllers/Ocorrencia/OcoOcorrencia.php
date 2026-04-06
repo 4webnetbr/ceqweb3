@@ -223,7 +223,7 @@ class OcoOcorrencia extends BaseController
         );
         // debug($telas, true);
 
-        if (!empty($telas)) { 
+        if (!empty($telas)) {
             $telasResultado = [];
             $total = count($telas);
 
@@ -272,12 +272,13 @@ class OcoOcorrencia extends BaseController
             $fields['cod_erp_show'],
             $fields['lot_id'],
             $fields['lot_lote'],
-            $fields['fab_nomFab'],
+            $fields['fab_apeFab'],
             $fields['lot_validade_show'],
             $fields['lot_validade'],
             $fields['pro_despro'],
             $fields['oco_qtd'],
             $fields['oco_descricao'],
+            $fields['tel_nome'],
         ];
 
         return $campos;
@@ -387,8 +388,9 @@ class OcoOcorrencia extends BaseController
         $config['Label'] = "Subtipo de Ocorrência";
         $config['Pai'] = "tpo_id";
         $config['Urlbusca'] = base_url('Buscas/buscaSubtipoPorTipo');
+        $config['FunChan'] = "buscaLoteProduto('lot_lote','" . base_url('/buscas/buscaProdutoporLote') . "')";
 
-        $mod_oc = criaSelectRelativo(
+        $sut_id = criaSelectRelativo(
             'vw_oco_subt_ocorrencia_relac',
             'sut_id',
             'sut_nome',
@@ -396,7 +398,8 @@ class OcoOcorrencia extends BaseController
             2,
             'oco_ocorrencia',
             ['tel_id' => ''],
-            $config
+            $config,
+            'sut_id'
         );
 
         $desc              = new MyCampo('oco_ocorrencia', 'oco_descricao');
@@ -429,7 +432,7 @@ class OcoOcorrencia extends BaseController
             $toc_oc,
             $oco->campos['lot_id'],
             $oco->campos['lot_lote'],
-            $mod_oc,
+            $sut_id,
             $oco->campos['pro_id'],
             $oco->campos['pro_despro'],
             $quantia,
@@ -552,6 +555,7 @@ class OcoOcorrencia extends BaseController
     public function store()
     {
         $postado = $this->request->getPost();
+        $ret   = [];
         // debug($postado, true);
 
         try {
@@ -579,7 +583,7 @@ class OcoOcorrencia extends BaseController
                 if ($acao) {
                     $postado['tpa_id'] = $acao->tpa_id ?? null;
                     $postado['tmo_id'] = $acao->tmo_id ?? null;
-                    $postado['tel_id'] = $acao->tel_id ?? null;
+                    // $postado['tel_id'] = $acao->tel_id ?? null;
                 }
             }
             // cria data se não veio do form
@@ -590,23 +594,20 @@ class OcoOcorrencia extends BaseController
 
             // cria a entity
             $entity = new EntOcoOcorrencia($postado);
-            // debug($entity->stt_id);
+            // debug($entity, true);
 
             if (!$this->ocorrencia->save($entity)) {
                 throw new \Exception(implode('<br>', $this->ocorrencia->errors()));
             }
 
-            session()->setFlashdata('msg', 'Ocorrência gravada com sucesso!');
-
-            return $this->response->setJSON([
-                'erro' => false,
-                'url'  => site_url($this->data['controler'])
-            ]);
+            $ret['erro'] = false;
+            $ret['msg']  = 'Ocorrência gravada com sucesso!';
+            session()->setFlashdata('msg', $ret['msg']);
+            $ret['url']  = site_url($this->data['controler']);
         } catch (\Exception $e) {
-            return $this->response->setJSON([
-                'erro' => true,
-                'msg'  => $e->getMessage()
-            ]);
+            $ret['erro'] = true;
+            $ret['msg']  = $e->getMessage();
         }
+        return $this->response->setJSON($ret);
     }
 }

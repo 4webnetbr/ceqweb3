@@ -110,13 +110,14 @@ class EntOcoOcorrencia extends Entity
         $ret['pro_id'] = $proid->crOculto();
 
         // CÓDIGO ERP (oculto)
+        // debug($dados, true);
         $lotVal = new MyCampo('oco_ocorrencia', 'lot_codpro');
-        $lotVal->valor = (isset($dados['lot_codpro'])) ? $dados['lot_codpro'] : '';
+        $lotVal->valor = (isset($dados['pro_codpro'])) ? $dados['pro_codpro'] : '';
         $ret['cod_erp'] = $lotVal->crOculto();
 
         // CÓDIGO ERP (mostrar na tela) 
         $valid = new MyCampo('pro_sap_lote', 'lot_codpro');
-        $valid->valor    = (isset($dados['lot_codpro'])) ? $dados['lot_codpro'] : '';
+        $valid->valor    = (isset($dados['pro_codpro'])) ? $dados['pro_codpro'] : '';
         $valid->leitura  = true;
         $valid->size     = 30;
         $valid->dispForm = 'col-6';
@@ -151,12 +152,13 @@ class EntOcoOcorrencia extends Entity
         $ret['lot_validade_show'] = $valid->crInput();
 
         // fabricante (oculto)
-        $nomFab = new MyCampo('pro_sap_fabricante', 'fab_nomFab');
-        $nomFab->valor = (isset($dados['fab_nomFab'])) ? $dados['fab_nomFab'] : '';
+        $nomFab = new MyCampo('pro_sap_fabricante', 'fab_apeFab');
+        $nomFab->valor = (isset($dados['fab_apeFab'])) ? $dados['fab_apeFab'] : '';
+        $nomFab->label    = 'Fabricante';
         $nomFab->leitura  = true;
         $nomFab->size     = 40;
         $nomFab->dispForm = 'col-6';
-        $ret['fab_nomFab'] = $nomFab->crInput();
+        $ret['fab_apeFab'] = $nomFab->crInput();
 
         // fabricante (mostrar na tela)
         $lotfab = new MyCampo('pro_sap_fabricante', 'lot_fabricante');
@@ -196,6 +198,13 @@ class EntOcoOcorrencia extends Entity
 
         $ret['oco_data'] = $data->crInput();
 
+        $teor              = new MyCampo('cfg_tela', 'tel_nome');
+        $teor->valor       = (isset($dados['tel_nome'])) ? $dados['tel_nome'] : '';
+        $teor->label       = 'Tela de Origem';
+        $teor->obrigatorio = false;
+        $teor->leitura     = $show;
+        $teor->dispForm    = 'col-6';
+        $ret['tel_nome'] = $teor->crInput();
 
         // $stat                 = new MyCampo();
         // $stat->valor          = (isset($dados['stt_nome'])) ? fmtEtiquetaCor($dados['stt_cor'], $dados['stt_nome']) : '';

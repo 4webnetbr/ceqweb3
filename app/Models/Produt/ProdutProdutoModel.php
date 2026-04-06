@@ -252,11 +252,13 @@ class ProdutProdutoModel extends Model
         }
 
         if ($deposito) {
-            $builder->where("FIND_IN_SET($deposito, prc_deposito) >", 0);
-
+            $builder->where("FIND_IN_SET('$deposito', prc_deposito) >", 0);
             // $builder->like('prc_deposito', $deposito);
         }
         $builder->groupBy('pro_codpro');
+		// debug($builder->getCompiledSelect()); 
+		// $cs = $builder->getCompiledSelect();
+
         return $builder->get()->getResult();
     }
 

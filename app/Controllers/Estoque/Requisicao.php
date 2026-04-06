@@ -401,12 +401,30 @@ class Requisicao extends BaseController
                 $produto[] = isset($prod->rep_seguranca) ? $prod->rep_seguranca . '%' : '';
                 $produto[]  = $prod->rep_quantia ?? null;
                 $produto[]  = $prod->rpa_cancelada ?? null;
-                $produto[]  = $prod->rpa_atendida ?? null;
+                $produto[] = ($prod->rpa_atendida == 0 && $prod->rpa_data === null)
+                    ? ''
+                    : ($prod->rpa_atendida ?? null);
                 $produto[]  = data_br($prod->rpa_data) ?? null;
-                $produto[]  = $prod->rpa_conferida ?? null;
+                $produto[] = ($prod->rpa_conferida == 0 && $prod->rpa_data_conferencia === null)
+                    ? ''
+                    : ($prod->rpa_conferida ?? null);
                 $produto[]  = data_br($prod->rpa_data_conferencia) ?? null;
-                $produto[]  = $prod->rpa_aprovada ?? null;
-                $produto[]  = data_br($prod->rpa_data_inspecao) ?? null;
+                if ($prod->rpa_aprovada < 0) {
+                    $prod->rpa_aprovada = 'NA';
+                    $prod->rpa_data_inspecao = 'NA';
+                }
+
+                // regra adicional
+                $rpaAprovada = ($prod->rpa_aprovada == 0 && $prod->rpa_data_inspecao === null)
+                    ? ''
+                    : $prod->rpa_aprovada;
+                $produto[] = $rpaAprovada;
+
+
+                $rpaData = $prod->rpa_data_inspecao;
+                $produto[] = ($rpaData === null || $rpaData === 'NA')
+                    ? $rpaData
+                    : data_br($rpaData);
 
                 $produto[] = ($prod->rep_quantia ?? 0) - (($prod->rpa_atendida ?? 0) + ($prod->rpa_cancelada ?? 0));
                 $produtos[] = $produto;
@@ -600,12 +618,6 @@ class Requisicao extends BaseController
         // === Parâmetros recebidos ===
         $reqid         = trim($req->reqid ?? '');
         $proid         = $req->proid ?? '';
-        // debug($proid, true);
-        // if (is_array($proid)) {
-        //     $proid = implode(',', array_map('trim', $proid));
-        // } else {
-        //     $proid = trim($proid);
-        // }
         $deporigem     = trim($req->deporigem ?? '');
         $depdestino    = trim($req->depdestino ?? '');
         $tipomovim     = trim($req->tipomovim ?? '');
@@ -716,8 +728,6 @@ class Requisicao extends BaseController
                 // $consumo[$tipo] = $this->indexarConsumo($res);
                 $consumo[$tipo] = array_column($res, null, 'codigo_erp');
             }
-            // debug($consumo);
-            // debug($consumo['insumos']['codigo_erp'] . ' ' . $consumo['insumos']['produto_nome'] . ' ' . $consumo['insumos']['consumido'], true);
         }
 
         // AGRUPAR PRODUTOS POR CLASSE
@@ -743,6 +753,7 @@ class Requisicao extends BaseController
             $prodArr = (array) $prod;
 
             $prodArr['pro_consumo']      = 0;
+            $prodArr['tmo_gestaoestoque'] = $tipomov->tmo_estoquepadrao;
             $prodArr['pro_multiplica']   = $produtoreq['rep_multiplicador'] ?? 1;
             $prodArr['pct_seguranca']    = $produtoreq['rep_seguranca'] ?? $pct_seguranca;
             $prodArr['pro_seguranca']    = 0;
@@ -888,7 +899,7 @@ class Requisicao extends BaseController
             $dash = strtolower($prod['cla_dash_consumo']);
             $codPro = trim($prod['pro_codpro']);
             // === Buscar consumo ===
-            if ($prod['pre_gestaoestoque'] === 'S' && !empty($dash)) {
+            if ($prod['tmo_gestaoestoque'] == 'S' && $prod['pre_gestaoestoque'] === 'S' && !empty($dash)) {
                 // debug($consumo[$dash][$codPro]);
                 $produto->pro_consumo_medio  = $consumo[$dash][$codPro]['media'] ?? 0;
                 $produto->pro_consumo_diaant = $consumo[$dash][$codPro]['consumido'] ?? 0;
@@ -910,10 +921,7 @@ class Requisicao extends BaseController
                 $produto->pro_consumo_proximo = $prod['pro_consumo_proximo'];
             }
             // === Ajuste no estoque de destino (condicional) ===
-            if ($prod['pre_gestaoestoque'] === 'S' && $prod['pre_estdataatual'] === 'N') {
-                // debug('<br>Códpro ' . $codPro);
-                // debug('Consumo Próximo ' . $produto->pro_consumo_proximo);
-                // debug('Primeiro ' . $prod['pro_primeiro']);
+            if ($prod['tmo_gestaoestoque'] == 'S' && $prod['pre_gestaoestoque'] === 'S' && $prod['pre_estdataatual'] === 'N') {
                 if ($prod['pro_primeiro'] === 1) {
                     $estdestino = $produto->lotedes->pro_estdestino - $produto->pro_consumo;
                 } else {
@@ -936,16 +944,13 @@ class Requisicao extends BaseController
             $sugestaoBruta = ($produto->pro_consumo + $produto->pro_seguranca) - $produto->lotedes->pro_estdestino;
 
             // === Aplicar faixa de mínimo e máximo (somente se gestão de estoque) ===
-            if ($prod['pre_gestaoestoque'] === 'S') {
+            if ($prod['tmo_gestaoestoque'] == 'S' && $prod['pre_gestaoestoque'] === 'S') {
                 $produto->pro_minimo = ($prod['pre_mindiaanterior'] === 'S')
                     ? $produto->pro_consumo_diaant
                     : $prod['pre_minimo'];
                 $produto->pro_consumo = ($prod['pre_mindiaanterior'] === 'S')
                     ? $produto->pro_consumo
                     : $prod['pre_sugerida'];
-                // if ($prod['pre_mindiaanterior'] != 'S') {
-                //     debug($prod);
-                // }
 
                 $produto->pro_seguranca = ceil(floatval($produto->pro_consumo * ($prod['pct_seguranca'] / 100)));
 

@@ -734,12 +734,12 @@ function recursivo($caminho, $dirName, $diretoriosPermitidos, $arquivosPermitido
  * @param mixed $cor
  * @return string
  */
-function fmtEtiquetaCorBst($cor, $label = '')
+function fmtEtiquetaCorBst($cor, $label = '', $tipo = 0)
 {
     if ($cor == '' || str_contains($cor, 'Selecione')) {
         $cor = 'bg-white';
     }
-    if (substr($cor, 0, 1) == '#') {
+    if (substr(trim($cor), 0, 1) == '#') {
         return fmtEtiquetaCor($cor, $label);
     } else {
         $cores["bg-primary"] = "&nbsp";
@@ -761,9 +761,17 @@ function fmtEtiquetaCorBst($cor, $label = '')
         if ($label == '') {
             $label = $cores[$cor];
         }
+        $py = 'py-1';
+        $di = 'd-table';
+        $mw = 'min-width:20ch;';
+        if ($tipo == 1) {
+            // sem pad vertical e sem min-width pra caber em qualquer espaço
+            $py = '';
+            $mw = '';
+            $di = 'd-inline-block';
+        }
 
-
-        $ret = "<span style='margin:0 auto;min-width:20ch' class='$cor $texto[$cor] px-3 py-1 d-table rounded-pill text-center text-nowrap'>$label</span>";
+        $ret = "<span style='margin:0 auto;$mw' class='$cor $texto[$cor] px-3 $py $di d-table rounded-pill text-center text-nowrap'>$label</span>";
         return $ret;
     }
 }
@@ -985,7 +993,7 @@ function criaSelectRelativo(
         $builder->orderBy($campoNome);
         // Busca os dados (chave e nome)
         $dados = $builder->get()->getResultArray();
-        // if ($nomeTabela == 'cfg_usuario') {
+        // if ($nomeTabela == 'vw_oco_subt_ocorrencia_relac') {
         //     debug($db->getLastQuery(), false);
         // }
 
@@ -1135,29 +1143,34 @@ function filtrarPorPerfil(array $dados, ?int $perfilId = null): array
     return array_values($dados_filtrados);
 }
 
-function retornaInsVis($req)
+/**
+ * retornaInsVis
+ * Verifica se algum produto da Requisição necessita de inspeção visual e se ainda não foi feita
+ * @param mixed $req  número da requisição
+ * @return object   retorna S ou N
+ */
+
+use App\DTOs\InspecaoResult;
+
+function retornaInsVis(int|string $req): InspecaoResult
 {
     $produtos = (new EstoquRequisicaoModel)->getRequisicaoProdutos($req);
     $temS = false;
-    $temN = false;
+    $temN = true;
 
     foreach ($produtos as $produto) {
         if ($produto->cla_insvis === 'S') {
-            $temS = true;
-        } elseif ($produto->cla_insvis === 'N') {
-            $temN = true;
-        }
+            $temN = false;
 
-        if ($temS && $temN) {
-            break;
+            if ($produto->rpa_data_inspecao === null) {
+                $temS = true;
+                break;
+            }
         }
     }
 
-    $resultado = match (true) {
-        $temS && !$temN => 'S',
-        !$temS && $temN => 'N',
-        default => 'M',
-    };
-
-    return $resultado;
+    return new InspecaoResult(
+        temS: $temS,
+        temN: $temN,
+    );
 }

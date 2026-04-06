@@ -9,7 +9,7 @@ use CodeIgniter\Events\Events;
 
 class Login extends BaseController
 {
-    private $login = '' ;
+    private $login = '';
     public $usuario_config;
     public $data;
     public $usu_login;
@@ -79,13 +79,6 @@ class Login extends BaseController
     {
         if (session()->logged_in === true) {
             session()->destroy();
-            // $sessionCookieName = config('App')->sessionCookieName; // Nome padrão é 'ci_session'
-            // $sessionValue = $this->request->getCookie($sessionCookieName);
-            // $sessionPath = WRITEPATH . 'session'; // Diretório onde as sessões são armazenadas
-            // $sessionFile = $sessionPath . DIRECTORY_SEPARATOR . 'ci_session' . $sessionValue;
-            // if(file_exists($sessionFile)){
-            //     unlink($sessionFile);
-            // }
         }
         $logo                   = base_url('assets/images/logo_header.jpg');
 
@@ -125,7 +118,7 @@ class Login extends BaseController
             $session->setFlashdata('msg', 'Usuário não Encontrado');
             return redirect()->to('/login');
         } else {
-             $conf_senha = (md5($senha) == trim($log_config[0]->usu_senha));
+            $conf_senha = (md5($senha) == trim($log_config[0]->usu_senha));
             if (!$conf_senha) {
                 $session->setFlashdata('msg', 'Senha não corresponde ao Usuário!');
                 return redirect()->to('/login');

@@ -52,8 +52,6 @@ class EntCfgUsuario extends Entity
         $this->usu_id = $id->crOculto();
 
         $nome = new MyCampo('cfg_usuario', 'usu_nome');
-        $nome->objeto      = 'input';
-        $nome->tipo        = 'text';
         $nome->obrigatorio = true;
         $nome->leitura     = false;
         $nome->valor       = $dados->usu_nome ?? '';

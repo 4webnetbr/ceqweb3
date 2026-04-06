@@ -85,14 +85,14 @@ class ProdutLoteModel extends Model
     public function getLoteValidade($validade = false)
     {
         $db = db_connect('dbProduto');
-    
+
         $builder = $db->table('pro_sap_lote');
         $builder->select('*');
-    
+
         if (!empty($validade)) {
             $builder->where('lot_validade', $validade);
         }
-    
+
         return $builder->get()->getResult();
     }
 
@@ -124,17 +124,36 @@ class ProdutLoteModel extends Model
     {
         $db = db_connect('dbProduto');
         $builder = $db->table('vw_pro_sap_lote_relac');
-    
+
         $builder->select('*');
-    
+
         $builder->groupStart()
-                    ->like('lot_lote', $termo)
-                    ->orLike('lot_codbar', $termo)
-                ->groupEnd();
-    
+            ->like('lot_lote', $termo)
+            ->orLike('lot_codbar', $termo)
+            ->groupEnd();
+
         $builder->where('stt_id', 9);
-    
+
         return $builder->get()->getResult();
+    }
+
+    public function getLoteClasse($termo, $classe)
+    {
+        $db = db_connect('dbProduto');
+        $builder = $db->table('vw_pro_sap_lote_relac');
+
+        $builder->select('*');
+
+        $builder->groupStart()
+            ->like('lot_lote', $termo)
+            ->orLike('lot_codbar', $termo)
+            ->groupEnd();
+
+        $builder->whereIn('cla_id', $classe);
+        $builder->where('stt_id', 9);
+        // $ret = $builder->get()->getResult();
+        // debug($db->getLastQuery());
+        return $ret;
     }
 
     public function getLoteCodproLote($codpro, $lote)
@@ -191,15 +210,15 @@ class ProdutLoteModel extends Model
         if (empty($lot_id)) {
             return '';
         }
-    
+
         $db = db_connect('dbProduto');
-    
+
         $builder = $db->table('pro_sap_lote');
         $builder->select('lot_lote');
         $builder->where('lot_id', $lot_id);
-    
+
         $row = $builder->get()->getRow();
-    
+
         return $row->lot_lote ?? '';
     }
 }

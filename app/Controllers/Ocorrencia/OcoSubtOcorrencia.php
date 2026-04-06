@@ -66,6 +66,8 @@ class OcoSubtOcorrencia extends BaseController
     {
         $campos = montaColunasCampos($this->data, 'sut_id');
         $dados_mdocor = $this->subtocorrencia->getSubtOcorrencia();
+        // $dados_mdocor = filtrarPorPerfil($dados_mdocor);
+
         $mdocor = [
             'data' => montaListaColunasEnt($this->data, 'sut_id', $dados_mdocor, $campos[1]),
         ];
@@ -199,7 +201,7 @@ class OcoSubtOcorrencia extends BaseController
         // }
 
         // Busca os dados do Modelo de Ocorrência pelo ID
-        $dados_SubtOcorrencia = (array) $this->subtocorrencia->getSubtOcorrencia($id)[0];
+        $dados_SubtOcorrencia = (array) $this->subtocorrencia->getSubtOcorrencia($id)[0] ?? null;
         $classes = $this->subtocorrencia->getClassePorSubtipo($id);
         // debug($classes, true);
         $dados_SubtOcorrencia['cla_id'] = array_column($classes, 'cla_id');
@@ -371,7 +373,7 @@ class OcoSubtOcorrencia extends BaseController
     public function store()
     {
         $postado = $this->request->getPost();
-        // debug($postado, true);
+        debug($postado, true);
         $ret   = [];
         $grupo = 'dbOcorrencia';
         $db    = db_connect($grupo);
@@ -383,10 +385,11 @@ class OcoSubtOcorrencia extends BaseController
         }
         //finalização automática
         if (is_array($postado['sut_fina'] ?? null)) {
-            $postado['sut_fina'] = $postado['sut_fina'][0];  
+            $postado['sut_fina'] = $postado['sut_fina'][0];
         }
         // classes
         $classesSelecionadas = $postado['cla_id'] ?? [];
+        debugg($classesSelecionadas, true);
         unset($postado['cla_id']);
         // permissões
         if (isset($postado['prf_id']) && is_array($postado['prf_id'])) {
@@ -408,6 +411,7 @@ class OcoSubtOcorrencia extends BaseController
 
             // Salvar Tipo de Ocorrência (principal)
             if (!$this->subtocorrencia->save($postado)) {
+                debug($postado);
                 throw new \Exception(implode('<br>', $this->subtocorrencia->errors()));
             }
 
@@ -551,11 +555,11 @@ class OcoSubtOcorrencia extends BaseController
             $ret['url']  = site_url($this->data['controler']);
         } catch (\Exception $e) {
             $db->transRollback();
-
             if ($e->getMessage() === 'MSG_8') {
                 $ret['erro'] = true;
                 $ret['msg']  = 8;
             } else {
+                debug($e);
                 $ret['erro'] = true;
                 $ret['msg']  = 'Erro ao gravar o Subtipo de Ocorrência :<br><br>' . $e->getMessage();
             }

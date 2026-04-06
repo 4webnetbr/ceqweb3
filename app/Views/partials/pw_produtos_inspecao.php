@@ -6,14 +6,14 @@ if (!isset($show)) {
 ?>
 <div class="accordion" id="accProdutos">
     <div class="accordion-item">
-        <h2 class="accordion-header" id="headprod<?= $produtos[0]['req_id'] ?>">
-            <button class="accordion-button" type="button" 
-                data-bs-target="#collapseprod<?= $produtos[0]['req_id'] ?>" aria-expanded="true"
-                aria-controls="collapseprod<?= $produtos[0]['req_id'] ?>" data-proid="<?= $produtos[0]['req_id'] ?>">
+        <h2 class="accordion-header" id="headprod<?= $produtos[0]['req_id'] ?? '' ?>">
+            <button class="accordion-button" type="button"
+                data-bs-target="#collapseprod<?= $produtos[0]['req_id'] ?? '' ?>" aria-expanded="true"
+                aria-controls="collapseprod<?= $produtos[0]['req_id'] ?? '' ?>" data-proid="<?= $produtos[0]['req_id'] ?? '' ?>">
                 <div class='col-12 text-center'>Produtos</div>
             </button>
         </h2>
-        <div id="collapseprod<?= $produtos[0]['req_id'] ?>" class="accordion-collapse collapse show border border-2" aria-labelledby="headprod<?= $produtos[0]['req_id'] ?>" data-bs-parent="#accProdutos">
+        <div id="collapseprod<?= $produtos[0]['req_id'] ?? '' ?>" class="accordion-collapse collapse show border border-2" aria-labelledby="headprod<?= $produtos[0]['req_id'] ?? '' ?>" data-bs-parent="#accProdutos">
             <div class="accordion-body p-0" style="max-height:49vh; height:auto;">
                 <table class="display table table-bordered table-sm table-striped table-hover text-center align-middle tabela-pequena">
                     <thead class="table-info">

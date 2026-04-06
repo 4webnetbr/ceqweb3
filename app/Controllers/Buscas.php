@@ -450,8 +450,12 @@ class Buscas extends BaseController
         $busca = $this->request->getVar('busca');
         // debug($busca);
         if (!empty($busca)) {
+            $sutid = $this->request->getVar('sutid');
+            $classes = (new OcorreSubtOcorrenciaModel())->getClassePorSubtipo($sutid) ?? null;
+            $idsClasses = array_column($classes, 'cla_id');
             $lotesm = new ProdutLoteModel();
-            $lote   = $lotesm->getLoteSearch($busca);
+            $lote   = $lotesm->getLoteClasse($busca, $idsClasses);
+            // debug($lote, true);
 
             if (empty($lote)) {
                 $ret->lotid = '-1';
@@ -753,8 +757,9 @@ class Buscas extends BaseController
         $ret = [];
 
         if ($_REQUEST['busca']) {
+            $perfilId = session()->get('usu_perfil_id');
             $subtipos = new OcorreSubtOcorrenciaModel();
-            $lst = $subtipos->getSubtOcorrenciaPorTipo($_REQUEST['busca']);
+            $lst = $subtipos->getSubtOcorrenciaPorTipo($_REQUEST['busca'], $perfilId);
             if (empty($lst)) {
                 $o = new \stdClass();
                 $o->id   = -1;
@@ -813,22 +818,21 @@ class Buscas extends BaseController
         $ret = [];
 
         if ($_REQUEST['busca']) {
-
-            $db = db_connect('dbOcorrencia');
-            $builder = $db->table('oco_tipo_ocorrencia_permissao p');
-            $builder->select('p.prf_id, c.prf_nome');
-            $builder->join(
-                'config_ceqweb_db.cfg_perfil c',
-                'c.prf_id = p.prf_id'
-            );
-            $builder->where('p.tpo_id', $_REQUEST['busca']);
-            $lst = $builder->get()->getResult();
-
-            foreach ($lst as $l) {
+            $model = new OcorreTipoOcorrenciaModel();
+            $lst = $model->getTipoOcorrenciaPermissao($_REQUEST['busca']);
+            // debug($lst, true);
+            if (empty($lst)) {
                 $o = new \stdClass();
-                $o->id   = $l->prf_id;
-                $o->text = $l->prf_nome;
+                $o->id   = -1;
+                $o->text = 'Nenhum Tipo encontrado';
                 $ret[] = $o;
+            } else {
+                foreach ($lst as $l) {
+                    $o = new \stdClass();
+                    $o->id   = $l->prf_id;
+                    $o->text = $l->prf_nome;
+                    $ret[] = $o;
+                }
             }
         }
 

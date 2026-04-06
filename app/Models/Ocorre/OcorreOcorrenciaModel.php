@@ -79,7 +79,7 @@ class OcorreOcorrenciaModel extends Model
     {
         $db = db_connect('dbOcorrencia');
 
-        $builder = $db->table($this->view);
+        $builder = $db->table($this->viewcomp);
         $builder->select('*');
         $builder->where('oco_id', $id);
 
@@ -89,12 +89,12 @@ class OcorreOcorrenciaModel extends Model
     public function getListaCompleta()
     {
         $db = db_connect('dbOcorrencia');
-    
+
         $builder = $db->table($this->view);
         $builder->select('*');
         $builder->orderBy('stt_ordem');
         $builder->orderBy('oco_id', 'ASC');
-    
+
         return $builder->get()->getResult();
     }
 

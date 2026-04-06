@@ -991,7 +991,7 @@ div {
 
 /* deixa QUALQUER backdrop acima de tudo do site */
 .modal-backdrop.bootbox {
-  z-index: 5000 !important;
+  /* z-index: 5000 !important; */
 }
 
 .modal-content {
@@ -1014,6 +1014,7 @@ tr td {
 
 .dropdown.bootstrap-select {
   border: var(--bs-border-width) solid var(--bs-border-color) !important;
+  top: -3px !important;
 }
 
 .esconder {

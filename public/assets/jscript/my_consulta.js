@@ -848,96 +848,111 @@ function acertaSaldoConf(obj) {
 function carregaTelaAcaoTipo(obj) {
   tipo = obj.value;
   objdest = "telas_aplicaveis";
-  url = window.location.origin + "/OcoSubtOcorrencia/addCampoTa/" + tipo + "/0";
-  retornoAjax = false;
-  executaAjax(url, "json");
-  if (retornoAjax) {
-    text = "";
-    for (tt = 0; tt < retornoAjax.length; tt++) {
-      text +=
-        "<div class='row tableDiv table2 mb-4 table-" +
-        objdest +
-        "' width='100 % ' data-index=" +
-        tt +
-        " >";
-      text += "<div class='col-11'>";
-      // text = '<table class="table2 table-sm" data-index="' + proximo + '"><tbody><tr>';
-      indice = retornoAjax[tt].length;
-      for (ct = 0; ct < indice - 2; ct++) {
-        quebra = retornoAjax[tt][ct].indexOf("quebralinha");
-        oculto = retornoAjax[tt][ct].indexOf("hidden");
-        text += retornoAjax[tt][ct];
+  if (tipo != "") {
+    url =
+      window.location.origin + "/OcoSubtOcorrencia/addCampoTa/" + tipo + "/0";
+    retornoAjax = false;
+    executaAjax(url, "json");
+    if (retornoAjax) {
+      text = "";
+      for (tt = 0; tt < retornoAjax.length; tt++) {
+        text +=
+          "<div class='row tableDiv table2 mb-4 table-" +
+          objdest +
+          "' width='100 % ' data-index=" +
+          tt +
+          " >";
+        text += "<div class='col-11'>";
+        // text = '<table class="table2 table-sm" data-index="' + proximo + '"><tbody><tr>';
+        indice = retornoAjax[tt].length;
+        for (ct = 0; ct < indice - 2; ct++) {
+          quebra = retornoAjax[tt][ct].indexOf("quebralinha");
+          oculto = retornoAjax[tt][ct].indexOf("hidden");
+          text += retornoAjax[tt][ct];
+        }
+        text += "</div>";
+        text += "<div class='col-1 d-initial h-auto p-0'>";
+        text += "<div class='col-12 d-block float-start text-center p-0'>";
+        text += retornoAjax[tt][indice - 2];
+        text += retornoAjax[tt][indice - 1];
+        text += "</div>";
+        // text += "</div>";
+        text += "</div>";
+        text += "</div>";
       }
-      text += "</div>";
-      text += "<div class='col-1 d-initial h-auto p-0'>";
-      text += "<div class='col-12 d-block float-start text-center p-0'>";
-      text += retornoAjax[tt][indice - 2];
-      text += retornoAjax[tt][indice - 1];
-      text += "</div>";
-      // text += "</div>";
-      text += "</div>";
-      text += "</div>";
+      jQuery("#rep_" + objdest).html(text);
+      jQuery("select").selectpicker();
     }
-    jQuery("#rep_" + objdest).html(text);
-    jQuery("select").selectpicker();
+  } else {
+    jQuery("#rep_" + objdest).html("");
   }
 }
 
 function carregaAcaoTipo(obj) {
   let tipo = obj.value;
   let objdest = "acoes";
-  let url =
-    window.location.origin + "/OcoSubtOcorrencia/addCampoTp/" + tipo + "/0";
+  if (tipo != "") {
+    let url =
+      window.location.origin + "/OcoSubtOcorrencia/addCampoTp/" + tipo + "/0";
 
-  retornoAjax = false;
-  executaAjax(url, "json");
+    retornoAjax = false;
+    executaAjax(url, "json");
 
-  if (retornoAjax) {
-    let text = "";
+    if (retornoAjax) {
+      let text = "";
 
-    for (let tt = 0; tt < retornoAjax.length; tt++) {
-      text +=
-        "<div class='row tableDiv table2 mb-4 table-" +
-        objdest +
-        "' data-index='" +
-        tt +
-        "'>";
+      for (let tt = 0; tt < retornoAjax.length; tt++) {
+        text +=
+          "<div class='row tableDiv table2 mb-4 table-" +
+          objdest +
+          "' data-index='" +
+          tt +
+          "'>";
 
-      // COL-11
-      text += "<div class='col-11 d-flex row'>";
+        // COL-11
+        text += "<div class='col-11 d-flex row'>";
 
-      text += retornoAjax[tt][0];
-      text += retornoAjax[tt][1];
-      text += retornoAjax[tt][2];
-      text += retornoAjax[tt][3];
+        text += retornoAjax[tt][0];
+        text += retornoAjax[tt][1];
+        text += retornoAjax[tt][2];
+        text += retornoAjax[tt][3];
 
-      text += "</div>";
+        text += "</div>";
 
-      // COL-1
-      text += "<div class='col-1 p-0'>";
-      text += retornoAjax[tt][5];
-      text += "</div>";
+        // COL-1
+        text += "<div class='col-1 p-0'>";
+        text += retornoAjax[tt][5];
+        text += "</div>";
 
-      text += "</div>";
+        text += "</div>";
+      }
+
+      jQuery("#rep_" + objdest).html(text);
+
+      acertaDependente();
+      jQuery("select").selectpicker();
+
+      jQuery(".tableDiv.table-" + objdest + " select[id^='tpa']").each(
+        function () {
+          verificaTipoAcao(this);
+        },
+      );
     }
-
-    jQuery("#rep_" + objdest).html(text);
-
-    acertaDependente();
-    jQuery("select").selectpicker();
-
-    jQuery(".tableDiv.table-" + objdest + " select[id^='tpa']").each(
-      function () {
-        verificaTipoAcao(this);
-      },
-    );
+  } else {
+    jQuery("#rep_" + objdest).html("");
   }
 }
 
 async function buscaLoteProduto(obj, url) {
+  if (typeof obj === "object" && obj !== null) {
+    obj = obj;
+  } else {
+    obj = jQuery("#" + obj)[0];
+  }
   lote = obj.value;
-  if (lote.trim() != "") {
-    dados = { busca: lote };
+  sut_id = jQuery("#sut_id").val();
+  if (lote.trim() != "" && sut_id != "") {
+    dados = { busca: lote, sutid: sut_id };
     const retornoAjax = await executaAjaxWait(url, "json", dados);
 
     // retornoAjax = false;
@@ -949,7 +964,11 @@ async function buscaLoteProduto(obj, url) {
         jQuery("#lot_id").val(retornoAjax.lotid);
         jQuery("#pro_despro").val(retornoAjax.despro);
       } else {
-        boxAlert(10, true, "", true);
+        jQuery("#pro_id").val("");
+        jQuery("#lot_id").val("");
+        jQuery("#pro_despro").val("");
+        boxAlert(42, true, "", true);
+        desbloqueiaTela();
         obj.value = "";
         jQuery(obj).focus();
       }

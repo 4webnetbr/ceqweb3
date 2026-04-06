@@ -70,26 +70,25 @@ class OcorreTipoOcorrenciaModel extends Model
         // $perfilId = session()->get('usu_perfil_id'); 
         $db       = db_connect('dbOcorrencia');
         $builder  = $db->table('vw_oco_tpo_ocorrencia_relac');
-        $builder->select('vw_oco_tpo_ocorrencia_relac.*');
+        $builder->select('*');
 
         // filtros existentes
         if ($somenteAtivos) {
             $builder->groupStart()
-                    ->where('tpo_ativo', 'A');
+                ->where('tpo_ativo', 'A');
             if ($tpo_id) {
-                $builder->orWhere('vw_oco_tpo_ocorrencia_relac.tpo_id', $tpo_id);
+                $builder->orWhere('tpo_id', $tpo_id);
             }
             $builder->groupEnd();
         } elseif ($tpo_id) {
-            $builder->where('vw_oco_tpo_ocorrencia_relac.tpo_id', $tpo_id);
+            $builder->where('tpo_id', $tpo_id);
         }
 
         if ($tel_id) {
             $builder->where('tel_id', $tel_id);
         }
 
-        $builder->orderBy("CASE WHEN tpo_ativo = 'A' THEN 0 ELSE 1 END");
-        $builder->orderBy('tpo_nome');
+        $builder->orderBy('tpo_ativo, tpo_nome');
 
         return $builder->get()->getResult();
     }
@@ -167,6 +166,22 @@ class OcorreTipoOcorrenciaModel extends Model
         $builder->select('*');
 
         $builder->where('tpo_id', $tpo_id);
+
+        return $builder->get()->getResult();
+    }
+    public function getTipoOcorrenciaPermissao($tpo_id = false)
+    {
+        // $perfilId = session()->get('usu_perfil_id'); 
+        $db       = db_connect('dbOcorrencia');
+        $builder  = $db->table('vw_oco_tipo_ocorrencia_permissao_relac');
+        $builder->select('*');
+
+        // filtros existentes
+        if ($tpo_id) {
+            $builder->where('tpo_id', $tpo_id);
+        }
+
+        $builder->orderBy('tpo_ativo, tpo_nome');
 
         return $builder->get()->getResult();
     }

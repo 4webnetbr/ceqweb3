@@ -203,7 +203,7 @@ class OcoTipoOcorrencia extends BaseController
         // BUSCA DADOS 
         $dados_TipoOcorrencia = $this->tipoocorrencia->getTipoOcorrencia($id);
         // debug($dados_TipoOcorrencia, true);
-        $entity = new EntOcoTipoOcorre((array) $dados_TipoOcorrencia[0], $show);
+        $entity = new EntOcoTipoOcorre((array) $dados_TipoOcorrencia[0], false);
 
         // CAMPOS GERAIS
         $fields = $entity->campos;
@@ -232,13 +232,13 @@ class OcoTipoOcorrencia extends BaseController
                 $campos[1][$c][] = $fields2['mod_id'];
                 $campos[1][$c][] = $fields2['tel_id'];
                 $campos[1][$c][] = $fields2['tof_campo'];
-                if ($show) {
-                    $campos[1][$c][] = $fields2['bt_addta'];
-                    $campos[1][$c][] = '';
-                } else {
-                    $campos[1][$c][] = $fields2['bt_addta'];
-                    $campos[1][$c][] = $fields2['bt_delta'];
-                }
+                // if ($show) {
+                //     $campos[1][$c][] = $fields2['bt_addta'];
+                //     $campos[1][$c][] = '';
+                // } else {
+                $campos[1][$c][] = $fields2['bt_addta'];
+                $campos[1][$c][] = $fields2['bt_delta'];
+                // }
             }
         } else {
             $fields2 = $entity->defCamposTelasAplicaveis(false, 0, $show);
@@ -274,13 +274,13 @@ class OcoTipoOcorrencia extends BaseController
                 $dnone = ($dados_Acao[$c]['stt_id'] != 0) ? '' : 'd-none';
                 $campos[2][$c][] = "<div id='divstat[$c]' class='$dnone row col-6'>" . $fields3['stt_id'] . "</div>";
 
-                if ($show) {
-                    $campos[2][$c][] = '';
-                    $campos[2][$c][] = '';
-                } else {
-                    $campos[2][$c][] = $fields3['bt_addtp'];
-                    $campos[2][$c][] = $fields3['bt_deltp'];
-                }
+                // if ($show) {
+                //     $campos[2][$c][] = $fields3['bt_addtp'];
+                //     $campos[2][$c][] = '';
+                // } else {
+                $campos[2][$c][] = $fields3['bt_addtp'];
+                $campos[2][$c][] = $fields3['bt_deltp'];
+                // }
             }
         } else {
             $fields3 = $entity->defCamposAcao(false, 0, true);
@@ -321,7 +321,7 @@ class OcoTipoOcorrencia extends BaseController
     public function delete($id)
     {
         $ret = [];
-    
+
         try {
             $this->verificarUsoEmRelacionamentos('oco_tipo_ocorrencia', 'tpo_id', (int) $id);
             $this->tipoocorrencia->delete($id);
@@ -331,7 +331,7 @@ class OcoTipoOcorrencia extends BaseController
             $ret['erro'] = true;
             $ret['msg']  = 3;
         }
-    
+
         echo json_encode($ret);
     }
 

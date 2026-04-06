@@ -37,18 +37,18 @@ class WorkAnalise extends BaseController
 
         $saldoestFiltrado = array_filter($saldoest, function ($item) {
             return !(($item->codigoLote === 'N/A' && $item->estoqueDeposito == 0) ||
-                     ($item->codigoLote !== 'N/A' && $item->quantidadeEstoque == 0));
+                ($item->codigoLote !== 'N/A' && $item->quantidadeEstoque == 0));
         });
-        echo count($saldoestFiltrado)." Produtos no Estoque Quarentena... \n";
+        echo count($saldoestFiltrado) . " Produtos no Estoque Quarentena... \n";
 
         $saldoestArr = array_map(fn($obj) => (array) $obj, array_values($saldoestFiltrado));
         $codigoProdutoArray = array_column($saldoestArr, 'codigoProduto');
         $codigoLoteArray    = array_column($saldoestArr, 'codigoLote');
 
-        $prodsArr = $produto->getProdutoCodLista($codigoProdutoArray, 'S');
-        $lotesArr = $lote->getLoteIn($codigoLoteArray);
-        $analises = $analise->getAnaliseCod();
-        $movimData = $tipomovimento->getTipoMovimentacao(5);
+        $prodsArr = (array) $produto->getProdutoCodLista($codigoProdutoArray, 'S');
+        $lotesArr = (array) $lote->getLoteIn($codigoLoteArray);
+        $analises = (array) $analise->getAnaliseCod();
+        $movimData = (array) $tipomovimento->getTipoMovimentacao(5);
         $movim = $movimData[0] ?? null;
 
         $prods = array_column($prodsArr, null, 'pro_codpro');
@@ -67,7 +67,7 @@ class WorkAnalise extends BaseController
             $prodproc   = $saldo['codigoProduto'];
             $loteproc   = $saldo['codigoLote'];
             $quantidade = str_replace(['.', ','], '', $saldo['quantidadeEstoque']);
-            echo " Produto ".$prodproc." Lote ".$loteproc." ...\n";
+            echo " Produto " . $prodproc . " Lote " . $loteproc . " ...\n";
 
             if (!isset($prods[$prodproc]) || $prods[$prodproc]['cla_micro'] !== 'S') {
                 continue;
@@ -136,10 +136,10 @@ class WorkAnalise extends BaseController
             }
         }
 
-        echo count($analisesToSave). " Análises criadas \n";
+        echo count($analisesToSave) . " Análises criadas \n";
 
         $msgsocket = "";
-        
+
         if (!empty($analisesToSave)) {
             if (method_exists($analise, 'saveBatch')) {
                 $analise->saveBatch($analisesToSave);
@@ -148,12 +148,12 @@ class WorkAnalise extends BaseController
                     $analise->save($data);
                 }
             }
-            $msgsocket  = count($analisesToSave). " Análises criadas";
+            $msgsocket  = count($analisesToSave) . " Análises criadas";
 
             // echo count($analisesToSave) . " análises salvas.\n";
         }
 
-        echo count($lotesToUpdate). " Lotes Atualizados \n";
+        echo count($lotesToUpdate) . " Lotes Atualizados \n";
         if (!empty($lotesToUpdate)) {
             if (method_exists($lote, 'updateBatch')) {
                 $lote->updateBatch($lotesToUpdate, 'lot_id');
@@ -168,7 +168,7 @@ class WorkAnalise extends BaseController
         $final = date('d/m/Y H:i:s');
         echo "$final WorkAnalise finalizado \n\n";
 
-        if($msgsocket != ""){
+        if ($msgsocket != "") {
             $notifica->gravaNotifica('Micro\Analise', '', $msgsocket, 'C');
         }
     }

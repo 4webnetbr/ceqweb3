@@ -59,7 +59,9 @@ class Filters extends BaseConfig
                     'workanalise',
                     'workanalise/*',
                     'home',
-                    'home/*'
+                    'home/*',
+                    'websocket',
+                    'websocket/*'
                 ]
             ],
             'limpezaAuto',
@@ -68,7 +70,7 @@ class Filters extends BaseConfig
         ],
         'after' => [
             'toolbar',
-            'accessLog'=> [
+            'accessLog' => [
                 'except' => [
                     'server',
                     'server/*',
@@ -82,6 +84,8 @@ class Filters extends BaseConfig
                     'wsceqweb/*',
                     'workanalise',
                     'workanalise/*',
+                    'websocket',
+                    'websocket/*'
                 ]
             ],
 

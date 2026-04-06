@@ -43,7 +43,7 @@ if (strlen($ajuda) > 5) {
       <?= $icone; ?>
     </div>
     <div class='d-inline-flex float-start col-11 ps-3'>
-      <?= "<span id='legenda' style='font-size:calc(1.3rem + 0.3vw);line-height: " . $heig . "'>" .
+      <?= "<span id='legenda' style='display:contents;font-size:calc(1.3rem + 0.3vw);line-height: " . $heig . "'>" .
         $desc_metodo . " " . $title . "</span>"; ?>
     </div>
     <?

@@ -71,25 +71,27 @@ class OcorreSubtOcorrenciaModel extends Model
     {
         $db = db_connect('dbOcorrencia');
 
-        $builder = $db->table('vw_oco_subt_ocorrencia_relac v');
+        $builder = $db->table('vw_oco_subt_ocorrencia_relac');
         $builder->select('*');
 
-        $perfilId = session()->get('usu_perfil_id');
+        // $perfilId = session()->get('usu_perfil_id');
 
-        $builder->where("FIND_IN_SET($perfilId, v.prf_id)");
+        // $builder->where("FIND_IN_SET($perfilId, prf_id) >", 0, false);
 
         if ($sut_id) {
-            $builder->where('v.sut_id', $sut_id);
+            $builder->where('sut_id', $sut_id);
         }
 
-        $builder->groupBy('v.sut_id');
+        $builder->groupBy('sut_id');
 
-        $builder->orderBy('v.sut_ativo, v.sut_nome');
+        $builder->orderBy('sut_ativo, sut_nome');
 
-        return $builder->get()->getResult();
+        $ret = $builder->get()->getResult();
+        // debug($db->getLastQuery(), true);
+        return $ret;
     }
 
-    public function getSubtOcorrenciaPorTipo($tpo_id = null)
+    public function getSubtOcorrenciaPorTipo($tpo_id = null, $prfid = false)
     {
         // Conecta ao banco de Ocorrência
         $db = db_connect('dbOcorrencia');
@@ -100,10 +102,18 @@ class OcorreSubtOcorrenciaModel extends Model
         if ($tpo_id !== null) {
             $builder->where('tpo_id', $tpo_id);
         }
+        if ($prfid !== null) {
+            $builder->where("FIND_IN_SET($prfid, prf_id) >", 0, false);
+        }
+
+        $builder->where('sut_ativo', 'A');
         $builder->orderBy('sut_ativo, sut_nome');
 
         // Retorna os resultados
-        return $builder->get()->getResult();
+        $ret = $builder->get()->getResult();
+        // debug($db->getLastQuery(), true);
+
+        return $ret;
     }
 
     public function getTOTelasAplicaveis($sut_id = false)

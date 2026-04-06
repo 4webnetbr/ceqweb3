@@ -78,7 +78,7 @@ class InspecaoProd extends BaseController
     {
         // if (!$requis = cache('requis')) {
         $campos = montaColunasCampos($this->data, 'req_id');
-        $dados_requis = $this->requisicao->getRequisicaoLista(false, [24, 25, 26]);
+        $dados_requis = $this->requisicao->getRequisicaoLista(false, [21, 24, 25, 26]);
         $dados_requis = filtrarRequisicoesPorPerfil($dados_requis);
         // debug($dados_requis, true);
         if ($dados_requis) {
@@ -144,7 +144,7 @@ class InspecaoProd extends BaseController
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
         // debug($produtos);
         $filtrado = array_filter($produtos, function ($item) {
-            return ($item->rpa_atendida + $item->rpa_cancelada) == $item->rep_quantia && $item->rpa_conferida > 0 && $item->rpa_aprovada == 0;
+            return ($item->rpa_atendida + $item->rpa_cancelada) == $item->rep_quantia && $item->rpa_conferida > 0 && $item->rpa_data_inspecao == null;
         });
         // debug($filtrado, true);
         // $produtos = $filtrado;
@@ -324,11 +324,8 @@ class InspecaoProd extends BaseController
         $config['Leitura'] = false;
         $config['Pai'] = "tpo_id";
         $config['Urlbusca'] = base_url('Buscas/buscaSubtipoPorTipo');
+        $config['FunChan'] = "buscaLoteProduto('lot_lote','" . base_url('/buscas/buscaProdutoporLote') . "')";
 
-        // $filtros = [
-        //     'tel_id' => [$json['tel_id']],
-        //     'cla_id' => [$dadosProd->cla_id],
-        // ];
         $filtros = [];
         // debug($filtros, true);
         $mod_oc = criaSelectRelativo(
@@ -528,6 +525,7 @@ class InspecaoProd extends BaseController
 
             return $this->response->setJSON([
                 'erro' => false,
+                'msg'  => 'Ocorrência gravada com sucesso!',
                 'url'  => site_url($this->data['controler'])
             ]);
         } catch (\Exception $e) {
@@ -622,7 +620,8 @@ class InspecaoProd extends BaseController
                 } else {
                     $filtro = [
                         'pro_id' => $val->proid,
-                        'lot_lote' => $val->lotlote
+                        'lot_lote' => $val->lotlote,
+                        'oco_id' => null
                     ];
                     $ocorrencias = $this->common->getRegFiltro('dbEstoque', 'est_requisicao_produto_ocorrencia', ['*'], $filtro);
                     // debug($ocorrencias, true);
@@ -641,6 +640,11 @@ class InspecaoProd extends BaseController
                         $entity = new EntOcoOcorrencia($result);
                         // debug($entity, true);
                         $this->ocorrencia->save($entity);
+                        $idoco = $this->ocorrencia->getInsertID();
+                        $sql = [
+                            'oco_id' => $idoco,
+                        ];
+                        $this->common->updateReg('dbEstoque', 'est_requisicao_produto_ocorrencia', 'rpo_id = ' . $ocorrencias[0]['rpo_id'], $sql);
                     }
                     // pega o movimento
                     // $idmov  = $val['tmo_id'];

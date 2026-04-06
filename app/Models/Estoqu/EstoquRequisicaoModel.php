@@ -108,7 +108,7 @@ class EstoquRequisicaoModel extends Model
             $builder->where('req_id', $req_id);
         }
         if ($tipo == 'conferencia') {
-            $builder->where('rep_quantia = rpa_atendida + rpa_cancelada', null, false);
+            // $builder->where('rep_quantia = rpa_atendida + rpa_cancelada', null, false);
             $builder->where('rpa_conferida', 0);
         }
         // debug($builder->getCompiledSelect(), true);
