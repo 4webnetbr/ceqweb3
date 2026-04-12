@@ -68,7 +68,7 @@ class LogEmailThrottleHandler implements HandlerInterface
             // log_message('info', 'Email '.json_encode($email));
             
             $email->setTo($this->emailTo);
-            $email->setSubject("CeqWeb3 Log automático em $dataatual - [$level]");
+            $email->setSubject("DevCeqWeb3 Log automático em $dataatual - [$level]");
 
             $body = <<<HTML
 <b>Nível:</b> $level<br>
