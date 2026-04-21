@@ -1,10 +1,7 @@
 <?php
-
 namespace App\Controllers\Produto;
 
-use Config\Database;
 use App\Controllers\BaseController;
-use App\Traits\ForeignKeyUsageChecker;
 use App\Entities\Produto\EntProdutos;
 use App\Entities\Produto\EntProdutProduto;
 use App\Models\CommonModel;
@@ -12,13 +9,14 @@ use App\Models\Produt\ProdutClasseModel;
 use App\Models\Produt\ProdutIngredienteModel;
 use App\Models\Produt\ProdutLoteModel;
 use App\Models\Produt\ProdutProdutoModel;
-
+use App\Traits\ForeignKeyUsageChecker;
+use Config\Database;
 
 class Produto extends BaseController
 {
     use ForeignKeyUsageChecker;
 
-    public $data = [];
+    public $data      = [];
     public $permissao = '';
     public $produtos;
     public $classe;
@@ -48,7 +46,7 @@ class Produto extends BaseController
      * Erro de Acesso
      * erro
      */
-    function __erro()
+    public function __erro()
     {
         echo view('vw_semacesso', $this->data);
     }
@@ -61,7 +59,7 @@ class Produto extends BaseController
         // $integ = new WsCeqweb();
         // $integ->integraProduto();
 
-        $this->data['colunas'] = montaColunasLista($this->data, 'pro_id');
+        $this->data['colunas']   = montaColunasLista($this->data, 'pro_id');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
     }
@@ -73,23 +71,25 @@ class Produto extends BaseController
      */
     public function lista()
     {
-        $campos = montaColunasCampos($this->data, 'pro_id');
-        $dados_produto = $this->produtos->getListaProduto();
-        $dados_produto = filtrarPorPerfil($dados_produto);
+        $campos                 = montaColunasCampos($this->data, 'pro_id');
+        $dados_produto          = $this->produtos->getListaProduto();
+        $dados_produto          = filtrarPorPerfil($dados_produto);
         $this->data['exclusao'] = false;
-        $produto = [
+        $produto                = [
             'data' => montaListaColunasEnt($this->data, 'pro_id', $dados_produto, $campos[1]),
         ];
         cache()->save('produto', $produto, 60000);
-
-        echo json_encode($produto);
+        return $this->response
+            ->setContentType('application/json')
+            ->setJSON($produto);
+        //    echo json_encode($produto);
     }
 
     /**
      * Aprovação
      * aprova
      *
-     * @param mixed $id 
+     * @param mixed $id
      * @return void
      */
     public function aprova($dados_produtos)
@@ -101,10 +101,10 @@ class Produto extends BaseController
         $entity = new EntProdutProduto($dados_produtos);
         $fields = $entity->campos;
 
-        $this->data['secoes'] = [];
+        $this->data['secoes']    = [];
         $this->data['secoes'][0] = 'Dados Gerais';
 
-        $this->data['campos'] = [];
+        $this->data['campos']    = [];
         $this->data['campos'][0] = [];
 
         $this->data['campos'][0][] = $fields['pro_codpro'];
@@ -130,7 +130,7 @@ class Produto extends BaseController
      * Consulta
      * show
      *
-     * @param mixed $id 
+     * @param mixed $id
      * @return void
      */
     public function show($id)
@@ -142,14 +142,14 @@ class Produto extends BaseController
      * Edição
      * edit
      *
-     * @param mixed $id 
+     * @param mixed $id
      * @return void
      */
     public function edit($id, $show = false)
     {
         $dados = $this->produtos->getListaProduto($id)[0] ?? null;
 
-        if (!$dados || ($dados->stt_edicao == 'N' && $show == false)) {
+        if (! $dados || ($dados->stt_edicao == 'N' && $show == false)) {
             return redirectWithError($this->data['controler'], 41);
         }
 
@@ -158,12 +158,11 @@ class Produto extends BaseController
             return $this->aprova($dados);
         }
 
-
         $entity = new EntProdutProduto((array) $dados);
         $fields = $entity->defCampos((array) $dados, true);
 
         // debug($fields['cla_id']);
-        $secao = ['Dados Gerais'];
+        $secao  = ['Dados Gerais'];
         $campos = [[]];
 
         $campos[0][] = $fields['pro_codpro'];
@@ -179,15 +178,14 @@ class Produto extends BaseController
         $campos[0][] = $fields['pro_informacoes'];
 
         // Dados Estoque
-        $dados_ceq_produto = $this->produtos->getProdutoCeqweb($id)[0]
-            ?? (object)['prc_cplpro' => $dados->pro_cplpro];
+        $dados_ceq_produto = $this->produtos->getProdutoCeqweb($id)[0] ?? (object) ['prc_cplpro' => $dados->pro_cplpro];
 
         $dados_ceq_produto->produto = $dados;
 
         $entityCeq = new EntProdutProduto((array) $dados_ceq_produto);
         $fieldceq  = $entityCeq->defCamposCeqweb((array) $dados_ceq_produto, $show);
 
-        $secao[1] = 'Dados Estoque';
+        $secao[1]  = 'Dados Estoque';
         $campos[1] = [
             $fieldceq['prc_id'],
             $fieldceq['pro_cplpro'],
@@ -211,8 +209,8 @@ class Produto extends BaseController
         // Gestão de Estoque
         if ($dados->cla_gestaoestoque === 'S') {
 
-            $secao[2] = 'Gestão de Estoque';
-            $displ[2] = 'tabela';
+            $secao[2]  = 'Gestão de Estoque';
+            $displ[2]  = 'tabela';
             $campos[2] = [];
 
             $dados_est_produto = $this->produtos->getProdutoEstoque($id);
@@ -277,9 +275,9 @@ class Produto extends BaseController
         acerta_botoes_rep('gestao_de_estoque');
         mostraOcultaCampo('prc_etiq_misturador','S','prc_cor_etiqueta_mist,prc_codbar');
         mostraOcultaCampo('prc_etiq_produto','S','prc_cor_etiqueta_prod');
-        
+
         mostraOcultaCampoTodos('pre_mindiaanterior','N','pre_minimo');
-        
+
             mostraOcultaCampoTodos('pre_maxdiaanterior','S','pre_porcmaximo');
             mostraOcultaCampoTodos('pre_maxdiaanterior','N','pre_maximo');
 
@@ -291,21 +289,17 @@ class Produto extends BaseController
             mostraOcultaDivTodos('pre_gestaoestoque','S','div_est_minimo,div_est_maximo');
         </script>";
 
+        $this->data['secoes']      = $secao;
+        $this->data['campos']      = $campos;
+        $this->data['displ']       = $displ;
+        $this->data['destino']     = 'store';
+        $this->data['script']      = $script;
+        $this->data['desc_edicao'] = $dados->pro_codpro . " - " . $dados->pro_despro . " - " . fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
 
-        $this->data['secoes']       = $secao;
-        $this->data['campos']       = $campos;
-        $this->data['displ']        = $displ;
-        $this->data['destino']      = 'store';
-        $this->data['script']       = $script;
-        $this->data['desc_edicao']  = $dados->pro_codpro . " - " . $dados->pro_despro . " - " . fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
-
-        $this->data['log']          = buscaLog('pro_sap_produto', $id);
+        $this->data['log'] = buscaLog('pro_sap_produto', $id);
 
         return view('vw_edicao', $this->data);
     }
-
-
-
 
     public function ativinativ($id, $tipo)
     {
@@ -314,13 +308,13 @@ class Produto extends BaseController
             if ($tipo == 1) {
                 $dad_atin = [
                     'pro_ativo' => 'A',
-                    'stt_id'    => 3
+                    'stt_id'    => 3,
                 ];
                 $msg = "Produto Ativado com Sucesso";
             } else {
                 $dad_atin = [
                     'pro_ativo' => 'I',
-                    'stt_id'    => 20
+                    'stt_id'    => 20,
                 ];
                 $msg = "Produto Inativado com Sucesso";
                 // $this->verificarUsoEmRelacionamentos('pro_sap_produto', 'pro_id', (int) $id);
@@ -328,7 +322,7 @@ class Produto extends BaseController
             $this->produtos->update($id, $dad_atin);
             $ret['erro'] = false;
             session()->setFlashdata('msg', $msg);
-            $ret['msg']  = $msg;
+            $ret['msg'] = $msg;
         } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
             $ret['erro'] = true;
             $ret['msg']  = 14;
@@ -343,7 +337,7 @@ class Produto extends BaseController
      * Exclusão
      * delete
      *
-     * @param mixed $id 
+     * @param mixed $id
      * @return void
      */
     public function delete($id)
@@ -372,7 +366,7 @@ class Produto extends BaseController
         $entity   = new EntProdutProduto();
         $fieldest = $entity->defCamposEstoque(false, $ind);
 
-        $campo = [];
+        $campo                = [];
         $campo[count($campo)] = $fieldest['pre_id'];
         $campo[count($campo)] = $fieldest['dep_codDep'];
         $campo[count($campo)] = $fieldest['pre_gestaoestoque'];
@@ -411,20 +405,20 @@ class Produto extends BaseController
 
     public function storeaprova()
     {
-        $ret = ['erro' => false];
+        $ret     = ['erro' => false];
         $postado = $this->request->getPost();
 
-        $pro_id = intval($postado['pro_id'] ?? 0);
+        $pro_id     = intval($postado['pro_id'] ?? 0);
         $pro_codpro = $postado['pro_codpro'];
-        $cla_id = $postado['cla_id'] ?? null;
-        $ing_id = $postado['ing_id'] ?? null;
-        $aprova = intval($postado['aprova'] ?? 0);
+        $cla_id     = $postado['cla_id'] ?? null;
+        $ing_id     = $postado['ing_id'] ?? null;
+        $aprova     = intval($postado['aprova'] ?? 0);
 
         // Verificação obrigatória para aprovação
         if ($aprova === 3 && empty($cla_id)) {
             echo json_encode([
                 'erro' => true,
-                'msg'  => 24 // ID da mensagem no cadastro
+                'msg'  => 24, // ID da mensagem no cadastro
             ]);
             return;
         }
@@ -446,10 +440,10 @@ class Produto extends BaseController
                 'pro_informacoes'       => $postado['pro_informacoes'] ?? null,
             ];
 
-            if (!$this->produtos->save($sql_aprova)) {
+            if (! $this->produtos->save($sql_aprova)) {
                 throw new \Exception('Erro ao atualizar o status do produto.');
             }
-            if ($aprova === 3 && !empty($cla_id)) {
+            if ($aprova === 3 && ! empty($cla_id)) {
                 $dadosclasse = $this->classe->getClasse($cla_id);
                 if ($dadosclasse && $dadosclasse->cla_micro === 'N') {
                     $sql_lote = ['stt_id' => 9];
@@ -457,9 +451,9 @@ class Produto extends BaseController
                 }
             }
             // Atualiza ou insere relacionamento com ingrediente, se houver
-            if (!empty($ing_id)) {
+            if (! empty($ing_id)) {
                 $data_atu = date('Y-m-d H:i:s');
-                $sql_ing = [
+                $sql_ing  = [
                     'ing_id'         => $ing_id,
                     'cla_id'         => $cla_id,
                     'pro_id'         => $pro_id,
@@ -520,14 +514,13 @@ class Produto extends BaseController
             }
         }
 
-
         $ent = new EntProdutos($postado);
         $ent->fill($postado);
 
         $exists = 0;
         if (intval($exists) > 0) {
             $ret['erro'] = true;
-            $ret['msg'] = 8;
+            $ret['msg']  = 8;
         } else {
             $this->produtos->transBegin();
 
@@ -545,7 +538,7 @@ class Produto extends BaseController
                 // debug($e, true);
             }
 
-            if (!$salva) {
+            if (! $salva) {
                 $ret['erro'] = true;
                 $ret['msg']  = implode('<br>', $this->produtos->errors());
                 // debug($ret, true);
@@ -561,34 +554,34 @@ class Produto extends BaseController
                     : null;
 
                 $sql_prc = [
-                    'pro_id'                    => $postado['pro_id'],
-                    'prc_cplpro'                => $postado['prc_cplpro'] ?? null,
-                    'prc_qtdemb_ceq'            => $postado['prc_qtdemb_ceq'] ?? null,
-                    'prc_conf_req'              => $postado['prc_conf_req'] ?? null,
-                    'prc_pedido_caixa'          => $postado['prc_pedido_caixa'] ?? null,
-                    'prc_etiq_misturador'       => $postado['prc_etiq_misturador'] ?? null,
-                    'prc_codbar'                => $postado['prc_codbar'] ?? null,
-                    'prc_cor_etiqueta_mist'     => $postado['prc_cor_etiqueta_mist'] ?? null,
-                    'prc_etiq_produto'          => $postado['prc_etiq_produto'] ?? null,
-                    'prc_cor_etiqueta_prod'     => $postado['prc_cor_etiqueta_prod'] ?? null,
-                    'prc_deposito'              => $postado['prc_deposito'],
+                    'pro_id'                => $postado['pro_id'],
+                    'prc_cplpro'            => $postado['prc_cplpro'] ?? null,
+                    'prc_qtdemb_ceq'        => $postado['prc_qtdemb_ceq'] ?? null,
+                    'prc_conf_req'          => $postado['prc_conf_req'] ?? null,
+                    'prc_pedido_caixa'      => $postado['prc_pedido_caixa'] ?? null,
+                    'prc_etiq_misturador'   => $postado['prc_etiq_misturador'] ?? null,
+                    'prc_codbar'            => $postado['prc_codbar'] ?? null,
+                    'prc_cor_etiqueta_mist' => $postado['prc_cor_etiqueta_mist'] ?? null,
+                    'prc_etiq_produto'      => $postado['prc_etiq_produto'] ?? null,
+                    'prc_cor_etiqueta_prod' => $postado['prc_cor_etiqueta_prod'] ?? null,
+                    'prc_deposito'          => $postado['prc_deposito'],
                 ];
 
-                $salva = !empty($postado['prc_id'])
+                $salva = ! empty($postado['prc_id'])
                     ? $this->common->updateReg('dbProduto', 'pro_ceq_produto', 'prc_id = ' . $postado['prc_id'], $sql_prc)
                     : $this->common->insertReg('dbProduto', 'pro_ceq_produto', $sql_prc);
 
-                if (!$salva) {
+                if (! $salva) {
                     $ret['erro'] = true;
                     $ret['msg']  = 'Erro ao salvar dados adicionais do produto.';
                     // debug($ret, true);
                 }
 
-                $pro_id = (int) $postado['pro_id'];
+                $pro_id   = (int) $postado['pro_id'];
                 $data_atu = date('Y-m-d H:i:s');
 
                 // Ingrediente
-                if (!empty($postado['ing_id'])) {
+                if (! empty($postado['ing_id'])) {
                     $sql_ingrediente = [
                         'ing_id'         => $postado['ing_id'],
                         'cla_id'         => $postado['cla_id'],
@@ -623,38 +616,38 @@ class Produto extends BaseController
                     );
 
                     foreach ($depCodDep as $key => $dep) {
-                        $pre_cbfabricante = $postado['pre_cbfabricante'][$key] ?? null;
+                        $pre_cbfabricante  = $postado['pre_cbfabricante'][$key] ?? null;
                         $pre_undfabricante = ($pre_cbfabricante === 'N') ? 'N' : ($postado['pre_undfabricante'][$key] ?? null);
 
-                        $pre_cblote = $postado['pre_cblote'][$key] ?? null;
+                        $pre_cblote  = $postado['pre_cblote'][$key] ?? null;
                         $pre_undlote = ($pre_cblote === 'N') ? 'N' : ($postado['pre_undlote'][$key] ?? null);
 
-                        $pre_cbmisturador = $postado['pre_cbmisturador'][$key] ?? null;
+                        $pre_cbmisturador  = $postado['pre_cbmisturador'][$key] ?? null;
                         $pre_undmisturador = ($pre_cbmisturador === 'N') ? 'N' : ($postado['pre_undmisturador'][$key] ?? null);
 
                         $sql_dep = [
-                            'pro_id'            => $pro_id,
-                            'dep_codDep'        => $dep,
+                            'pro_id'             => $pro_id,
+                            'dep_codDep'         => $dep,
                             'pre_mindiaanterior' => $postado['pre_mindiaanterior'][$key] ?? null,
-                            'pre_minimo'        => $postado['pre_minimo'][$key] ?? null,
+                            'pre_minimo'         => $postado['pre_minimo'][$key] ?? null,
                             'pre_maxdiaanterior' => $postado['pre_maxdiaanterior'][$key] ?? null,
-                            'pre_porcmaximo'    => $postado['pre_porcmaximo'][$key] ?? null,
-                            'pre_maximo'        => $postado['pre_maximo'][$key] ?? null,
-                            'pre_sugerida'      => $postado['pre_sugerida'][$key] ?? null,
+                            'pre_porcmaximo'     => $postado['pre_porcmaximo'][$key] ?? null,
+                            'pre_maximo'         => $postado['pre_maximo'][$key] ?? null,
+                            'pre_sugerida'       => $postado['pre_sugerida'][$key] ?? null,
                             'pre_cbfabricante'   => $pre_cbfabricante,
                             'pre_undfabricante'  => $pre_undfabricante,
                             'pre_cblote'         => $pre_cblote,
                             'pre_undlote'        => $pre_undlote,
-                            'pre_cbmisturador'         => $pre_cbmisturador,
-                            'pre_undmisturador'        => $pre_undmisturador,
-                            'pre_estdataatual'  => $postado['pre_estdataatual'][$key] ?? null,
-                            'pre_gestaoestoque' => $postado['pre_gestaoestoque'][$key] ?? null,
+                            'pre_cbmisturador'   => $pre_cbmisturador,
+                            'pre_undmisturador'  => $pre_undmisturador,
+                            'pre_estdataatual'   => $postado['pre_estdataatual'][$key] ?? null,
+                            'pre_gestaoestoque'  => $postado['pre_gestaoestoque'][$key] ?? null,
                         ];
                         // debug($sql_dep);
                         $dep_id = $this->common->insertReg('dbProduto', 'pro_est_produto', $sql_dep);
                         // debug($dep_id);
 
-                        if (!$dep_id) {
+                        if (! $dep_id) {
                             $ret['erro'] = true;
                             $ret['msg']  = 'Erro ao salvar depósitos do produto.';
                             // debug($ret, true);
