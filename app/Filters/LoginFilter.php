@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Filters;
 
 // use App\Models\Config\ConfigMensagemModel;
@@ -9,6 +8,7 @@ use App\Models\Config\ConfigTelaModel;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+
 // use Config\Services;
 
 class LoginFilter implements FilterInterface
@@ -19,23 +19,23 @@ class LoginFilter implements FilterInterface
 
         $session = session();
 
-        if (!$session->logged_in) {
+        if (! $session->logged_in) {
             return redirect()->to(site_url('login'));
         }
 
         $session->set('last_activity', time());
 
-        $uri = $request->getUri();
+        $uri      = $request->getUri();
         $segments = $uri->getSegments();
-        $path = $uri->getPath();
+        $path     = $uri->getPath();
 
         if ($path === '/') {
             return redirect()->to($session->usu_dashboard);
         }
 
-        $modal = end($segments) === 'modal=true';
+        $modal      = end($segments) === 'modal=true';
         $controller = $segments[0] ?? '';
-        $metodo = $segments[1] ?? 'index';
+        $metodo     = $segments[1] ?? 'index';
 
         // ✅ Carrega mensagens apenas uma vez por sessão
         // if (!$session->has('msg_cfg')) {
@@ -44,20 +44,20 @@ class LoginFilter implements FilterInterface
         //     $session->set(['msg_cfg' => $mensagens]);
         // }
 
-        $perfilId = $session->get('usu_perfil_id');
+        $perfilId    = $session->get('usu_perfil_id');
         $tipoUsuario = $session->get('usu_tipo');
 
-        $telaModel = new ConfigTelaModel();
+        $telaModel       = new ConfigTelaModel();
         $perfilItemModel = new ConfigPerfilItemModel();
 
-        $telaInfo = $telaModel->getTelaSearch($controller);
+        $telaInfo  = $telaModel->getTelaSearch($controller);
         $dadosTela = [];
 
-        if (!$telaInfo) {
+        if (! $telaInfo) {
             $dadosTela = [
-                'title' => $controller,
+                'title'     => $controller,
                 'permissao' => false,
-                'erromsg' => "<h2>Atenção</h2>A Tela <b>{$controller}</b> 
+                'erromsg'   => "<h2>Atenção</h2>A Tela <b>{$controller}</b>
                     <span style='color:red'>Não foi Encontrada!</span><br>
                     Informe o Problema ao Administrador do Sistema!",
             ];
@@ -65,17 +65,17 @@ class LoginFilter implements FilterInterface
             $tela = (array) $telaInfo[0];
 
             $titulo = match (strtolower($metodo)) {
-                'index'  => "Acessou a tela de {$tela['tel_nome']}",
-                'lista'  => "Listou {$tela['tel_nome']}",
-                'show'   => "Visualizou {$tela['tel_nome']}",
-                'add'    => "Novo Cadastro de {$tela['tel_nome']}",
-                'store'  => "Gravação de {$tela['tel_nome']}",
-                'edit'   => "Alteração de {$tela['tel_nome']}",
+                'index' => "Acessou a tela de {$tela['tel_nome']}",
+                'lista' => "Listou {$tela['tel_nome']}",
+                'show' => "Visualizou {$tela['tel_nome']}",
+                'add' => "Novo Cadastro de {$tela['tel_nome']}",
+                'store' => "Gravação de {$tela['tel_nome']}",
+                'edit' => "Alteração de {$tela['tel_nome']}",
                 'update' => "Atualização de {$tela['tel_nome']}",
                 'delete' => "Exclusão de {$tela['tel_nome']}",
                 'ordena' => "Ordenação de {$tela['tel_nome']}",
                 'ativinativ' => "Ativação/Inativação de {$tela['tel_nome']}",
-                default  => "{$tela['tel_nome']}::{$metodo}",
+                default => "{$tela['tel_nome']}::{$metodo}",
             };
 
             $logContext = service('logContext');
@@ -83,22 +83,22 @@ class LoginFilter implements FilterInterface
             $logContext->set('titulo', $titulo);
 
             $dadosTela = [
-                'modal' => $modal,
-                'tel_id' => $tela['tel_id'],
-                'icone' => $tela['tel_tela_icone'],
-                'title' => $tela['tel_nome'],
-                'controler' => $tela['tel_controler'],
-                'model' => $tela['tel_model'],
-                'identificador' => $tela['tel_ident'],
-                'metodo' => $metodo,
-                'regras_gerais' => $tela['tel_regras_gerais'],
+                'modal'           => $modal,
+                'tel_id'          => $tela['tel_id'],
+                'icone'           => $tela['tel_tela_icone'],
+                'title'           => $tela['tel_nome'],
+                'controler'       => $tela['tel_controler'],
+                'model'           => $tela['tel_model'],
+                'identificador'   => $tela['tel_ident'],
+                'metodo'          => $metodo,
+                'regras_gerais'   => $tela['tel_regras_gerais'],
                 'regras_cadastro' => $tela['tel_regras_cadastro'],
-                'bt_add' => $tela['tel_texto_botao'],
-                'perfil_usu' => $perfilId,
+                'bt_add'          => $tela['tel_texto_botao'],
+                'perfil_usu'      => $perfilId,
             ];
 
             // ✅ Carrega menu apenas se necessário
-            if (!$session->has('menu')) {
+            if (! $session->has('menu')) {
                 $menu = montaMenu($perfilId, $tipoUsuario);
                 $session->set(['menu' => $menu]);
                 $dadosTela['it_menu'] = $menu;
@@ -107,12 +107,12 @@ class LoginFilter implements FilterInterface
             }
 
             $dadosTela['permissao'] = $this->buscaPermissaoTela($perfilItemModel, $perfilId, $tela['tel_id']) ?? 'CAEX';
-            $dadosTela['erromsg'] = $this->validaPermissao($dadosTela['permissao'], $metodo, $dadosTela['title']);
+            $dadosTela['erromsg']   = $this->validaPermissao($dadosTela['permissao'], $metodo, $dadosTela['title']);
         }
 
         $session->setFlashdata(['dados_tela' => $dadosTela]);
 
-        if (!empty(trim($dadosTela['erromsg']))) {
+        if (! empty(trim($dadosTela['erromsg']))) {
             $view = $modal ? 'vw_semacesso_modal' : 'vw_semacesso';
             echo view($view, $dadosTela);
             exit;
@@ -131,11 +131,11 @@ class LoginFilter implements FilterInterface
             return "<h2>Sem autorização para acessar a lista de <br>{$titulo}</h2><br>Solicite acesso ao Administrador do Sistema";
         }
 
-        if ($metodo === 'add' && !strpbrk($permissao, 'A')) {
+        if ($metodo === 'add' && ! strpbrk($permissao, 'A')) {
             return "<h2>Sem autorização para Adicionar <br>{$titulo}</h2><br>Solicite acesso ao Administrador do Sistema";
         }
 
-        if ($metodo === 'edit' && !strpbrk($permissao, 'E')) {
+        if ($metodo === 'edit' && ! strpbrk($permissao, 'E')) {
             return "<h2>Sem autorização para Editar <br>{$titulo}</h2><br>Solicite acesso ao Administrador do Sistema";
         }
 
