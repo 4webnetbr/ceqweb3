@@ -1,5 +1,4 @@
 <?php
-
 namespace Config;
 
 use CodeIgniter\Config\Services;
@@ -17,9 +16,9 @@ $routes->setTranslateURIDashes(false);
 $routes->set404Override(function () {
     log_message('critical', 'Rota 404 chamada: {uri}', ['uri' => current_url()]);
     return view('vw_semacesso', [
-        'title' => current_url(),
+        'title'     => current_url(),
         'permissao' => false,
-        'erromsg' => "<h2>Atenção</h2>O Caminho <b>" . current_url() . "</b><br>
+        'erromsg'   => "<h2>Atenção</h2>O Caminho <b>" . current_url() . "</b><br>
         <span style='color:red; font-size:16px'>Não foi Encontrado!</span><br>
         Informe o Problema ao Administrador do Sistema!",
     ]);
@@ -35,27 +34,21 @@ $routes->match(['GET', 'POST'], '/Login/(:any)', 'Login::$1', ['as' => 'loginlog
 $routes->get('home_config', 'Config\\Home_config::index', ['as' => 'home_config_index']);
 $routes->get('WorkAnalise', 'WorkAnalise::index', ['as' => 'workanalise_index']);
 
-$routes->get('OcoSubtOcorrencia/getInfoTipoOcorrencia/(:num)', 'Ocorrencia\OcoSubtOcorrencia::getInfoTipoOcorrencia/$1');
-$routes->get('OcoOcorrencia', 'Ocorrencia\OcoOcorrencia::index');
-$routes->post('ocorrencia/get-produto-lote', 'Ocorrencia\OcoOcorrencia::getProdutoPorLote');
+// Controladores de Ocorrências
+$ocoControllers = [
+    'OcoTipoOcorrencia',
+    'OcoSubtOcorrencia',
+    'OcoOcorrencia',
+    'OcoTrataOcorrencia',
+];
 
-// Nova Ocorrência
-// $routes->post('OcoOcorrencia/buscaModelosPorTipo', 'Ocorrencia\OcoOcorrencia::buscaModelosPorTipo');
-$routes->post('OcoOcorrencia/getProdutoLote', 'Ocorrencia\OcoOcorrencia::getProdutoLote');
-$routes->post('OcoOcorrencia/store', 'Ocorrencia\OcoOcorrencia::store');
-$routes->post('ocorrencia/ocoNovOcorrencia/buscaOcorrenciasPorTipo', 'Ocorrencia\OcoOcorrencia::buscaOcorrenciasPorTipo');
-
-// OCorrência
-$routes->post(
-    'OcoOcorrencia/buscaOcorrenciasPorTipo',
-    'Ocorrencia\OcoOcorrencia::buscaOcorrenciasPorTipo'
-);
-
-$routes->post(
-    'ocorrencia/finalizar/(:num)',
-    'Ocorrencia\OcoTrataOcorrencia::finalizar/$1'
-);
-
+foreach ($ocoControllers as $ctrl) {
+    $routes->group($ctrl, static function ($routes) use ($ctrl) {
+        $name = strtolower($ctrl);
+        $routes->get('/', "Ocorrencia\\$ctrl::index", ['as' => "{$name}_index"]);
+        $routes->match(['GET', 'POST'], '(:any)', "Ocorrencia\\$ctrl::$1", ['as' => "{$name}_match"]);
+    });
+}
 
 $routes->match(['GET', 'POST'], 'buscas/(:any)/(:any)', 'Buscas::$1/$2', ['as' => 'buscas_two_params']);
 $routes->match(['GET', 'POST'], 'buscas/(:any)', 'Buscas::$1', ['as' => 'buscas_one_params']);
@@ -120,7 +113,7 @@ $cfgControllers = [
     'CfgLayoutEtiq',
     'CfgEtiqueta',
     'CfgEmpresa',
-    'CfgImpressora'
+    'CfgImpressora',
 ];
 
 foreach ($cfgControllers as $ctrl) {
@@ -130,15 +123,6 @@ foreach ($cfgControllers as $ctrl) {
         $routes->match(['GET', 'POST'], '(:any)', "Config\\$ctrl::$1", ['as' => "{$name}_match"]);
     });
 }
-
-// Rotas especiais para CfgModulo
-$routes->group('CfgModulo', static function ($routes) {
-    $routes->get('000', 'Config\\CfgModulo::add', ['as' => 'cfgmodulo_add']);
-    $routes->get('100/(:any)', 'Config\\CfgModulo::show/$1', ['as' => 'cfgmodulo_show_match']);
-    $routes->get('200/(:any)', 'Config\\CfgModulo::edit/$1', ['as' => 'cfgmodulo_edit_match']);
-    $routes->get('300/(:any)', 'Config\\CfgModulo::delete/$1', ['as' => 'cfgmodulo_delete_match']);
-    $routes->get('400/(:any)', 'Config\\CfgModulo::ativinativ/$1', ['as' => 'cfgmodulo_ativinativ_match']);
-});
 
 // Controladores de Estoque
 $estoqueControllers = [
@@ -153,7 +137,7 @@ $estoqueControllers = [
     'ConfRequisicao',
     'EtqProduto',
     'EtqMisturador',
-    'EtqProdutoReq'
+    'EtqProdutoReq',
 ];
 
 foreach ($estoqueControllers as $ctrl) {
@@ -178,7 +162,6 @@ foreach ($preProcesControllers as $ctrl) {
     });
 }
 
-
 // Controladores de Produto
 $produtoControllers = [
     'Origem',
@@ -187,7 +170,7 @@ $produtoControllers = [
     'ProClasse',
     'ProIngrediente',
     'Produto',
-    'Fabricante'
+    'Fabricante',
 ];
 
 foreach ($produtoControllers as $ctrl) {
@@ -198,39 +181,19 @@ foreach ($produtoControllers as $ctrl) {
     });
 }
 
+// Controladores de Micro
+$microControllers = [
+    'Analise',
+    'AnaRequisicao',
+];
 // Grupo: Micro
-$routes->group('Analise', static function ($routes) {
-    $routes->get('/', 'Micro\\Analise::index', ['as' => 'analise_index']);
-    $routes->match(['GET', 'POST'], '(:any)', 'Micro\\Analise::$1', ['as' => 'analise_match']);
-});
-
-$routes->group('AnaRequisicao', static function ($routes) {
-    $routes->get('/', 'Micro\\AnaRequisicao::index', ['as' => 'anarequisicao_index']);
-    $routes->match(['GET', 'POST'], '(:any)', 'Micro\\AnaRequisicao::$1', ['as' => 'anarequisicao_match']);
-});
-
-// Grupo: Ocorrencia
-$routes->group('OcoTipoAcao', static function ($routes) {
-    $routes->get('/', 'Ocorrencia\\OcoTipoAcao::index', ['as' => 'ocotipoacao_index']);
-    $routes->match(['GET', 'POST'], '(:any)', 'Ocorrencia\\OcoTipoAcao::$1', ['as' => 'ocotipoacao_match']);
-});
-$routes->group('OcoTipoOcorrencia', static function ($routes) {
-    $routes->get('/', 'Ocorrencia\\OcoTipoOcorrencia::index', ['as' => 'ocotipoocorrencia_index']);
-    $routes->match(['GET', 'POST'], '(:any)', 'Ocorrencia\\OcoTipoOcorrencia::$1', ['as' => 'ocotipoocorrencia_match']);
-});
-$routes->group('OcoSubtOcorrencia', static function ($routes) {
-    $routes->get('/', 'Ocorrencia\\OcoSubtOcorrencia::index', ['as' => 'ocosubtocorrencia_index']);
-    $routes->match(['GET', 'POST'], '(:any)', 'Ocorrencia\\OcoSubtOcorrencia::$1', ['as' => 'ocosubtcorrencia_match']);
-});
-$routes->group('OcoOcorrencia', static function ($routes) {
-    $routes->get('/', 'Ocorrencia\\OcoOcorrencia::index', ['as' => 'ocorrencia_index']);
-    $routes->match(['GET', 'POST'], '(:any)', 'Ocorrencia\\OcoOcorrencia::$1', ['as' => 'ocorrencia_match']);
-});
-$routes->group('OcoTrataOcorrencia', static function ($routes) {
-    $routes->get('/', 'Ocorrencia\\OcoTrataOcorrencia::index', ['as' => 'ocotrataocorrencia_index']);
-    $routes->match(['GET', 'POST'], '(:any)', 'Ocorrencia\\OcoTrataOcorrencia::$1', ['as' => 'ocotrataocorrencia_match']);
-});
-
+foreach ($produtoControllers as $ctrl) {
+    $routes->group($ctrl, static function ($routes) use ($ctrl) {
+        $name = strtolower($ctrl);
+        $routes->get('/', "Micro\\$ctrl::index", ['as' => "{$name}_index"]);
+        $routes->match(['GET', 'POST'], '(:any)', "Micro\\$ctrl::$1", ['as' => "{$name}_match"]);
+    });
+}
 
 // Grupo: WebService
 $routes->group('WsCeqweb', static function ($routes) {

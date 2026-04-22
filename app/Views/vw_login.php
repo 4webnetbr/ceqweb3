@@ -1,31 +1,92 @@
-<?= $this->extend('templates/login_template') ?>
+<?php echo $this->extend('templates/login_template') ?>
+<?php echo $this->section('content'); ?>
+<style>
+/* Container principal */
+#divgeral {
+  height: 100vh;
+}
 
-<?= $this->section('content'); ?>
-<div class="container text-start col-10 float-none align-items-center d-flex" style="max-height:90vh!important; height:90vh!important;">
-	<div class="row justify-content-center" style="max-height:50vh!important; height:50vh!important;">
-		<div class="col col-lg-10 col-12 bg-login align-items-center p-0">
-			<div class="col-6 float-start h-100 align-items-center d-flex" style='border: 0;border-right: 2px solid;'>
-				<img src='<?= $logo; ?>' width='100%' />
+/* Logo */
+.logo-image {
+  max-width: 60%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Div IDENT (lado esquerdo / topo no mobile) */
+#divident {
+  background-color: #fff;
+  position: relative;
+  z-index: 2;
+  height: 100vh !important;
+  overflow: hidden;
+
+  box-shadow: 8px 0 20px rgba(0,0,0,0.25);
+}
+
+#divident::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* background-color: aliceblue; */
+  background-image: url("../images/logo_base3.png");
+  /* background-repeat: repeat; */
+  background-size: 75%;
+  opacity: 1;
+  z-index: 0;
+}
+
+#divident > * {
+  position: relative;
+  z-index: 1;
+}
+/* Div LOGO */
+#divlogo {
+	height: 100vh !important;
+  z-index: 1;
+}
+
+
+/* ===== RESPONSIVO ===== */
+@media (max-width: 991.98px) {
+  #divgeral {
+    flex-direction: column;
+  }
+
+  #divident {
+	height: 40vh !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25); /* sombra inferior no mobile */
+  }
+
+  #divlogo {
+    height: 60vh !important;
+  }
+}
+</style>
+<section class="container-fluid p-0 h-100">
+<div id="divgeral" class="d-flex flex-column flex-lg-row h-100">
+	<!-- divident -->
+	<div id="divident" class="divident col-12 col-lg-3 d-flex justify-content-center align-items-center order-1 order-lg-2 ps-3">
+		<form method="post" type="normal" action="<?php echo site_url($destino) ?>" class="">
+			<div class="card-body">
+				<h3 class="card-title mb-4 ps-3 ">Identificação</h3>
+				<?php
+                    for ($c = 0; $c < sizeof($campos); $c++) {
+                        echo $campos[$c];
+                    }
+                ?>
+				<br>
+				<span style='color:red;font-size:15px;'><?php echo session('msg'); ?></span>
 			</div>
-			<!-- <div class="row justify-content-center"> -->
-			<div class="col-4 text-center p-4 float-start d-flex">
-				<form method="post" type="normal" action="<?= site_url($destino) ?>" class="">
-					<div class="card-body bg-white">
-						<h3 class="card-title text-start mb-4 text-start">Identificação</h3>
-						<?php
-						for ($c = 0; $c < sizeof($campos); $c++) {
-							echo $campos[$c];
-						}
-						?>
-						<br>
-						<span style='color:red;font-size:15px;'><?= session('msg'); ?></span>
-					</div>
-				</form>
-			</div>
-			<!-- </div> -->
-		</div>
+		</form>
 	</div>
+
+  <!-- divlogo -->
+  <div id="divlogo"
+       class="col-12 col-lg-9 d-flex justify-content-center align-items-center order-2 order-lg-1">
+    <img src="https://ceqweb3.ceqnep.com.br/assets/images/logo_header.jpg" class="logo-image" />
+  </div>
+
 </div>
-<!-- <script src="<?//= base_url('assets/jscript/my_fields.js'); ?>"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/6.0.0/bootbox.min.js" integrity="sha512-oVbWSv2O4y1UzvExJMHaHcaib4wsBMS5tEP3/YkMP6GmkwRJAa79Jwsv+Y/w7w2Vb/98/Xhvck10LyJweB8Jsw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script> -->
-<?= $this->endSection(); ?>
+</section>
+<?php echo $this->endSection(); ?>

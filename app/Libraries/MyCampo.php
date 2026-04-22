@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Libraries;
 
 use App\Models\Config\ConfigDicDadosModel;
@@ -14,7 +13,7 @@ use App\Models\Config\ConfigDicDadosModel;
 
 class MyCampo
 {
-    public string $place = '';      // placeholder do Campo
+    public string $place = ''; // placeholder do Campo
     public string $objeto;     // informa o tipo de campo a ser criado
     public string $tipo;       // informa o tipo Customizado do campo
     public string $nome;       // Nome do Campo
@@ -438,9 +437,9 @@ class MyCampo
         ];
         $label_text = $this->label;
         if (($this->tipo == 'file' || $this->tipo == 'imagem') && $this->tipo != 'hidden') {
-            $label['class'] = "btn btn-primary";
-            $label['style'] = "white-space: normal;width:$this->largura;padding:0.8em;";
-            $label_text .= "<i class='fa fa-file-archive-o'></i> Selecionar Arquivo";
+            $label['class']  = "btn btn-primary";
+            $label['style']  = "white-space: normal;width:$this->largura;padding:0.8em;";
+            $label_text     .= "<i class='fa fa-file-archive-o'></i> Selecionar Arquivo";
         }
         if (str_contains($this->dispForm, 'linha')) {
             $ret = "<div class='col-2 col-lg-2 d-block'>";
@@ -474,9 +473,9 @@ class MyCampo
         ];
         $label_text = $this->label;
         if (($this->tipo == 'file' || $this->tipo == 'imagem') && $this->tipo != 'hidden') {
-            $label['class'] = "btn btn-primary";
-            $label['style'] = "white-space: normal;width:$this->largura;padding:0.8em;";
-            $label_text .= "<i class='fa fa-file-archive-o'></i> Selecionar Arquivo";
+            $label['class']  = "btn btn-primary";
+            $label['style']  = "white-space: normal;width:$this->largura;padding:0.8em;";
+            $label_text     .= "<i class='fa fa-file-archive-o'></i> Selecionar Arquivo";
         }
         $mb = 'mb-4';
         if (isset($this->objeto) && $this->objeto == 'cr2opcoes') {
@@ -522,13 +521,13 @@ class MyCampo
         if (str_contains($this->classep, 'semmb')) {
             $mb = 'm-0';
         }
-        $respf .= "<div id='ig_$this->id' class='row $colunas float-start align-items-center d-inline-flex $mb'>";
+        $respf     .= "<div id='ig_$this->id' class='row $colunas float-start align-items-center d-inline-flex $mb'>";
         $divaberta = true;
         if ($this->infotop != '') {
             $respf .= "<div class='text-info'><i class='fa-solid fa-bullhorn'></i> $this->infotop</div>";
         }
 
-        if (!isset($this->label)) {
+        if (! isset($this->label)) {
             $this->label = '';
         }
         if ($this->label != '') {
@@ -569,9 +568,9 @@ class MyCampo
         if ($grouppos == 'arquivo') {
             $respf .= "<div id='nome_arquivo_img_" . $this->nome . "' class='text-break border p-1 mb-2' style='width: auto;' >$this->valor</div>";
             if ($this->funcBlur != '') {
-                $this->funcBlur = str_replace("'", '"', $this->funcBlur);
-                $respf .= "<div id='view_img_" . $this->nome . "' class='show img-thumbnail ' onclick='" . $this->funcBlur . "'>";
-                $respf .= "<div class='text-black'>Clique para Visualizar</div>";
+                $this->funcBlur  = str_replace("'", '"', $this->funcBlur);
+                $respf          .= "<div id='view_img_" . $this->nome . "' class='show img-thumbnail ' onclick='" . $this->funcBlur . "'>";
+                $respf          .= "<div class='text-black'>Clique para Visualizar</div>";
             } else {
                 $respf .= "<div id='view_img_" . $this->nome . "' class='show img-thumbnail ' >";
             }
@@ -611,7 +610,7 @@ class MyCampo
         // }
 
         if ($this->cadModal != '' && ! $this->leitura) {
-            $field_btn = [
+            $field_btn  = [
                 'name'    => 'bt_ad_' . $this->nome,
                 'id'      => 'bt_ad_' . $this->id,
                 'style'   => 'width:2.5rem',
@@ -637,7 +636,7 @@ class MyCampo
     public function propriedades()
     {
         $selec = '';
-        if (!isset($this->field['multiple']) && isset($this->selecionado)) {
+        if (! isset($this->field['multiple']) && isset($this->selecionado)) {
             if (gettype($this->selecionado) == 'array') {
                 $selec = implode(',', $this->selecionado);
             } else {
@@ -661,12 +660,12 @@ class MyCampo
             $this->field['data-index'] = $this->ordem;
         }
         if ($this->tipo != 'botao' && $this->tipo != 'button') {
-            if (!empty($this->funcChan)) {
-                $onchange = $this->field['onchange'] ?? '';
+            if (! empty($this->funcChan)) {
+                $onchange                = $this->field['onchange'] ?? '';
                 $this->field['onchange'] = trim($onchange . '; ' . $this->funcChan, '; ');
             }
-            if (!empty($this->funcBlur)) {
-                $onblur = $this->field['onblur'] ?? '';
+            if (! empty($this->funcBlur)) {
+                $onblur                = $this->field['onblur'] ?? '';
                 $this->field['onblur'] = trim($onblur . '; ' . $this->funcBlur, '; ');
             }
         }
@@ -689,7 +688,7 @@ class MyCampo
             $this->tipo != 'login' &&
             $this->tipo != 'password' &&
             $this->tipo != 'senha' &&
-            !$this->leitura
+            ! $this->leitura
         ) {
             unset($this->field['readonly']);
             unset($this->field['disabled']);
@@ -758,7 +757,9 @@ class MyCampo
     public function crBotao(): string
     {
         $this->acertaId();
-        $this->tipo = 'button';
+        if (! $this->tipo) {
+            $this->tipo = 'button';
+        }
         // NÃO TEM FORMATO NO FORMULÁRIO
         $txtlabel    = isset($this->label) ? $this->label : "";
         $this->field = [
@@ -809,7 +810,7 @@ class MyCampo
     public function crCheckbox(): string
     {
         $this->acertaId();
-        $resp = '';
+        $resp       = '';
         $this->tipo = 'check';
         if (! isset($this->selecionado)) {
             $this->selecionado = $this->valor;
@@ -818,22 +819,22 @@ class MyCampo
         $this->tipo = 'check';
         $resp       = '';
 
-        $resp .= "<div class='form-check form-switch p-0 $this->dispForm '>";
-        $this->field = array(
-            'name'          => $this->nome,
-            'id'            => $this->id,
-            'value'         => $this->valor,
-            'role'          => 'switch',
-            'data-selec'     => $this->selecionado,
-            'data-enabled'     => $this->leitura,
-            'data-alter'     => false,
-            'data-label'     => $this->label,
-            'label'         => $this->label,
-            'hint'          => $this->hint,
-            'onchange'         => $this->funcChan,
-            'class'         => "form-check-input $this->classep",
+        $resp        .= "<div class='form-check form-switch p-0 $this->dispForm '>";
+        $this->field  = [
+            'name'         => $this->nome,
+            'id'           => $this->id,
+            'value'        => $this->valor,
+            'role'         => 'switch',
+            'data-selec'   => $this->selecionado,
+            'data-enabled' => $this->leitura,
+            'data-alter'   => false,
+            'data-label'   => $this->label,
+            'label'        => $this->label,
+            'hint'         => $this->hint,
+            'onchange'     => $this->funcChan,
+            'class'        => "form-check-input $this->classep",
             // 'class'         => "form-check-input ml-2 float-start $this->classep",
-        );
+        ];
 
         if ($this->valor == $this->selecionado) {
             $this->field['checked'] = true;
@@ -863,7 +864,7 @@ class MyCampo
                                 form-control px-1 sort overflow-auto
                                 overflow-x-hidden'
                                 style='width: auto; max-height: 70vh; '>";
-        $cont = 0;
+        $cont  = 0;
         foreach ($this->opcoes as $valor => $label) {
             $id = $this->id . '[' . $cont . ']';
             if (! isset($this->selecionado)) {
@@ -882,7 +883,7 @@ class MyCampo
             }
             $this->propriedades();
 
-            $lab = "<label class='btn $this->classep fs-4' for='$id'> $label </label>";
+            $lab   = "<label class='btn $this->classep fs-4' for='$id'> $label </label>";
             $resp .= "<div class='d-inline-flex me-2 col-12'>";
             $resp .= form_checkbox($this->field, '', $checked) . $lab;
             $resp .= '</div>';
@@ -976,7 +977,7 @@ class MyCampo
 
         $campo .= "<div class='form-check form-switch form-check-inline
                                 form-control px-1 py-1 m-0 ' style='width: auto'>";
-        $cont = 0;
+        $cont  = 0;
         foreach ($this->opcoes as $valor => $label) {
             $id = $this->id . '[' . $cont . ']';
             if (! isset($this->selecionado)) {
@@ -995,14 +996,14 @@ class MyCampo
             }
             $this->propriedades();
 
-            $lab = "<label class='form-check-label px-1 m-auto mx-0' for='$id'> $label </label>";
+            $lab    = "<label class='form-check-label px-1 m-auto mx-0' for='$id'> $label </label>";
             $campo .= "<div class='d-inline-flex  $this->classep' style='width: auto'>";
             $campo .= form_radio($this->field) . $lab;
             $campo .= '</div>';
             $cont++;
         }
         $campo .= "</div>";
-        $resp .= $this->fmtDisplay($campo);
+        $resp  .= $this->fmtDisplay($campo);
         return $resp;
     }
 
@@ -1014,16 +1015,16 @@ class MyCampo
     public function crRadiobutton(): string
     {
         $this->acertaId();
-        $this->tipo = 'check';
-        $resp       = '';
-        $campo      = '';
+        $this->tipo  = 'check';
+        $resp        = '';
+        $campo       = '';
         // $resp .= "<div class='form-check form-switch form-check-inline
         //                         form-control px-1 w-auto'>";
         $campo .= "<div class='form-check form-switch form-check-inline
                                 form-control px-1 sort overflow-auto
                                 overflow-x-hidden'
                                 style='width: auto; max-height: 70vh; '>";
-        $cont = 0;
+        $cont  = 0;
         foreach ($this->opcoes as $valor => $label) {
             $id = $this->id . '[' . $cont . ']';
             if (! isset($this->selecionado)) {
@@ -1051,14 +1052,14 @@ class MyCampo
             //     $this->field['tabindex'] = -1;
             // }
 
-            $lab = "<label class='btn $this->classep fs-4' for='$id'> $label </label>";
+            $lab    = "<label class='btn $this->classep fs-4' for='$id'> $label </label>";
             $campo .= "<div class='d-inline-flex me-2 col-12'>";
             $campo .= form_radio($this->field, '', $checked) . $lab;
             $campo .= '</div>';
             $cont++;
         }
         $campo .= "</div>";
-        $resp .= $this->fmtDisplay($campo);
+        $resp  .= $this->fmtDisplay($campo);
 
         return $resp;
     }
@@ -1097,48 +1098,48 @@ class MyCampo
             }
             switch ($this->tipo) {
                 case 'color':
-                    $this->field['type']             = 'color';
-                    $this->field['class']            = "form-control $this->classep";
-                    $this->field['aria-describedby'] = 'ig_' . $this->nome;
+                    $this->field['type']              = 'color';
+                    $this->field['class']             = "form-control $this->classep";
+                    $this->field['aria-describedby']  = 'ig_' . $this->nome;
                     break;
                 case 'icone':
-                    $this->field['type']             = 'text';
-                    $this->field['class']            = "form-control $this->classep icone";
-                    $this->field['aria-describedby'] = 'ig_' . $this->nome;
-                    $groupant .= "<span class='input-group-text input-group-addon'>
+                    $this->field['type']              = 'text';
+                    $this->field['class']             = "form-control $this->classep icone";
+                    $this->field['aria-describedby']  = 'ig_' . $this->nome;
+                    $groupant                        .= "<span class='input-group-text input-group-addon'>
                                 <i class='" . $this->valor . "'></i></span>";
                     break;
                 case 'sonumero':
-                    $this->field['type']             = 'text';
-                    $this->field['onkeyup']          = 'mascara(this, \'mnum\')';
-                    $this->field['onchange']         = 'mascara(this, \'mnum\')';
-                    $this->field['pattern']          = '^[0-9-]{1,' . $leng . '}$';
-                    $this->field['style']            = 'text-align: right';
-                    $this->field['aria-describedby'] = 'ig_' . $this->nome;
+                    $this->field['type']              = 'text';
+                    $this->field['onkeyup']           = 'mascara(this, \'mnum\')';
+                    $this->field['onchange']          = 'mascara(this, \'mnum\')';
+                    $this->field['pattern']           = '^[0-9-]{1,' . $leng . '}$';
+                    $this->field['style']             = 'text-align: right';
+                    $this->field['aria-describedby']  = 'ig_' . $this->nome;
                     break;
                 case 'quantia':
-                    $this->field['type']             = 'text';
-                    $this->field['onkeyup']          = 'mascara(this, \'mquantia\')';
-                    $this->field['onblur']           = $this->funcBlur;
-                    $this->field['value']            = floatToQuantia($this->valor, $this->size);
-                    $this->field['pattern']          = "^([\d]*\,?[\d]{0," . $this->size . "})$";
-                    $this->field['style']            = 'text-align: right';
-                    $this->field['aria-describedby'] = 'ig_' . $this->nome;
+                    $this->field['type']              = 'text';
+                    $this->field['onkeyup']           = 'mascara(this, \'mquantia\')';
+                    $this->field['onblur']            = $this->funcBlur;
+                    $this->field['value']             = floatToQuantia($this->valor, $this->size);
+                    $this->field['pattern']           = "^([\d]*\,?[\d]{0," . $this->size . "})$";
+                    $this->field['style']             = 'text-align: right';
+                    $this->field['aria-describedby']  = 'ig_' . $this->nome;
                     break;
                 case 'inteiro':
                     // $this->field['type']      = 'text';
-                    $this->field['dir']              = 'rtl';
-                    $this->field['min']              = $this->minimo;
-                    $this->field['max']              = $this->maximo;
-                    $this->field['step']             = $this->step;
-                    $this->field['oninput']          = "this.value = acertaMaximo(this, $leng)";
-                    $this->field['onkeyup']          = 'mascara(this, \'mnum\'); this.value = acertaMaximo(this, ' . $leng . '); ';
-                    $this->field['onchange']         = "mascara(this, 'mnum')";
-                    $this->field['pattern']          = '^[1-9][0-9]{0,' . $leng . '}$';
-                    $this->field['style']            = 'text-align: right';
-                    $this->field['aria-describedby'] = 'ig_' . $this->nome;
-                    $this->field['class']            = $this->field['class'] . ' form-number';
-                    $this->largura                   = $this->largura + 10;
+                    $this->field['dir']               = 'rtl';
+                    $this->field['min']               = $this->minimo;
+                    $this->field['max']               = $this->maximo;
+                    $this->field['step']              = $this->step;
+                    $this->field['oninput']           = "this.value = acertaMaximo(this, $leng)";
+                    $this->field['onkeyup']           = 'mascara(this, \'mnum\'); this.value = acertaMaximo(this, ' . $leng . '); ';
+                    $this->field['onchange']          = "mascara(this, 'mnum')";
+                    $this->field['pattern']           = '^[1-9][0-9]{0,' . $leng . '}$';
+                    $this->field['style']             = 'text-align: right';
+                    $this->field['aria-describedby']  = 'ig_' . $this->nome;
+                    $this->field['class']             = $this->field['class'] . ' form-number';
+                    $this->largura                    = $this->largura + 10;
                     if (! $this->leitura) {
                         $groupant = "<div class='input-group-text input-group-addon down-num $pe' data-refer='$this->id' id='dw_$this->nome'><i class='fas fa-minus'></i></div>";
                         $grouppos = "<div class='input-group-text input-group-append up-num $pe' data-refer='$this->id' id='up_$this->nome'><i class='fas fa-plus'></i></div>";
@@ -1151,9 +1152,9 @@ class MyCampo
                     $this->field['min']     = $this->minimo;
                     $this->field['max']     = $this->maximo;
                     $this->field['step']    = $this->step;
-                    $this->field['onfocus']  = 'entrar_moeda(this)';
+                    $this->field['onfocus'] = 'entrar_moeda(this)';
                     // $this->field['oninput']  = "this.value = acertaMaximo(this, $leng)";
-                    $this->field['onkeyup']  = 'mascara(this, \'mnum\'); this.value = acertaMaximo(this, ' . $leng . '); ';
+                    $this->field['onkeyup'] = 'mascara(this, \'mnum\'); this.value = acertaMaximo(this, ' . $leng . '); ';
                     // $this->field['onchange'] = "this.value = acertaMaximo(this, $leng);";
                     $this->field['pattern'] = '^[1-9][0-9]{0,' . $leng . '}$';
                     $this->field['style']   = 'text-align: right';
@@ -1188,119 +1189,120 @@ class MyCampo
                                 id='ad_$this->nome'><i class='bi bi-key'></i></span>";
                     break;
                 case 'password':
-                    $fieldpassoculto = [
+                    $fieldpassoculto  = [
                         'type'  => 'password',
                         'name'  => 'enganagoogle',
                         'value' => '',
                         'style' => "opacity: 0;position: absolute;",
                     ];
-                    $resp .= form_input($fieldpassoculto);
-                    $this->field['class']            = "form-control $this->classep password";
-                    $this->field['onchange']         = $this->funcChan;
-                    $this->field['onblur']           = 'validaSenha(this);oculta_passinfo();' . $this->funcBlur;
-                    $this->field['aria-describedby'] = 'ad_' . $this->nome;
-                    $groupant .= "<span class='input-group-text input-group-addon'
+                    $resp                            .= form_input($fieldpassoculto);
+                    $this->field['class']             = "form-control $this->classep password";
+                    $this->field['onchange']          = $this->funcChan;
+                    $this->field['onblur']            = 'validaSenha(this);oculta_passinfo();' . $this->funcBlur;
+                    $this->field['aria-describedby']  = 'ad_' . $this->nome;
+                    $groupant                        .= "<span class='input-group-text input-group-addon'
                                 id='ad_$this->nome'><i class='bi bi-key'></i></span>";
+                    $grouppos .= "<span name='show_password' class='input-group-text input-group-append show_password bi bi-eye-slash-fill' id='ada_$this->nome' data-field='$this->nome'></span>";
                     break;
                 case 'email':
-                    $this->field['type']                = 'email';
-                    $this->field['pattern']             = '^[\w\.=-]+@[\w\.-]+\.[\w]{2,3}$';
-                    $this->field['style']               = 'text-align: left';
-                    $this->field['aria-describedby']    = 'ad_' . $this->nome;
-                    $this->field['data-original-title'] = 'Informe um E-mail válido!';
-                    $this->field['title']               = 'Informe um E-mail válido!';
-                    $grouppos .= "<span class='input-group-text input-group-append' id='ad_$this->nome'>
+                    $this->field['type']                 = 'email';
+                    $this->field['pattern']              = '^[\w\.=-]+@[\w\.-]+\.[\w]{2,3}$';
+                    $this->field['style']                = 'text-align: left';
+                    $this->field['aria-describedby']     = 'ad_' . $this->nome;
+                    $this->field['data-original-title']  = 'Informe um E-mail válido!';
+                    $this->field['title']                = 'Informe um E-mail válido!';
+                    $grouppos                           .= "<span class='input-group-text input-group-append' id='ad_$this->nome'>
                             <i class='far fa-envelope-open' ></i></span>";
                     break;
                 case 'site':
                 case 'url':
-                    $this->field['type']                = 'url';
-                    $this->field['pattern']             = '^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$';
-                    $this->field['style']               = 'text-align: left';
-                    $this->field['aria-describedby']    = 'ad_' . $this->nome;
-                    $this->field['data-original-title'] = 'Informe uma url válida!';
-                    $this->field['title']               = 'Informe uma url válida!';
-                    $grouppos .= "<span class='input-group-text input-group-append' id='ad_$this->nome'>
+                    $this->field['type']                 = 'url';
+                    $this->field['pattern']              = '^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$';
+                    $this->field['style']                = 'text-align: left';
+                    $this->field['aria-describedby']     = 'ad_' . $this->nome;
+                    $this->field['data-original-title']  = 'Informe uma url válida!';
+                    $this->field['title']                = 'Informe uma url válida!';
+                    $grouppos                           .= "<span class='input-group-text input-group-append' id='ad_$this->nome'>
                                 <i class='far fa-link'></i></span>";
                     break;
                 case 'telefone':
                 case 'fone':
-                    $this->field['type']                = 'tel';
-                    $this->field['pattern']             = '^\(\d{2}\) \d{4}\-\d{4}$';
-                    $this->field['onkeyup']             = 'mascara(this, \'mtel\')';
-                    $this->field['style']               = 'text-align: left';
-                    $this->field['aria-describedby']    = 'ad_' . $this->nome;
-                    $this->field['data-original-title'] = 'Informe um Telefone válido! (99) 9999-9999';
-                    $this->field['title']               = 'Informe um Telefone válido! (99) 9999-9999';
-                    $grouppos .= "<span class='input-group-text input-group-append' id='ad_$this->nome'></span>
+                    $this->field['type']                 = 'tel';
+                    $this->field['pattern']              = '^\(\d{2}\) \d{4}\-\d{4}$';
+                    $this->field['onkeyup']              = 'mascara(this, \'mtel\')';
+                    $this->field['style']                = 'text-align: left';
+                    $this->field['aria-describedby']     = 'ad_' . $this->nome;
+                    $this->field['data-original-title']  = 'Informe um Telefone válido! (99) 9999-9999';
+                    $this->field['title']                = 'Informe um Telefone válido! (99) 9999-9999';
+                    $grouppos                           .= "<span class='input-group-text input-group-append' id='ad_$this->nome'></span>
                                 <i class='fas fa-phone' ></i></span>";
                     break;
                 case 'celular':
                 case 'celul':
                 case 'whatsapp':
                 case 'whats':
-                    $this->field['type']                = 'tel';
-                    $this->field['pattern']             = '^\(\d{2}\) \d{4,5}\-\d{4}$';
-                    $this->field['onkeyup']             = 'mascara(this, \'mcel2\')';
-                    $this->field['style']               = 'text-align: left';
-                    $this->field['aria-describedby']    = 'ad_' . $this->nome;
-                    $this->field['data-original-title'] = 'Informe um Celular válido! (99) 99999-9999';
-                    $this->field['title']               = 'Informe um Celular válido! (99) 99999-9999';
-                    $grouppos .= "<span class='input-group-text input-group-append' id='ad_$this->nome'>
+                    $this->field['type']                 = 'tel';
+                    $this->field['pattern']              = '^\(\d{2}\) \d{4,5}\-\d{4}$';
+                    $this->field['onkeyup']              = 'mascara(this, \'mcel2\')';
+                    $this->field['style']                = 'text-align: left';
+                    $this->field['aria-describedby']     = 'ad_' . $this->nome;
+                    $this->field['data-original-title']  = 'Informe um Celular válido! (99) 99999-9999';
+                    $this->field['title']                = 'Informe um Celular válido! (99) 99999-9999';
+                    $grouppos                           .= "<span class='input-group-text input-group-append' id='ad_$this->nome'>
                                 <i class='fa fa-mobile-alt'></i></span>";
                     break;
                 case 'cnpj':
-                    $this->field['type']                = 'text';
-                    $this->field['pattern']             = '^\d{2}\.\d{3}\.\d{3}\/\d{4}\-\d{2}$';
-                    $this->field['onkeyup']             = 'mascara(this, \'mcnpj\')';
-                    $this->field['style']               = 'text-align: right';
-                    $this->field['aria-describedby']    = 'ad_' . $this->nome;
-                    $this->field['data-original-title'] = 'Digite o CNPJ no formato 99.999.999/9999-99';
-                    $this->field['title']               = 'Digite o CNPJ no formato 99.999.999/9999-99';
+                    $this->field['type']                 = 'text';
+                    $this->field['pattern']              = '^\d{2}\.\d{3}\.\d{3}\/\d{4}\-\d{2}$';
+                    $this->field['onkeyup']              = 'mascara(this, \'mcnpj\')';
+                    $this->field['style']                = 'text-align: right';
+                    $this->field['aria-describedby']     = 'ad_' . $this->nome;
+                    $this->field['data-original-title']  = 'Digite o CNPJ no formato 99.999.999/9999-99';
+                    $this->field['title']                = 'Digite o CNPJ no formato 99.999.999/9999-99';
                     break;
                 case 'cpf':
-                    $this->field['type']                = 'text';
-                    $this->field['pattern']             = '^\d{3}\.\d{3}\.\d{3}\-\d{2}$';
-                    $this->field['onkeyup']             = 'mascara(this, \'mcpf\')';
-                    $this->field['onblur']              = $this->field['onblur'] . ';ValidaCPF(this)';
-                    $this->field['style']               = 'text-align: right';
-                    $this->field['aria-describedby']    = 'ad_' . $this->nome;
-                    $this->field['data-original-title'] = 'Digite o CPF no formato 999.999.999-99';
-                    $this->field['title']               = 'Digite o CPF no formato 999.999.999-99';
+                    $this->field['type']                 = 'text';
+                    $this->field['pattern']              = '^\d{3}\.\d{3}\.\d{3}\-\d{2}$';
+                    $this->field['onkeyup']              = 'mascara(this, \'mcpf\')';
+                    $this->field['onblur']               = $this->field['onblur'] . ';ValidaCPF(this)';
+                    $this->field['style']                = 'text-align: right';
+                    $this->field['aria-describedby']     = 'ad_' . $this->nome;
+                    $this->field['data-original-title']  = 'Digite o CPF no formato 999.999.999-99';
+                    $this->field['title']                = 'Digite o CPF no formato 999.999.999-99';
                     break;
                 case 'cep':
-                    $this->field['type']                = 'text';
-                    $this->field['pattern']             = '^\d{5}\-\d{3}$';
-                    $this->field['onkeyup']             = 'mascara(this, \'mcep\')';
-                    $this->field['style']               = 'text-align: right';
-                    $this->field['aria-describedby']    = 'ad_' . $this->nome;
-                    $this->field['data-original-title'] = 'Digite o CEP no formato 99999-999';
-                    $this->field['title']               = 'Digite o CEP no formato 99999-999';
+                    $this->field['type']                 = 'text';
+                    $this->field['pattern']              = '^\d{5}\-\d{3}$';
+                    $this->field['onkeyup']              = 'mascara(this, \'mcep\')';
+                    $this->field['style']                = 'text-align: right';
+                    $this->field['aria-describedby']     = 'ad_' . $this->nome;
+                    $this->field['data-original-title']  = 'Digite o CEP no formato 99999-999';
+                    $this->field['title']                = 'Digite o CEP no formato 99999-999';
                     break;
                 case 'placaveiculo':
-                    $this->field['type']                = 'text';
-                    $this->field['pattern']             = '^\[A-Z]{3}\-\d[A-Z0-9]\d{2}$';
-                    $this->field['onkeyup']             = 'mascara(this, \'mplaca\')';
-                    $this->field['class']               = "form-control $this->classep text-uppercase";
-                    $this->field['style']               = 'text-align: left';
-                    $this->field['data-original-title'] = 'Informe uma Placa Válida! AAA=0000 ou AAA-0A00';
-                    $this->field['title']               = 'Informe uma Placa Válida! AAA=0000 ou AAA-0A00';
-                    $this->field['aria-describedby']    = 'ig_' . $this->nome;
+                    $this->field['type']                 = 'text';
+                    $this->field['pattern']              = '^\[A-Z]{3}\-\d[A-Z0-9]\d{2}$';
+                    $this->field['onkeyup']              = 'mascara(this, \'mplaca\')';
+                    $this->field['class']                = "form-control $this->classep text-uppercase";
+                    $this->field['style']                = 'text-align: left';
+                    $this->field['data-original-title']  = 'Informe uma Placa Válida! AAA=0000 ou AAA-0A00';
+                    $this->field['title']                = 'Informe uma Placa Válida! AAA=0000 ou AAA-0A00';
+                    $this->field['aria-describedby']     = 'ig_' . $this->nome;
                     break;
                 case 'ip':
-                    $this->field['type']                = 'text';
-                    $this->field['pattern']             = '^\d{3}\.\d{3}\.\d{1,3}\.\d{1,3}$';
-                    $this->field['class']               = "form-control $this->classep text-uppercase";
-                    $this->field['style']               = 'text-align: left';
-                    $this->field['data-original-title'] = 'Informe um Endereço IP válido! 000.000.000.000';
-                    $this->field['title']               = 'Informe um Endereço IP válido! 000.000.000.000';
-                    $this->field['aria-describedby']    = 'ig_' . $this->nome;
+                    $this->field['type']                 = 'text';
+                    $this->field['pattern']              = '^\d{3}\.\d{3}\.\d{1,3}\.\d{1,3}$';
+                    $this->field['class']                = "form-control $this->classep text-uppercase";
+                    $this->field['style']                = 'text-align: left';
+                    $this->field['data-original-title']  = 'Informe um Endereço IP válido! 000.000.000.000';
+                    $this->field['title']                = 'Informe um Endereço IP válido! 000.000.000.000';
+                    $this->field['aria-describedby']     = 'ig_' . $this->nome;
                     break;
                 case 'file':
-                    $this->field['type']          = 'file';
-                    $this->field['data_folder']   = $this->pasta;
-                    $this->field['data_img_name'] = $this->imgName;
-                    $this->field['class']         = '';
+                    $this->field['type']           = 'file';
+                    $this->field['data_folder']    = $this->pasta;
+                    $this->field['data_img_name']  = $this->imgName;
+                    $this->field['class']          = '';
                     if ($this->valor != '') {
                         $ico_arq = substr($this->valor, strrpos($this->valor, '.') + 1) . ".png";
                     } else {
@@ -1310,37 +1312,40 @@ class MyCampo
                     $grouppos .= "<div id='view_img_" . $this->nome . "' class='show clearfix'
                                 style='width:200px; height:200px;' >";
                     $grouppos .= "<img id='img_" . $this->nome . "' src='" .
-                        base_url('uploads/tipo_down/') . $ico_arq . "' for='" . $this->id .
+                    base_url('uploads/tipo_down/') . $ico_arq . "' for='" . $this->id .
                         "' class='img-thumbnail col-lg-12 col-xs-12'
                                 style='width:200px; height:200px;' alt='' /></div>";
                     break;
                 case 'textselect': //mostra o texto do select informado
-                    $this->field['type'] = 'text';
-                    $busca               = "buscaTextselect(this,\"" . $this->nome . "\")";
-                    $resp .= "<script>";
-                    $resp .= "chang_ant = jQuery('#" . $this->place . "').attr('onchange');";
-                    $resp .= "jQuery('#" . $this->place . "').attr('onchange','+chang_ant+'" . $busca . "');";
-                    $resp .= "jQuery('#" . $this->place . "').trigger('change');";
-                    $resp .= "</script>";
+                    $this->field['type']  = 'text';
+                    $busca                = "buscaTextselect(this,\"" . $this->nome . "\")";
+                    $resp                .= "<script>";
+                    $resp                .= "chang_ant = jQuery('#" . $this->place . "').attr('onchange');";
+                    $resp                .= "jQuery('#" . $this->place . "').attr('onchange','+chang_ant+'" . $busca . "');";
+                    $resp                .= "jQuery('#" . $this->place . "').trigger('change');";
+                    $resp                .= "</script>";
                     break;
                 case 'textselectoculto': //guarda o texto do select informado
-                    $this->field['type'] = 'hidden';
-                    $busca               = "buscaTextselect(this,\"" . $this->nome . "\")";
-                    $resp .= "<script>";
-                    $resp .= "chang_ant = jQuery('#" . $this->place . "').attr('onchange');";
-                    $resp .= "jQuery('#" . $this->place . "').attr('onchange','+chang_ant+'" . $busca . "');";
-                    $resp .= "jQuery('#" . $this->place . "').trigger('blur');";
-                    $resp .= "</script>";
+                    $this->field['type']  = 'hidden';
+                    $busca                = "buscaTextselect(this,\"" . $this->nome . "\")";
+                    $resp                .= "<script>";
+                    $resp                .= "chang_ant = jQuery('#" . $this->place . "').attr('onchange');";
+                    $resp                .= "jQuery('#" . $this->place . "').attr('onchange','+chang_ant+'" . $busca . "');";
+                    $resp                .= "jQuery('#" . $this->place . "').trigger('blur');";
+                    $resp                .= "</script>";
                     break;
                 case 'calculo': //campo com resultado de cálculo
-                    $this->field['placeholder'] = '';
-                    $busca                      = "calcula(\"" . $this->id . "\",\"" . $this->place . "\", \"" . $this->pai . "\")";
-                    $resp .= "<script>";
-                    $resp .= "jQuery('#" . $this->valor . "').attr('onchange','" . $busca . "');";
-                    $resp .= "jQuery('#" . $this->valor . "').trigger('change');";
-                    $resp .= "</script>";
+                    $this->field['placeholder']  = '';
+                    $busca                       = "calcula(\"" . $this->id . "\",\"" . $this->place . "\", \"" . $this->pai . "\")";
+                    $resp                       .= "<script>";
+                    $resp                       .= "jQuery('#" . $this->valor . "').attr('onchange','" . $busca . "');";
+                    $resp                       .= "jQuery('#" . $this->valor . "').trigger('change');";
+                    $resp                       .= "</script>";
                     break;
             }
+            if ($this->tipo == 'password' || $this->tipo == 'senha') {
+            }
+
             $grouppos .= "<div id='dc-$this->id' class='div-caract badge bg-info-subtle'></div>";
 
             // debug($this->field);
@@ -1368,7 +1373,7 @@ class MyCampo
             'id'        => $this->id,
             'value'     => $this->valor,
             'size'      => $this->size,
-            'maxlength'    => $this->maxLength ?? $this->size,
+            'maxlength' => $this->maxLength ?? $this->size,
             'class'     => "daterange form-control $this->classep",
         ];
         $this->propriedades();
@@ -1422,7 +1427,7 @@ class MyCampo
             'value'     => $this->valor,
             'cols'      => $this->colunas,
             'rows'      => $this->linhas,
-            'maxlength'    => $this->maxLength ?? $this->size,
+            'maxlength' => $this->maxLength ?? $this->size,
             'class'     => 'form-control',
         ];
         $grouppos = "<div id='dc-$this->id' class='div-caract badge bg-info-subtle'></div>";
@@ -1486,11 +1491,11 @@ class MyCampo
         $this->tipo = 'select';
 
         $resp = '';
-        if (!isset($this->selecionado)) {
+        if (! isset($this->selecionado)) {
             $this->selecionado = $this->valor;
         }
 
-        if (!is_array($this->selecionado)) {
+        if (! is_array($this->selecionado)) {
             $this->selecionado = ($this->selecionado !== null && $this->selecionado !== '')
                 ? array_filter(explode(',', (string) $this->selecionado))
                 : [];
@@ -1516,9 +1521,8 @@ class MyCampo
             'data-actions-box'          => 'true',
             'data-size'                 => '2',
             'data-selected-text-format' => 'count > 1',
-            'style' => "height:130px; overflow-y:auto max-height:130px;",
+            'style'                     => "height:130px; overflow-y:auto max-height:130px;",
         ];
-
 
         // debug($this->field);
         // debug($this->opcoes);
@@ -1561,7 +1565,7 @@ class MyCampo
         if (isset($this->opcoes['icone']) && count($this->opcoes['icone']) > 0) {
             $campo .= "<script>";
             foreach ($this->opcoes['icone'] as $key => $value) {
-                $opt = "#$this->id option[value=\"$key\"]";
+                $opt    = "#$this->id option[value=\"$key\"]";
                 $campo .= "jQuery('$opt').attr('data-content','" . $this->opcoes['icone'][$key] . "');";
             }
             $campo .= "</script>";
@@ -1588,10 +1592,10 @@ class MyCampo
         $resp = '';
 
         $this->field = [
-            'name'  => $this->nome,
-            'id'    => $this->id,
+            'name'           => $this->nome,
+            'id'             => $this->id,
             'data-container' => "body",
-            'class' => " form-control form-select selectpicker",
+            'class'          => " form-control form-select selectpicker",
         ];
         if (! isset($this->size) || $this->size == '') {
             $this->size = -1;
@@ -1644,21 +1648,21 @@ class MyCampo
         $campo                 = form_dropdown($this->field, $cores, $this->selecionado);
 
         $campo .= "<script>";
-        $cor = fmtEtiquetaCorBst('bg-primary');
+        $cor    = fmtEtiquetaCorBst('bg-primary');
         $campo .= "jQuery(\"#$this->id option[value='bg-primary']\").attr('data-content',\"$cor\");";
-        $cor = fmtEtiquetaCorBst('bg-secondary');
+        $cor    = fmtEtiquetaCorBst('bg-secondary');
         $campo .= "jQuery(\"#$this->id option[value='bg-secondary']\").attr('data-content',\"$cor\");";
-        $cor = fmtEtiquetaCorBst('bg-success');
+        $cor    = fmtEtiquetaCorBst('bg-success');
         $campo .= "jQuery(\"#$this->id option[value='bg-success']\").attr('data-content',\"$cor\");";
-        $cor = fmtEtiquetaCorBst('bg-danger');
+        $cor    = fmtEtiquetaCorBst('bg-danger');
         $campo .= "jQuery(\"#$this->id option[value='bg-danger']\").attr('data-content',\"$cor\");";
-        $cor = fmtEtiquetaCorBst('bg-warning');
+        $cor    = fmtEtiquetaCorBst('bg-warning');
         $campo .= "jQuery(\"#$this->id option[value='bg-warning']\").attr('data-content',\"$cor\");";
-        $cor = fmtEtiquetaCorBst('bg-info');
+        $cor    = fmtEtiquetaCorBst('bg-info');
         $campo .= "jQuery(\"#$this->id option[value='bg-info']\").attr('data-content',\"$cor\");";
-        $cor = fmtEtiquetaCorBst('bg-dark');
+        $cor    = fmtEtiquetaCorBst('bg-dark');
         $campo .= "jQuery(\"#$this->id option[value='bg-dark']\").attr('data-content',\"$cor\");";
-        $cor = fmtEtiquetaCorBst('bg-white');
+        $cor    = fmtEtiquetaCorBst('bg-white');
         $campo .= "jQuery(\"#$this->id option[value='bg-white']\").attr('data-content',\"$cor\");";
         $campo .= "</script>";
 
@@ -1682,12 +1686,11 @@ class MyCampo
 
         $resp = '';
 
-
         $this->field = [
-            'name'  => $this->nome,
-            'id'    => $this->id,
+            'name'           => $this->nome,
+            'id'             => $this->id,
             'data-container' => "body",
-            'class' => ' form-control form-select form-color selectpicker',
+            'class'          => ' form-control form-select form-color selectpicker',
         ];
         if (! isset($this->size) || $this->size == '') {
             $this->size = -1;
@@ -1698,7 +1701,7 @@ class MyCampo
         // $this->field['placeholder'] = str_replace('Selecione', '-Selecione', $this->field['placeholder']);
         // debug($this->field['placeholder']);
 
-        $campo = form_dropdown($this->field, $this->opcoes, $this->selecionado);
+        $campo  = form_dropdown($this->field, $this->opcoes, $this->selecionado);
         // debug($campo);
         $campo .= "<script>";
         foreach ($this->opcoes as $key => $valor) {
@@ -1708,7 +1711,7 @@ class MyCampo
             if (substr($rgb, 0, 1) == '#') {
                 $nome = substr($valor, $pos1 + 1);
             }
-            $cor  = fmtEtiquetaCor($rgb, $nome);
+            $cor    = fmtEtiquetaCor($rgb, $nome);
             $campo .= "jQuery(\"#$this->id option[value='" . $key . "']\").attr('data-content',\"$cor\");";
         }
         $campo .= "</script>";
@@ -1759,9 +1762,8 @@ class MyCampo
     public function crDepende(): string
     {
         $this->acertaId();
-        $this->tipo = 'select';
+        $this->tipo   = 'select';
         $this->objeto = 'select';
-
 
         if (! isset($this->selecionado)) {
             $this->selecionado = $this->valor;
@@ -1770,13 +1772,13 @@ class MyCampo
         $resp = '';
 
         $this->field = [
-            'name'       => $this->nome,
-            'id'         => $this->id,
+            'name'           => $this->nome,
+            'id'             => $this->id,
             'data-container' => "body",
-            'data-busca' => $this->urlbusca,
-            'data-pai'   => $this->pai,
-            'onfocus'    => "testa_dep('" . $this->pai . "')",
-            'class'      => " form-control form-select dependente selectpicker",
+            'data-busca'     => $this->urlbusca,
+            'data-pai'       => $this->pai,
+            'onfocus'        => "testa_dep('" . $this->pai . "')",
+            'class'          => " form-control form-select dependente selectpicker",
         ];
 
         if (! isset($this->size) || $this->size == '') {
@@ -1804,11 +1806,10 @@ class MyCampo
     {
         $this->acertaId();
         $this->tipo = 'select';
-        if (!isset($this->selecionado)) {
+        if (! isset($this->selecionado)) {
             $this->selecionado = $this->valor;
         }
         $resp = '';
-
 
         $this->field = [
             'name'             => $this->nome . '[]',
@@ -1867,7 +1868,7 @@ class MyCampo
                         style='white-space: normal;width:" . $this->size . "px; padding:0.8em;'
                                 for='" . $this->id . "' data-mdb-toggle='tooltip' data-mdb-placement='bottom' title=''
                                 data-bs-original-title='A imagem será redimensionada para " . $this->size . " X " .
-                $this->largura . " proporcionalmente' aria-label='A imagem será redimensionada para
+            $this->largura . " proporcionalmente' aria-label='A imagem será redimensionada para
                                 $this->size X $this->largura proporcionalmente' >
                                 <i class=\"fas fa-image\"></i> Clique para selecionar imagem de $this->label";
         }

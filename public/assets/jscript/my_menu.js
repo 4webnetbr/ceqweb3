@@ -434,3 +434,8 @@ function buscaMenu(busca) {
     }
   });
 }
+
+async function abrirAjax(url) {
+  bloqueiaTela();
+  redireciona(url);
+}

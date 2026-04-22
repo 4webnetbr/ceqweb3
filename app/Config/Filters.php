@@ -1,5 +1,4 @@
 <?php
-
 namespace Config;
 
 use CodeIgniter\Config\BaseConfig;
@@ -61,14 +60,14 @@ class Filters extends BaseConfig
                     'home',
                     'home/*',
                     'websocket',
-                    'websocket/*'
-                ]
+                    'websocket/*',
+                ],
             ],
             'limpezaAuto',
             // 'honeypot',
             // 'csrf',
         ],
-        'after' => [
+        'after'  => [
             'toolbar',
             'accessLog' => [
                 'except' => [
@@ -85,8 +84,8 @@ class Filters extends BaseConfig
                     'workanalise',
                     'workanalise/*',
                     'websocket',
-                    'websocket/*'
-                ]
+                    'websocket/*',
+                ],
             ],
 
             // 'honeypot',

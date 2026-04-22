@@ -111,6 +111,7 @@ class LoginFilter implements FilterInterface
         }
 
         $session->setFlashdata(['dados_tela' => $dadosTela]);
+        // $session->set(['dados_tela' => $dadosTela]);
 
         if (! empty(trim($dadosTela['erromsg']))) {
             $view = $modal ? 'vw_semacesso_modal' : 'vw_semacesso';
