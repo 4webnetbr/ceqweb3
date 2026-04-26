@@ -3,26 +3,243 @@ jQuery.noConflict();
 // variável globas de retono da função executaAjax
 var retornoAjax;
 var executandoAjax = false;
+var executandoProcesso = false;
+
+/**
+ * Show Password
+ * Mostra ou oculta a Senha
+ * Document Ready my_fields
+ */
+jQuery(document).on("click", ".show_password", function (e) {
+  e.preventDefault();
+
+  const fieldId = jQuery(this).data("field");
+  const $input = jQuery("#" + fieldId);
+
+  if (!$input.length) return;
+
+  const isPassword = $input.prop("type") === "password";
+  $input.prop("type", isPassword ? "text" : "password");
+  $input.trigger("focus");
+});
+jQuery(document)
+  .off("click", "#bt_salvar, #bt_salvar_modal")
+  .on("click", "#bt_salvar, #bt_salvar_modal", async function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    await bloqueiaTela();
+
+    id = this.id;
+    let submeter = true;
+
+    if (id == "bt_salvar") {
+      const controller = jQuery("#controler").val();
+      if (controller.toLowerCase() == "requisicao") {
+        // event.preventDefault(); // impede submit automático
+        submeter = await enviarRequisicoes(0, event);
+        if (!submeter) {
+          desBloqueiaTela();
+          return; // para aqui e não executa mais nada
+        }
+      } else if (controller.toLowerCase() === "aterequisicao") {
+        submeter = await enviarAteRequisicoes(event);
+        if (!submeter) {
+          desBloqueiaTela();
+          return; // para aqui e não executa mais nada
+        }
+      } else if (controller.toLowerCase() === "confrequisicao") {
+        submeter = await enviarConfRequisicoes(event);
+        if (!submeter) {
+          desBloqueiaTela();
+          return; // para aqui e não executa mais nada
+        }
+      } else if (controller.toLowerCase() === "inspecaoprod") {
+        submeter = enviarInspecao(event);
+        if (!submeter) {
+          desBloqueiaTela();
+          return; // para aqui e não executa mais nada
+        }
+      }
+    }
+    if (submeter) {
+      validaForm(event, id);
+    } else {
+      desBloqueiaTela();
+    }
+  });
+
+function validaForm(event, id) {
+  var elemAlterado = false;
+  var form = jQuery("#form1")[0];
+  if (id == "bt_salvar_modal") {
+    form = jQuery("#form_modal")[0];
+  }
+  // elemAlterado = Boolean(form[0].getAttribute('data-alter'));
+  if (
+    form.getAttribute("data-alter") === true ||
+    form.getAttribute("data-alter") === "true"
+  ) {
+    elemAlterado = true;
+  }
+  // }
+  if (!elemAlterado) {
+    url = "/buscas/gravasessao";
+    var mens = 7;
+    let dados = { msg: mens };
+    executaAjax(url, "json", dados);
+    if (retornoAjax) {
+      retorna_listagem();
+    }
+  } else {
+    jQuery("[id*='-valid']").addClass("d-none");
+    jQuery("[id*='-fival']").removeClass("d-block");
+    // var form = jQuery(this)[0].form;
+
+    form.classList.add("was-validated");
+    isvalido = validador(form);
+    if (!isvalido) {
+      event.preventDefault();
+      event.stopPropagation();
+      desBloqueiaTela();
+    } else {
+      // verificar se o campo select foi alterado
+      jQuery("input[data-valid], select[data-valid]").each(async function () {
+        let validar = this.getAttribute("data-valid");
+
+        if (!validar || validar === "0") return;
+        let valororig = this.getAttribute("data-valor");
+        let value = jQuery(this).val();
+
+        // Se for um array (como em selects múltiplos), converte para string
+        if (Array.isArray(value)) {
+          value = value.join(",");
+        }
+
+        if (valororig !== value) {
+          event.preventDefault();
+          event.stopPropagation();
+          boxAlert(20, false, "submit", true, 1, true, "");
+        }
+      });
+      console.log("form atual:", form);
+      console.log("existe no DOM?", document.body.contains(form));
+      console.log("jquery acha?", jQuery("#form_modal").length);
+
+      jQuery(form).trigger("submit");
+    }
+  }
+}
+/**
+ * Submete o Formulário com ajax
+ * Document Ready my_default
+ */
+async function submeteForm(event) {
+  event.preventDefault(); // ✅ controle correto
+  event.stopPropagation();
+
+  console.trace("Submit disparado");
+
+  var form = jQuery(this);
+  form.addClass("was-validated");
+
+  var tipo = form.attr("type");
+  if (tipo != "modal") {
+    bloqueiaTela();
+  }
+  if (tipo != "normal") {
+    jQuery(".moeda").each(function () {
+      var valor = converteMoedaFloat(jQuery(this).val());
+      jQuery(this).val(valor);
+    });
+    var disabled = form.find(":input:disabled").removeAttr("disabled");
+
+    var dadosForm = new FormData(this);
+
+    dadosForm.forEach(function (value, key) {
+      console.log(key + ": " + value);
+    });
+    disabled.attr("disabled", "disabled");
+    // console.log(dadosForm.values);
+    var url = form.attr("action");
+    console.trace("Submit está sendo aberto aqui");
+    retornoAjax = await executaAjax(url, "json", dadosForm);
+    if (retornoAjax) {
+      if (tipo != "modal") {
+        desBloqueiaTela();
+        if (!retornoAjax.erro) {
+          if (retornoAjax.url) {
+            if (tipo == "novaguia") {
+              redirec_blank(retornoAjax.url);
+            } else {
+              redireciona(retornoAjax.url);
+            }
+          }
+        } else {
+          boxAlert(
+            retornoAjax.msg,
+            retornoAjax.erro,
+            retornoAjax.url,
+            false,
+            1,
+            false,
+          );
+        }
+      } else {
+        var myModalEl = document.getElementById("myModal");
+        var modal = bootstrap.Modal.getInstance(myModalEl);
+        modal.hide();
+        desBloqueiaTela();
+        if (retornoAjax.msg != "") {
+          mostranoToast(retornoAjax.msg, retornoAjax.erro);
+        }
+      }
+    }
+  }
+  // }
+}
+
+function getTabId() {
+  let tabId = sessionStorage.getItem("tabId");
+
+  if (!tabId) {
+    tabId = crypto.randomUUID();
+    sessionStorage.setItem("tabId", tabId);
+  }
+  // 🔥 garante envio em qualquer request (inclusive redirect)
+  document.cookie = `tabId=${tabId}; path=/`;
+
+  return tabId;
+}
+
+// roda imediatamente
+jQuery.ajaxSetup({
+  beforeSend: function (xhr) {
+    xhr.setRequestHeader("Tab-ID", getTabId());
+  },
+});
 
 jQuery(document).ready(function () {
-  // Gera ou recupera um identificador único para a guia
-  if (!sessionStorage.getItem("tabId")) {
-    // grava na seção local data
-    sessionStorage.setItem(
-      "tabId",
-      Date.now() + "-" + Math.random().toString(36).substr(2, 9),
-    );
-  }
+  jQuery("body").on("submit", "#form1, #form_modal", submeteForm);
 
-  // Adiciona o identificador em um campo oculto
-  const tabId = sessionStorage.getItem("tabId");
-  document.cookie = `tabId=${tabId}; path=/;`;
+  // // Gera ou recupera um identificador único para a guia
+  // if (!sessionStorage.getItem("tabId")) {
+  //   // grava na seção local data
+  //   sessionStorage.setItem(
+  //     "tabId",
+  //     Date.now() + "-" + Math.random().toString(36).substr(2, 9),
+  //   );
+  // }
 
-  jQuery.ajaxSetup({
-    beforeSend: function (xhr) {
-      xhr.setRequestHeader("Tab-ID", sessionStorage.getItem("tabId"));
-    },
-  });
+  // // Adiciona o identificador em um campo oculto
+  // const tabId = sessionStorage.getItem("tabId");
+  // document.cookie = `tabId=${tabId}; path=/;`;
+
+  // jQuery.ajaxSetup({
+  //   beforeSend: function (xhr) {
+  //     xhr.setRequestHeader("Tab-ID", sessionStorage.getItem("tabId"));
+  //   },
+  // });
 
   /**
    * se a div Toast tiver conteúdo mostra por 3 segundos
@@ -82,185 +299,6 @@ jQuery(document).ready(function () {
 
   jQuery(".toast").on("hide.bs.toast", function () {
     jQuery(".toast-body").html("");
-  });
-
-  jQuery("#bt_salvar")
-    .off("click")
-    .on("click", async function (event) {
-      await bloqueiaTela();
-      event.preventDefault();
-      event.stopPropagation();
-
-      const controller = jQuery("#controler").val();
-
-      let submeter = false;
-      if (controller.toLowerCase() == "requisicao") {
-        // event.preventDefault(); // impede submit automático
-        submeter = await enviarRequisicoes(0, event);
-        if (!submeter) {
-          desBloqueiaTela();
-          return; // para aqui e não executa mais nada
-        }
-      } else if (controller.toLowerCase() === "aterequisicao") {
-        submeter = await enviarAteRequisicoes(event);
-        if (!submeter) {
-          desBloqueiaTela();
-          return; // para aqui e não executa mais nada
-        }
-      } else if (controller.toLowerCase() === "confrequisicao") {
-        submeter = await enviarConfRequisicoes(event);
-        if (!submeter) {
-          desBloqueiaTela();
-          return; // para aqui e não executa mais nada
-        }
-      } else if (controller.toLowerCase() === "inspecaoprod") {
-        submeter = enviarInspecao(event);
-        if (!submeter) {
-          desBloqueiaTela();
-          return; // para aqui e não executa mais nada
-        }
-      } else {
-        submeter = true;
-      }
-      if (submeter) {
-        var elemAlterado = false;
-        var form = jQuery("#form1");
-        // elemAlterado = Boolean(form[0].getAttribute('data-alter'));
-        if (
-          form[0].getAttribute("data-alter") === true ||
-          form[0].getAttribute("data-alter") === "true"
-        ) {
-          elemAlterado = true;
-        }
-        // }
-        if (!elemAlterado) {
-          url = "/buscas/gravasessao";
-          var mens = 7;
-          let dados = { msg: mens };
-          executaAjax(url, "json", dados);
-          if (retornoAjax) {
-            retorna_listagem();
-          }
-        } else {
-          jQuery("[id*='-valid']").addClass("d-none");
-          jQuery("[id*='-fival']").removeClass("d-block");
-          var form = jQuery(this)[0].form;
-
-          form.classList.add("was-validated");
-          isvalido = validador(form);
-          if (!isvalido) {
-            event.preventDefault();
-            event.stopPropagation();
-            desBloqueiaTela();
-          } else {
-            // verificar se o campo select foi alterado
-            jQuery("input[data-valid], select[data-valid]").each(
-              async function () {
-                let validar = this.getAttribute("data-valid");
-
-                if (!validar || validar === "0") return;
-                let valororig = this.getAttribute("data-valor");
-                let value = jQuery(this).val();
-
-                // Se for um array (como em selects múltiplos), converte para string
-                if (Array.isArray(value)) {
-                  value = value.join(",");
-                }
-
-                if (valororig !== value) {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  boxAlert(20, false, "submit", true, 1, true, "");
-                }
-              },
-            );
-            jQuery("#form1").submit();
-            // form.submit();
-          }
-        }
-      } else {
-        desBloqueiaTela();
-      }
-    });
-
-  /**
-   * Submete o Formulário com ajax
-   * Document Ready my_default
-   */
-  jQuery("#form1, #form_modal").on("submit", function (event) {
-    // se não foi clicado no botão salvar, cancela o submit
-    console.trace("Submit está sendo aberto aqui");
-    bt_clic = event.originalEvent
-      ? event.originalEvent.submitter.id
-      : this[0].id;
-    if (
-      bt_clic != "bt_salvar" &&
-      bt_clic != "bt_aprovar" &&
-      bt_clic != "bt_rejeitar" &&
-      bt_clic != "bt_enviar"
-    ) {
-      return false;
-    } else {
-      var form = jQuery(this);
-      form.addClass("was-validated");
-
-      var tipo = form.attr("type");
-      if (tipo != "modal") {
-        bloqueiaTela();
-      }
-      if (tipo != "normal") {
-        event.preventDefault(); // avoid to execute the actual submit of the form.
-        jQuery(".moeda").each(function () {
-          var valor = converteMoedaFloat(jQuery(this).val());
-          jQuery(this).val(valor);
-        });
-        var disabled = form.find(":input:disabled").removeAttr("disabled");
-        // if (jQuery(".selectpicker").length > 0) {
-        //   jQuery(".selectpicker").selectpicker("refresh");
-        // }
-
-        var dadosForm = new FormData(this);
-
-        dadosForm.forEach(function (value, key) {
-          console.log(key + ": " + value);
-        });
-        disabled.attr("disabled", "disabled");
-        // console.log(dadosForm.values);
-        var url = form.attr("action");
-        console.trace("Submit está sendo aberto aqui");
-        executaAjax(url, "json", dadosForm);
-        if (retornoAjax) {
-          if (tipo != "modal") {
-            desBloqueiaTela();
-            if (!retornoAjax.erro) {
-              if (retornoAjax.url) {
-                if (tipo == "novaguia") {
-                  redirec_blank(retornoAjax.url);
-                } else {
-                  redireciona(retornoAjax.url);
-                }
-              }
-            } else {
-              boxAlert(
-                retornoAjax.msg,
-                retornoAjax.erro,
-                retornoAjax.url,
-                false,
-                1,
-                false,
-              );
-            }
-          } else {
-            var myModalEl = document.getElementById("myModal");
-            var modal = bootstrap.Modal.getInstance(myModalEl);
-            modal.hide();
-            if (retornoAjax.msg != "") {
-              mostranoToast(retornoAjax.msg, retornoAjax.erro);
-            }
-          }
-        }
-      }
-    }
   });
 
   /**
@@ -451,45 +489,40 @@ function sleep(ms) {
  * Bloqueia a tela e apresenta a msg Processando...
  */
 async function bloqueiaTela() {
+  await mostraBloqueio();
+  await new Promise(requestAnimationFrame);
+  await new Promise(requestAnimationFrame);
+}
+async function mostraBloqueio() {
   const $tela = jQuery("#bloqueiaTela");
 
-  // Garante que o display seja "block"
-  if ($tela.css("display") === "none") {
-    $tela.stop(true, true).css({
-      display: "block",
-      opacity: 1,
-      visibility: "visible",
-    });
-    // Força o navegador a fazer repaint antes de seguir
-    // await new Promise(requestAnimationFrame);
+  if (!$tela.is(":visible")) {
+    $tela.show();
   }
 }
 
 function isTelaBloqueada() {
-  const $tela = jQuery("#bloqueiaTela");
-  return (
-    $tela.is(":visible") &&
-    $tela.css("visibility") === "visible" &&
-    parseFloat($tela.css("opacity")) > 0
-  );
+  return jQuery("#bloqueiaTela").is(":visible");
 }
-
 /**
  * desBloqueiaTela
  * Desbloqueia a Tela
  */
-async function desBloqueiaTela() {
-  await new Promise((resolve) =>
-    requestAnimationFrame(() => requestAnimationFrame(resolve)),
-  );
-  if (!executandoAjax) {
-    jQuery("#bloqueiaTela").stop(true, true).css({
-      display: "none",
-      opacity: 0,
-      visibility: "hidden",
-    });
-  }
+function desBloqueiaTela() {
+  jQuery("#bloqueiaTela").css("display", "none");
 }
+// async function desBloqueiaTela() {
+//   await new Promise((resolve) =>
+//     requestAnimationFrame(() => requestAnimationFrame(resolve)),
+//   );
+//   if (!executandoAjax) {
+//     jQuery("#bloqueiaTela").stop(true, true).css({
+//       display: "none",
+//       opacity: 0,
+//       visibility: "hidden",
+//     });
+//   }
+// }
 
 /** Função nova
  *  Não faz nada é só pra exemplificar
@@ -522,6 +555,7 @@ function submeter(destino) {
  * @param {string} url - URL de destino
  */
 function redireciona(url) {
+  bloqueiaTela();
   window.location.assign(url);
 }
 
@@ -566,7 +600,8 @@ function salvaPagina() {
 
   if (cookie) {
     try {
-      dados = JSON.parse(cookie);
+      // dados = JSON.parse(cookie);
+      dados = cookie;
     } catch (e) {
       console.warn("Cookie mal formatado, sobrescrevendo.");
     }
@@ -691,20 +726,6 @@ async function openModal(url, titulo = false) {
     // document.onreadystatechange = function () {
     myModal.show();
   }
-  // jQuery.ajax({
-  //     url: url,
-  //     dataType: 'html',
-  //     success: function (data) {
-  //         jQuery('.modal-body').html(data);
-  //         var myModal = new bootstrap.Modal(document.getElementById("myModal"), {});
-  //         // document.onreadystatechange = function () {
-  //         myModal.show();
-  //         //   myModal.addEventListener('shown.bs.modal', () => {
-  //         //     myInput.focus()
-  //         //   })
-  //         // };
-  //     }
-  // });
 }
 
 /**
@@ -923,6 +944,8 @@ async function boxAlert(
   // ---- retorna Promise para permitir await (mantendo callbacks originais)
   return new Promise((resolve) => {
     console.trace("Modal está sendo aberto aqui");
+    estavabloqueado = isTelaBloqueada();
+    desBloqueiaTela();
     if (!confirma) {
       if (opcoes) {
         // SELECT (prompt)
@@ -940,6 +963,9 @@ async function boxAlert(
           value: String(opcoes[0].id),
           callback: function (result) {
             jQuery(".modal-backdrop").removeClass("bootbox");
+            if (estavabloqueado) {
+              bloqueiaTela();
+            }
             resolve(result);
           },
         });
@@ -960,7 +986,9 @@ async function boxAlert(
           if (!erro) {
             // comportamento original: redireciona se NÃO for erro
             jQuery(".modal-backdrop").removeClass("bootbox");
-            redireciona(url);
+            if (url != "") {
+              redireciona(url);
+            }
           }
           resolve(true); // fecha -> resolve
         },
@@ -995,6 +1023,9 @@ async function boxAlert(
       },
       callback: function (result) {
         if (!result) {
+          if (estavabloqueado) {
+            bloqueiaTela();
+          }
           resolve(false);
           return;
         }
@@ -1007,6 +1038,9 @@ async function boxAlert(
         }
         if (url === "") {
           resolve(true);
+          if (estavabloqueado) {
+            bloqueiaTela();
+          }
           return;
         }
 
@@ -1015,6 +1049,9 @@ async function boxAlert(
           try {
             eval(url);
           } catch (e) {}
+          if (estavabloqueado) {
+            bloqueiaTela();
+          }
           resolve(true);
           return;
         }
@@ -1287,19 +1324,24 @@ function mostranoToast(texto, alerta = false) {
   let processandoTimeout = null;
 })();
 
-function mostranorodape(texto) {
-  jQuery("#msgprocessando").html(" Processando...<br>" + texto);
-  jQuery("#msgrodape").html(texto);
-  // Cancela o timeout anterior, se existir
+async function mostranorodape(texto) {
+  const $msgProc = jQuery("#msgprocessando");
+  const $msgRodape = jQuery("#msgrodape");
+
+  $msgProc.html(" Processando...<br>" + texto);
+  $msgRodape.html(texto);
+
   if (typeof processandoTimeout === "number") {
     clearTimeout(processandoTimeout);
   }
 
-  // Cria um novo timeout
-  processandoTimeout = setTimeout(function () {
-    jQuery("#msgrodape").html("&nbsp;");
-    jQuery("#msgprocessando").html(" Processando..");
-  }, 1500);
+  // deixa o browser renderizar ANTES de continuar
+  await new Promise(requestAnimationFrame);
+
+  processandoTimeout = setTimeout(() => {
+    $msgRodape.html("&nbsp;");
+    $msgProc.html(" Processando..");
+  }, 3000);
 }
 
 async function permiteNotificacao() {
@@ -1484,7 +1526,7 @@ function validador(form) {
  * @param {array} dados - dados a serem informados
  * @return {Object} retorno
  */
-function executaAjax(urldest, tipo = "json", dados = {}, funcao = "") {
+async function executaAjax(urldest, tipo = "json", dados = {}, funcao = "") {
   // console.trace("ExecutaAjax está sendo aberto aqui");
   eubloquiei = false;
   if (!isTelaBloqueada()) {
@@ -1578,8 +1620,12 @@ function executaAjax(urldest, tipo = "json", dados = {}, funcao = "") {
  */
 function executaAjaxWait(urldest, tipo = "json", dados = {}, funcao = "") {
   executandoAjax = true;
+  eubloquiei = false;
   // Bloqueia a tela
-  bloqueiaTela();
+  if (!isTelaBloqueada()) {
+    eubloquiei = true;
+    bloqueiaTela();
+  }
 
   return new Promise((resolve, reject) => {
     jQuery.ajax({
@@ -1612,7 +1658,9 @@ function executaAjaxWait(urldest, tipo = "json", dados = {}, funcao = "") {
       complete: function () {
         // Desbloqueia a tela após a conclusão
         executandoAjax = false;
-        desBloqueiaTela();
+        if (eubloquiei) {
+          desBloqueiaTela();
+        }
       },
     });
   });
@@ -1623,7 +1671,7 @@ function gerarEtiqueta(url) {
   openPdfModal(url, "Impressão de Etiquetas ");
 }
 
-async function gerarEtiquetaZPL(url, etiq = false, chave = false) {
+async function gerarEtiquetaZPL(url, etiq = false, chave = false, qtia = 1) {
   // SE A ETIQUETA NÃO ESTÁ DEFINIDA, BUSCA AS ETIQUETAS DA PÁGINA ATIVA
   bloqueiaTela();
   if (!etiq) {
@@ -1638,7 +1686,7 @@ async function gerarEtiquetaZPL(url, etiq = false, chave = false) {
         if (retornoAjax[0].id == "-1") {
           etiq = null;
           desBloqueiaTela();
-          await boxAlert(retornoAjax[0].text, true, "");
+          boxAlert(retornoAjax[0].text, true, "");
         } else {
           etiq = retornoAjax[0].id;
         }
@@ -1659,7 +1707,7 @@ async function gerarEtiquetaZPL(url, etiq = false, chave = false) {
   if (etiq && etiq != null) {
     url = url + "/" + etiq + "/";
     // if (chave) {
-    url = url + chave + "/";
+    url = url + chave + "/" + qtia;
     // }
     openImgModal(url, "Impressão de Etiquetas ");
   } else {
@@ -1734,7 +1782,7 @@ async function imprimirEtiqueta(url = false) {
     if (retornoAjax.length == 1) {
       if (retornoAjax[0].id == "-1") {
         imp = null;
-        await boxAlert(retornoAjax[0].text, true, "");
+        boxAlert(retornoAjax[0].text, true, "");
       } else {
         imp = retornoAjax[0].id;
       }
@@ -1752,24 +1800,27 @@ async function imprimirEtiqueta(url = false) {
     }
   }
   if (imp != null) {
-    url = url + imp;
+    url = url + "/" + imp;
 
     jQuery.get(url, async function (res) {
       if (res.erro) {
         boxAlert(res.erro, true, "", true);
       } else {
-        await boxAlert(res.status, false, "", true, 2); // ou mostrar status no modal
+        boxAlert(res.status, false, "", true, 2); // ou mostrar status no modal
         fecharTodosModais();
       }
     });
   }
 }
 
-function geraEiquetaProd(url, id_quantia) {
+function geraEiquetaProd(obj, url, id_quantia) {
   qtia = jQuery("#" + id_quantia).val();
-  url = url + "/" + qtia;
+  jQuery(obj).removeClass("btn-outline-dark");
+  jQuery(obj).addClass("btn-outline-danger");
+  // url = url + "/" + qtia;
+  url = url + "/1";
   jQuery.getJSON(url, function (res) {
-    gerarEtiquetaZPL(res.link, (etiq = false), res.chave);
+    gerarEtiquetaZPL(res.link, (etiq = false), res.chave, qtia);
   });
 }
 

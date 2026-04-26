@@ -483,7 +483,7 @@ class MyCampo
         }
 
         $ret = "<div class='position-relative {$mb}' style='z-index:110'>";
-        $ret .= "<div class='text-nowrap text-start d-inline-block position-absolute ms-2 pe-2 py-0 bg-white' >";
+        $ret .= "<div class='text-nowrap text-start d-inline-block position-absolute ms-2 pe-2 py-0' >";
         $ret .= form_label($label_text, $ident, $label);
         $ret .= "</div>";
         $ret .= "</div>";
@@ -757,7 +757,7 @@ class MyCampo
     public function crBotao(): string
     {
         $this->acertaId();
-        if (! $this->tipo) {
+        if (! isset($this->tipo) || $this->tipo == '' || $this->tipo == 'text') {
             $this->tipo = 'button';
         }
         // NÃO TEM FORMATO NO FORMULÁRIO
@@ -1140,6 +1140,7 @@ class MyCampo
                     $this->field['aria-describedby']  = 'ig_' . $this->nome;
                     $this->field['class']             = $this->field['class'] . ' form-number';
                     $this->largura                    = $this->largura + 10;
+                    // $this->largura  = ($leng * 4) + 10;
                     if (! $this->leitura) {
                         $groupant = "<div class='input-group-text input-group-addon down-num $pe' data-refer='$this->id' id='dw_$this->nome'><i class='fas fa-minus'></i></div>";
                         $grouppos = "<div class='input-group-text input-group-append up-num $pe' data-refer='$this->id' id='up_$this->nome'><i class='fas fa-plus'></i></div>";
@@ -1160,6 +1161,7 @@ class MyCampo
                     $this->field['style']   = 'text-align: right';
                     $this->field['class']   = $this->field['class'] . ' form-number';
                     $this->largura          = $this->largura + 10;
+                    // $this->largura = ($leng * 4) + 10;
                     if (! $this->leitura) {
                         $groupant = "<div class='input-group-text input-group-addon down-num $pe' data-refer='$this->id' id='dw_$this->nome'><i class='fas fa-minus'></i></div>";
                         $grouppos = "<div class='input-group-text input-group-append up-num $pe' data-refer='$this->id' id='up_$this->nome'><i class='fas fa-plus'></i></div>";
@@ -1185,15 +1187,13 @@ class MyCampo
                     }
                     break;
                 case 'senha':
-                    $groupant .= "<span class='input-group-text input-group-addon'
-                                id='ad_$this->nome'><i class='bi bi-key'></i></span>";
-                    break;
                 case 'password':
                     $fieldpassoculto  = [
-                        'type'  => 'password',
-                        'name'  => 'enganagoogle',
-                        'value' => '',
-                        'style' => "opacity: 0;position: absolute;",
+                        'type'     => 'password',
+                        'name'     => 'enganagoogle',
+                        'value'    => '',
+                        'tabindex' => -1,
+                        'style'    => "left:0;opacity: 0;position: absolute;",
                     ];
                     $resp                            .= form_input($fieldpassoculto);
                     $this->field['class']             = "form-control $this->classep password";
@@ -1343,9 +1343,6 @@ class MyCampo
                     $resp                       .= "</script>";
                     break;
             }
-            if ($this->tipo == 'password' || $this->tipo == 'senha') {
-            }
-
             $grouppos .= "<div id='dc-$this->id' class='div-caract badge bg-info-subtle'></div>";
 
             // debug($this->field);
@@ -1705,12 +1702,13 @@ class MyCampo
         // debug($campo);
         $campo .= "<script>";
         foreach ($this->opcoes as $key => $valor) {
-            $pos1 = strpos($valor, "-");
-            $rgb  = substr($valor, 0, $pos1 - 1);
-            $nome = substr($valor, $pos1);
-            if (substr($rgb, 0, 1) == '#') {
-                $nome = substr($valor, $pos1 + 1);
-            }
+            $pos1  = strpos($valor, "#");
+            // $rgb  = substr($valor, 0, $pos1 - 1);
+            $rgb   = substr(trim($valor), -7);
+            $nome  = substr($valor, 0, $pos1 - 3);
+            // if (substr($rgb, 0, 1) == '#') {
+            //     $nome = substr($valor, $pos1 + 1);
+            // }
             $cor    = fmtEtiquetaCor($rgb, $nome);
             $campo .= "jQuery(\"#$this->id option[value='" . $key . "']\").attr('data-content',\"$cor\");";
         }

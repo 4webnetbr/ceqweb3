@@ -24,35 +24,21 @@ class Login extends BaseController
 
     public function defCampos()
     {
-        $login        = new MyCampo('cfg_usuario', 'usu_login');
-        $login->tipo  = 'login';
-        $login->valor = '';
-        // $login->nome        = 'usu_login';
-        // $login->id          = 'usu_login';
-        // $login->label       = 'Usuário';
-        // $login->place       = 'Usuário';
+        $login              = new MyCampo('cfg_usuario', 'usu_login');
+        $login->tipo        = 'login';
+        $login->valor       = '';
         $login->obrigatorio = true;
-        // $login->hint        = 'Informe o Usuário';
-        $login->size    = 25;
-        $login->tamanho = 25;
-        // $login->tipo_form   = 'vertical';
-        $this->usu_login = $login->crInput();
+        $login->size        = 25;
+        $login->tamanho     = 25;
+        $this->usu_login    = $login->crInput();
 
-        $senha = new MyCampo('cfg_usuario', 'usu_senha');
-        // $senha->objeto      = 'input';
-        $senha->tipo  = 'password';
-        $senha->valor = '';
-        // $senha->nome        = 'usu_senha';
-        // $senha->id          = 'usu_senha';
-        // $senha->label       = 'Senha';
-        // $senha->place       = 'Senha';
+        $senha              = new MyCampo('cfg_usuario', 'usu_senha');
+        $senha->tipo        = 'password';
+        $senha->valor       = '';
         $senha->obrigatorio = true;
-        // $senha->hint        = 'Informe a Senha';
-        $senha->size      = 15;
-        $senha->maxLength = 8;
-        // $senha->largura   = 35;
-        // $senha->tipo_form   = 'vertical';
-        $this->usu_senha = $senha->crInput();
+        $senha->size        = 15;
+        $senha->maxLength   = 8;
+        $this->usu_senha    = $senha->crInput();
 
         $bt_ent          = new MyCampo();
         $bt_ent->tipo    = 'submit';
@@ -92,11 +78,11 @@ class Login extends BaseController
         return view('vw_login', $this->data);
     }
 
-/**
- * Validação de Login
- *
- * @return \CodeIgniter\HTTP\RedirectResponse
- */
+    /**
+     * Validação de Login
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse
+     */
     public function logon()
     {
         // $session = service('session', $config);
@@ -158,9 +144,11 @@ class Login extends BaseController
                 if ($usuarioId) {
                     $cookieNome = 'pguser_' . $usuarioId;
 
-                    if ($this->request->getCookie($cookieNome)) {
-                        $usuariocook = $this->request->getCookie($cookieNome);
-                        $dash        = $usuariocook;
+                    $paginasalva = $this->request->getCookie($cookieNome) ?? '';
+                    // debug($paginasalva, true);
+                    if ($paginasalva != '') {
+                        // $usuariocook = $this->request->getCookie($cookieNome);
+                        $dash = $paginasalva;
                     }
                 }
 
