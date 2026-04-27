@@ -129,7 +129,7 @@ class MyCampo
         $tip_camp['datetime']   = 'Data e Hora';
 
         $dicionario = new ConfigDicDadosModel();
-        // debug($tabela.' '.$campo);
+        // debug($tabela . ' ' . $campo);
         $dados_campo = $dicionario->getDetalhesCampo($tabela, $campo);
         // debug($dados_campo, true);
         if (count($dados_campo)) {

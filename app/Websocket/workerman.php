@@ -1,14 +1,13 @@
 <?php
 ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 use Config\Logger;
-use Workerman\Worker;
 use Workerman\Timer;
+use Workerman\Worker;
 
 // -----------------------------------------------------------------------------
-// 1. Carrega estrutura mínima do CodeIgniter
+// Bootstrap mínimo do CodeIgniter
 // -----------------------------------------------------------------------------
 require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../vendor/codeigniter4/framework/system/Common.php';
@@ -28,11 +27,12 @@ try {
 }
 
 // -----------------------------------------------------------------------------
-// 2. Classe do WebSocket
+// Classe WebSocket
 // -----------------------------------------------------------------------------
 class CommWsCeqweb
 {
     public $clients;
+    public $tabs = []; // 🔥 precisa ser PUBLIC
 
     public function __construct()
     {
@@ -41,62 +41,77 @@ class CommWsCeqweb
 
     public function onConnect($connection)
     {
-        try {
-            $this->clients->attach($connection);
-            log_message('info', 'WS: cliente conectado');
-        } catch (\Throwable $e) {
-            error_log("Erro onConnect: " . $e->getMessage());
-        }
+        $this->clients->attach($connection);
+        log_message('info', 'WS: cliente conectado');
     }
 
     public function onMessage($connection, $msg)
     {
-        try {
-            $mensagem = json_decode($msg);
-            $xmsg = $mensagem->msg ?? '';
-            $tipo = $mensagem->tipo ?? 'Cliente';
+        $mensagem = json_decode($msg);
+        $xmsg     = $mensagem->msg ?? '';
+        $tipo     = $mensagem->tipo ?? 'Cliente';
 
-            log_message('info', 'WS: Msg recebida -> ' . $xmsg);
+        // 🔥 Registro da aba
+        if ($tipo === 'REGISTER_TAB') {
+            $tabId = $xmsg;
 
-            // Mensagem interna do servidor PHP (via envia_msg_ws)
-            if ($tipo === 'Servidor') {
-                foreach ($this->clients as $client) {
-                    $client->send($msg);
-                }
-                log_message('info', 'WS: Broadcast enviado para todos os clientes');
-                return;
-            }
+            $this->tabs[$tabId] = $connection;
+            $connection->tabId  = $tabId;
 
+            log_message('info', "WS: Aba registrada -> $tabId");
+            return;
+        }
+
+        // Broadcast interno
+        if ($tipo === 'Servidor') {
             foreach ($this->clients as $client) {
-                if ($xmsg === "Ativo") {
-                    if ($connection === $client) {
-                        $client->send($msg);
-                    }
-                } elseif ($xmsg === "ok") {
-                    // Ignora resposta keepalive
-                } else {
-                    $client->send($msg);
-                    log_message('info', 'WS: Replicando mensagem para cliente');
-                }
+                $client->send($msg);
             }
-        } catch (\Throwable $e) {
-            error_log("Erro onMessage: " . $e->getMessage());
+            return;
+        }
+
+        // Replicação padrão
+        foreach ($this->clients as $client) {
+            if ($xmsg === "Ativo") {
+                if ($connection === $client) {
+                    $client->send($msg);
+                }
+            } elseif ($xmsg !== "ok") {
+                $client->send($msg);
+            }
         }
     }
 
     public function onClose($connection)
     {
-        try {
-            $this->clients->detach($connection);
-            log_message('info', "WS: Cliente desconectado: {$connection->id}");
-        } catch (\Throwable $e) {
-            error_log("Erro onClose: " . $e->getMessage());
+        $this->clients->detach($connection);
+
+        if (isset($connection->tabId)) {
+            unset($this->tabs[$connection->tabId]);
+        }
+
+        log_message('info', "WS: Cliente desconectado");
+    }
+
+    // 🔥 Derruba aba específica
+    public function killTab($tabId)
+    {
+        if (isset($this->tabs[$tabId])) {
+
+            $this->tabs[$tabId]->send(json_encode([
+                'tipo'  => 'SESSION_EXPIRED',
+                'tabId' => $tabId,
+            ]));
+
+            unset($this->tabs[$tabId]);
+
+            log_message('info', "WS: Aba derrubada -> $tabId");
         }
     }
 }
 
 // -----------------------------------------------------------------------------
-// 3. Inicializa servidor Workerman com SSL
+// Inicialização
 // -----------------------------------------------------------------------------
 $socket = new CommWsCeqweb();
 
@@ -104,69 +119,63 @@ $context = [
     'ssl' => [
         'local_cert'  => '/etc/nginx/ssl/ceqweb3.ceqnep.com.br/2933563/server.crt',
         'local_pk'    => '/etc/nginx/ssl/ceqweb3.ceqnep.com.br/2933563/server.key',
-        'verify_peer' => false
-    ]
+        'verify_peer' => false,
+    ],
 ];
 
-$ws = new Worker("websocket://0.0.0.0:8443/ws", $context);
+$ws            = new Worker("websocket://0.0.0.0:8443/ws", $context);
 $ws->transport = 'ssl';
 
 // -----------------------------------------------------------------------------
-// 4. Eventos Workerman com tratamento
+// Eventos
 // -----------------------------------------------------------------------------
-$ws->onConnect = function ($conn) use ($socket) {
-    try {
-        $socket->onConnect($conn);
-    } catch (\Throwable $e) {
-        error_log("Erro no onConnect externo: " . $e->getMessage());
-    }
-};
-
-$ws->onMessage = function ($conn, $msg) use ($socket) {
-    try {
-        $socket->onMessage($conn, $msg);
-    } catch (\Throwable $e) {
-        error_log("Erro no onMessage externo: " . $e->getMessage());
-    }
-};
-
-$ws->onClose = function ($conn) use ($socket) {
-    try {
-        $socket->onClose($conn);
-    } catch (\Throwable $e) {
-        error_log("Erro no onClose externo: " . $e->getMessage());
-    }
-};
+$ws->onConnect = fn($conn) => $socket->onConnect($conn);
+$ws->onMessage = fn($conn, $msg) => $socket->onMessage($conn, $msg);
+$ws->onClose   = fn($conn) => $socket->onClose($conn);
 
 // -----------------------------------------------------------------------------
-// 5. KeepAlive: envia "Servidor Ativo" a cada 15 segundos
+// Worker Start
 // -----------------------------------------------------------------------------
 $ws->onWorkerStart = function () use ($socket) {
-    try {
-        Timer::add(15, function () use ($socket) {
-            $msg = [
-                'msg'       => 'Ativo',
-                'controler' => 'Servidor',
-                'tipo'      => 'Servidor Ativo',
-                'usuario'   => '',
-                'id'        => '',
-            ];
 
-            foreach ($socket->clients as $client) {
-                try {
-                    $client->send(json_encode($msg));
-                    log_message('info', "WS: KeepAlive enviado para {$client->id}");
-                } catch (\Throwable $e) {
-                    error_log("Erro ao enviar KeepAlive: " . $e->getMessage());
-                }
-            }
-        });
+    // 🔥 Redis (reutilizado)
+    static $redis;
 
-        log_message('info', 'WS: Servidor configurado com sucesso');
-        log_message('info', 'WS: Rodando na porta 8443 (WSS)');
-    } catch (\Throwable $e) {
-        error_log("Erro no onWorkerStart: " . $e->getMessage());
+    if (! $redis) {
+        $redis = new \Redis();
+        $redis->connect('127.0.0.1', 6379);
     }
+
+    // 🔁 KeepAlive
+    Timer::add(15, function () use ($socket) {
+
+        $msg = [
+            'msg'  => 'Ativo',
+            'tipo' => 'Servidor Ativo',
+        ];
+
+        foreach ($socket->clients as $client) {
+            $client->send(json_encode($msg));
+        }
+
+    });
+
+    // 🔥 Verificação de expiração (CORE DO SISTEMA)
+    Timer::add(5, function () use ($socket, $redis) {
+
+        foreach ($socket->tabs as $tabId => $connection) {
+
+            if (! $redis->exists("tab:$tabId")) {
+
+                log_message('info', "WS: Expirou -> $tabId");
+
+                $socket->killTab($tabId);
+            }
+        }
+
+    });
+
+    log_message('info', 'WS: Servidor iniciado com Redis + Timer');
 };
 
 // -----------------------------------------------------------------------------

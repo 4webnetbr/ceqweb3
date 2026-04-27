@@ -37,7 +37,7 @@
     $mostra_ajuda = true;
     }
 ?>
-<div id='title' class='title col-12 px-lg-4 px-1 bg-warning float-start d-inline flex-nowrap' style="overflow-x: auto;overflow-y: hidden;font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;">
+<div id='title' class='title col-12 px-lg-4 px-1 bg-danger-subtle float-start d-inline flex-nowrap' style="overflow-x: auto;overflow-y: hidden;font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;">
   <div class='titulo col-lg-6 col-7 float-start  d-inline flex-nowrap text-nowrap' style="overflow-x: auto;overflow-y: hidden;font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;">
     <div class='d-block float-start col-1' style='font-size: calc(1.275rem + 1.1vw);margin-top: -.3rem;'>
       <?php echo $icone; ?>

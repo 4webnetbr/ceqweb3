@@ -13,6 +13,13 @@ jQuery(document).ready(function () {
       jQuery("#stat_server").removeClass("parado");
       jQuery("#stat_server").prop("title", "Servidor Conectado");
 
+      /** Registra a Aba no WebSocket */
+      conn.send(
+        JSON.stringify({
+          msg: getTabId(),
+          tipo: "REGISTER_TAB",
+        }),
+      );
       startKeepAlive();
     };
 
@@ -69,6 +76,13 @@ jQuery(document).ready(function () {
           break;
         case "NovaInspecao":
           verificaInspecao(data.msg[0], data.msg[1], data.msg[2], data.msg[3]);
+        case "NovaOcorrencia":
+          verificaOcorrencia(data.msg[0], data.msg[1]);
+        case "SESSION_EXPIRED":
+          if (data.tabId === getTabId()) {
+            alert("Sua sessão expirou nesta aba.");
+            window.location.href = "/login/logout";
+          }
       }
     };
 

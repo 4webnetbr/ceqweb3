@@ -59,9 +59,15 @@ class Login extends BaseController
 
     public function index()
     {
-        if (session()->logged_in === true) {
-            session()->destroy();
-        }
+        // if (session()->logged_in === true) {
+        //     $sessionService = new \App\Services\RedisSessionService();
+        //     $tabId          = $this->request->getHeaderLine('Tab-ID')
+        //         ?: ($_COOKIE['tabId'] ?? null);
+        //     $userId = session()->get('usu_id');
+
+        //     $sessionService->removeTab($userId, $tabId);
+        //     session()->destroy();
+        // }
         $logo = base_url('assets/images/logo_header.jpg');
 
         $this->defCampos();
@@ -155,5 +161,14 @@ class Login extends BaseController
                 return redirect()->to('/' . $dash);
             }
         }
+    }
+
+    public function logout()
+    {
+        $sessionService = new \App\Services\RedisSessionService();
+
+        $sessionService->logout();
+
+        return redirect()->to('/login');
     }
 }
