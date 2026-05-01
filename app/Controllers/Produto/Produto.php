@@ -79,8 +79,10 @@ class Produto extends BaseController
             'data' => montaListaColunasEnt($this->data, 'pro_id', $dados_produto, $campos[1]),
         ];
         cache()->save('produto', $produto, 60000);
-
-        echo json_encode($produto);
+        return $this->response
+            ->setContentType('application/json')
+            ->setJSON($produto);
+        //    echo json_encode($produto);
     }
 
     /**
@@ -96,7 +98,7 @@ class Produto extends BaseController
             $dados_produtos = (array) $dados_produtos;
         }
 
-        $entity = new EntProdutProduto($dados_produtos, true);
+        $entity = new EntProdutProduto($dados_produtos);
         $fields = $entity->campos;
 
         $this->data['secoes']    = [];
@@ -111,10 +113,10 @@ class Produto extends BaseController
         $this->data['campos'][0][] = $fields['fam_codFam'];
         $this->data['campos'][0][] = $fields['pro_ctrlot'];
         $this->data['campos'][0][] = $fields['pro_despro'];
-        $this->data['campos'][0][] = $fields['fab_codFab'];
         $this->data['campos'][0][] = $fields['cla_id'];
-        $this->data['campos'][0][] = $fields['pro_codbar_fabricante'];
+        $this->data['campos'][0][] = $fields['fab_codFab'];
         $this->data['campos'][0][] = $fields['ing_id'];
+        $this->data['campos'][0][] = $fields['pro_codbar_fabricante'];
         $this->data['campos'][0][] = $fields['pro_informacoes'];
 
         $this->data['desc_metodo'] = 'Aprovação de Produto';
@@ -169,10 +171,10 @@ class Produto extends BaseController
         $campos[0][] = $fields['fam_codFam'];
         $campos[0][] = $fields['pro_ctrlot'];
         $campos[0][] = $fields['pro_despro'];
-        $campos[0][] = $fields['fab_codFab'];
         $campos[0][] = $fields['cla_id'];
-        $campos[0][] = $fields['pro_codbar_fabricante'];
+        $campos[0][] = $fields['fab_codFab'];
         $campos[0][] = $fields['ing_id'];
+        $campos[0][] = $fields['pro_codbar_fabricante'];
         $campos[0][] = $fields['pro_informacoes'];
 
         // Dados Estoque
@@ -191,16 +193,14 @@ class Produto extends BaseController
             'vazio2',
             $fieldceq['prc_qtdemb_ceq'],
             $fieldceq['prc_conf_req'],
-            "<div class='col-4 float-start d-inline-grid'>",
             $fieldceq['prc_etiq_misturador'],
-            $fieldceq['prc_codbar'],
-            $fieldceq['prc_cor_etiqueta_mist'],
-            "</div>",
-            "<div class='col-4 float-start d-inline-grid'>",
             $fieldceq['prc_etiq_produto'],
-            $fieldceq['prc_cor_etiqueta_prod'],
-            "</div>",
             $fieldceq['prc_pedido_caixa'],
+            $fieldceq['prc_codbar'],
+            $fieldceq['prc_cor_etiqueta_prod'],
+            $fieldceq['prc_cor_etiqueta_mist'],
+            'vazio3',
+            'vazio3',
             $fieldceq['prc_deposito'],
         ];
 

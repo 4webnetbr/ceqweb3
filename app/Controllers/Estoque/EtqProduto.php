@@ -122,7 +122,7 @@ class EtqProduto extends BaseController
         $requisicao = $this->requisicao->getRequisicao($id);
 
         if (!$requisicao) {
-            return redirectWithError($this->data['controler'],41);
+            return redirectWithError($this->data['controler'], 41);
             // session()->setFlashdata('erromsg', 'Requisição não encontrada.');
             // return redirect()->to(site_url($this->data['controler']));
         }
@@ -228,10 +228,12 @@ class EtqProduto extends BaseController
     {
         $produtos = $this->requisicao->getRequisicaoRep($id);
         // debug($produtos);
-        $produtosreq = array_fill(0, $qtia, $produtos[0]);
-        // debug($produtosreq);
+        $produtosreq = array_fill(0, 1, $produtos[0]);
+        // debug($produtosreq, true);
         $chave = uniqid('etq_');
         cache()->save($chave, $produtosreq, 300); // 1 minuto
+
+        $produtosreq = array_fill(0, $qtia, $produtos[0]);
 
         $link = base_url('/CriaEtiquetaZPL/emiteEtiqueta');
 

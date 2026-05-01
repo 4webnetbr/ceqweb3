@@ -1,56 +1,56 @@
 <!-- Section Menu -->
-<?php echo $this->section('titulo');
-    if (! isset($title)) {
-    $title = $controler;
-    }
-    $mostra_ajuda = false;
-    $ajuda        = '';
-    $heig         = '1.5rem';
-    if (! isset($desc_edicao)) {
-    $heig        = '3rem';
-    $desc_edicao = '';
-    }
+<?= $this->section('titulo');
+if (!isset($title)) {
+  $title = $controler;
+}
+$mostra_ajuda = false;
+$ajuda        = '';
+$heig = '1.5rem';
+if (!isset($desc_edicao)) {
+  $heig = '3rem';
+  $desc_edicao  = '';
+}
 
-    // if (!isset($desc_metodo)){
-    if ($metodo == 'index' || $metodo == '') {
-    $ajuda = $regras_gerais;
-    if (! isset($desc_metodo)) {
-        $desc_metodo = '';
-    }
-    } elseif ($metodo == 'add' || $metodo == '000') {
-    if (! isset($desc_metodo)) {
-        $desc_metodo = 'Cadastro de ';
-    }
-    $ajuda = $regras_cadastro;
-    } elseif ($metodo == 'edit' || $metodo == '200') {
-    $ajuda = $regras_cadastro;
-    if (! isset($desc_metodo)) {
-        $desc_metodo = 'Alteração de ';
-    }
-    } elseif ($metodo == 'show' || $metodo == '000') {
-    $ajuda = $regras_cadastro;
-    if (! isset($desc_metodo)) {
-        $desc_metodo = 'Consulta de ';
-    }
-    }
-    if (strlen($ajuda) > 5) {
-    $mostra_ajuda = true;
-    }
+// if (!isset($desc_metodo)){
+if ($metodo == 'index' || $metodo == '') {
+  $ajuda = $regras_gerais;
+  if (!isset($desc_metodo)) {
+    $desc_metodo = '';
+  }
+} elseif ($metodo == 'add' || $metodo == '000') {
+  if (!isset($desc_metodo)) {
+    $desc_metodo = 'Cadastro de ';
+  }
+  $ajuda = $regras_cadastro;
+} elseif ($metodo == 'edit' || $metodo == '200') {
+  $ajuda = $regras_cadastro;
+  if (!isset($desc_metodo)) {
+    $desc_metodo = 'Alteração de ';
+  }
+} elseif ($metodo == 'show' || $metodo == '000') {
+  $ajuda = $regras_cadastro;
+  if (!isset($desc_metodo)) {
+    $desc_metodo = 'Consulta de ';
+  }
+}
+if (strlen($ajuda) > 5) {
+  $mostra_ajuda = true;
+}
 ?>
 <div id='title' class='title col-12 px-lg-4 px-1 bg-danger-subtle float-start d-inline flex-nowrap' style="overflow-x: auto;overflow-y: hidden;font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;">
   <div class='titulo col-lg-6 col-7 float-start  d-inline flex-nowrap text-nowrap' style="overflow-x: auto;overflow-y: hidden;font-size: clamp(0.8rem, 2rem - 1vw, 1.5rem) !important;">
     <div class='d-block float-start col-1' style='font-size: calc(1.275rem + 1.1vw);margin-top: -.3rem;'>
-      <?php echo $icone; ?>
+      <?= $icone; ?>
     </div>
     <div class='d-inline-flex float-start col-11 ps-3'>
-      <?php echo "<span id='legenda' style='font-size:calc(1.3rem + 0.3vw);line-height: " . $heig . "'>" .
-          $desc_metodo . " " . $title . "</span>"; ?>
+      <?= "<span id='legenda' style='display:contents;font-size:calc(1.3rem + 0.3vw);line-height: " . $heig . "'>" .
+        $desc_metodo . " " . $title . "</span>"; ?>
     </div>
     <?
     if ($desc_edicao != '') { ?>
       <div class='d-inline-flex float-start col-11 ps-3'>
-        <?php echo "<span id='desc_edicao' style='display:contents;font-size:calc(1rem + 0.1vw);line-height: 1.5rem'>" .
-            $desc_edicao . "</span>"; ?>
+        <?= "<span id='desc_edicao' style='font-size:calc(1rem + 0.1vw);line-height: 1.5rem'>" .
+          $desc_edicao . "</span>"; ?>
       </div>
     <?
     } ?>
@@ -63,11 +63,11 @@
     if ($metodo == 'index' || $metodo == '') {
       if (strlen($bt_add) > 2 && strpbrk($permissao, 'A')) { ?>
         <button id="bt_add" class="btn btn-outline-primary bt-manut btn-sm mb-2 float-end add"
-          onclick="redireciona('<?php echo $controler; ?>/add/')">
+          onclick="redireciona('<?= $controler; ?>/add/')">
           <div class="align-items-center py-15 text-start float-start font-weight-bold" style="">
             <i class="fa fa-circle-plus btn-info" style="font-size: 2rem;"></i>
           </div>
-          <div class="align-items-start txt-bt-manut d-none"><?php echo $bt_add; ?></div>
+          <div class="align-items-start txt-bt-manut d-none"><?= $bt_add; ?></div>
         </button>
       <?  }
     } elseif ((isset($mostrar)) || ($metodo == 'filtro' || $metodo == 'show') || ($destino == '')) { ?>
@@ -89,7 +89,7 @@
         </div>
         <div class="align-items-start txt-bt-manut ">Cancelar</div>
       </button>
-      <button id="bt_salvar" class="btn btn-primary bt-manut btn-sm mb-2 ms-1 float-end" type='button'>
+      <button id="bt_salvar" class="btn btn-primary bt-manut btn-sm mb-2 ms-1 float-end" form='form1' type='submit'>
         <div class="align-items-center py-15 text-start float-start font-weight-bold" style="">
           <i class="fas fa-save" style="font-size: 2rem;"></i>
         </div>
@@ -130,11 +130,11 @@
 <!-- Show AJUDA -->
 <div id='show_ajuda' class="collapse card col-lg-3 col-6 border border-2 border-info shadow p-3 me-1 float-end">
   <div class="card-header">
-    <i class='<?php echo $icone; ?>'>&nbsp;</i><?php echo $title; ?>
+    <i class='<?= $icone; ?>'>&nbsp;</i><?= $title; ?>
   </div>
   <div class="card-body">
     <h5 class="card-title">Ajuda</h5>
-    <p class="card-text"><?php echo $ajuda; ?></p>
+    <p class="card-text"><?= $ajuda; ?></p>
   </div>
 </div>
 
@@ -142,4 +142,4 @@
 <div id='show_notifica' class="collapse card col-2 border border-2 border-warning shadow p-3 me-1 float-end bg-warning-subtle ">
 </div>
 
-<?php echo $this->endSection(); ?>
+<?= $this->endSection(); ?>

@@ -993,9 +993,9 @@ function criaSelectRelativo(
         $builder->orderBy($campoNome);
         // Busca os dados (chave e nome)
         $dados = $builder->get()->getResultArray();
-        // if ($nomeTabela == 'vw_oco_subt_ocorrencia_relac') {
-        //     debug($db->getLastQuery(), false);
-        // }
+        if ($nomeTabela == 'vw_oco_tpo_ocorrencia_relac') {
+            // debug($db->getLastQuery(), false);
+        }
 
         // $dados = filtrarPorPerfil($dados);
         $opcoes = array_column($dados, $campoNome, $campoChave);
@@ -1173,4 +1173,14 @@ function retornaInsVis(int|string $req): InspecaoResult
         temS: $temS,
         temN: $temN,
     );
+}
+
+
+if (!function_exists('errorResponse')) {
+    function errorResponse(string $controller, int|string $msgCode = 41): array|\CodeIgniter\HTTP\RedirectResponse
+    {
+        session()->setFlashdata('msg', $msgCode);
+
+        return redirect()->to(site_url($controller));
+    }
 }

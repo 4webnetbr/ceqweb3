@@ -148,7 +148,7 @@ class EntOcoTipoOcorre extends Entity
         $add->i_cone    = "<i class='fas fa-plus'></i>";
         $add->place     = "Adicionar Campo";
         $add->classep   = "btn-outline-success btn-sm bt-repete";
-        $add->funcChan  = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTa/") . "','telas_aplicaveis',this);setTimeout(function(){acerta_botoes_rep_telas('telas_aplicaveis');},50)";
+        $add->funcChan  = "addCampo('" . base_url("OcoTipoOcorrencia/addCampoTa/") . "','telas_aplicaveis',this, true);";
         $ret['bt_addta']   = $add->crBotao();
 
         $del            = new MyCampo();
@@ -158,7 +158,7 @@ class EntOcoTipoOcorre extends Entity
         $del->id        = "bt_delta[$pos]";
         $del->i_cone    = "<i class='fas fa-trash'></i>";
         $del->classep   = "btn-outline-danger btn-sm bt-exclui";
-        $del->funcChan  = "exclui_campo('telas_aplicaveis',this)";
+        $del->funcChan  = "exclui_campo('telas_aplicaveis',this, $pos, true)";
         $del->place     = "Excluir Campo";
         $ret['bt_delta']   = $del->crBotao();
 

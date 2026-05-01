@@ -29,7 +29,7 @@ class CfgDicionario extends BaseController
 
     public function index()
     {
-        $this->data['colunas'] = ['Tabela', 'Banco', 'Tabela', 'Registros','Descrição',  'Ação'];
+        $this->data['colunas'] = ['Tabela', 'Banco', 'Tabela', 'Registros', 'Descrição',  'Ação'];
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
 
         echo view('vw_lista', $this->data);
@@ -39,7 +39,7 @@ class CfgDicionario extends BaseController
     {
         $result = [];
         $dados_tab = $this->dicionario->getTabelas();
-        // debug($dados_tab, false);
+        debug($dados_tab, false);
         for ($p = 0; $p < sizeof($dados_tab); $p++) {
             $tabela = $dados_tab[$p];
             $detalhes = '';
@@ -156,7 +156,6 @@ class CfgDicionario extends BaseController
             ? $dados['table_rows']
             : '';
         $this->tab_regi = $regi->create();
-
     }
 
     public function def_campos_campos($tabela)
@@ -195,7 +194,5 @@ class CfgDicionario extends BaseController
         $trel->valor = '';
         $trel->valor = relacion_tabela($relac);
         $this->tab_trel = $trel->create();
-
     }
-
 }

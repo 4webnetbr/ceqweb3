@@ -493,11 +493,13 @@ class AteRequisicao extends BaseController
                                 'rpa_cancelada' => 0,
                                 'rpa_atendida'  => $val->rep_quantia,
                                 'rpa_conferida'  => $val->rep_quantia,
-                                'rpa_aprovada'  => $val->rep_quantia,
                                 'rpa_data'      => date('Y-m-d H:i:s'),
                                 'rpa_data_conferencia'      => date('Y-m-d H:i:s'),
-                                'rpa_data_inspecao'      => date('Y-m-d H:i:s'),
                             ];
+                            if ($val->cla_insvis == 'N' && $val->rpa_id != null) {
+                                $sql_save['rpa_aprovada'] =  -1;
+                                $sql_save['rpa_data_inspecao']      = date('Y-m-d H:i:s');
+                            }
                             $ate = $this->reqprodutoate
                                 ->getProdutoRequisicaoAtendimento($val->rep_id, $val->pro_id);
 

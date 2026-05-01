@@ -69,7 +69,7 @@ class WorkAnalise extends BaseController
             $quantidade = str_replace(['.', ','], '', $saldo['quantidadeEstoque']);
             echo " Produto " . $prodproc . " Lote " . $loteproc . " ...\n";
 
-            if (!isset($prods[$prodproc]) || $prods[$prodproc]['cla_micro'] !== 'S') {
+            if (!isset($prods[$prodproc]) || $prods[$prodproc]->cla_micro !== 'S') {
                 continue;
             }
 
@@ -80,17 +80,17 @@ class WorkAnalise extends BaseController
                 'lot_validade' => $saldo['validade'],
                 'stt_id'       => null,
             ];
-            $loteInfo['lot_entrada'] = $saldo['entrada'];
+            $loteInfo->lot_entrada = $saldo['entrada'];
 
             $analiseKey = $prodproc . '-' . $loteproc;
             $analis = $analisesAssoc[$analiseKey] ?? null;
             $geramovimentacao = false;
 
-            if ($loteInfo['stt_id'] == 8) {
+            if ($loteInfo->stt_id == 8) {
                 if (is_null($analis) || $analis['stt_id'] == 16) {
                     $analisesToSave[] = [
-                        'pro_id'   => $prod['pro_id'],
-                        'lot_id'   => $loteInfo['lot_id'],
+                        'pro_id'   => $prod->pro_id,
+                        'lot_id'   => $loteInfo->lot_id,
                         'ana_qtde' => $quantidade,
                         'ana_data' => date('Y-m-d'),
                         'stt_id'   => 10,
@@ -98,17 +98,17 @@ class WorkAnalise extends BaseController
                 } else {
                     $geramovimentacao = true;
                 }
-            } elseif ($loteInfo['stt_id'] == 9) {
+            } elseif ($loteInfo->stt_id == 9) {
                 if (is_null($analis) || in_array($analis['stt_id'], [13, 16])) {
                     $analisesToSave[] = [
-                        'pro_id'   => $prod['pro_id'],
-                        'lot_id'   => $loteInfo['lot_id'],
+                        'pro_id'   => $prod->pro_id,
+                        'lot_id'   => $loteInfo->lot_id,
                         'ana_qtde' => $quantidade,
                         'ana_data' => date('Y-m-d'),
                         'stt_id'   => 10,
                     ];
                     $lotesToUpdate[] = [
-                        'lot_id' => $loteInfo['lot_id'],
+                        'lot_id' => $loteInfo->lot_id,
                         'stt_id' => 8,
                     ];
                 } else {
@@ -119,18 +119,18 @@ class WorkAnalise extends BaseController
             if ($geramovimentacao && $analis && $analis['stt_id'] == 15) {
                 if ($movim) {
                     (new SoapSapiens())->transfProdutosSapiens(
-                        $prod['pro_codpro'],
-                        $movim['tmo_transacao_erp'],
-                        $movim['dep_codorigem'],
+                        $prod->pro_codpro,
+                        $movim->tmo_transacao_erp,
+                        $movim->dep_codorigem,
                         date('d/m/Y'),
                         $quantidade,
-                        $loteInfo['lot_lote'],
-                        $movim['dep_coddestino'],
-                        data_br($loteInfo['lot_validade'])
+                        $loteInfo->lot_lote,
+                        $movim->dep_coddestino,
+                        data_br($loteInfo->lot_validade)
                     );
                 }
                 $lotesToUpdate[] = [
-                    'lot_id' => $loteInfo['lot_id'],
+                    'lot_id' => $loteInfo->lot_id,
                     'stt_id' => 9,
                 ];
             }

@@ -124,6 +124,10 @@ class EntOcoOcorrencia extends Entity
 
         $ret['cod_erp_show'] = $valid->crInput();
 
+        $claid = new MyCampo('pro_classe', 'cla_id');
+        $claid->valor = '';
+        $ret['cla_id'] = $claid->crOculto();
+
         // LOTE
         $lotid              = new MyCampo('oco_ocorrencia', 'lot_id');
         $lotid->valor       = (isset($dados['lot_id'])) ? $dados['lot_id'] : '';
@@ -141,6 +145,7 @@ class EntOcoOcorrencia extends Entity
         $lotVal = new MyCampo('oco_ocorrencia', 'lot_validade');
         $lotVal->valor = (isset($dados['lot_validade'])) ? $dados['lot_validade'] : '';
         $ret['lot_validade'] = $lotVal->crOculto();
+
 
         // VALIDADE (mostrar na tela) 
         $valid = new MyCampo('pro_sap_lote', 'lot_validade');

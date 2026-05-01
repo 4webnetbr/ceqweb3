@@ -1,0 +1,1892 @@
+// serve para utilizar com outras bibliotecas javascript, e não gerar conflito
+jQuery.noConflict();
+// variável globas de retono da função executaAjax
+var retornoAjax;
+var executandoAjax = false;
+var executandoProcesso = false;
+
+/**
+ * Show Password
+ * Mostra ou oculta a Senha
+ * Document Ready my_fields
+ */
+jQuery(document).on("click", ".show_password", function (e) {
+  e.preventDefault();
+
+  const fieldId = jQuery(this).data("field");
+  const $input = jQuery("#" + fieldId);
+
+  if (!$input.length) return;
+
+  const isPassword = $input.prop("type") === "password";
+  $input.prop("type", isPassword ? "text" : "password");
+  $input.trigger("focus");
+});
+jQuery(document)
+  .off("click", "#bt_salvar, #bt_salvar_modal")
+  .on("click", "#bt_salvar, #bt_salvar_modal", async function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    await bloqueiaTela();
+
+    id = this.id;
+    let submeter = true;
+
+    if (id == "bt_salvar") {
+      const controller = jQuery("#controler").val();
+      if (controller.toLowerCase() == "requisicao") {
+        // event.preventDefault(); // impede submit automático
+        submeter = await enviarRequisicoes(0, event);
+        if (!submeter) {
+          desBloqueiaTela();
+          return; // para aqui e não executa mais nada
+        }
+      } else if (controller.toLowerCase() === "aterequisicao") {
+        submeter = await enviarAteRequisicoes(event);
+        if (!submeter) {
+          desBloqueiaTela();
+          return; // para aqui e não executa mais nada
+        }
+      } else if (controller.toLowerCase() === "confrequisicao") {
+        submeter = await enviarConfRequisicoes(event);
+        if (!submeter) {
+          desBloqueiaTela();
+          return; // para aqui e não executa mais nada
+        }
+      } else if (controller.toLowerCase() === "inspecaoprod") {
+        submeter = enviarInspecao(event);
+        if (!submeter) {
+          desBloqueiaTela();
+          return; // para aqui e não executa mais nada
+        }
+      }
+    }
+    if (submeter) {
+      validaForm(event, id);
+    } else {
+      desBloqueiaTela();
+    }
+  });
+
+function validaForm(event, id) {
+  var elemAlterado = false;
+  var form = jQuery("#form1")[0];
+  if (id == "bt_salvar_modal") {
+    form = jQuery("#form_modal")[0];
+  }
+  // elemAlterado = Boolean(form[0].getAttribute('data-alter'));
+  if (
+    form.getAttribute("data-alter") === true ||
+    form.getAttribute("data-alter") === "true"
+  ) {
+    elemAlterado = true;
+  }
+  // }
+  if (!elemAlterado) {
+    url = "/buscas/gravasessao";
+    var mens = 7;
+    let dados = { msg: mens };
+    executaAjax(url, "json", dados);
+    if (retornoAjax) {
+      retorna_listagem();
+    }
+  } else {
+    jQuery("[id*='-valid']").addClass("d-none");
+    jQuery("[id*='-fival']").removeClass("d-block");
+    // var form = jQuery(this)[0].form;
+
+    form.classList.add("was-validated");
+    isvalido = validador(form);
+    if (!isvalido) {
+      event.preventDefault();
+      event.stopPropagation();
+      desBloqueiaTela();
+    } else {
+      // verificar se o campo select foi alterado
+      jQuery("input[data-valid], select[data-valid]").each(async function () {
+        let validar = this.getAttribute("data-valid");
+
+        if (!validar || validar === "0") return;
+        let valororig = this.getAttribute("data-valor");
+        let value = jQuery(this).val();
+
+        // Se for um array (como em selects múltiplos), converte para string
+        if (Array.isArray(value)) {
+          value = value.join(",");
+        }
+
+        if (valororig !== value) {
+          event.preventDefault();
+          event.stopPropagation();
+          boxAlert(20, false, "submit", true, 1, true, "");
+        }
+      });
+      console.log("form atual:", form);
+      console.log("existe no DOM?", document.body.contains(form));
+      console.log("jquery acha?", jQuery("#form_modal").length);
+
+      jQuery(form).trigger("submit");
+    }
+  }
+}
+/**
+ * Submete o Formulário com ajax
+ * Document Ready my_default
+ */
+async function submeteForm(event) {
+  event.preventDefault(); // ✅ controle correto
+  event.stopPropagation();
+
+  console.trace("Submit disparado");
+
+  var form = jQuery(this);
+  form.addClass("was-validated");
+
+  var tipo = form.attr("type");
+  if (tipo != "modal") {
+    bloqueiaTela();
+  }
+  if (tipo != "normal") {
+    jQuery(".moeda").each(function () {
+      var valor = converteMoedaFloat(jQuery(this).val());
+      jQuery(this).val(valor);
+    });
+    var disabled = form.find(":input:disabled").removeAttr("disabled");
+
+    var dadosForm = new FormData(this);
+
+    dadosForm.forEach(function (value, key) {
+      console.log(key + ": " + value);
+    });
+    disabled.attr("disabled", "disabled");
+    // console.log(dadosForm.values);
+    var url = form.attr("action");
+    console.trace("Submit está sendo aberto aqui");
+    retornoAjax = await executaAjax(url, "json", dadosForm);
+    if (retornoAjax) {
+      if (tipo != "modal") {
+        desBloqueiaTela();
+        if (!retornoAjax.erro) {
+          if (retornoAjax.url) {
+            if (tipo == "novaguia") {
+              redirec_blank(retornoAjax.url);
+            } else {
+              redireciona(retornoAjax.url);
+            }
+          }
+        } else {
+          boxAlert(
+            retornoAjax.msg,
+            retornoAjax.erro,
+            retornoAjax.url,
+            false,
+            1,
+            false,
+          );
+        }
+      } else {
+        var myModalEl = document.getElementById("myModal");
+        var modal = bootstrap.Modal.getInstance(myModalEl);
+        modal.hide();
+        desBloqueiaTela();
+        if (retornoAjax.msg != "") {
+          mostranoToast(retornoAjax.msg, retornoAjax.erro);
+        }
+      }
+    }
+  }
+  // }
+}
+
+function getTabId() {
+  let tabId = sessionStorage.getItem("tabId");
+
+  if (!tabId) {
+    tabId = crypto.randomUUID();
+    sessionStorage.setItem("tabId", tabId);
+  }
+  // 🔥 garante envio em qualquer request (inclusive redirect)
+  document.cookie = `tabId=${tabId}; path=/`;
+
+  return tabId;
+}
+
+// roda imediatamente
+jQuery.ajaxSetup({
+  beforeSend: function (xhr) {
+    xhr.setRequestHeader("Tab-ID", getTabId());
+  },
+});
+
+jQuery(document).ready(function () {
+  jQuery("body").on("submit", "#form1, #form_modal", submeteForm);
+
+  // // Gera ou recupera um identificador único para a guia
+  // if (!sessionStorage.getItem("tabId")) {
+  //   // grava na seção local data
+  //   sessionStorage.setItem(
+  //     "tabId",
+  //     Date.now() + "-" + Math.random().toString(36).substr(2, 9),
+  //   );
+  // }
+
+  // // Adiciona o identificador em um campo oculto
+  // const tabId = sessionStorage.getItem("tabId");
+  // document.cookie = `tabId=${tabId}; path=/;`;
+
+  // jQuery.ajaxSetup({
+  //   beforeSend: function (xhr) {
+  //     xhr.setRequestHeader("Tab-ID", sessionStorage.getItem("tabId"));
+  //   },
+  // });
+
+  /**
+   * se a div Toast tiver conteúdo mostra por 3 segundos
+   * Document Ready my_default
+   */
+  // variável que armazena o texto contido na div que conte
+  texto = jQuery(".toast-body").html();
+  if (jQuery.trim(texto) != "") {
+    confirma = erro = false;
+    if (!isNaN(jQuery.trim(texto))) {
+      // é número
+      msg = jQuery.trim(texto);
+      msg_id = msg_cfg[msg - 1];
+      mensagem = msg_id.msg_mensagem;
+      tipo = msg_id.msg_tipo;
+      if (tipo == "P") {
+        titulo =
+          '<i class="fa-solid fa-circle-question fa-lg"></i><span class="mx-2">' +
+          msg_id.msg_titulo +
+          "</span>";
+        confirma = true;
+      } else if (tipo == "A") {
+        titulo =
+          '<i class="fa-solid fa-circle-exclamation fa-lg"></i><span class="mx-2">' +
+          msg_id.msg_titulo +
+          "</span>";
+        tipo = 1;
+      } else if (tipo == "E") {
+        titulo =
+          '<i class="fa-solid fa-circle-xmark fa-lg"></i><span class="mx-2">' +
+          msg_id.msg_titulo +
+          "</span>";
+        erro = true;
+      } else if (tipo == "I") {
+        titulo =
+          '<i class="fa-solid fa-circle-info fa-lg"></i><span class="mx-2">' +
+          msg_id.msg_titulo +
+          "</span>";
+      }
+      if (confirma) {
+        boxAlert(msg, false, "", true, 1, true, titulo);
+      } else if (erro) {
+        boxAlert(msg, true, "", true, 1, false, titulo);
+      } else {
+        cor = msg_id.msg_cor;
+        jQuery("#toast-title").html(titulo);
+        jQuery("#myToast").removeClass("bg-success");
+        jQuery("#myToast").addClass(cor);
+        jQuery("#toast-body").html(mensagem);
+        mostranoToast(mensagem);
+      }
+    }
+    // if (!confirma && !erro) {
+    //     showToast();
+    // }
+  }
+
+  jQuery(".toast").on("hide.bs.toast", function () {
+    jQuery(".toast-body").html("");
+  });
+
+  /**
+   * aprovaProduto
+   * Aprova ou Rejeita o Produto
+   */
+  jQuery("#bt_aprovar").on("click", function (event) {
+    var form = jQuery("#form1");
+    jQuery("[id*='-valid']").addClass("d-none");
+    jQuery("[id*='-fival']").removeClass("d-block");
+    var form = jQuery("#form1")[0];
+
+    form.classList.add("was-validated");
+    isvalido = validador(form);
+    if (isvalido) {
+      jQuery("<input>")
+        .attr({
+          type: "hidden",
+          id: "aprova",
+          name: "aprova",
+          value: 3, // id do status aprovado
+        })
+        .appendTo("#form1");
+      jQuery("#form1").trigger("submit");
+    } else {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  });
+
+  /**
+   * rejeitaProduto
+   * Rejeita o Produto
+   */
+  jQuery("#bt_rejeitar").on("click", function (event) {
+    var form = jQuery("#form1");
+    jQuery("[id*='-valid']").addClass("d-none");
+    jQuery("[id*='-fival']").removeClass("d-block");
+    var form = jQuery("#form1")[0];
+
+    form.classList.add("was-validated");
+    isvalido = validador(form);
+    if (isvalido) {
+      jQuery("<input>")
+        .attr({
+          type: "hidden",
+          id: "aprova",
+          name: "aprova",
+          value: 2, // id do status reprovado
+        })
+        .appendTo("#form1");
+      jQuery("#form1").trigger("submit");
+    } else {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  });
+
+  // setInterval(() => {
+  //     retornoAjax = false;
+  //     url = 'buscas/verSessao';
+  //     executaAjax(url, 'json');
+  //     if (!retornoAjax.sessao) {
+  //         redireciona('/');
+  //     }
+  // }, 120000);
+});
+
+function getContrastYIQ(hexcolor) {
+  hexcolor = hexcolor.replace("#", "");
+  const r = parseInt(hexcolor.substr(0, 2), 16);
+  const g = parseInt(hexcolor.substr(2, 2), 16);
+  const b = parseInt(hexcolor.substr(4, 2), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "black" : "white";
+}
+
+function rgbToHex(rgb) {
+  const result = rgb.match(/\d+/g);
+  return result
+    ? "#" + result.map((x) => (+x).toString(16).padStart(2, "0")).join("")
+    : "#000000";
+}
+
+async function showToast(message, isAlert = false) {
+  let msg_id = null;
+  let titulo = "Informação";
+  let corpo = message;
+  let fundo = isAlert ? "#dc3545" : "#198754";
+  let classeFundo = isAlert ? "bg-danger" : "bg-success";
+  let icone = `<i class="bi ${
+    isAlert ? "bi-exclamation-triangle" : "bi-info-circle"
+  }"></i>`;
+  let tituloHTML = `${icone} ${titulo}`;
+
+  if (!isNaN(message)) {
+    const msgvar = await getMensagem(message);
+
+    // msg_id = msg_cfg[parseInt(message) - 1];
+    if (msgvar) {
+      titulo = msgvar.msg_titulo || titulo;
+      corpo = msgvar.msg_mensagem || corpo;
+      tituloHTML = msgvar.msg_desc_tipo || `${icone} ${titulo}`;
+      if (msgvar.msg_cor) {
+        if (msgvar.msg_cor.startsWith("#")) {
+          fundo = msgvar.msg_cor;
+          classeFundo = "";
+        } else {
+          classeFundo = msgvar.msg_cor;
+          fundo = null; // será determinado via CSS real
+        }
+      }
+    }
+  }
+
+  const container = document.getElementById("toast-container");
+  const toast = document.createElement("div");
+  toast.className = `toast align-items-center ${classeFundo}`.trim();
+
+  // Aplicar contraste adequado ao texto
+  let textoCor = "white";
+  if (fundo && fundo.startsWith("#")) {
+    toast.style.backgroundColor = fundo;
+    textoCor = getContrastYIQ(fundo);
+    toast.style.color = textoCor;
+  } else if (classeFundo) {
+    // cria elemento temporário para obter a cor real
+    const temp = document.createElement("div");
+    temp.className = classeFundo;
+    temp.style.display = "none";
+    document.body.appendChild(temp);
+
+    const computed = getComputedStyle(temp).backgroundColor;
+    const hex = rgbToHex(computed);
+    textoCor = getContrastYIQ(hex);
+    toast.classList.add(`text-${textoCor}`);
+    document.body.removeChild(temp);
+  }
+
+  // Cabeçalho
+  const header = document.createElement("div");
+  header.className = "toast-header";
+  header.style.color = fundo; // título sempre preto
+
+  const title = document.createElement("strong");
+  title.className = "me-auto";
+  title.innerHTML = tituloHTML;
+
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "btn-close";
+  closeBtn.style.color = "black";
+  closeBtn.setAttribute("aria-label", "Fechar");
+
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+
+  // Corpo
+  const body = document.createElement("div");
+  body.className = "toast-body";
+  body.textContent = corpo;
+
+  toast.appendChild(header);
+  toast.appendChild(body);
+  container.appendChild(toast);
+
+  // Força reflow e ativa a animação
+  void toast.offsetHeight;
+  toast.classList.add("toast-animar");
+
+  const timeout = setTimeout(() => {
+    toast.classList.remove("toast-animar");
+    toast.addEventListener("transitionend", () => toast.remove());
+  }, 6000);
+
+  closeBtn.addEventListener("click", () => {
+    clearTimeout(timeout);
+    toast.classList.remove("toast-animar");
+    toast.addEventListener("transitionend", () => toast.remove());
+  });
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+/**
+ * bloqueiaTela
+ * Bloqueia a tela e apresenta a msg Processando...
+ */
+async function bloqueiaTela() {
+  await mostraBloqueio();
+  await new Promise(requestAnimationFrame);
+  await new Promise(requestAnimationFrame);
+}
+async function mostraBloqueio() {
+  const $tela = jQuery("#bloqueiaTela");
+
+  if (!$tela.is(":visible")) {
+    $tela.show();
+  }
+}
+
+function isTelaBloqueada() {
+  return jQuery("#bloqueiaTela").is(":visible");
+}
+/**
+ * desBloqueiaTela
+ * Desbloqueia a Tela
+ */
+function desBloqueiaTela() {
+  jQuery("#bloqueiaTela").css("display", "none");
+}
+// async function desBloqueiaTela() {
+//   await new Promise((resolve) =>
+//     requestAnimationFrame(() => requestAnimationFrame(resolve)),
+//   );
+//   if (!executandoAjax) {
+//     jQuery("#bloqueiaTela").stop(true, true).css({
+//       display: "none",
+//       opacity: 0,
+//       visibility: "hidden",
+//     });
+//   }
+// }
+
+/** Função nova
+ *  Não faz nada é só pra exemplificar
+ */
+function naofaznada() {}
+
+/**
+ * submeter
+ * submete um form, para um destino
+ */
+function submeter(destino) {
+  jQuery("[id*='-valid']").addClass("d-none");
+  jQuery("[id*='-fival']").removeClass("d-block");
+  var form = jQuery("#form1")[0];
+
+  form.classList.add("was-validated");
+  isvalido = validador(form);
+  if (isvalido) {
+    jQuery("#form1").attr("action", destino);
+    jQuery("#form1").trigger("submit");
+  } else {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+}
+
+/**
+ * redireciona
+ * Redireciona a execução para a URL fornecida
+ * @param {string} url - URL de destino
+ */
+function redireciona(url) {
+  bloqueiaTela();
+  window.location.assign(url);
+}
+
+/**
+ * redirec_blank
+ * Abre a URL fornecida numa nova Janela
+ * @param {string} url - URL de destino
+ */
+function redirec_blank(url, event = null) {
+  if (event) event.stopPropagation(); // Para cliques dentro de labels ou outros elementos
+  window.open(url, "_blank");
+}
+
+/**
+ * retorna_listagem
+ * Retorna para a a Listagem do Controler
+ *
+ *
+ */
+function retorna_listagem() {
+  var arr = location.href.split("/");
+  var controler = arr[0] + "//" + arr[2] + "/" + arr[3];
+  location.href = controler;
+}
+
+/**
+ * salva página atual
+ * Salva a página atual no cookie, para retornar para a mesma página, quando entrar
+ *
+ */
+function salvaPagina() {
+  var controller = jQuery("#controler").val();
+  var usuario = jQuery("#usu_id").val();
+  if (!usuario) {
+    console.warn("Usuário não identificado.");
+    return;
+  }
+
+  var cookieNome = "pguser_" + usuario;
+  var cookie = getCookie(cookieNome);
+  var dados = {};
+
+  if (cookie) {
+    try {
+      // dados = JSON.parse(cookie);
+      dados = cookie;
+    } catch (e) {
+      console.warn("Cookie mal formatado, sobrescrevendo.");
+    }
+  }
+
+  dados[usuario] = controller;
+  setCookie(cookieNome, controller, 7);
+}
+/**
+ * retorna_url
+ * Retorna para a URL anterior
+ *
+ * @param {int} tipo - Se for igual a 1, volta para a URL anterior gravada
+ *
+ */
+function retorna_url(tipo = 1) {
+  window.history.back();
+}
+
+/**
+ * openUrlDiv
+ * Abre a URL fornecida, dentro da Div informada
+ * @param {string} url - URL de destino
+ * @param {string} div - nome da Div de destino
+ */
+function openUrlDiv(url, div) {
+  retornoAjax = false;
+  executaAjax(url, "html", "");
+  if (retornoAjax) {
+    jQuery("#" + div).html(retorno);
+  }
+  // jQuery.ajax({
+  //     type: 'POST',
+  //     async: true,
+  //     dataType: 'html',
+  //     url: url,
+  //     success: function (retorno) {
+  //         jQuery("#" + div).html(retorno);
+  //     },
+  //     error: function (xhr, ajaxOptions, thrownError) {
+  //         retorno = xhr.statusText;
+  //         boxAlert(retorno, true, '', false, 2, false);
+  //     }
+  // });
+}
+
+/**
+ * openOpcMenu
+ * Abre a URL fornecida, dentro da Div informada
+ * @param {string} url - URL de destino
+ * @param {string} div - nome da Div de destino
+ */
+function openOpcMenu(url) {
+  retornoAjax = false;
+  executaAjax(url, "html", "");
+  if (retornoAjax) {
+    jQuery("#" + div).html(retorno);
+  }
+  // jQuery.ajax({
+  //     type: 'POST',
+  //     async: true,
+  //     dataType: 'html',
+  //     url: url,
+  //     success: function (retorno) {
+
+  //         jQuery("#" + div).html(retorno);
+  //     },
+  //     error: function (xhr, ajaxOptions, thrownError) {
+  //         retorno = xhr.statusText;
+  //         boxAlert(retorno, true, '', false, 2, false);
+  //     }
+  // });
+}
+
+/**
+ * openPDFModal
+ * Abre o PDF informado na URL, numa Janela Modal
+ * @param {string} url - URL do PDF
+ * @param {string} titulo - titulo da Janela Modal
+ */
+async function openPDFModal(url, titulo = false) {
+  const retornoAjax = await executaAjaxWait(url, "json");
+  if (retornoAjax) {
+    if (titulo) {
+      jQuery("#myModalLabel").html(titulo);
+    }
+    let pdfBase64 = retornoAjax.pdf;
+    let pdfretornado =
+      "<embed src='data:application/pdf;base64," +
+      pdfBase64 +
+      "' type='application/pdf' width='100%' height='500px'>";
+
+    jQuery("#modal-body").html(pdfretornado);
+
+    // Selecionando o container do modal
+    const container = document.querySelector("#myModal"); // Supondo que 'myModal' seja o ID do seu modal
+
+    // Criando o modal do Bootstrap
+    const modal = new bootstrap.Modal(container);
+
+    // Adicionando a classe 'resize' ao corpo do modal
+    container.querySelector(".modal-content").classList.add("resize");
+
+    modal.show();
+  }
+}
+
+/**
+ * openModal
+ * Abre a URL informada, numa Janela Modal
+ * @param {string} url - URL
+ * @param {string} titulo - titulo da Janela Modal
+ */
+async function openModal(url, titulo = false) {
+  const retornoAjax = await executaAjaxWait(url, "html");
+  if (retornoAjax) {
+    if (titulo) {
+      jQuery(".modal-title").html(titulo);
+    }
+    jQuery(".modal-body").html(retornoAjax);
+    var myModal = new bootstrap.Modal(document.getElementById("myModal"), {});
+    // document.onreadystatechange = function () {
+    myModal.show();
+  }
+}
+
+/**
+ * openImgDiv
+ * Abre a Imagem fornecida, dentro da Div informada
+ * @param {string} Imagem - URL da imagem de destino
+ * @param {string} div - nome da Div de destino
+ */
+function openImgDiv(url, div) {
+  text = "";
+  text += "<div id='" + div + "' onclick='removeDiv(\"" + div + "\")'>";
+  text +=
+    "<div class='d-block m-auto h-100 w-100 opacity-50 bg-gray-padrao position-absolute ' style='z-index: 200; top:0' >";
+  text += "</div>";
+  text +=
+    "<div class='d-block m-auto h-75 w-75 border border-2 border-info rounded-3 shadow bg-white position-relative m-auto align-itens-center' style='z-index: 300;'>";
+  text +=
+    "<img src='" +
+    url +
+    "' class='d-block position-relative m-auto' style='max-height: 40rem;' />";
+  text += "</div>";
+  text += "</div>";
+  jQuery("body").append(text);
+}
+
+/**
+ * removeDiv
+ * remove a Div Aberta
+ * @param {string} div - nome da Div de destino
+ */
+function removeDiv(div) {
+  jQuery("#" + div).remove();
+}
+
+/**
+ * toogle_div
+ * Mostra ou esconde uma Div
+ *
+ * @param {string} iddiv - id da Div
+ */
+function toogle_div(iddiv) {
+  jQuery("#" + iddiv).toggleClass("d-none");
+}
+
+/**
+ * excluir
+ * Apresenta o box de alerta de exclusão, e caso confirmado, exclui o registro
+ *
+ * @param {url} url - url de exclusão do Registro
+ * @param {string} registro - descrição do Registro que será excluído
+ */
+
+function excluir(url, registro) {
+  msg =
+    "Confirma a Exclusão do Registro?<br><h5 class='text-center'>" +
+    registro +
+    "</h5>";
+  boxAlert(1, false, url, false, 4, true);
+}
+
+/**
+ * ativInativ
+ * Apresenta o box de alerta de Ativação/Inativação, e caso confirmado, ativa ou inativa o registro
+ *
+ * @param {url} url - url de exclusão do Registro
+ * @param {string} registro - descrição do Registro que será excluído
+ */
+
+function ativInativ(url, registro, ativo) {
+  if (ativo) {
+    msg =
+      "Confirma a Inativação do Registro?<br><h5 class='text-center'>" +
+      registro +
+      "</h5>";
+    tit = "Inativação de Registro";
+    msg = 4;
+  } else {
+    msg =
+      "Confirma a Ativação do Registro?<br><h5 class='text-center'>" +
+      registro +
+      "</h5>";
+    tit = "Ativação de Registro";
+    msg = 16;
+  }
+  boxAlert(msg, false, url, false, 4, true, tit);
+}
+
+var cache = {};
+
+async function getMensagem(id) {
+  if (cache[id]) {
+    return cache[id];
+  }
+
+  const response = await fetch(`${window.location.origin}/mensagem/${id}`);
+  const data = await response.json();
+
+  cache[id] = data;
+
+  return data;
+}
+
+/**
+ * boxAlert
+ * Cria um box de Alerta para o Usuário
+ * Se for confirmação de exclusão, a url deve ser vazia e o box retornará a opção escolhida (Sim/Não)
+ *
+ * @param {string} msg    - Mensagem que será exibida
+ * @param {boolean} erro  - verdadeiro, caso seja uma mensagem de ERRO
+ * @param {url}     url   - url que será executada no callback
+ * @param {boolean} close - verdadeiro, Mostra o botão para fechar o Alerta
+ * @param {integer} tipo  - Determina as características do Box 1 = Atenção, 2 = Informação
+ * @param {boolean} confirma  - verdadeiro, Mostra os botões Sim ou Não para Confirmação
+ * @param {string} titulo    - Título do Alerta
+ * @param {array} opcoes  - verdadeiro, Mostra os botões Sim ou Não para Confirmação
+ */
+async function boxAlert(
+  msg,
+  erro = false,
+  url,
+  close = false,
+  tipo = 1,
+  confirma = false,
+  titulo = "",
+  opcoes = false,
+) {
+  // --- normalização de título/tipo/cor a partir do msg ou do tipo informado
+  let cor = "bg-warning";
+  bootbox.setLocale("pt-BR");
+
+  if (!isNaN(msg)) {
+    // mensagem por ID do array msg_cfg
+    const msgvar = await getMensagem(msg);
+    // const msg_id = msg_cfg[+msg - 1];
+    if (msgvar) {
+      msg = msgvar.msg_mensagem;
+      tipo = msgvar.msg_tipo;
+      cor = msgvar.msg_cor;
+
+      if (tipo === "P") {
+        titulo =
+          '<h3><i class="fa-solid fa-circle-question fa-lg"></i><span class="mx-2">' +
+          msgvar.msg_titulo +
+          "</span></h3>";
+        confirma = true;
+      } else if (tipo === "A") {
+        titulo =
+          '<h3><i class="fa-solid fa-circle-exclamation fa-lg"></i><span class="mx-2">' +
+          msgvar.msg_titulo +
+          "</span></h3>";
+        tipo = 1; // mantém comportamento original
+      } else if (tipo === "E") {
+        titulo =
+          '<h3><i class="fa-solid fa-circle-xmark fa-lg"></i><span class="mx-2">' +
+          msgvar.msg_titulo +
+          "</span></h3>";
+        erro = true;
+      } else if (tipo === "I") {
+        titulo =
+          '<h3><i class="fa-solid fa-circle-info fa-lg"></i><span class="mx-2">' +
+          msgvar.msg_titulo +
+          "</span></h3>";
+      } else if (tipo === "S") {
+        titulo =
+          '<h3><i class="fa-regular fa-circle-question fa-lg"></i><span class="mx-2">' +
+          msgvar.msg_titulo +
+          "</span></h3>";
+      }
+    }
+  } else {
+    // mensagem direta + tipo numérico informado
+    if (tipo === 1) {
+      // ATENÇÃO
+      titulo =
+        '<h3><i class="fas fa-exclamation-triangle"></i><span class="mx-2">Atenção</span></h3>';
+      tipo = "A";
+      cor = "bg-warning";
+    } else if (tipo === 2) {
+      // INFORMAÇÃO
+      titulo =
+        '<h3><i class="fas fa-info-circle"></i><span class="mx-2">Informação</span></h3>';
+      tipo = "I";
+      cor = "bg-success";
+    } else if (tipo === 3) {
+      // ERRO
+      titulo =
+        '<h3><i class="fas fa-circle-xmark"></i><span class="mx-2">ERRO!</span></h3>';
+      tipo = "E";
+      cor = "bg-danger";
+    } else if (tipo === 9) {
+      // SELEÇÃO
+      tit =
+        '<h3><i class="far fa-circle-question"></i><span class="mx-2">' +
+          titulo ?? "Selecione" + "</span></h3>";
+      titulo = tit;
+      tipo = "S";
+      cor = "bg-primary";
+    }
+  }
+
+  // helper para aplicar cor e fonte só no último bootbox aberto
+  const pintaCabecalho = () => {
+    setTimeout(() => {
+      const $hdr = jQuery(".bootbox .modal-header").last();
+      if ($hdr.length) {
+        $hdr.addClass(cor);
+        if (tipo === "A") $hdr.css("color", "black");
+        else if (tipo === "S") $hdr.css("color", "white");
+        else if (tipo === "I") $hdr.css("color", "white");
+        else if (tipo === "E") $hdr.css("color", "yellow");
+        else if (tipo === "P") $hdr.css("color", "black");
+      }
+    }, 0);
+  };
+
+  // ---- retorna Promise para permitir await (mantendo callbacks originais)
+  return new Promise((resolve) => {
+    console.trace("Modal está sendo aberto aqui");
+    estavabloqueado = isTelaBloqueada();
+    desBloqueiaTela();
+    if (!confirma) {
+      if (opcoes) {
+        // SELECT (prompt)
+        const dlg = bootbox.prompt({
+          title: titulo,
+          message: "<div class='text-center'><h5>" + msg + "</h5></div>",
+          centerVertical: true,
+          size: "medium",
+          closeButton: false,
+          cancelButton: false,
+          inputType: "select",
+          inputOptions: [
+            ...opcoes.map(({ id, text }) => ({ text, value: String(id) })),
+          ],
+          value: String(opcoes[0].id),
+          callback: function (result) {
+            jQuery(".modal-backdrop").removeClass("bootbox");
+            if (estavabloqueado) {
+              bloqueiaTela();
+            }
+            resolve(result);
+          },
+        });
+        pintaCabecalho();
+        jQuery(".modal-backdrop").addClass("bootbox");
+        return;
+      }
+
+      // ALERT
+      const dlg = bootbox.alert({
+        title: titulo,
+        message: "<div class='text-center'><h5>" + msg + "</h5></div>",
+        centerVertical: true,
+        closeButton: close,
+        size: "large",
+        className: "rubberBand animated",
+        callback: function () {
+          if (!erro) {
+            // comportamento original: redireciona se NÃO for erro
+            jQuery(".modal-backdrop").removeClass("bootbox");
+            if (url != "") {
+              redireciona(url);
+            }
+          }
+          resolve(true); // fecha -> resolve
+        },
+      });
+      pintaCabecalho();
+      jQuery(".modal-backdrop").addClass("bootbox");
+      return;
+    }
+
+    // CONFIRM
+    if (titulo === "") {
+      titulo =
+        '<h3><i class="fas fa-question-circle"></i><span class="mx-2">Exclusão de Registro</span></h3>';
+    }
+
+    const dlg = bootbox.confirm({
+      title: titulo,
+      message: "<div class='text-center'><h5>" + msg + "</h5></div>",
+      centerVertical: true,
+      size: "large",
+      closeButton: false,
+      swapButtonOrder: true,
+      buttons: {
+        cancel: {
+          label: '<i class="fa fa-times"></i> Não',
+          className: "btn-secondary",
+        },
+        confirm: {
+          label: '<i class="fa fa-check"></i> Sim',
+          className: "btn-danger ",
+        },
+      },
+      callback: function (result) {
+        if (!result) {
+          if (estavabloqueado) {
+            bloqueiaTela();
+          }
+          resolve(false);
+          return;
+        }
+
+        // confirmou:
+        if (url === "submit") {
+          jQuery("#form1").trigger("submit");
+          resolve(true);
+          return;
+        }
+        if (url === "") {
+          resolve(true);
+          if (estavabloqueado) {
+            bloqueiaTela();
+          }
+          return;
+        }
+
+        if (typeof url === "string" && url.indexOf("location") > -1) {
+          // ex.: "location.href='...'"
+          try {
+            eval(url);
+          } catch (e) {}
+          if (estavabloqueado) {
+            bloqueiaTela();
+          }
+          resolve(true);
+          return;
+        }
+
+        if (typeof url === "string" && url.indexOf("back") > -1) {
+          window.history.back();
+          resolve(true);
+          return;
+        }
+
+        if (tipo === "P") {
+          // mantém comportamento original com executaAjax + retornoAjax global
+          retornoAjax = false;
+          executaAjax(url, "json", "");
+          if (retornoAjax) {
+            if (retornoAjax.erro) {
+              // exibe erro e depois resolve(false)
+              boxAlert(retornoAjax.msg, true, "", false, 1, false).then(() =>
+                resolve(false),
+              );
+            } else {
+              // volta para o controller atual
+              const arr = location.href.split("/");
+              const controler = arr[0] + "//" + arr[2] + "/" + arr[3];
+              // location.href = controler;
+              jQuery("#table").DataTable().ajax.reload(null, false);
+              msgtoast = retornoAjax.msg;
+              if (msgtoast != "") {
+                mostranoToast(msgtoast);
+              }
+
+              resolve(true);
+            }
+          } else {
+            // se executaAjax for assíncrona, aqui nada foi retornado ainda
+            resolve(false);
+          }
+        } else {
+          redireciona(url);
+          resolve(true);
+        }
+      },
+    });
+    pintaCabecalho();
+    jQuery(".modal-backdrop").addClass("bootbox");
+  });
+}
+
+/**
+ * abre_tab
+ * abre a Url fornecida como parametro, via Ajax, na Tab fornecida
+ *
+ * @param {url} url    -
+ * @param {string} tab    -
+ * @param {string} tipo    - para o caso de etapas
+ */
+
+function abre_tab(url, tab, tipo) {
+  retornoAjax = false;
+  executaAjax(url, "json", "");
+  if (retornoAjax) {
+    ulprin = jQuery("#tabPrincipal");
+    liprin = ulprin.find("li");
+    if (tipo == "etapa") {
+      tabpos = liprin[0].id.substring(3);
+      jQuery("#li-" + tabpos).id = "li-" + tab;
+      jQuery("#but-" + tabpos).id = "but-" + tab;
+      jQuery("#tab-" + tabpos).id = "tab-" + tab;
+      jQuery("#tab-" + tab).html(retorno);
+    } else {
+      if (jQuery("#li-" + tab).length) {
+        jQuery("#tab-" + tab).html(retorno);
+      } else {
+        textli =
+          "<li id='li=" +
+          retorno.dados.url_amiga +
+          "' class='nav-item' role='presentation'>";
+        textli +=
+          "    <button class='nav-link active' id='but-" +
+          retorno.dados.url_amiga +
+          "' data-bs-toggle='tab' data-bs-target='#tab-" +
+          retorno.dados.url_amiga +
+          "' type='button' role='tab' aria-controls='tab-" +
+          retorno.dados.url_amiga +
+          "' aria-selected='true'>";
+        textli += "    <i class='far fa-hand-point-right'></i>";
+        textli += "        &nbsp;-&nbsp;" + retorno.dados.title;
+        textli += "    </button>";
+        textli += "</li>";
+        jQuery("#tabPrincipal").append(textli);
+        textpn =
+          "<div id='tab-" +
+          retorno.dados.url_amiga +
+          "' class='tab-pane-prin fade p-lg-3 p-2 active show' role='tabpanel' aria-labelledby='tab-" +
+          retorno.dados.url_amiga +
+          "' tabindex='0'>";
+        textpn += retorno.html;
+        textpn += "</div>";
+        jQuery("#principal").append(textpn);
+      }
+    }
+  }
+
+  // ulprin = jQuery('#tabPrincipal');
+  // liprin = ulprin.find('li');
+  // jQuery.ajax({
+  //     type: 'POST',
+  //     async: true,
+  //     dataType: 'json',
+  //     url: url,
+  //     success: function (retorno) {
+  //         if (tipo == 'etapa') {
+  //             tabpos = liprin[0].id.substring(3);
+  //             jQuery("#li-" + tabpos).id = 'li-' + tab;
+  //             jQuery("#but-" + tabpos).id = 'but-' + tab;
+  //             jQuery("#tab-" + tabpos).id = 'tab-' + tab;
+  //             jQuery("#tab-" + tab).html(retorno);
+  //         } else {
+  //             if (jQuery("#li-" + tab).length) {
+  //                 jQuery("#tab-" + tab).html(retorno);
+  //             } else {
+  //                 textli = "<li id='li=" + retorno.dados.url_amiga + "' class='nav-item' role='presentation'>"
+  //                 textli += "    <button class='nav-link active' id='but-" + retorno.dados.url_amiga + "' data-bs-toggle='tab' data-bs-target='#tab-" + retorno.dados.url_amiga + "' type='button' role='tab' aria-controls='tab-" + retorno.dados.url_amiga + "' aria-selected='true'>";
+  //                 textli += "    <i class='far fa-hand-point-right'></i>";
+  //                 textli += "        &nbsp;-&nbsp;" + retorno.dados.title;
+  //                 textli += "    </button>";
+  //                 textli += "</li>";
+  //                 jQuery("#tabPrincipal").append(textli);
+  //                 textpn = "<div id='tab-" + retorno.dados.url_amiga + "' class='tab-pane-prin fade p-lg-3 p-2 active show' role='tabpanel' aria-labelledby='tab-" + retorno.dados.url_amiga + "' tabindex='0'>";
+  //                 textpn += retorno.html;
+  //                 textpn += "</div>";
+  //                 jQuery("#principal").append(textpn);
+  //             }
+  //         }
+  //     },
+  //     error: function (xhr, ajaxOptions, thrownError) {
+  //         retorno = xhr.statusText;
+  //         boxAlert(retorno, true, '', false, 2, false);
+  //     }
+  // });
+}
+
+/**
+ * removerTags
+ * Remove os Tags Html do texto fornecido como parâmetro
+ *
+ * @param {string} html    - Texto original
+ * @return {string} texto sem tags
+ */
+function removerTags(html) {
+  const data = new DOMParser().parseFromString(html, "text/html");
+  return data.body.textContent || "";
+}
+
+/**
+ * tiraAcentos
+ * Remove os Acentos do texto fornecido como parâmetro
+ *
+ * @param {string} txt    - Texto original
+ * @return {string} texto sem acentos
+ */
+function tiraAcentos(txt) {
+  if (txt != null && txt != "" && txt != undefined) {
+    var i = txt.toLowerCase().trim();
+
+    var acentos = "ãáàâäéèêëíìîïõóòôöúùûüç";
+    var sem_acentos = "aaaaaeeeeiiiiooooouuuuc";
+
+    for (var x = 0; x < i.length; x++) {
+      var str_pos = acentos.indexOf(i.substr(x, 1));
+      if (str_pos != -1) {
+        i = i.replace(acentos.charAt(str_pos), sem_acentos.charAt(str_pos));
+      }
+    }
+
+    return i;
+  } else {
+    return txt;
+  }
+}
+
+/**
+ * Cancelar
+ * Cancela a Edição de Dados atual e retorna para a tela de listagem
+ * Caso existam informações não Salvas mostra o Box de Confirmação do cancelamento
+ *
+ */
+function cancelar() {
+  var arr = location.href.split("/");
+  var controler = arr[0] + "//" + arr[2] + "/" + arr[3];
+  var elemAlterado = false;
+  var form = jQuery("#form1");
+
+  // elemAlterado = Boolean(form[0].getAttribute('data-alter'));
+  if (
+    form[0].getAttribute("data-alter") === true ||
+    form[0].getAttribute("data-alter") === "true"
+  ) {
+    elemAlterado = true;
+  }
+
+  if (elemAlterado) {
+    // msg = "Algumas informações desta página, ainda não foram salvas!!! < br > Confirmando a saída, essas informações serão perdidas definitivamente! < br > <br>Confirma Saída?";
+    msg = 2;
+    boxAlert(msg, false, "back", false, 3, true, "Registro Alterado");
+  } else {
+    window.history.back();
+  }
+}
+
+function setCookie(nome, valor, dias) {
+  var data = new Date();
+  data.setTime(data.getTime() + dias * 24 * 60 * 60 * 1000);
+  var expires = "expires=" + data.toUTCString();
+  document.cookie =
+    nome + "=" + encodeURIComponent(valor) + ";" + expires + ";path=/";
+}
+
+function getCookie(name) {
+  let cookies = document.cookie.split(";");
+  for (let i = 0; i < cookies.length; i++) {
+    let cookie = cookies[i].trim();
+    // Verifica se o cookie começa com o nome desejado
+    if (cookie.indexOf(name + "=") === 0) {
+      return cookie.substring((name + "=").length, cookie.length);
+    }
+  }
+  return null; // Retorna null se não encontrar o cookie
+
+  // var cookies = document.cookie;
+  // var prefix = name + "=";
+  // var begin = cookies.indexOf("; " + prefix);
+
+  // if (begin == -1) {
+
+  //     begin = cookies.indexOf(prefix);
+
+  //     if (begin != 0) {
+  //         return null;
+  //     }
+
+  // } else {
+  //     begin += 2;
+  // }
+
+  // var end = cookies.indexOf(";", begin);
+
+  // if (end == -1) {
+  //     end = cookies.length;
+  // }
+
+  // return unescape(cookies.substring(begin + prefix.length, end));
+}
+
+function deleteCookie(name) {
+  if (getCookie(name)) {
+    document.cookie = name + "=" + "; expires=Thu, 01-Jan-70 00:00:01 GMT";
+  }
+}
+
+function mostranoToast(texto, alerta = false) {
+  if (texto != "") {
+    showToast(texto, alerta);
+  }
+  showNotification(texto);
+}
+
+(function () {
+  // código isolado aqui
+  let processandoTimeout = null;
+})();
+
+async function mostranorodape(texto) {
+  const $msgProc = jQuery("#msgprocessando");
+  const $msgRodape = jQuery("#msgrodape");
+
+  $msgProc.html(" Processando...<br>" + texto);
+  $msgRodape.html(texto);
+
+  if (typeof processandoTimeout === "number") {
+    clearTimeout(processandoTimeout);
+  }
+
+  // deixa o browser renderizar ANTES de continuar
+  await new Promise(requestAnimationFrame);
+
+  processandoTimeout = setTimeout(() => {
+    $msgRodape.html("&nbsp;");
+    $msgProc.html(" Processando..");
+  }, 3000);
+}
+
+async function permiteNotificacao() {
+  if (!("Notification" in window)) {
+    console.warn("Este navegador não suporta notificações.");
+    return false;
+  }
+
+  if (Notification.permission === "granted") {
+    return true;
+  }
+
+  if (Notification.permission === "denied") {
+    console.warn("As notificações estão bloqueadas pelo usuário.");
+    return false;
+  }
+
+  try {
+    const permissao = await Notification.requestPermission();
+    if (permissao === "granted") {
+      return true;
+    } else {
+      console.log("O usuário negou a permissão de notificações.");
+      return false;
+    }
+  } catch (erro) {
+    console.error("Erro ao solicitar permissão de notificações:", erro);
+    return false;
+  }
+}
+
+async function showNotification(texto) {
+  const permitido = await permiteNotificacao();
+
+  if (permitido) {
+    const options = {
+      body: texto,
+      dir: "ltr",
+      icon: "/assets/images/alert.png",
+    };
+
+    new Notification("Nova Notificação", options);
+  }
+}
+
+function verificaNotificacao() {
+  var usuarioatual = jQuery("#usu_id").val();
+  if (usuarioatual != "") {
+    var url = "/Notifica/verNotifica";
+    let dados = { usuario: usuarioatual };
+    retornoAjax = false;
+    executaAjax(url, "json", dados);
+    if (retornoAjax) {
+      if (retornoAjax.novo > 0) {
+        jQuery("#bt_notifica").removeClass("btn-outline-light");
+        jQuery("#bt_notifica").removeClass("disabled");
+        jQuery("#bt_notifica").addClass("btn-outline-warning");
+
+        jQuery("#badgenotif").removeClass("d-none");
+
+        jQuery("#show_notifica").html(retornoAjax.html);
+        jQuery("#badgenotif").html(retornoAjax.novo);
+      } else {
+        jQuery("#bt_notifica").removeClass("btn-outline-warning");
+
+        jQuery("#bt_notifica").addClass("btn-outline-light");
+        jQuery("#bt_notifica").addClass("disabled");
+
+        jQuery("#badgenotif").addClass("d-none");
+
+        jQuery("#show_notifica").html("");
+        jQuery("#badgenotif").html("");
+        jQuery("#show_notifica").removeClass("show");
+      }
+    }
+  }
+}
+
+function viuNotifica($id) {
+  var url = "/Notifica/viuNotifica";
+  var dados = { id: $id };
+  retornoAjax = false;
+  executaAjax(url, "json", dados);
+  if (retornoAjax) {
+    verificaNotificacao();
+  }
+}
+
+function validador(form) {
+  let valido = true;
+
+  if (!form.checkValidity()) {
+    jQuery(".was-validated :invalid").each(function () {
+      const el = this;
+      const $el = jQuery(el);
+      const nid = escIdColchetes(el.id);
+      const tab = escIdColchetes(el.closest(".tab-pane")?.id);
+      const $erro = jQuery("#" + nid + "-fival");
+      const $tabVal = jQuery("#" + tab + "-valid");
+
+      $erro.removeClass("d-none").addClass("d-block");
+      if ($tabVal.length) $tabVal.removeClass("d-none");
+
+      const nome = el.title || "";
+      let mensagens = [];
+
+      if (el.validity.badInput) {
+        mensagens.push("Valor inserido é inválido");
+      }
+      if (el.validity.patternMismatch) {
+        mensagens.push("Valor não corresponde ao formato esperado");
+      }
+      if (el.validity.rangeOverflow) {
+        mensagens.push("Valor máximo permitido é " + el.max);
+      }
+      if (el.validity.rangeUnderflow) {
+        mensagens.push("Valor mínimo permitido é " + el.min);
+      }
+      if (el.validity.stepMismatch) {
+        mensagens.push("Valor não é permitido para este intervalo.");
+      }
+      if (el.validity.tooLong) {
+        mensagens.push(
+          "O campo " +
+            nome +
+            ", aceita no máximo " +
+            el.maxLength +
+            " caracteres",
+        );
+      }
+      if (el.validity.tooShort) {
+        mensagens.push(
+          "Digite pelo menos " + el.minLength + " caracteres para " + nome,
+        );
+      }
+      if (el.validity.typeMismatch) {
+        mensagens.push("Valor não corresponde ao tipo esperado");
+      }
+      if (el.validity.valueMissing) {
+        mensagens.push(nome + " é Obrigatório!");
+      }
+
+      // Mostra todas as mensagens
+      const mensagemFinal = mensagens.join("<br>");
+      $erro.html(mensagemFinal);
+      mensagens.forEach((msg) => mostranoToast(msg, true));
+
+      valido = false;
+    });
+  } else {
+    jQuery(".was-validated :valid").each(function () {
+      const $el = jQuery(this);
+      const val = $el.val();
+
+      if ($el.is("select") && $el.prop("required")) {
+        if (val <= 0 || val == "" || val == null) {
+          this.selectedIndex = -1;
+          valido = false;
+          return false;
+        }
+      }
+
+      if ($el.is("number") && $el.prop("required")) {
+        if (val < 0 || val == "" || val == null) {
+          valido = false;
+          return false;
+        }
+      }
+    });
+
+    if (!valido) validador(form);
+  }
+
+  return valido;
+}
+
+/**
+ * executaAjax
+ * Executa uma requisição ajax, e retorna o resultado pra quem chamou, ou executa a função informada
+ * @param {string} urldest - URL de destino
+ * @param {string} tipo - Tipo de Retorno (html, json)
+ * @param {array} dados - dados a serem informados
+ * @return {Object} retorno
+ */
+async function executaAjax(urldest, tipo = "json", dados = {}, funcao = "") {
+  // console.trace("ExecutaAjax está sendo aberto aqui");
+  eubloquiei = false;
+  if (!isTelaBloqueada()) {
+    eubloquiei = true;
+    bloqueiaTela();
+  }
+  var options = {};
+  if (dados.entries != undefined) {
+    options = {
+      method: "POST",
+      url: urldest,
+      data: dados,
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      processData: false,
+      contentType: false,
+      async: false,
+      dataType: tipo,
+      beforeSend: function () {
+        // bloqueiaTela();
+      },
+      complete: function () {
+        if (eubloquiei) {
+          desBloqueiaTela();
+        }
+      },
+      error: function () {
+        if (eubloquiei) {
+          desBloqueiaTela();
+        }
+      },
+    };
+  } else {
+    options = {
+      method: "POST",
+      cache: false,
+      url: urldest,
+      data: dados,
+      async: false,
+      dataType: tipo,
+      beforeSend: function () {
+        // bloqueiaTela();
+      },
+      complete: function () {
+        if (eubloquiei) {
+          desBloqueiaTela();
+        }
+      },
+      error: function () {
+        if (eubloquiei) {
+          desBloqueiaTela();
+        }
+      },
+    };
+  }
+  var request = jQuery.ajax(options);
+
+  request.done(function (retorno) {
+    retornoAjax = retorno;
+    if (typeof window[funcao] === "function") {
+      window[funcao];
+    }
+  });
+  request.fail(function (jqXHR, textStatus) {
+    retornoAjax = false;
+    if (jqXHR.responseJSON != undefined) {
+      msgerro =
+        "Erro <br> Código " +
+        jqXHR.responseJSON.code +
+        "<br> Arquivo: " +
+        jqXHR.responseJSON.file +
+        "<br> Linha: " +
+        jqXHR.responseJSON.line +
+        "<br> Mensagem: " +
+        jqXHR.responseJSON.message;
+    } else {
+      msgerro = jqXHR.responseText;
+    }
+    boxAlert(msgerro, true, "", false, 3, false);
+    desBloqueiaTela();
+  });
+  return retornoAjax;
+}
+
+/**
+ * executaAjax
+ * Executa uma requisição ajax, e retorna o resultado pra quem chamou, ou executa a função informada
+ * @param {string} urldest - URL de destino
+ * @param {string} tipo - Tipo de Retorno (html, json)
+ * @param {array} dados - dados a serem informados
+ * @return {Object} retorno
+ */
+function executaAjaxWait(urldest, tipo = "json", dados = {}, funcao = "") {
+  executandoAjax = true;
+  eubloquiei = false;
+  // Bloqueia a tela
+  if (!isTelaBloqueada()) {
+    eubloquiei = true;
+    bloqueiaTela();
+  }
+
+  return new Promise((resolve, reject) => {
+    jQuery.ajax({
+      method: "POST",
+      cache: false,
+      url: urldest,
+      data: dados,
+      dataType: tipo,
+      success: function (retorno) {
+        resolve(retorno);
+      },
+      error: function (jqXHR, textStatus) {
+        let msgerro;
+        if (jqXHR.responseJSON !== undefined) {
+          msgerro =
+            "Erro <br> Código " +
+            jqXHR.responseJSON.code +
+            "<br> Arquivo: " +
+            jqXHR.responseJSON.file +
+            "<br> Linha: " +
+            jqXHR.responseJSON.line +
+            "<br> Mensagem: " +
+            jqXHR.responseJSON.message;
+        } else {
+          msgerro = jqXHR.responseText;
+        }
+        boxAlert(msgerro, true, "", false, 3, false);
+        reject(false);
+      },
+      complete: function () {
+        // Desbloqueia a tela após a conclusão
+        executandoAjax = false;
+        if (eubloquiei) {
+          desBloqueiaTela();
+        }
+      },
+    });
+  });
+}
+
+function gerarEtiqueta(url) {
+  // url = '/etiqueta/emiteEtiqueta/' + etq_id;
+  openPdfModal(url, "Impressão de Etiquetas ");
+}
+
+async function gerarEtiquetaZPL(url, etiq = false, chave = false, qtia = 1) {
+  // SE A ETIQUETA NÃO ESTÁ DEFINIDA, BUSCA AS ETIQUETAS DA PÁGINA ATIVA
+  bloqueiaTela();
+  if (!etiq) {
+    var controller = jQuery("#controler").val();
+    var urlcontroler = window.location.origin + "/buscas/buscaetiqcontroler";
+    dados = { busca: controller };
+    retornoAjax = false;
+    executaAjax(urlcontroler, "json", dados);
+    bloqueiaTela();
+    if (retornoAjax) {
+      if (retornoAjax.length == 1) {
+        if (retornoAjax[0].id == "-1") {
+          etiq = null;
+          desBloqueiaTela();
+          boxAlert(retornoAjax[0].text, true, "");
+        } else {
+          etiq = retornoAjax[0].id;
+        }
+      } else {
+        etiq = await boxAlert(
+          "Etiquetas Cadastradas",
+          false,
+          "",
+          false,
+          9,
+          false,
+          "Selecione a Etiqueta",
+          retornoAjax,
+        );
+      }
+    }
+  }
+  if (etiq && etiq != null) {
+    url = url + "/" + etiq + "/";
+    // if (chave) {
+    url = url + chave + "/" + qtia;
+    // }
+    openImgModal(url, "Impressão de Etiquetas ");
+  } else {
+    desBloqueiaTela();
+  }
+}
+
+/**
+ * openPDFModal
+ * Abre o PDF informado na URL, numa Janela Modal
+ * @param {string} url - URL do PDF
+ * @param {string} titulo - titulo da Janela Modal
+ */
+async function openImgModal(url, titulo = false, chave) {
+  jQuery.get(url, function (res) {
+    if (res.erro) {
+      desBloqueiaTela();
+      boxAlert(res.erro, true, "");
+    } else {
+      if (titulo) {
+        jQuery("#myModalLabel").html(titulo);
+      }
+      // const data = JSON.parse(res);
+      imgRetornada =
+        "<img src='data:image/png;base64," +
+        res.imagem +
+        "' style='width:95%' />";
+      // jQuery('#img_etiqueta').attr('src', 'data:image/png;base64,' + data.imagem);
+      // jQuery('#modalEtiqueta').modal('show');
+
+      jQuery("#modal-body").html(imgRetornada);
+
+      // Selecionando o container do modal
+      const container = document.querySelector("#myModal"); // Supondo que 'myModal' seja o ID do seu modal
+
+      // Criando o modal do Bootstrap
+      const modal = new bootstrap.Modal(container);
+
+      // Adicionando a classe 'resize' ao corpo do modal
+      container.querySelector(".modal-content").classList.add("resize");
+
+      const etq_id = url.substring(url.lastIndexOf("/") + 1);
+
+      // if (!etq_id.startsWith("etq")) {
+      // url = false;
+      // } else {
+      url = url.replace("emiteEtiqueta", "imprimeEtiqueta");
+      // }
+
+      jQuery('.modal-footer button[data-bs-dismiss="modal"]')
+        .text("🖨️ Imprimir")
+        .removeAttr("data-bs-dismiss") // remove o fechar
+        .removeClass("btn-dark") // remove o fechar
+        .removeClass("d-none") // remove o fechar
+        .addClass("btn-success") // remove o fechar
+        .off("click") // remove eventos antigos
+        .on("click", function () {
+          imprimirEtiqueta(url); // chama a função correta
+        });
+
+      modal.show();
+      desBloqueiaTela();
+    }
+  });
+}
+
+async function imprimirEtiqueta(url = false) {
+  var urlbusca = window.location.origin + "/buscas/buscaimpressoras";
+  retornoAjax = false;
+  executaAjax(urlbusca, "json");
+  if (retornoAjax) {
+    if (retornoAjax.length == 1) {
+      if (retornoAjax[0].id == "-1") {
+        imp = null;
+        boxAlert(retornoAjax[0].text, true, "");
+      } else {
+        imp = retornoAjax[0].id;
+      }
+    } else {
+      imp = await boxAlert(
+        "Impressoras Cadastradas",
+        false,
+        "",
+        false,
+        9,
+        false,
+        "Selecione a Impressora",
+        retornoAjax,
+      );
+    }
+  }
+  if (imp != null) {
+    url = url + "/" + imp;
+
+    jQuery.get(url, async function (res) {
+      if (res.erro) {
+        boxAlert(res.erro, true, "", true);
+      } else {
+        boxAlert(res.status, false, "", true, 2); // ou mostrar status no modal
+        fecharTodosModais();
+      }
+    });
+  }
+}
+
+function geraEiquetaProd(obj, url, id_quantia) {
+  qtia = jQuery("#" + id_quantia).val();
+  jQuery(obj).removeClass("btn-outline-dark");
+  jQuery(obj).addClass("btn-outline-danger");
+  // url = url + "/" + qtia;
+  url = url + "/1";
+  jQuery.getJSON(url, function (res) {
+    gerarEtiquetaZPL(res.link, (etiq = false), res.chave, qtia);
+  });
+}
+
+// Fecha todos os modais e (opcional) aguarda o fechamento
+async function fecharTodosModais({
+  bootboxToo = true, // fecha diálogos do Bootbox
+  offcanvasToo = true, // fecha offcanvas abertos também (se houver)
+  cleanup = true, // remove backdrops órfãos e classes no body
+  wait = true, // aguarda animação/hidden dos modais
+  timeout = 1500, // tempo máx. para aguardar (ms)
+} = {}) {
+  // 1) Bootbox
+  if (bootboxToo && window.bootbox) {
+    try {
+      bootbox.hideAll();
+    } catch (_) {}
+  }
+
+  // 2) Bootstrap modals (em ordem reversa p/ respeitar empilhamento)
+  const modals = Array.from(document.querySelectorAll(".modal.show")).reverse();
+  const waiters = [];
+
+  for (const el of modals) {
+    const inst = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+    if (wait) {
+      waiters.push(
+        new Promise((res) => {
+          el.addEventListener("hidden.bs.modal", res, { once: true });
+        }),
+      );
+    }
+    inst.hide();
+  }
+
+  // 3) Offcanvas (opcional)
+  if (offcanvasToo) {
+    const canvases = Array.from(
+      document.querySelectorAll(".offcanvas.show"),
+    ).reverse();
+    for (const el of canvases) {
+      const inst =
+        bootstrap.Offcanvas.getInstance(el) || new bootstrap.Offcanvas(el);
+      if (wait) {
+        waiters.push(
+          new Promise((res) => {
+            el.addEventListener("hidden.bs.offcanvas", res, { once: true });
+          }),
+        );
+      }
+      inst.hide();
+    }
+  }
+
+  // 4) Aguarda animações (se solicitado)
+  if (wait && waiters.length) {
+    await Promise.race([
+      Promise.allSettled(waiters),
+      new Promise((res) => setTimeout(res, timeout)),
+    ]);
+  }
+
+  // 5) Limpa backdrops e classes
+  if (cleanup) {
+    document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+    document.body.classList.remove("modal-open");
+    document.body.style.removeProperty("padding-right");
+    document.body.style.removeProperty("overflow");
+  }
+}

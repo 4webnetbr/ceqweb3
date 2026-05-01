@@ -94,6 +94,7 @@ class WsCeqweb extends ResourceController
         $temori = $origem->getOrigem($codOri);
         log_message('info', 'tem Origem: ' . json_encode($temori));
         if ($temori) {
+            log_message('info', 'Tipo: ' . $tipo);
             // se o tipo for 'I' // Inclusão
             if ($tipo == 'I' || $tipo == 'A') {
                 // Cria uma notificação avisando que foi incluído um novo Produto
@@ -108,14 +109,15 @@ class WsCeqweb extends ResourceController
                     $prods = $this->mode_produto->getProdutoCod($codPro);
                     // debug($prods, true);
                     if ($prods) {
-                        $produto = $prods[0]['pro_despro'];
+                        $produto = $prods[0]->pro_despro;
                         $msgsocket  = "O Produto " . $produto . " foi alterado!";
                     }
                 }
                 // debug('MsgSocket '.$msgsocket);
+                log_message('info', 'MsgSocket ' . $msgsocket);
                 if ($msgsocket != '') {
                     $gravaNotifica = $this->notifica->gravaNotifica('Produto\Produto', $codPro, $msgsocket, $tipo);
-                    var_dump($gravaNotifica);
+                    log_message('info', 'Grava Notificação: ' . var_dump($gravaNotifica));
                 }
             } else if ($tipo == 'E') {
                 $prods = $this->mode_produto->getProduto($codPro);
@@ -125,7 +127,8 @@ class WsCeqweb extends ResourceController
                     // Cria uma notificação avisando que foi incluído um novo Produto
                     //Ao clicar na notificação, o usuário será redirecionado para a tela de Consulta do Produto 
                     //com o ID do Produto incluído
-                    $this->notifica->gravaNotifica('Produto\Produto', $codPro, $msgsocket, $tipo);
+                    $gravaNotifica = $this->notifica->gravaNotifica('Produto\Produto', $codPro, $msgsocket, $tipo);
+                    log_message('info', 'Grava Notificação: ' . var_dump($gravaNotifica));
                 }
             }
             cache()->clean();
@@ -150,7 +153,7 @@ class WsCeqweb extends ResourceController
                 }
                 // VERIFICA SE O LOTE JÁ EXISTE
                 $existe = $this->mode_lote->getLoteCodbar($codBar);
-                if(empty($existe)){
+                if (empty($existe)) {
                     $sql_lote = [
                         'lot_codbar'    => $codBar,
                         'lot_codpro'    => $codErp,
@@ -200,9 +203,9 @@ class WsCeqweb extends ResourceController
             $deps['dep_codDescricao'] = $dep->codDescricao;
             // $tem = $this->mode_deposito->getDeposito($dep->codDep);
             // if ($tem) {
-                $this->mode_deposito->save($deps);
+            $this->mode_deposito->save($deps);
             // } else {
-                // $this->mode_deposito->insert($deps);
+            // $this->mode_deposito->insert($deps);
             // }
         }
     }
@@ -254,7 +257,7 @@ class WsCeqweb extends ResourceController
             // Indexa produtos existentes por código para facilitar comparação
             $existentesIndexados = [];
             foreach ($existentes as $e) {
-                $existentesIndexados[$e['pro_codpro']] = $e;
+                $existentesIndexados[$e->pro_codpro] = $e;
             }
 
             $dadosInsert = [];
@@ -272,23 +275,40 @@ class WsCeqweb extends ResourceController
                     'pro_ctrlot'  => $pro->ctrlot,
                     'pro_qtdemb'  => $pro->qtdemb
                 ];
+                log_message('info', json_encode($existentesIndexados));
 
                 if (isset($existentesIndexados[$pro->codpro])) {
-                    $dados['pro_id'] = $existentesIndexados[$pro->codpro]['pro_id'];
+
+                    $dados['pro_id'] = $existentesIndexados[$pro->codpro]->pro_id;
                     $dadosUpdate[] = $dados;
 
                     log_message('info', 'Atualizando Produto: ' . json_encode($dados));
-                    envia_msg_ws('WsCeqweb', 'Atualizando Produto: ' . $pro->codpro, 'MsgServer', session()->get('usu_id'), 1);
+
+                    envia_msg_ws(
+                        'WsCeqweb',
+                        'Atualizando Produto: ' . $pro->codpro,
+                        'MsgServer',
+                        session()->get('usu_id'),
+                        1
+                    );
                 } else {
+
                     $dadosInsert[] = $dados;
 
                     log_message('info', 'Produto novo: ' . json_encode($dados));
-                    envia_msg_ws('WsCeqweb', 'Inserindo Produto: ' . $pro->codpro, 'MsgServer', session()->get('usu_id'), 1);
+
+                    envia_msg_ws(
+                        'WsCeqweb',
+                        'Inserindo Produto: ' . $pro->codpro,
+                        'MsgServer',
+                        session()->get('usu_id'),
+                        1
+                    );
                 }
 
                 $produtosParaIntegrar[] = [
                     'codemp' => $pro->codemp,
-                    'codpro' => $pro->codpro
+                    'codpro' => $pro->codpro,
                 ];
             }
 
@@ -312,46 +332,46 @@ class WsCeqweb extends ResourceController
     {
         $ultimo = $this->mode_lote->getUltimoLote();
         // debug($ultimo, true);
-    
+
         if (!isset($ultimo[0]->lot_codbar)) {
             $ultimo[0]->lot_codbar = '';
         }
-    
+
         log_message('info', 'Ultimo Lote ' . $ultimo[0]->lot_codbar);
         log_message('info', 'Início do BuscaLotes ' . date('d/m/Y H:i:s'));
-    
+
         $r_lots = $this->busca_sap->buscaLotes($ultimo[0]->lot_codbar);
-    
+
         log_message('info', 'Final do BuscaLotes ' . date('d/m/Y H:i:s'));
-    
+
         if ($r_lots) {
-    
+
             if (!is_array($r_lots)) {
                 $a_lots = [];
-                $a_lots[0] = $r_lots; 
+                $a_lots[0] = $r_lots;
                 $r_lots = $a_lots;
             }
-    
+
             log_message('info', 'Lotes Retornados ' . json_encode($r_lots));
             log_message('info', 'Total de Lotes  ' . count($r_lots));
-    
+
             $origem = new ProdutOrigemModel();
-    
+
             for ($d = 0; $d < count($r_lots); $d++) {
                 $lot = $r_lots[$d]; // OBJETO
-    
+
                 log_message('info', 'Contador de Lote  ' . $d);
                 log_message('info', 'Lote  ' . json_encode($lot));
-    
+
                 $lcodori = $lot->codori ?? null;
                 $temori = $origem->getOrigem($lcodori);
-    
+
                 if ($temori) {
-    
+
                     $lcodpro = $lot->codpro ?? null;
                     $micro = $this->mode_produto->getProdutoCod($lcodpro);
                     $status = 9;
-    
+
                     if (isset($micro[0]->stt_disponivel) && $micro[0]->stt_disponivel == 'S') {
                         if (isset($micro[0]->cla_micro) && $micro[0]->cla_micro == 'S') {
                             $status = 8;
@@ -366,12 +386,12 @@ class WsCeqweb extends ResourceController
                     } else {
                         $status = 8;
                     }
-    
+
                     $lcodbar = $lot->codbar ?? null;
                     $lcodlot = $lot->codlot ?? null;
                     $ldatenv = $lot->datenv ?? null;
                     $ldatval = $lot->datval ?? null;
-    
+
                     $lots = new \stdClass();
                     $lots->lot_codbar   = $lcodbar;
                     $lots->lot_codpro   = $lcodpro;
@@ -379,9 +399,9 @@ class WsCeqweb extends ResourceController
                     $lots->lot_entrada  = data_db($ldatenv);
                     $lots->lot_validade = data_db($ldatval);
                     $lots->stt_id       = $status;
-    
+
                     $tem = $this->mode_lote->getLoteCodbar($lcodbar);
-    
+
                     if ($tem) {
                         $this->mode_lote->update($tem[0]->lot_id, (array) $lots);
                     } else {
@@ -457,7 +477,7 @@ class WsCeqweb extends ResourceController
         // Indexa também por código do produto
         $fabricantesAtuaisIndexados = [];
         foreach ($fabricantesAtuais as $item) {
-            $fabricantesAtuaisIndexados[$item['pro_codPro']] = $item['fab_codFab'];
+            $fabricantesAtuaisIndexados[$item->pro_codPro] = $item->fab_codFab;
         }
 
         $dadosParaInserir = [];

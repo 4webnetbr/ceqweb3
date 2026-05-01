@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Libraries;
 
 use App\Models\Config\ConfigDicDadosModel;
@@ -129,7 +130,7 @@ class MyCampo
         $tip_camp['datetime']   = 'Data e Hora';
 
         $dicionario = new ConfigDicDadosModel();
-        // debug($tabela . ' ' . $campo);
+        // debug($tabela.' '.$campo);
         $dados_campo = $dicionario->getDetalhesCampo($tabela, $campo);
         // debug($dados_campo, true);
         if (count($dados_campo)) {
@@ -483,7 +484,7 @@ class MyCampo
         }
 
         $ret = "<div class='position-relative {$mb}' style='z-index:110'>";
-        $ret .= "<div class='text-nowrap text-start d-inline-block position-absolute ms-2 pe-2 py-0' >";
+        $ret .= "<div class='text-nowrap text-start d-inline-block position-absolute ms-2 pe-2 py-0 bg-white' >";
         $ret .= form_label($label_text, $ident, $label);
         $ret .= "</div>";
         $ret .= "</div>";
@@ -757,7 +758,7 @@ class MyCampo
     public function crBotao(): string
     {
         $this->acertaId();
-        if (! isset($this->tipo) || $this->tipo == '' || $this->tipo == 'text') {
+        if (! $this->tipo) {
             $this->tipo = 'button';
         }
         // NÃO TEM FORMATO NO FORMULÁRIO
@@ -1140,7 +1141,6 @@ class MyCampo
                     $this->field['aria-describedby']  = 'ig_' . $this->nome;
                     $this->field['class']             = $this->field['class'] . ' form-number';
                     $this->largura                    = $this->largura + 10;
-                    // $this->largura  = ($leng * 4) + 10;
                     if (! $this->leitura) {
                         $groupant = "<div class='input-group-text input-group-addon down-num $pe' data-refer='$this->id' id='dw_$this->nome'><i class='fas fa-minus'></i></div>";
                         $grouppos = "<div class='input-group-text input-group-append up-num $pe' data-refer='$this->id' id='up_$this->nome'><i class='fas fa-plus'></i></div>";
@@ -1161,7 +1161,6 @@ class MyCampo
                     $this->field['style']   = 'text-align: right';
                     $this->field['class']   = $this->field['class'] . ' form-number';
                     $this->largura          = $this->largura + 10;
-                    // $this->largura = ($leng * 4) + 10;
                     if (! $this->leitura) {
                         $groupant = "<div class='input-group-text input-group-addon down-num $pe' data-refer='$this->id' id='dw_$this->nome'><i class='fas fa-minus'></i></div>";
                         $grouppos = "<div class='input-group-text input-group-append up-num $pe' data-refer='$this->id' id='up_$this->nome'><i class='fas fa-plus'></i></div>";
@@ -1189,11 +1188,10 @@ class MyCampo
                 case 'senha':
                 case 'password':
                     $fieldpassoculto  = [
-                        'type'     => 'password',
-                        'name'     => 'enganagoogle',
-                        'value'    => '',
-                        'tabindex' => -1,
-                        'style'    => "left:0;opacity: 0;position: absolute;",
+                        'type'  => 'password',
+                        'name'  => 'enganagoogle',
+                        'value' => '',
+                        'style' => "opacity: 0;position: absolute;",
                     ];
                     $resp                            .= form_input($fieldpassoculto);
                     $this->field['class']             = "form-control $this->classep password";
@@ -1312,7 +1310,7 @@ class MyCampo
                     $grouppos .= "<div id='view_img_" . $this->nome . "' class='show clearfix'
                                 style='width:200px; height:200px;' >";
                     $grouppos .= "<img id='img_" . $this->nome . "' src='" .
-                    base_url('uploads/tipo_down/') . $ico_arq . "' for='" . $this->id .
+                        base_url('uploads/tipo_down/') . $ico_arq . "' for='" . $this->id .
                         "' class='img-thumbnail col-lg-12 col-xs-12'
                                 style='width:200px; height:200px;' alt='' /></div>";
                     break;
@@ -1343,6 +1341,9 @@ class MyCampo
                     $resp                       .= "</script>";
                     break;
             }
+            if ($this->tipo == 'password' || $this->tipo == 'senha') {
+            }
+
             $grouppos .= "<div id='dc-$this->id' class='div-caract badge bg-info-subtle'></div>";
 
             // debug($this->field);
@@ -1702,13 +1703,12 @@ class MyCampo
         // debug($campo);
         $campo .= "<script>";
         foreach ($this->opcoes as $key => $valor) {
-            $pos1  = strpos($valor, "#");
-            // $rgb  = substr($valor, 0, $pos1 - 1);
-            $rgb   = substr(trim($valor), -7);
-            $nome  = substr($valor, 0, $pos1 - 3);
-            // if (substr($rgb, 0, 1) == '#') {
-            //     $nome = substr($valor, $pos1 + 1);
-            // }
+            $pos1 = strpos($valor, "-");
+            $rgb  = substr($valor, 0, $pos1 - 1);
+            $nome = substr($valor, $pos1);
+            if (substr($rgb, 0, 1) == '#') {
+                $nome = substr($valor, $pos1 + 1);
+            }
             $cor    = fmtEtiquetaCor($rgb, $nome);
             $campo .= "jQuery(\"#$this->id option[value='" . $key . "']\").attr('data-content',\"$cor\");";
         }
@@ -1866,7 +1866,7 @@ class MyCampo
                         style='white-space: normal;width:" . $this->size . "px; padding:0.8em;'
                                 for='" . $this->id . "' data-mdb-toggle='tooltip' data-mdb-placement='bottom' title=''
                                 data-bs-original-title='A imagem será redimensionada para " . $this->size . " X " .
-            $this->largura . " proporcionalmente' aria-label='A imagem será redimensionada para
+                $this->largura . " proporcionalmente' aria-label='A imagem será redimensionada para
                                 $this->size X $this->largura proporcionalmente' >
                                 <i class=\"fas fa-image\"></i> Clique para selecionar imagem de $this->label";
         }

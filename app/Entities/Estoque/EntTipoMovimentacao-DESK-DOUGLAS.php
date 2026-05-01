@@ -21,6 +21,7 @@ class EntTipoMovimentacao extends Entity
         'tmo_entrefiliais'          => 'N',
         'tmo_estoquepadrao'         => 'N',
         'tmo_ativo'                 => 'A',
+        'tmo_gestaoestoque'         => 'S',
         'tmo_excluido'              => null,
     ];
 
@@ -146,6 +147,13 @@ class EntTipoMovimentacao extends Entity
         $seme->opcoes         = $simnao;
         $seme->dispForm       = 'col-6';
         $ret['tmo_semestoque'] = $seme->cr2opcoes();
+
+        $gees                 = new MyCampo('est_tipo_movimentacao', 'tmo_gestaoestoque', false);
+        $gees->valor          = (isset($dados['tmo_gestaoestoque'])) ? $dados['tmo_gestaoestoque'] : 'N';
+        $gees->selecionado    = $gees->valor;
+        $gees->opcoes         = $simnao;
+        $gees->dispForm       = 'col-6';
+        $ret['tmo_gestaoestoque'] = $gees->cr2opcoes();
 
         // Indica movimentação entre filiais
         $entf               = new MyCampo('est_tipo_movimentacao', 'tmo_entrefiliais', false);

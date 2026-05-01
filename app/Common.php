@@ -897,10 +897,11 @@ if (!function_exists('envia_msg_ws')) {
                     'id'        => $id,
                 ];
 
+                log_message('info', 'Msg WS ' . json_encode($msg));
                 $client->send(json_encode($msg));
                 $client->close();
 
-                log_message('info', 'Enviou Mensagem WS: ' . $msg['msg']);
+                log_message('info', 'Enviou Mensagem WS: ' . $msg['msg'] . ' Usuário ' . $usuario);
             }
         } catch (\Throwable $e) {
             log_message('error', 'Erro ao enviar WS: ' . $e->getMessage());

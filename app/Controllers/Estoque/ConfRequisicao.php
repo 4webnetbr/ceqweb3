@@ -3,9 +3,9 @@
 namespace App\Controllers\Estoque;
 
 use App\Controllers\BaseController;
+use App\Controllers\Buscas;
 use App\Controllers\BuscasSapiens;
 use App\Entities\Estoque\EntConfRequisicao;
-use App\Entities\Estoque\EntRequisicao;
 use App\Entities\Ocorrencia\EntOcoOcorrencia;
 use App\Libraries\MyCampo;
 use App\Models\CommonModel;
@@ -178,62 +178,13 @@ class ConfRequisicao extends BaseController
         $fields = $ent->campos;
         // debug($fields, true);
 
-        // $secao[0] = 'Dados Gerais';
-        // $campos[0][] = $fields['req_id'];
-        // $campos[0][] = $fields['req_data'];
-        // $campos[0][] = $fields['req_dataentrega'];
-        // $campos[0][] = $fields['tmo_id'];
-        // $campos[0][] = "<div class='col-6'>.</div>";
         $campos[0][] = $fields['lot_codbar'];
-
-        $produtos = $this->requisicao->getRequisicaoProdutos($id, 'conferencia');
-        // debug($produtos, true);
-        // array_column mudando para o OBJ
-        $pro_ids = array_unique(array_map(
-            fn($p) => $p->pro_id,
-            $produtos
-        ));
-
-
-
-        $dados_est_produto = $this->produtos
-            ->getProdutoEstoque($pro_ids, $requisicao->req_depdestino);
-
-        // debug($dados_est_produto, true);
-        // debug($dados_est_produto);
-
-        // Transformar $produtos em um array indexado por pro_id
-        $produtosIndexado = [];
-        foreach ($produtos as $param) {
-            $produtosIndexado[$param->pro_id] = $param;
-        }
-
-        // debug($produtosIndexado);
-        // Array para o resultado final
-        $resultado = [];
-
-        if (count($dados_est_produto) > 0) {
-            foreach ($dados_est_produto as $itemEstoque) {
-                $pro_id = $itemEstoque->pro_id;
-
-                if (isset($produtosIndexado[$pro_id])) {
-                    // Mescla os dados de estoque + parâmetros
-                    $resultado[] = (object) array_merge(
-                        (array) $itemEstoque,
-                        (array) $produtosIndexado[$pro_id]
-                    );
-                } else {
-                    $resultado[] = $itemEstoque;
-                }
-            }
-        } else {
-            $resultado = $produtos;
-        }
-
+        $resultado = (new Buscas())->buscaProdutosMergeEstoques($id, $requisicao->req_depdestino, 'conferencia');
         // debug($resultado, true);
 
         // debug(count($resultado));
         for ($p = 0; $p < count($resultado); $p++) {
+            // foreach ($resultado as $p => $prod) {
             $prod = $resultado[$p];
             // debug($prod, true);
             $val_cancelada  = $prod->rpa_cancelada  ?? 0;
@@ -273,7 +224,7 @@ class ConfRequisicao extends BaseController
             $resultado[$p]->cla_insvisconf  = $prod->cla_insvisconf ?? 'N';
             $resultado[$p]->bt_insvis       = "";
 
-            if ($prod->cla_insvis == 'S' && $prod->cla_insvisconf == 'S') {
+            if ($prod->cla_insvis == 'S' && $prod->cla_insvisconf == 'S' && $requisicao->tmo_id == 8) {
                 $bt_insvis = new MyCampo();
                 $bt_insvis->id = $bt_insvis->nome = 'bt_insvis';
                 $bt_insvis->classep  = 'btn btn-outline-black btn-sm border-0 mx-0 fs-0';
@@ -517,7 +468,6 @@ class ConfRequisicao extends BaseController
             }
 
             if (!$ret['erro']) {
-                $faltagravar = false;
                 if ($mudastatus) {
                     $status = 25;
                     if ($parcial) {
@@ -527,12 +477,8 @@ class ConfRequisicao extends BaseController
                         // CASO TODOS OS PRODUTOS, JA TENHAM SIDO FEITOS INSPEÇÃO VISUAL OU NÃO EXIJAM INSPEÇÃO VISUAL
                         // O STATUS DA REQUISIÇÃO PASSA A SER CONCLUÍDA
                         $insvis = retornaInsVis($postado['req_id']);
-                        if (!$insvis->temS) {
+                        if (!$insvis->temS || $insvis->temN) {
                             $status = 5; // Concluída
-                        }
-                        if ($insvis->temN) {
-                            $status = 5;
-                            $faltagravar = true; // Concluída mas precisa gravar a inspeção
                         }
                     }
 
@@ -545,16 +491,18 @@ class ConfRequisicao extends BaseController
 
                 if ($salvareq) {
                     $produtosreq = $this->requisicao->getRequisicaoProdutos($postado['req_id']);
-                    if ($status == 5 && $faltagravar) {
-                        foreach ($produtosreq as $val) {
+                    // debug($produtosreq, true);
+                    foreach ($produtosreq as $val) {
+                        if ($val->cla_insvis == 'N' && $val->rpa_id != null) {
                             $sql_save = [
                                 'rpa_aprovada'  => -1,
                                 'rpa_data_inspecao'      => date('Y-m-d H:i:s'),
                             ];
                             $atualizar = $this->requisicaoate->update($val->rpa_id, $sql_save);
-                            // TODO CRIAR MOVIMENTAÇÃO DE ESTOQUE
                         }
+                        // TODO CRIAR MOVIMENTAÇÃO DE ESTOQUE
                     }
+                    // }
                     $this->requisicaoate->transCommit();
                     $this->requisicao->transCommit();
                     $ret['msg'] = 'Conferência gravada com sucesso!';

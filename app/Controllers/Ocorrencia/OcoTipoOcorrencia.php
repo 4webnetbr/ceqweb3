@@ -127,7 +127,7 @@ class OcoTipoOcorrencia extends BaseController
         $this->data['displ']   = $displ;
         $this->data['destino'] = 'store';
         $this->data['script'] = "<script>
-                                acerta_botoes_rep('telas_aplicaveis');
+                                acerta_botoes_rep('telas_aplicaveis',0, true);
                                 acerta_botoes_rep('acoes');
                                 </script>";
 
@@ -304,7 +304,7 @@ class OcoTipoOcorrencia extends BaseController
         $this->data['displ']   = $displ;
         $this->data['destino'] = 'store';
         $this->data['script'] = "<script>
-                                acerta_botoes_rep('telas_aplicaveis');
+                                acerta_botoes_rep('telas_aplicaveis',0,true);
                                 acerta_botoes_rep('acoes');
                                 </script>";
 

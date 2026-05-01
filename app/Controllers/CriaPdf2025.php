@@ -77,13 +77,19 @@ class CriaPdf2025 extends BaseController
             for ($i = 0; $i < count($requis); $i++) {
                 $reqi = (object) $requis[$i];
                 $this->pdf->SetX(15);
-                $this->pdf->EtiqTexto('', $reqi->pro_despro, 'Arial', 8, 5, 15, 0, 0, 'L');
+                $this->pdf->SetFont('Arial', '', 8);
+                $y = $this->pdf->GetY();
+                $this->pdf->MultiCell(75, 4, utf8_decode($reqi->pro_despro), 0, 'L');
+                $yd = $this->pdf->GetY();
+                // $this->pdf->EtiqTexto('', $reqi->pro_despro, 'Arial', 8, 5, 15, 0, 0, 'L');
+                $this->pdf->SetY($yd - 4);
                 $this->pdf->SetX(90);
                 $this->pdf->EtiqTexto('', $reqi->fab_apeFab, 'Arial', 8, 5, 20, 0, 0, 'L');
                 $this->pdf->SetX(150);
                 $this->pdf->EtiqTexto('', $reqi->lot_lote, 'Arial', 8, 5, 15, 0, 0, 'L');
                 $this->pdf->SetX(175);
                 $this->pdf->EtiqTexto('', data_br($reqi->lot_validade), 'Arial', 8, 5, 20, 0, 1, 'L');
+                $this->pdf->SetY($yd);
             }
             $posy = 47 + 20 + (5 * count($requis));
             $this->pdf->Rect(10, $posy, 190, 14);

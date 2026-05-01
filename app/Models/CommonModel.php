@@ -169,7 +169,7 @@ class CommonModel extends Model
         if ($col == '') {
             $col = $fields[0];
         }
-        if($col != '*'){
+        if ($col != '*') {
             $builder->orderBy($col, $dir);
         }
 

@@ -55,7 +55,7 @@ class LogEmailThrottleHandler implements HandlerInterface
             $lastHash = $cache->get($cacheKey);
 
             if ($currentHash === $lastHash) {
-                log_message('info', 'Erro Repetido '.$text);
+                // log_message('info', 'Erro Repetido ' . $text);
                 return false; // Log repetido, ignora envio
             }
 
@@ -66,7 +66,7 @@ class LogEmailThrottleHandler implements HandlerInterface
             // log_message('info', 'EmailConfig '.json_encode($emailConfig));
             $email = new Email($emailConfig);
             // log_message('info', 'Email '.json_encode($email));
-            
+
             $email->setTo($this->emailTo);
             $email->setSubject("DevCeqWeb3 Log automático em $dataatual - [$level]");
 
@@ -89,12 +89,13 @@ HTML;
 
             $email->setMessage($body);
 
-            $enviar = $email->send();
+            /** Desabilitado o envio de email no Dev */
+            // $enviar = $email->send();
 
-            if (!$enviar) {
-                file_put_contents(WRITEPATH . 'logs/email-handler-error.log', $email->printDebugger(['headers', 'subject', 'body']) . PHP_EOL, FILE_APPEND);
-                return false;
-            }
+            // if (!$enviar) {
+            //     file_put_contents(WRITEPATH . 'logs/email-handler-error.log', $email->printDebugger(['headers', 'subject', 'body']) . PHP_EOL, FILE_APPEND);
+            //     return false;
+            // }
             // log_message('info', 'Enviar '.json_encode($enviar));
             return true;
         } catch (Throwable $e) {

@@ -22,7 +22,7 @@ class OcoSubtOcorrencia extends BaseController
     /**
      * Construtor da Classe
      * construct
-     */
+    **/
     public function __construct()
     {
         $this->data           = session()->getFlashdata('dados_tela');
@@ -138,7 +138,7 @@ class OcoSubtOcorrencia extends BaseController
 
         for ($t = 0; $t < sizeof($ttelas); $t++) {
             $total = sizeof($ttelas);
-            // debug($ttelas[$t]);
+            // debug($ttelas[$t]); 
             $fields = $entity->defCamposTelasAplicaveis($ttelas[$t], $ind, $total);
             $campo[$t][0] = $fields['mod_id'];
             $campo[$t][1] = $fields['tel_id'];
@@ -164,8 +164,7 @@ class OcoSubtOcorrencia extends BaseController
         $tacao          = $tipoAcaoModel->getTOAcao($tpo_id);
         $entity = new EntOcoSubtOcorrencia();
 
-        // Gera campos da ação
-
+        // Gera campos da ação 
         for ($a = 0; $a < sizeof($tacao); $a++) {
             $total = sizeof($tacao);
             $fields = $entity->defCamposAcao($tacao[$a], $ind, $total);
@@ -364,7 +363,6 @@ class OcoSubtOcorrencia extends BaseController
         return $this->response->setJSON($ret);
     }
 
-
     /**
      * Gravação
      * store
@@ -373,7 +371,7 @@ class OcoSubtOcorrencia extends BaseController
     public function store()
     {
         $postado = $this->request->getPost();
-        debug($postado, true);
+        // debug($postado, true);
         $ret   = [];
         $grupo = 'dbOcorrencia';
         $db    = db_connect($grupo);
@@ -389,7 +387,7 @@ class OcoSubtOcorrencia extends BaseController
         }
         // classes
         $classesSelecionadas = $postado['cla_id'] ?? [];
-        debugg($classesSelecionadas, true);
+        // debug($classesSelecionadas, true);
         unset($postado['cla_id']);
         // permissões
         if (isset($postado['prf_id']) && is_array($postado['prf_id'])) {

@@ -91,7 +91,7 @@ class OcorreSubtOcorrenciaModel extends Model
         return $ret;
     }
 
-    public function getSubtOcorrenciaPorTipo($tpo_id = null, $prfid = false)
+    public function getSubtOcorrenciaPorTipo($tpo_id = null, $prfid = false, $claid = false)
     {
         // Conecta ao banco de Ocorrência
         $db = db_connect('dbOcorrencia');
@@ -104,6 +104,9 @@ class OcorreSubtOcorrenciaModel extends Model
         }
         if ($prfid !== null) {
             $builder->where("FIND_IN_SET($prfid, prf_id) >", 0, false);
+        }
+        if ($claid !== null) {
+            $builder->where("FIND_IN_SET($claid, cla_id) >", 0, false);
         }
 
         $builder->where('sut_ativo', 'A');

@@ -87,7 +87,7 @@ class OcoOcorrencia extends BaseController
             if (trim($nov->stt_nome ?? '') !== 'Pendente') {
                 $url_imp = base_url('/CriaPdf2025/PrintOcorrencia/' . $nov->oco_id);
                 $nov->acao_person[] = "
-                     <button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0'
+                     <button class='btn btn- outline-dark btn-sm border-0 mx-0 fs-0'
                          title='Imprimir'
                          onclick='openPDFModal(\"{$url_imp}\",\"Imprimir Ocorrência\")'>
                          <i class='fa-solid fa-print'></i>
@@ -366,6 +366,7 @@ class OcoOcorrencia extends BaseController
         );
         $modProd = new ProdutProdutoModel();
         $dadosProd = $modProd->getProduto($proId)[0];
+        // debug($dadosProd, true);
 
         $config['Label'] = "Tipo de Ocorrência";
         $config['Leitura'] = false;
@@ -373,7 +374,7 @@ class OcoOcorrencia extends BaseController
             'tel_id' => [$telId],
             'cla_id' => [$dadosProd->cla_id],
         ];
-
+        // debug($filtros, true);
         $toc_oc = criaSelectRelativo(
             'vw_oco_tpo_ocorrencia_relac',
             'tpo_id',
@@ -389,6 +390,10 @@ class OcoOcorrencia extends BaseController
         $config['Pai'] = "tpo_id";
         $config['Urlbusca'] = base_url('Buscas/buscaSubtipoPorTipo');
         $config['FunChan'] = "buscaLoteProduto('lot_lote','" . base_url('/buscas/buscaProdutoporLote') . "')";
+        $filtros = [
+            'tel_id' => [$telId],
+            'cla_id' => [$dadosProd->cla_id],
+        ];
 
         $sut_id = criaSelectRelativo(
             'vw_oco_subt_ocorrencia_relac',
@@ -397,7 +402,7 @@ class OcoOcorrencia extends BaseController
             null,
             2,
             'oco_ocorrencia',
-            ['tel_id' => ''],
+            $filtros,
             $config,
             'sut_id'
         );
@@ -432,6 +437,7 @@ class OcoOcorrencia extends BaseController
             $toc_oc,
             $oco->campos['lot_id'],
             $oco->campos['lot_lote'],
+            $oco->campos['cla_id'],
             $sut_id,
             $oco->campos['pro_id'],
             $oco->campos['pro_despro'],

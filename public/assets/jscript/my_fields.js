@@ -1164,10 +1164,10 @@ function seleciona_item(id, texto, obj) {
  * @param {object} obj - Campo que deverá ser excluído
  */
 
-function exclui_campo(objdest, obj) {
+function exclui_campo(objdest, obj, pos = 0, vazio = false) {
   jQuery(obj).closest(".row").remove();
   jQuery("#form1").attr("data-alter", true);
-  acerta_botoes_rep(objdest);
+  acerta_botoes_rep(objdest, pos, vazio);
 }
 
 /**
@@ -1176,8 +1176,9 @@ function exclui_campo(objdest, obj) {
  * @param {string} url - url de criação dos campos
  * @param {string} objdest - nome da div de destino
  * @param {object} obj - Campo que deverá ser repetido
+ * @param {bool} vazio - Informa se o array pode ser vazio para ser usado na função acerta_botoes_rep
  */
-function addCampo(url, objdest, obj) {
+function addCampo(url, objdest, obj, vazio = false) {
   atual = parseInt(obj.getAttribute("data-index"));
   secao = jQuery(obj).parents().eq(5)[0].id;
   proximo = atual + 1;
@@ -1288,7 +1289,7 @@ function addCampo(url, objdest, obj) {
     });
 
     // carregamentos_iniciais();
-    acerta_botoes_rep(objdest);
+    acerta_botoes_rep(objdest, proximo, vazio);
     if (typeof acertaOcultos === "function") {
       acertaOcultos();
     }
@@ -1668,7 +1669,7 @@ function altera_index(obj, ind_a, ind_n) {
  * Acerta Botões de Adicionar e Excluir campos
  *
  */
-function acerta_botoes_rep(repete, pos = -1) {
+function acerta_botoes_rep(repete, pos = -1, vazio = false) {
   // if (repete.startsWith("acoes")) {
   //   return;
   // }
@@ -1687,7 +1688,7 @@ function acerta_botoes_rep(repete, pos = -1) {
   jQuery("#rep_" + repetepos + " .bt-down").removeClass("d-none");
   jQuery("#rep_" + repetepos + " .bt-repete").addClass("d-none");
 
-  if (visiveis == 1) {
+  if (visiveis == 1 && !vazio) {
     jQuery("#rep_" + repetepos + " .bt-exclui").addClass("d-none");
     jQuery("#rep_" + repetepos + " .bt-up").addClass("d-none");
     jQuery("#rep_" + repetepos + " .bt-down").addClass("d-none");
@@ -1725,9 +1726,9 @@ function testa_dep(id_dep) {
  * @param {integer} selec - Dependente pré-selecionado
  */
 function busca_dependente(obj, id_dep, url_busca, selec) {
-  const escapedIdDep = id_dep.replace(/[\[\]]/g, "\\$&");
-  const $select = jQuery("#" + escapedIdDep);
-  const $selectRaw = jQuery("#" + escapedIdDep)[0];
+  const IdDep = escIdColchetes(id_dep);
+  const $select = jQuery("#" + IdDep);
+  const $selectRaw = jQuery("#" + IdDep)[0];
 
   // Detecta valor de seleção padrão
   if (!selec) {
@@ -2402,9 +2403,9 @@ function escIdColchetes(id) {
   if (typeof id !== "string") return id;
 
   // Só escapa se ainda não estiver escapado
-  return id
-    .replace(/(?<!\\)\[/g, "\\[") // escapa [ se não tiver barra antes
-    .replace(/(?<!\\)\]/g, "\\]"); // escapa ] se não tiver barra antes
+  return id.replace(/\\?([\[\]])/g, (match, p1) => {
+    return match.startsWith("\\") ? match : "\\" + p1;
+  });
 }
 
 function validaDataMinima(obj) {

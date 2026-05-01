@@ -3,7 +3,7 @@
 
 echo $this->section('menu');
 
-$url_sair = base_url('/login/logout');
+$url_sair = base_url('/login');
 $avatar = session()->get('usu_avatar')??'avatar';
 $nomeus = session()->get('usu_nome')??'Sem nome';
 $idusua = session()->get('usu_id')??'Sem id';
@@ -46,12 +46,12 @@ if ($avatar != '') {
     <?
         echo anchor('CfgUsuario/edit_senha/' . session()->usu_id, 'Editar Meus Dados', 'class="form-control px-1 btn btn-outline-secondary w-100"');
         echo "<hr>";
-        echo anchor($url_sair, '<div class="icon-menu float-start me-2">
+        echo anchor(base_url('/'), '<div class="icon-menu float-start me-2">
                     <i class="fas fa-sign-out-alt" aria-hidden="true"></i></div>
                     <div class="text-start txt-bt-manut">
                       Sair
                     </div>', 'class="bt_user btn btn-outline-dark px-2 py-0 w-100 text-start float-start"');
-    ?>
+        ?>
   </div>
 </div>
 
@@ -60,16 +60,16 @@ if ($avatar != '') {
   <div class="pt-2 pb-1 ps-1 pe-1">
     <div id='sistema' class='div-user text-start w-100'>
       <a href="<?php echo site_url(); ?>" >
-        <div id="bt_empresa" name="bt_empresa" title="Empresa" type="button"
-                    class="bt_empresa w-100 px-2 text-start float-start mb-3" >
+        <button id="bt_empresa" name="bt_empresa" title="Empresa" type="button"
+                    class="bt_empresa btn btn-outline-light w-100 px-2 text-start float-start mb-3" >
 
-          <img src='<?php echo session()->icone; ?>'
+          <img src='<?php echo session()->icone . '?noc=' . time(); ?>'
                     class="img-empresa rounded-circle me-2 " />
 
           <div class="usu_nome txt-bt-manut">
             <img src='<?php echo session()->logo; ?>' class="logo-menu" />
           </div>
-        </div>
+        </button>
       </a>
     </div>
     <div id='div_user' class='div-user text-start w-100' style='height: 4rem'>
@@ -99,14 +99,14 @@ if ($avatar != '') {
       ?>
         <div class="accordion accordion-item accordion-body ms-2 py-1 px-0 h-auto bg-blue-claro">
         <a id="<?php echo strtolower($opcao['tel_controler']); ?>" href="<?php echo base_url($opcao['tel_controler']); ?>"
-                class="text-body-emphasis w-100" >
+                class="text-body-emphasis" >
           <div id="<?php echo strtolower($opcao['tel_controler']); ?>" data-menu='' class='nav-dropdown-menu mt-0 ms-1 mb-1'>
             <div class='align-items-center rounded-circle p-0 me-2 text-center float-start'
                   style='width:1.65rem; height:1.65rem;margin-top: 0.15rem !important'>
 
               <i class='<?php echo $opcao['men_icone']; ?>'></i>
             </div>
-            <div class='align-items-start ms-2 men_nome py-1 w-100'><?php echo $opcao['men_etiqueta']; ?></div>
+            <div class='align-items-start ms-2 men_nome py-1'><?php echo $opcao['men_etiqueta']; ?></div>
           </div>
         </a>
         </div>
@@ -146,7 +146,7 @@ if ($avatar != '') {
                                 style='width:1.65rem; height:1.65rem;'>
                             <i class='<?php echo $subopc['men_icone']; ?>'></i>
                           </div>
-                          <div class='align-items-start ms-2 men_nome py-0 w-100'><?php echo $subopc['men_etiqueta']; ?></div>
+                          <div class='align-items-start ms-2 men_nome py-0'><?php echo $subopc['men_etiqueta']; ?></div>
                         </div>
                       </a>
                     <?
@@ -178,7 +178,7 @@ if ($avatar != '') {
                                       <div class='align-items-center rounded-circle p-0 me-2 text-center float-start'  style='width:1.45rem; height:1.45rem;'>
                                         <i class='<?php echo $subsub['men_icone']; ?>'></i>
                                       </div>
-                                      <div class='align-items-start ms-2 men_nome py-0 w-100'><?php echo $subsub['men_etiqueta']; ?></div>
+                                      <div class='align-items-start ms-2 men_nome py-0'><?php echo $subsub['men_etiqueta']; ?></div>
                                     </div>
                                   </a>
                                 <?

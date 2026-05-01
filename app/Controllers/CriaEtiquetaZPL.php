@@ -68,203 +68,6 @@ class CriaEtiquetaZPL extends BaseController
     }
 
     /* ================== Montagem do ZPL nativo ================== */
-
-    /**
-     * Desenha o CONTEÚDO de UMA etiqueta dentro da linha,
-     * ancorado em (baseX, baseY). Respeita etc_*.
-     */
-    // private function buildConteudoEtiquetaEm(int $baseX, int $baseY, array $registro, array $camp, int $etqW, int $etqH): string
-    // {
-    //     $z = '';
-    //     $yCursor = 0;
-    //     $ocupouPct = 0; // quanto da largura da etiqueta (em %) já ocupei na “linha” de texto
-
-    //     foreach ($camp as $prop) {
-    //         $caracteres = (int) ($prop['etc_caracteres'] ?? 30);
-    //         $colPct     = max(1, (int) ($prop['etc_colunas'] ?? 100));
-    //         $alinh      = $prop['etc_alinhamento'] ?? 'L'; // L/C/R
-    //         $negrito    = ($prop['etc_negrito'] ?? 'N') === 'S';
-    //         $fonte      = $prop['etc_fonte'] ?? '0';       // '0' = A0 escalável
-    //         $tamPt      = (int) ($prop['etc_tamanho'] ?? 24);
-    //         $linhas     = (int) ($prop['etc_linhas'] ?? 1);
-    //         $isBar      = ($prop['etc_codbar'] ?? 'N') === 'S';
-    //         $tipoCampo  = $prop['etc_campo'] ?? '';        // '0','1','2','3' ou nome do campo
-    //         $rotulo     = $prop['etc_rotulo'] ?? '';
-
-    //         $largDisp = (int) floor($etqW * ($colPct / 100));
-
-    //         // quebra para nova linha visual na etiqueta se ultrapassar 100%
-    //         if ((($ocupouPct + $colPct) > 100) && $ocupouPct > 0) {
-    //             $yCursor += $this->alturaLinhaFromTamanho($tamPt);
-    //             $ocupouPct = 0;
-    //         }
-
-    //         $xBase = $baseX + (int) floor(($ocupouPct / 100) * $etqW);
-
-    //         // Linha horizontal?
-    //         if ($tipoCampo === '1') {
-    //             $z .= "^FO{$xBase}," . ($baseY + $yCursor) . "^GB{$largDisp},1,1^FS";
-    //             $yCursor += max(1, $this->mm2dot(0.6));
-    //             $ocupouPct = 0;
-    //             continue;
-    //         }
-
-    //         // Conteúdo
-    //         if ($tipoCampo === '0') {
-    //             $linhas   = 1;
-    //             $texto    = (string) $rotulo;
-    //         } elseif ($tipoCampo === '2') {
-    //             $linhas   = 1;
-    //             $texto    = date('d/m/Y');
-    //         } elseif ($tipoCampo === '3') {
-    //             $linhas   = 1;
-    //             $texto    = date('d/m/Y H:i:s');
-    //         } else {
-    //             if ($rotulo === 'Sem Rótulo' || $rotulo === '.') $rotulo = '';
-    //             $val = trim((string) ($registro[$tipoCampo] ?? ''));
-    //             if ($caracteres > 0 && $linhas == 1) $val = mb_substr($val, 0, $caracteres);
-    //             $texto = trim(($rotulo ? "$rotulo " : '') . $val);
-    //         }
-
-    //         if ($isBar) {
-    //             // Altura do código de barras baseada no “tamanho”
-    //             $alturaMM = $tamPt * 25.4 / 72;
-    //             $barH     = max(40, $this->mm2dot($alturaMM));
-    //             $dados    = $texto !== '' ? $texto : str_repeat('0', max(8, $caracteres));
-
-    //             // largura disponível para o código
-    //             // $largDisp = (int) floor($etqW * ($colPct / 100));
-
-    //             // margem lateral para centralizar (em dots)
-    //             $margem = (($etqW - $largDisp) / 2);
-
-    //             // posição inicial
-    //             $xPos = $xBase + $margem;
-
-    //             // Render
-    //             $z .= "^FO{$xPos}," . ($baseY + $yCursor);
-    //             // ^BC: N = não mostrar texto
-    //             $z .= "^BY2^BCN,{$barH},N,N,N^FD" . $this->escZpl($dados) . "^FS";
-
-    //             $yCursor += ($barH + $this->mm2dot(1.2));
-    //             $ocupouPct = 0;
-    //             continue;
-    //         }
-
-
-    //         // Texto
-    //         // $hDots = max(50, $this->alturaLinhaFromTamanho($tamPt));
-    //         $hDots = $this->alturaLinhaFromTamanho($tamPt);
-    //         // echo $tamPt.'<br>';
-    //         // echo $hDots.'<br><br>';
-    //         $wDots = $hDots * 0.4;
-
-    //         // $z .= "^FO{$xBase}," . ($baseY + $yCursor) . "^A{$fonte}N,{$hDots},{$wDots}";
-    //         // Define fonte
-    //         $z .= "^FO{$xBase}," . ($baseY + $yCursor) . "^A@N,{$hDots},{$wDots}";
-
-    //         $yBase = $baseY + $yCursor;
-
-    //         if ($linhas > 1 && $caracteres > 0) {
-    //             // Quebra fixa por caracteres e limita ao número de linhas
-    //             // Quantidade fixa por linha
-    //             $charsPerLine = max(1, (int)$caracteres);
-    //             $maxLines     = max(1, (int)$linhas);
-
-    //             // Quebra em partes de $charsPerLine
-    //             $partes = [];
-    //             $limite = $charsPerLine * $maxLines;
-
-    //             $partes = str_split($this->escZpl($texto), $caracteres);
-
-    //             // Garante que tenha exatamente $maxLines elementos
-    //             while (count($partes) < $maxLines) {
-    //                 $partes[] = ''; // linha vazia
-    //             }
-
-    //             // Altura de linha: altura da fonte + opcional leading
-    //             $leading  = $this->mm2dot($hDots / 25); // ex.: $this->mm2dot(0.6) se quiser espaço extra
-    //             $lineStep = $hDots + $leading;
-
-    //             $yBase = $baseY + $yCursor;
-
-    //             for ($i = 0; $i < $maxLines; $i++) {
-    //                 $yLine = $yBase + ($i * $lineStep);
-    //                 $z .= "^FO{$xBase},{$yLine}^A@N,{$hDots},{$wDots}";
-    //                 $z .= "^FB{$largDisp},1,0,{$alinh},0";
-    //                 $z .= "^FD{$partes[$i]}^FS";
-    //             }
-    //             $yCursor  += ($lineStep * ($maxLines -1));
-
-    //             // Avança o cursor exatamente pelas linhas definidas
-    //             $ocupouPct = 0;
-
-    //         } else {
-    //             // Caso padrão (1 linha)
-    //             $z .= "^FO{$xBase}," . ($baseY + $yCursor) . "^A@N,{$hDots},{$wDots}";
-    //             $z .= "^FB{$largDisp},{$linhas},0,{$alinh},0";
-    //             $z .= "^FD" . $this->escZpl($texto) . "^FS";
-    //         }
-
-    //         // $z .= $fd;
-    //         if ($negrito) {
-    //             // “bold” fake: imprime duas vezes com leve offset
-    //             // $z .= $fd;
-    //             $z .= "^FO" . ($xBase + 1) . "," . ($baseY + $yCursor) . "^A@N,{$hDots},{$wDots}";
-    //             if ($linhas > 1 || $colPct < 100) {
-    //                 $z .= "^FB{$largDisp},{$linhas},0," . ($alinh ?: 'L') . ",0";
-    //             }
-    //             // $z .= $fd;
-    //         } else {
-    //             // $z .= $fd;
-    //         }
-
-    //         $yCursor    += max($this->alturaLinhaFromTamanho($tamPt), $this->mm2dot(2.5));
-    //         $ocupouPct  += $colPct;
-    //         if ($ocupouPct >= 100) $ocupouPct = 0;
-    //     }
-
-    //     return $z;
-    // }
-
-    /**
-     * Monta UMA LINHA (um ^XA…^XZ) com até $this->colunas etiquetas.
-     * PW = largura total da LINHA, LL = altura total da LINHA.
-     */
-    // private function buildLinha(array $itensDaLinha, array $camp): string
-    // {
-    //     // tamanhos em dots
-    //     $etqW = $this->mm2dot($this->largura);
-    //     $etqH = $this->mm2dot($this->altura);
-    //     $ml   = $this->mm2dot($this->esquerda);
-    //     $mr   = $this->mm2dot($this->direita);
-    //     $mt   = $this->mm2dot($this->topo);
-    //     $mb   = $this->mm2dot($this->rodape);
-    //     $gh   = $this->mm2dot($this->horizontal);
-
-    //     $pw = $ml + ($this->colunas * $etqW) + (($this->colunas - 1) * $gh) + $mr; // largura TOTAL da LINHA
-    //     $ll = $mt + $etqH + $mb;                                                    // altura TOTAL da LINHA
-
-    //     $z  = "^XA^PW{$pw}^LL{$ll}^LH0,0";
-    //     // Opcional: velocidade/escurecimento
-    //     // $z .= "^PR6^MD10";
-
-    //     foreach ($itensDaLinha as $col => $registro) {
-    //         if ($col >= $this->colunas) break;
-
-    //         $baseX = $ml + $col * ($etqW + $gh);
-    //         $baseY = $mt;
-
-    //         // (Opcional) borda da etiqueta
-    //         // $z .= "^FO{$baseX},{$baseY}^GB{$etqW},{$etqH},1^FS";
-
-    //         $z .= $this->buildConteudoEtiquetaEm($baseX, $baseY, $registro, $camp, $etqW, $etqH);
-    //     }
-
-    //     $z .= "^XZ";
-    //     return $z;
-    // }
-
     /**
      * Gera UM ÚNICO formato (^XA ... ^XZ) contendo TODAS as etiquetas do array $dados,
      * distribuídas em fileiras com até $this->colunas por fileira.
@@ -577,13 +380,129 @@ class CriaEtiquetaZPL extends BaseController
      * PREVIEW: renderiza UMA LINHA (até let_colunas itens) em PNG via Labelary.
      * Mantém rota/assinatura que você já usa.
      */
-    public function emiteEtiqueta($etq_id, $chave = false)
+    // public function emiteEtiqueta($etq_id, $chave = false, $qtia = 1)
+    // {
+    //     $etiq = $this->etiqueta->getEtiqueta($etq_id);
+    //     $camp = $this->etiquetaCampo->getEtiquetaCampo($etq_id);
+    //     if (!$etiq) return;
+
+    //     $etq = $etiq[0];
+    //     $this->largura    = (float) $etq->let_largura;
+    //     $this->altura     = (float) $etq->let_altura;
+    //     $this->esquerda   = (float) $etq->let_marg_esquerda;
+    //     $this->direita    = (float) $etq->let_marg_direita;
+    //     $this->topo       = (float) $etq->let_marg_superior;
+    //     $this->rodape     = (float) $etq->let_marg_inferior;
+    //     $this->horizontal = (float) $etq->let_distancia_h;
+    //     $this->vertical   = (float) $etq->let_distancia_v;
+    //     $this->colunas    = (int)   $etq->let_colunas;
+    //     $this->linhas     = (int)   $etq->let_linhas;
+
+    //     // Busca 1 linha de dados (até N colunas) — mesma fonte que você já usa
+    //     $modelo = false;
+    //     if ($chave === false || $chave == 'false') {
+    //         $fields = array_column($camp, 'etc_campo');
+    //         $telid  = $etq->tel_id;
+    //         $telas  = (array) $this->tela->getTelaId($telid)[0] ?? null;
+
+    //         if ($telas && !empty($telas['tel_model'])) {
+    //             $model = $telas['tel_model'];
+    //             $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
+    //             $view   = $model_atual->view;
+    //             if (isset($model_atual->viewoutra)) {
+    //                 $view   = $model_atual->viewoutra;
+    //             }
+    //             $dados = $this->common->getListaTabela($model_atual->DBGroup, $view, $fields, false, 10);
+    //         } else {
+    //             $dados = array_fill(0, $this->colunas, []);
+    //         }
+    //         $modelo = true;
+    //     } else {
+    //         $dados = cache()->get($chave) ?: [];
+    //         // debug($all, true);
+    //         // $dados = array_slice($all, 0, max(1, $this->colunas));
+    //         // debug($dados, true);
+    //         if (!$dados) $dados = [[]];
+    //     }
+
+    //     // ZPL de UMA LINHA (até N colunas)
+    //     $zplLinha = $this->buildLinha($dados, $camp, $modelo);
+    //     // debug($zplLinha, true);
+    //     // echo $zplLinha;
+    //     // exit;
+    //     // Tamanho da LINHA (em polegadas) pro Labelary
+    //     // garante que todos os formatos terminam em ^XZ
+    //     $cols = max(1, (int)$this->colunas);
+    //     $totalRows = (int)ceil(count($dados) / $cols);
+
+    //     $etqW = $this->mm2dot($this->largura);
+    //     $ml   = $this->mm2dot($this->esquerda);
+    //     $mr   = $this->mm2dot($this->direita);
+    //     $gh   = $this->mm2dot($this->horizontal);
+    //     $pwDots = $ml + ($cols * $etqW) + (($cols - 1) * $gh) + $mr;
+    //     $PW_MAX = 3045; // limite do Labelary (15" em 203 DPI)
+    //     $pwDots = min($pwDots, $PW_MAX);
+
+    //     $etqH = $this->mm2dot($this->altura);
+    //     $mt   = $this->mm2dot($this->topo);
+    //     $mb   = $this->mm2dot($this->rodape);
+    //     $gv   = isset($this->vertical) ? $this->mm2dot($this->vertical) : 0;
+
+    //     $llDots = $mt + ($totalRows * $etqH) + (max(0, $totalRows - 1) * $gv) + $mb;
+    //     $LL_MAX = 3045; // 🔥 CORREÇÃO
+    //     $llDots = min($llDots, $LL_MAX);
+
+    //     $larg_in = round($pwDots / $this->dpi, 3);
+    //     $altu_in = round($llDots / $this->dpi, 3);
+
+    //     // se sua impressora for 203dpi, 8dpmm; 300dpi, 12dpmm
+    //     $dpmm = max(1, (int)round($this->dpi / 25.4));
+
+    //     $url = "http://api.labelary.com/v1/printers/{$dpmm}dpmm/labels/{$larg_in}x{$altu_in}/0/";
+
+
+    //     $ch  = curl_init($url);
+    //     curl_setopt_array($ch, [
+    //         CURLOPT_POST           => true,
+    //         CURLOPT_POSTFIELDS     => $zplLinha, // stream completo com todas as ^XA…^XZ
+    //         CURLOPT_HTTPHEADER     => ['Accept: image/png'],
+    //         CURLOPT_RETURNTRANSFER => true,
+    //         CURLOPT_TIMEOUT        => 30,
+    //     ]);
+
+    //     $png  = curl_exec($ch);
+    //     $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    //     $err  = curl_error($ch);
+    //     curl_close($ch);
+
+    //     if ($code !== 200 || !$png) {
+    //         // se uma página falhar, retorna o erro dessa página
+    //         return $this->response->setJSON([
+    //             'erro'   => $url . '<br>Falha no preview (Labelary) ' . $code . '<br>' . $err,
+    //             'http'   => $code,
+    //             'pagina' => 0,
+    //             'detalhe' => $err ?: '',
+    //         ]);
+    //     }
+
+    //     $imagem = base64_encode($png);
+
+    //     // retorna TODAS as imagens
+    //     return $this->response->setJSON(['imagem' => $imagem]);
+    // }
+
+    public function emiteEtiqueta(int $etq_id, string|bool $chave = false, int $qtia = 1)
     {
         $etiq = $this->etiqueta->getEtiqueta($etq_id);
         $camp = $this->etiquetaCampo->getEtiquetaCampo($etq_id);
-        if (!$etiq) return;
+
+        if (!$etiq) {
+            return;
+        }
 
         $etq = $etiq[0];
+
+        // Configuração
         $this->largura    = (float) $etq->let_largura;
         $this->altura     = (float) $etq->let_altura;
         $this->esquerda   = (float) $etq->let_marg_esquerda;
@@ -592,74 +511,108 @@ class CriaEtiquetaZPL extends BaseController
         $this->rodape     = (float) $etq->let_marg_inferior;
         $this->horizontal = (float) $etq->let_distancia_h;
         $this->vertical   = (float) $etq->let_distancia_v;
-        $this->colunas    = (int)   $etq->let_colunas;
-        $this->linhas     = (int)   $etq->let_linhas;
+        $this->colunas    = max(1, (int) $etq->let_colunas);
 
-        // Busca 1 linha de dados (até N colunas) — mesma fonte que você já usa
         $modelo = false;
-        if ($chave === false || $chave == 'false') {
+
+        // 🔥 1 etiqueta base
+        if ($chave === false || $chave === 'false') {
+
             $fields = array_column($camp, 'etc_campo');
             $telid  = $etq->tel_id;
-            $telas  = (array) $this->tela->getTelaId($telid)[0] ?? null;
+            $telas  = (array) ($this->tela->getTelaId($telid)[0] ?? null);
 
             if ($telas && !empty($telas['tel_model'])) {
+
                 $model = $telas['tel_model'];
                 $model_atual = model("App\\Models\\" . substr($model, 0, 6) . "\\" . $model);
-                $view   = $model_atual->view;
+
+                $view = $model_atual->view ?? null;
                 if (isset($model_atual->viewoutra)) {
-                    $view   = $model_atual->viewoutra;
+                    $view = $model_atual->viewoutra;
                 }
-                $dados = $this->common->getListaTabela($model_atual->DBGroup, $view, $fields, false, 10);
+
+                $dadosBase = $this->common->getListaTabela(
+                    $model_atual->DBGroup,
+                    $view,
+                    $fields,
+                    false,
+                    1
+                );
             } else {
-                $dados = array_fill(0, $this->colunas, []);
+                $dadosBase = [[]];
             }
+
             $modelo = true;
         } else {
-            $dados = cache()->get($chave) ?: [];
-            // debug($all, true);
-            // $dados = array_slice($all, 0, max(1, $this->colunas));
-            // debug($dados, true);
-            if (!$dados) $dados = [[]];
+            $dadosBase = cache()->get($chave) ?: [[]];
         }
 
-        // ZPL de UMA LINHA (até N colunas)
-        $zplLinha = $this->buildLinha($dados, $camp, $modelo);
-        // debug($zplLinha, true);
-        // echo $zplLinha;
-        // exit;
-        // Tamanho da LINHA (em polegadas) pro Labelary
-        // garante que todos os formatos terminam em ^XZ
-        $cols = max(1, (int)$this->colunas);
-        $totalRows = (int)ceil(count($dados) / $cols);
+        // garante 1 item
+        $item = is_array($dadosBase[0] ?? null) || is_object($dadosBase[0] ?? null)
+            ? $dadosBase[0]
+            : $dadosBase;
+
+        // =========================================================
+        // 🔥 PREVIEW (até 5 linhas)
+        // =========================================================
+        $qtia = max(1, (int) $qtia);
+
+        $maxLinhasPreview = 5;
+        $maxItensPreview  = $this->colunas * $maxLinhasPreview;
+
+        $previewQtd = min($qtia, $maxItensPreview);
+
+        // 🔥 monta várias etiquetas dentro da mesma label
+        $dadosPreview = array_fill(0, $previewQtd, $item);
+
+        $zpl = $this->buildLinha($dadosPreview, $camp, $modelo);
+
+        // =========================================================
+        // 🔥 IMPRESSÃO REAL (usa PQ)
+        // =========================================================
+        $zplPrint = preg_replace(
+            '/\^XZ\s*$/',
+            "^PQ{$qtia}\n^XZ",
+            rtrim($this->buildLinha([$item], $camp, $modelo))
+        );
+
+        // =========================================================
+        // 📏 DIMENSÕES BASEADAS NO PREVIEW
+        // =========================================================
+        $totalRows = (int) ceil($previewQtd / $this->colunas);
 
         $etqW = $this->mm2dot($this->largura);
         $ml   = $this->mm2dot($this->esquerda);
         $mr   = $this->mm2dot($this->direita);
         $gh   = $this->mm2dot($this->horizontal);
-        $pwDots = $ml + ($cols * $etqW) + (($cols - 1) * $gh) + $mr;
-        $PW_MAX = 3045; // limite do Labelary (15" em 203 DPI)
-        $pwDots = min($pwDots, $PW_MAX);
+
+        $pwDots = $ml + ($this->colunas * $etqW) + (($this->colunas - 1) * $gh) + $mr;
+        $pwDots = min($pwDots, 3045);
 
         $etqH = $this->mm2dot($this->altura);
         $mt   = $this->mm2dot($this->topo);
         $mb   = $this->mm2dot($this->rodape);
-        $gv   = isset($this->vertical) ? $this->mm2dot($this->vertical) : 0;
+        $gv   = $this->mm2dot($this->vertical);
 
         $llDots = $mt + ($totalRows * $etqH) + (max(0, $totalRows - 1) * $gv) + $mb;
+        $llDots = min($llDots, 3045);
 
         $larg_in = round($pwDots / $this->dpi, 3);
         $altu_in = round($llDots / $this->dpi, 3);
 
-        // se sua impressora for 203dpi, 8dpmm; 300dpi, 12dpmm
-        $dpmm = max(1, (int)round($this->dpi / 25.4));
+        $dpmm = max(1, (int) round($this->dpi / 25.4));
 
         $url = "http://api.labelary.com/v1/printers/{$dpmm}dpmm/labels/{$larg_in}x{$altu_in}/0/";
 
+        // =========================================================
+        // 🔄 REQUEST LABELARY
+        // =========================================================
+        $ch = curl_init($url);
 
-        $ch  = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => $zplLinha, // stream completo com todas as ^XA…^XZ
+            CURLOPT_POSTFIELDS     => $zpl,
             CURLOPT_HTTPHEADER     => ['Accept: image/png'],
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => 30,
@@ -668,28 +621,25 @@ class CriaEtiquetaZPL extends BaseController
         $png  = curl_exec($ch);
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $err  = curl_error($ch);
+
         curl_close($ch);
 
         if ($code !== 200 || !$png) {
-            // se uma página falhar, retorna o erro dessa página
             return $this->response->setJSON([
-                'erro'   => $url . '<br>Falha no preview (Labelary) ' . $code . '<br>' . $err,
-                'http'   => $code,
-                'pagina' => 0,
-                'detalhe' => $err ?: '',
+                'erro' => $url . '<br>Falha no preview (Labelary) ' . $code . '<br>' . $err,
             ]);
         }
 
-        $imagem = base64_encode($png);
-
-        // retorna TODAS as imagens
-        return $this->response->setJSON(['imagem' => $imagem]);
+        return $this->response->setJSON([
+            'imagem' => base64_encode($png),
+            'preview' => $previewQtd,
+            'total'   => $qtia
+        ]);
     }
-
     /**
      * IMPRESSÃO: quebra os dados em linhas de até let_colunas e envia cada LINHA (^XA…^XZ) pra Zebra.
      */
-    public function imprimeEtiqueta($etq_id, $chave = false, $imp_id = false)
+    public function imprimeEtiqueta($etq_id, $chave = false, $qtia = 1, $imp_id = false)
     {
         if (!$imp_id) {
             return $this->response->setJSON(['erro' => 'Impressora não definida.']);
@@ -700,7 +650,9 @@ class CriaEtiquetaZPL extends BaseController
         }
         $camp = $this->etiquetaCampo->getEtiquetaCampo($etq_id);
         $printers = new ConfigImpressoraModel();
+        // debug('Imp ' . $imp_id);
         $impr = $printers->getImpressora($imp_id);
+        // debug($impr, true);
         $this->ipZebra = trim($impr->imp_ip);
         $this->portaZebra = intval($impr->imp_porta);
         $nomeimpressora = $impr->imp_nome;
@@ -738,7 +690,14 @@ class CriaEtiquetaZPL extends BaseController
         } else {
             $all = cache()->get($chave) ?: [];
             // debug($all);
-            $dados = array_slice($all, 0, max(1, $this->colunas));
+            $item = is_array($all[0] ?? null) || is_object($all[0] ?? null)
+                ? $all[0]
+                : $all;
+
+            // 🔥 multiplica pela quantidade
+            $dados = array_fill(0, $qtia, $item);
+
+            // $dados = array_slice($all, 0, max(1, $this->colunas));
             // debug($dados, true);
             if (!$dados) $dados = [[]];
         }
@@ -759,7 +718,6 @@ class CriaEtiquetaZPL extends BaseController
         return $this->response->setJSON(['status' => "Etiquetas enviadas para Impressora $nomeimpressora"]);
     }
 
-    /* ================== Preview por tela (opcional) ================== */
 
     public function previewEtiquetaViaAjax()
     {

@@ -446,6 +446,8 @@ class Buscas extends BaseController
 
     public function buscaProdutoporLote()
     {
+        $lotesm = new ProdutLoteModel();
+
         $ret = new \stdClass();
         $busca = $this->request->getVar('busca');
         // debug($busca);
@@ -453,9 +455,7 @@ class Buscas extends BaseController
             $sutid = $this->request->getVar('sutid');
             $classes = (new OcorreSubtOcorrenciaModel())->getClassePorSubtipo($sutid) ?? null;
             $idsClasses = array_column($classes, 'cla_id');
-            $lotesm = new ProdutLoteModel();
             $lote   = $lotesm->getLoteClasse($busca, $idsClasses);
-            // debug($lote, true);
 
             if (empty($lote)) {
                 $ret->lotid = '-1';
@@ -933,5 +933,69 @@ class Buscas extends BaseController
         // debug($ret);
 
         echo json_encode($ret);
+    }
+
+    public function buscaProdutosMergeEstoques($id, $deposito, $tipo)
+    {
+        $modrequisicao = new EstoquRequisicaoModel();
+        $modprodutos   = new ProdutProdutoModel();
+        $produtos = $modrequisicao->getRequisicaoProdutos($id, $tipo);
+        // debug($produtos, true);
+        // array_column mudando para o OBJ
+        $pro_ids = array_unique(array_map(
+            fn($p) => $p->pro_id,
+            $produtos
+        ));
+        // Transformar $produtos em um array indexado por pro_id
+        $produtosIndexado = [];
+        foreach ($produtos as $param) {
+            $produtosIndexado[$param->pro_id] = $param;
+        }
+
+        // debug($pro_ids);
+
+        $dados_ceq_produto = $modprodutos
+            ->getProdutoEstoqueCeqweb($pro_ids, $deposito);
+
+        // debug($dados_est_produto, true);
+        $dados_est_produto = $modprodutos
+            ->getProdutoEstoque($pro_ids, $deposito);
+
+        $resultadoIndexado = [];
+
+        // 1. Base: produtosIndexado
+        foreach ($produtosIndexado as $pro_id => $produto) {
+            $resultadoIndexado[$pro_id] = (array) $produto;
+        }
+
+        // 2. Merge com estoque
+        foreach ($dados_est_produto as $itemEstoque) {
+            $pro_id = $itemEstoque->pro_id;
+
+            $resultadoIndexado[$pro_id] = array_merge(
+                $resultadoIndexado[$pro_id] ?? [],
+                (array) $itemEstoque
+            );
+        }
+
+        // 3. Merge com ceqweb
+        foreach ($dados_ceq_produto as $itemCeq) {
+            $pro_id = $itemCeq->pro_id;
+
+            $resultadoIndexado[$pro_id] = array_merge(
+                $resultadoIndexado[$pro_id] ?? [],
+                (array) $itemCeq
+            );
+        }
+
+        // 4. Converter para array final de objetos
+        $resultado = array_map(
+            fn(array $item): object => (object) $item,
+            $resultadoIndexado
+        );
+
+        $resultado = array_values($resultado);
+
+        return $resultado;
     }
 }

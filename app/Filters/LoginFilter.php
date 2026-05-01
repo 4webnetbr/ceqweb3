@@ -1,11 +1,15 @@
 <?php
 namespace App\Filters;
 
+// use App\Models\Config\ConfigMensagemModel;
+// use App\Models\Config\ConfigMenuModel;
 use App\Models\Config\ConfigPerfilItemModel;
 use App\Models\Config\ConfigTelaModel;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
+
+// use Config\Services;
 
 class LoginFilter implements FilterInterface
 {
@@ -21,41 +25,6 @@ class LoginFilter implements FilterInterface
 
         $session->set('last_activity', time());
 
-        $userId = session()->get('usu_id');
-
-        // se não está logado, ignora
-        if (! $userId) {
-            return;
-        }
-
-        // pega Tab-ID (header OU cookie)
-        $tabId = $request->getHeaderLine('Tab-ID')
-            ?: ($_COOKIE['tabId'] ?? null);
-
-        // debug($tabId, true);
-
-        // if (! $tabId) {
-        //     return;
-        // }
-        // 🔍 verifica se ainda está ativa
-        $sessionService = new \App\Services\RedisSessionService();
-
-        $userTabs = $sessionService->getUserTabs($userId);
-
-// 🔹 PRIMEIRO ACESSO DA ABA
-        if (! in_array($tabId, $userTabs)) {
-            $sessionService->updateTab($userId, $tabId);
-            // return;
-        }
-
-// 🔹 ABA EXISTIA, MAS EXPIROU
-        if (! $sessionService->isTabActive($tabId)) {
-            // 🔥 REMOVE aba inválida do usuário
-            $sessionService->logout();
-        }
-// 🔹 ABA ATIVA → só renova
-        $sessionService->updateTab($userId, $tabId);
-
         $uri      = $request->getUri();
         $segments = $uri->getSegments();
         $path     = $uri->getPath();
@@ -67,6 +36,13 @@ class LoginFilter implements FilterInterface
         $modal      = end($segments) === 'modal=true';
         $controller = $segments[0] ?? '';
         $metodo     = $segments[1] ?? 'index';
+
+        // ✅ Carrega mensagens apenas uma vez por sessão
+        // if (!$session->has('msg_cfg')) {
+        //     $msgModel = new ConfigMensagemModel();
+        //     $mensagens = $msgModel->getMensagemId();
+        //     $session->set(['msg_cfg' => $mensagens]);
+        // }
 
         $perfilId    = $session->get('usu_perfil_id');
         $tipoUsuario = $session->get('usu_tipo');
@@ -130,13 +106,12 @@ class LoginFilter implements FilterInterface
                 $dadosTela['it_menu'] = $session->get('menu');
             }
 
-            $dadosTela['permissao'] = $this->buscaPermissaoTela($perfilItemModel, $perfilId, $tela['tel_id']) ?? '';
-
-            $dadosTela['erromsg'] = $this->validaPermissao($dadosTela['permissao'], $metodo, $dadosTela['title']);
-            // debug($dadosTela['erromsg'], true);
+            $dadosTela['permissao'] = $this->buscaPermissaoTela($perfilItemModel, $perfilId, $tela['tel_id']) ?? 'CAEX';
+            $dadosTela['erromsg']   = $this->validaPermissao($dadosTela['permissao'], $metodo, $dadosTela['title']);
         }
 
         $session->setFlashdata(['dados_tela' => $dadosTela]);
+        // $session->set(['dados_tela' => $dadosTela]);
 
         if (! empty(trim($dadosTela['erromsg']))) {
             $view = $modal ? 'vw_semacesso_modal' : 'vw_semacesso';
@@ -153,11 +128,8 @@ class LoginFilter implements FilterInterface
 
     private function validaPermissao(string $permissao, string $metodo, string $titulo): string
     {
-        // debug($metodo, true);
         if (in_array($metodo, ['', 'index']) && $permissao === '') {
             return "<h2>Sem autorização para acessar a lista de <br>{$titulo}</h2><br>Solicite acesso ao Administrador do Sistema";
-        } else if ($permissao === '') {
-            return "<h2>Sem autorização para acessar <br>{$titulo}</h2><br>Solicite acesso ao Administrador do Sistema";
         }
 
         if ($metodo === 'add' && ! strpbrk($permissao, 'A')) {

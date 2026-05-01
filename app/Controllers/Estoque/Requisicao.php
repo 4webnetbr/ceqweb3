@@ -852,7 +852,7 @@ class Requisicao extends BaseController
     private function montarProduto(array $prod, array $ori, array $des, array $padr, array $consumo, array $produtoreq): array
     {
         // if ($prod['pre_mindiaanterior'] != 'S') {
-        //     debug($prod);
+        // debug($prod);
         // }
         $produto = new ProdutoMontado($prod);
 
@@ -1258,7 +1258,7 @@ class Requisicao extends BaseController
                 $status = 18; // Atendida
                 if ($tipomov->tmo_conferencia == 'N') {
                     $status = 25; // Conferida
-                    if ($insvis == 'N') {
+                    if ($insvis->temN) {
                         $status = 5; // Concluída
                     }
                 }
@@ -1306,11 +1306,13 @@ class Requisicao extends BaseController
                         'rpa_cancelada' => 0,
                         'rpa_atendida'  => $val->rep_quantia,
                         'rpa_conferida'  => $val->rep_quantia,
-                        'rpa_aprovada'  => $val->rep_quantia,
                         'rpa_data'      => date('Y-m-d H:i:s'),
                         'rpa_data_conferencia'      => date('Y-m-d H:i:s'),
-                        'rpa_data_inspecao'      => date('Y-m-d H:i:s'),
                     ];
+                    if ($val->cla_insvis == 'N' && $val->rpa_id != null) {
+                        $sql_save['rpa_aprovada'] =  -1;
+                        $sql_save['rpa_data_inspecao']      = date('Y-m-d H:i:s');
+                    }
 
                     $salva = $this->reqprodutoate->insert($sql_save);
                     // TODO CRIAR MOVIMENTAÇÃO DE ESTOQUE

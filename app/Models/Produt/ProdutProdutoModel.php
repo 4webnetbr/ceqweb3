@@ -256,8 +256,8 @@ class ProdutProdutoModel extends Model
             // $builder->like('prc_deposito', $deposito);
         }
         $builder->groupBy('pro_codpro');
-		// debug($builder->getCompiledSelect()); 
-		// $cs = $builder->getCompiledSelect();
+        // debug($builder->getCompiledSelect()); 
+        // $cs = $builder->getCompiledSelect();
 
         return $builder->get()->getResult();
     }
@@ -315,7 +315,9 @@ class ProdutProdutoModel extends Model
         $builder->select('*');
 
         if ($deposito) {
-            $builder->like('prc_deposito', $deposito);
+            // $builder->like('prc_deposito', $deposito);
+            $builder->where("FIND_IN_SET('$deposito', prc_deposito) >", 0);
+            $builder->where("FIND_IN_SET('$deposito', dep_codDep) >", 0);
         }
         if ($produto) {
             $builder->whereIn('pro_id', $produto);
@@ -327,5 +329,23 @@ class ProdutProdutoModel extends Model
         $ret = $builder->get()->getResult();
 
         return $ret;
+    }
+
+    public function excluiFabricante($pro_id = false)
+    {
+        $db = db_connect('dbProduto');
+        $builder = $db->table('pro_sap_prod_fabric');
+        $builder->where('pro_codPro', $pro_id);
+        $builder->delete();
+        return true;
+    }
+
+    public function excluiFabricanteArray($pro_id = false)
+    {
+        $db = db_connect('dbProduto');
+        $builder = $db->table('pro_sap_prod_fabric');
+        $builder->whereIn('pro_codPro', $pro_id);
+        $builder->delete();
+        return true;
     }
 }

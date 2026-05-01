@@ -96,7 +96,7 @@ class SoapSapiens
                 $msgretorno = $result->mensagemRetorno;
             }
             // $msgretorno = $result->mensagemRetorno;
-            if($result->tipoRetorno > 1){
+            if ($result->tipoRetorno > 1) {
                 $status = 'Erro';
             }
             // sucesso
@@ -106,7 +106,6 @@ class SoapSapiens
                 'status' => $status,
                 'mensagem' => $msgretorno,
             ];
-
         } catch (\SoapFault $e) {
             // falha de conexão ou erro na resposta
             $msgretorno = 'Erro SOAP: ' . $e->getMessage();
@@ -119,7 +118,7 @@ class SoapSapiens
         }
 
         $movdb = new MovimMonModel();
-        if($depdes == null || $depdes == ''){
+        if ($depdes == null || $depdes == '') {
             $depdes = 'Baixa';
         }
         $movim = $movdb->insertMovimento($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida, $status, $msgretorno);
@@ -179,7 +178,7 @@ class SoapSapiens
                 $msgretorno = $result->mensagemRetorno;
             }
             // $msgretorno = $result->mensagemRetorno;
-            if($result->tipoRetorno > 1){
+            if ($result->tipoRetorno > 1) {
                 $status = 'Erro';
             }
             // sucesso
@@ -189,7 +188,6 @@ class SoapSapiens
                 'status' => $status,
                 'mensagem' => $msgretorno,
             ];
-
         } catch (\SoapFault $e) {
             // falha de conexão ou erro na resposta
             $msgretorno = 'Erro SOAP: ' . $e->getMessage();

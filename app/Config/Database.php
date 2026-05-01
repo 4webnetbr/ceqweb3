@@ -1,11 +1,12 @@
 <?php
+
 namespace Config;
 
 use CodeIgniter\Database\Config;
 
 class Database extends Config
 {
-    public string $filesPath    = APPPATH . 'Database' . DIRECTORY_SEPARATOR;
+    public string $filesPath = APPPATH . 'Database' . DIRECTORY_SEPARATOR;
     public string $defaultGroup = 'default';
 
     public array $default;
