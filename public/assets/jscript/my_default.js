@@ -3,27 +3,224 @@ jQuery.noConflict();
 // variável globas de retono da função executaAjax
 var retornoAjax;
 var executandoAjax = false;
+var executandoProcesso = false;
 
-jQuery(document).ready(function () {
-  // Gera ou recupera um identificador único para a guia
-  if (!sessionStorage.getItem("tabId")) {
-    // grava na seção local data
-    sessionStorage.setItem(
-      "tabId",
-      Date.now() + "-" + Math.random().toString(36).substr(2, 9),
-    );
-  }
+/**
+ * Show Password
+ * Mostra ou oculta a Senha
+ * Document Ready my_fields
+ */
+jQuery(document).on("click", ".show_password", function (e) {
+  e.preventDefault();
 
-  // Adiciona o identificador em um campo oculto
-  const tabId = sessionStorage.getItem("tabId");
-  document.cookie = `tabId=${tabId}; path=/;`;
+  const fieldId = jQuery(this).data("field");
+  const $input = jQuery("#" + fieldId);
 
-  jQuery.ajaxSetup({
-    beforeSend: function (xhr) {
-      xhr.setRequestHeader("Tab-ID", sessionStorage.getItem("tabId"));
-    },
+  if (!$input.length) return;
+
+  const isPassword = $input.prop("type") === "password";
+  $input.prop("type", isPassword ? "text" : "password");
+  $input.trigger("focus");
+});
+jQuery(document)
+  .off("click", "#bt_salvar, #bt_salvar_modal")
+  .on("click", "#bt_salvar, #bt_salvar_modal", async function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    await bloqueiaTela();
+
+    id = this.id;
+    let submeter = true;
+
+    if (id == "bt_salvar") {
+      const controller = jQuery("#controler").val();
+      if (controller.toLowerCase() == "requisicao") {
+        // event.preventDefault(); // impede submit automático
+        submeter = await enviarRequisicoes(0, event);
+        if (!submeter) {
+          desBloqueiaTela();
+          return; // para aqui e não executa mais nada
+        }
+      } else if (controller.toLowerCase() === "aterequisicao") {
+        submeter = await enviarAteRequisicoes(event);
+        if (!submeter) {
+          desBloqueiaTela();
+          return; // para aqui e não executa mais nada
+        }
+      } else if (controller.toLowerCase() === "confrequisicao") {
+        submeter = await enviarConfRequisicoes(event);
+        if (!submeter) {
+          desBloqueiaTela();
+          return; // para aqui e não executa mais nada
+        }
+      } else if (controller.toLowerCase() === "inspecaoprod") {
+        submeter = enviarInspecao(event);
+        if (!submeter) {
+          desBloqueiaTela();
+          return; // para aqui e não executa mais nada
+        }
+      }
+    }
+    if (submeter) {
+      validaForm(event, id);
+    } else {
+      desBloqueiaTela();
+    }
   });
 
+function validaForm(event, id) {
+  var elemAlterado = false;
+  var form = jQuery("#form1")[0];
+  if (id == "bt_salvar_modal") {
+    form = jQuery("#form_modal")[0];
+  }
+  // elemAlterado = Boolean(form[0].getAttribute('data-alter'));
+  if (
+    form.getAttribute("data-alter") === true ||
+    form.getAttribute("data-alter") === "true"
+  ) {
+    elemAlterado = true;
+  }
+  // }
+  if (!elemAlterado) {
+    url = "/buscas/gravasessao";
+    var mens = 7;
+    let dados = { msg: mens };
+    executaAjax(url, "json", dados);
+    if (retornoAjax) {
+      retorna_listagem();
+    }
+  } else {
+    jQuery("[id*='-valid']").addClass("d-none");
+    jQuery("[id*='-fival']").removeClass("d-block");
+    // var form = jQuery(this)[0].form;
+
+    form.classList.add("was-validated");
+    isvalido = validador(form);
+    if (!isvalido) {
+      event.preventDefault();
+      event.stopPropagation();
+      desBloqueiaTela();
+    } else {
+      // verificar se o campo select foi alterado
+      jQuery("input[data-valid], select[data-valid]").each(async function () {
+        let validar = this.getAttribute("data-valid");
+
+        if (!validar || validar === "0") return;
+        let valororig = this.getAttribute("data-valor");
+        let value = jQuery(this).val();
+
+        // Se for um array (como em selects múltiplos), converte para string
+        if (Array.isArray(value)) {
+          value = value.join(",");
+        }
+
+        if (valororig !== value) {
+          event.preventDefault();
+          event.stopPropagation();
+          boxAlert(20, false, "submit", true, 1, true, "");
+        }
+      });
+      console.log("form atual:", form);
+      console.log("existe no DOM?", document.body.contains(form));
+      console.log("jquery acha?", jQuery("#form_modal").length);
+
+      jQuery(form).trigger("submit");
+    }
+  }
+}
+/**
+ * Submete o Formulário com ajax
+ * Document Ready my_default
+ */
+async function submeteForm(event) {
+  event.preventDefault(); // ✅ controle correto
+  event.stopPropagation();
+
+  console.trace("Submit disparado");
+
+  var form = jQuery(this);
+  form.addClass("was-validated");
+
+  var tipo = form.attr("type");
+  if (tipo != "modal") {
+    bloqueiaTela();
+  }
+  if (tipo != "normal") {
+    jQuery(".moeda").each(function () {
+      var valor = converteMoedaFloat(jQuery(this).val());
+      jQuery(this).val(valor);
+    });
+    var disabled = form.find(":input:disabled").removeAttr("disabled");
+
+    var dadosForm = new FormData(this);
+
+    dadosForm.forEach(function (value, key) {
+      console.log(key + ": " + value);
+    });
+    disabled.attr("disabled", "disabled");
+    // console.log(dadosForm.values);
+    var url = form.attr("action");
+    console.trace("Submit está sendo aberto aqui");
+    retornoAjax = await executaAjax(url, "json", dadosForm);
+    if (retornoAjax) {
+      if (tipo != "modal") {
+        desBloqueiaTela();
+        if (!retornoAjax.erro) {
+          if (retornoAjax.url) {
+            if (tipo == "novaguia") {
+              redirec_blank(retornoAjax.url);
+            } else {
+              redireciona(retornoAjax.url);
+            }
+          }
+        } else {
+          boxAlert(
+            retornoAjax.msg,
+            retornoAjax.erro,
+            retornoAjax.url,
+            false,
+            1,
+            false,
+          );
+        }
+      } else {
+        var myModalEl = document.getElementById("myModal");
+        var modal = bootstrap.Modal.getInstance(myModalEl);
+        modal.hide();
+        desBloqueiaTela();
+        if (retornoAjax.msg != "") {
+          mostranoToast(retornoAjax.msg, retornoAjax.erro);
+        }
+      }
+    }
+  }
+  // }
+}
+
+function getTabId() {
+  let tabId = sessionStorage.getItem("tabId");
+
+  if (!tabId) {
+    tabId = crypto.randomUUID();
+    sessionStorage.setItem("tabId", tabId);
+  }
+  // 🔥 garante envio em qualquer request (inclusive redirect)
+  document.cookie = `tabId=${tabId}; path=/`;
+
+  return tabId;
+}
+
+// roda imediatamente
+jQuery.ajaxSetup({
+  beforeSend: function (xhr) {
+    xhr.setRequestHeader("Tab-ID", getTabId());
+  },
+});
+
+jQuery(document).ready(function () {
+  jQuery("body").on("submit", "#form1, #form_modal", submeteForm);
   /**
    * se a div Toast tiver conteúdo mostra por 3 segundos
    * Document Ready my_default

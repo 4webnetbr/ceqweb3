@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filters;
 
 // use App\Models\Config\ConfigMensagemModel;
@@ -18,12 +19,43 @@ class LoginFilter implements FilterInterface
         helper(['funcoes_helper']);
 
         $session = session();
+        // debug($session->logged_in, true);
 
-        if (! $session->logged_in) {
+        if (!$session->logged_in) {
+            // debug('Não está logado', true);
             return redirect()->to(site_url('login'));
         }
 
         $session->set('last_activity', time());
+
+        $userId = session()->get('usu_id');
+        // se não está logado, ignora
+        if (! $userId) {
+            return;
+        }
+
+        // pega Tab-ID (header OU cookie)
+        $tabId = $request->getHeaderLine('Tab-ID');
+
+        if ($tabId) {
+            // 🔍 verifica se ainda está ativa
+            $sessionService = new \App\Services\RedisSessionService();
+
+            $userTabs = $sessionService->getUserTabs($userId);
+            // debug($userTabs);
+            // 🔹 PRIMEIRO ACESSO DA ABA
+            if (! in_array($tabId, $userTabs)) {
+                $sessionService->updateTab($userId, $tabId);
+            }
+
+            // 🔹 ABA EXISTIA, MAS EXPIROU
+            if (! $sessionService->isTabActive($tabId)) {
+                // 🔥 REMOVE aba inválida do usuário
+                return redirect()->to(site_url('login/logout'));
+            }
+            // 🔹 ABA ATIVA → só renova
+            $sessionService->updateTab($userId, $tabId);
+        }
 
         $uri      = $request->getUri();
         $segments = $uri->getSegments();

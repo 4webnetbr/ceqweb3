@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 class RedisSessionService
@@ -44,6 +45,7 @@ class RedisSessionService
     // ❌ Remove aba (logout específico)
     public function removeTab($userId, $tabId)
     {
+        debug('remover ' . $userId . ' - ' . $tabId);
         $this->redis->del($this->tabKey($tabId));
         $this->redis->sRem($this->userTabsKey($userId), $tabId);
     }
@@ -52,30 +54,5 @@ class RedisSessionService
     public function getUserTabs($userId)
     {
         return $this->redis->sMembers($this->userTabsKey($userId));
-    }
-
-    public function logout()
-    {
-        $userId = session()->get('user_id');
-
-        // tenta pegar tabId automaticamente se não vier
-        $request = service('request');
-
-        $tabId = $request->getHeaderLine('Tab-ID')
-            ?: ($_COOKIE['tabId'] ?? null);
-
-        // se tiver tabId, trata a aba
-        if ($tabId) {
-
-            // se já expirou
-            $this->removeTab($userId, $tabId);
-            // session()->destroy();
-            return redirect()->to('/login');
-        }
-
-        // destrói sessão de qualquer forma
-        session()->destroy();
-
-        return redirect()->to('/login');
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filters;
 
 use App\Models\Config\ConfigPerfilItemModel;
@@ -42,18 +43,18 @@ class LoginFilter implements FilterInterface
 
         $userTabs = $sessionService->getUserTabs($userId);
 
-// 🔹 PRIMEIRO ACESSO DA ABA
+        // 🔹 PRIMEIRO ACESSO DA ABA
         if (! in_array($tabId, $userTabs)) {
             $sessionService->updateTab($userId, $tabId);
             // return;
         }
 
-// 🔹 ABA EXISTIA, MAS EXPIROU
+        // 🔹 ABA EXISTIA, MAS EXPIROU
         if (! $sessionService->isTabActive($tabId)) {
             // 🔥 REMOVE aba inválida do usuário
-            $sessionService->logout();
+            return redirect()->to(site_url('login/logout'));
         }
-// 🔹 ABA ATIVA → só renova
+        // 🔹 ABA ATIVA → só renova
         $sessionService->updateTab($userId, $tabId);
 
         $uri      = $request->getUri();

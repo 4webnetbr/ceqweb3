@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
@@ -73,9 +74,6 @@ class Login extends BaseController
 
     public function index()
     {
-        if (session()->logged_in === true) {
-            session()->destroy();
-        }
         $logo = base_url('assets/images/logo_header.jpg');
 
         $this->defCampos();
@@ -92,11 +90,11 @@ class Login extends BaseController
         return view('vw_login', $this->data);
     }
 
-/**
- * Validação de Login
- *
- * @return \CodeIgniter\HTTP\RedirectResponse
- */
+    /**
+     * Validação de Login
+     *
+     * @return \CodeIgniter\HTTP\RedirectResponse
+     */
     public function logon()
     {
         // $session = service('session', $config);
@@ -167,5 +165,19 @@ class Login extends BaseController
                 return redirect()->to('/' . $dash);
             }
         }
+    }
+
+    public function logout()
+    {
+        $request = service('request');
+        $tabId = $request->getHeaderLine('Tab-ID')
+            ?: ($_COOKIE['tabId'] ?? null);
+
+        $userId = session()->get('usu_id');
+        // se já expirou
+        $sessionService = new \App\Services\RedisSessionService();
+        $sessionService->removeTab($userId, $tabId);
+        // session()->destroy();
+        return redirect()->to('/login');
     }
 }
