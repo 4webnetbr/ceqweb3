@@ -276,6 +276,8 @@ function montarTabelaProdutos(classe, rt, dadosDep) {
 }
 
 async function carregarProdutos(url, aba, obj) {
+  bloqueiaTela();
+  executandoProcesso = true;
   const reqid = jQuery("#req_id").val();
   const deporigem = jQuery("#req_deporigem").val();
   const depdestino = jQuery("#req_depdestino").val();
@@ -763,10 +765,15 @@ async function carregarProdutos(url, aba, obj) {
     jQuery(document).on("input change", ".requisicao", function () {
       atualizarEstadoBotaoSalvar();
     });
+    executandoProcesso = false;
+
+    desBloqueiaTela();
     // bindEvents();
   } catch (error) {
     console.error("Erro na requisição AJAX:", error);
   }
+  executandoProcesso = false;
+  desBloqueiaTela();
 }
 
 function atualizarEstadoBotaoSalvar() {
@@ -804,120 +811,238 @@ function normalizarNomeColuna(texto) {
 }
 
 async function enviarRequisicoes(tipo = 0, event) {
-  const requisicoes = [];
-  const form = document.getElementById("form1");
-  const jqForm = jQuery(form);
-  let repeteDias = parseInt(jQuery("#req_repetedias").val()) || 0;
+  // var linhasProduto = jQuery("tr.linha-produto");
+  var linhasProduto = jQuery("input.requisicao")
+    .filter(function () {
+      var val = this.value.trim();
+      return val !== "" && val !== "0";
+    })
+    .closest("tr.linha-produto");
 
-  if (tipo === 1) {
-    jqForm.find('input[name="req_status"]').remove();
-    jqForm.append(`<input type="hidden" name="req_status" value="${tipo}">`);
-  }
+  if (linhasProduto.length > 0) {
+    const requisicoes = [];
+    const form = document.getElementById("form1");
+    const jqForm = jQuery(form);
+    let repeteDias = parseInt(jQuery("#req_repetedias").val()) || 0;
 
-  const linhasProduto = jQuery("tr.linha-produto");
-
-  for (let i = 0; i < linhasProduto.length; i++) {
-    const tr = jQuery(linhasProduto[i]);
-    const index = tr.data("index");
-    const inputRequisicao = jQuery(`.requisicao[data-index="${index}"]`);
-    const valorRequisicao = parseInt(inputRequisicao.val()) || 0;
-    const saldoDisponivel = parseInt(tr.data("saldo-disponivel")) || 0;
-
-    if (valorRequisicao !== 0) {
-      if (repeteDias > 0) {
-        const saldoNecessario = valorRequisicao * (repeteDias + 1);
-        if (saldoNecessario > saldoDisponivel) {
-          // event.preventDefault();
-          // event.stopPropagation();
-          await boxAlert(35, true, "", true, 1, false);
-          if (tipo === 1) return;
-          return false;
-        }
-      }
-
-      const dados = {};
-
-      tr.find("td").each(function (i) {
-        const th = tr.closest("table").find("thead th").eq(i);
-        const nomeColuna = normalizarNomeColuna(th.text());
-
-        const texto = jQuery(this)
-          .clone()
-          .children()
-          .remove()
-          .end()
-          .contents()
-          .filter(function () {
-            return this.nodeType === 3; // Text node
-          })
-          .text()
-          .trim();
-        if (nomeColuna) {
-          dados[nomeColuna] = texto;
-        }
-      });
-
-      dados.multiplica = jQuery(`#pro_multiplica_${index}`).val();
-      dados.seguranca = jQuery(`#pro_pctseguranca_${index}`).val();
-      dados.requisicao = valorRequisicao;
-
-      const acc = tr.closest(".accordion-item");
-      if (acc.length) {
-        dados.cla_id = acc.data("cla_id") || acc.data("claid") || null;
-        dados.classe = acc
-          .find(".accordion-header, .accordion-button")
-          .first()
-          .text()
-          .trim();
-      }
-
-      requisicoes.push(dados);
+    if (tipo === 1) {
+      jqForm.find('input[name="req_status"]').remove();
+      jqForm.append(`<input type="hidden" name="req_status" value="${tipo}">`);
     }
-  }
 
-  jqForm.find('input[name="json_requisicoes"]').remove();
-  jqForm.append(
-    `<input type="hidden" name="json_requisicoes" value='${JSON.stringify(
-      requisicoes,
-    )}'>`,
-  );
+    linhasProduto.each(async function () {
+      // for (let i = 0; i < linhasProduto.length; i++) {
+      // const linhaatual = jQuery(linhasProduto[i]);
+      const linhaatual = jQuery(this);
+      const index = linhaatual.data("index");
+      const inputRequisicao = jQuery(`.requisicao[data-index="${index}"]`);
+      const valorRequisicao = parseInt(inputRequisicao.val()) || 0;
+      const saldoDisponivel =
+        parseInt(linhaatual.data("saldo-disponivel")) || 0;
 
-  if (tipo > 0) {
-    form.classList.add("was-validated");
+      if (valorRequisicao !== 0) {
+        if (repeteDias > 0) {
+          const saldoNecessario = valorRequisicao * (repeteDias + 1);
+          if (saldoNecessario > saldoDisponivel) {
+            // event.preventDefault();
+            // event.stopPropagation();
+            await boxAlert(35, true, "", true, 1, false);
+            if (tipo === 1) return;
+            return false;
+          }
+        }
 
-    const isValido = validador(form);
-    if (!isValido) {
-      event.preventDefault();
-      event.stopPropagation();
-      desBloqueiaTela();
+        const dados = {};
+
+        linhaatual.find("td").each(function (i) {
+          const th = linhaatual.closest("table").find("thead th").eq(i);
+          const nomeColuna = normalizarNomeColuna(th.text());
+
+          const texto = jQuery(this)
+            .clone()
+            .children()
+            .remove()
+            .end()
+            .contents()
+            .filter(function () {
+              return this.nodeType === 3; // Text node
+            })
+            .text()
+            .trim();
+          if (nomeColuna) {
+            dados[nomeColuna] = texto;
+          }
+        });
+
+        dados.multiplica = jQuery(`#pro_multiplica_${index}`).val();
+        dados.seguranca = jQuery(`#pro_pctseguranca_${index}`).val();
+        dados.requisicao = valorRequisicao;
+
+        const acc = linhaatual.closest(".accordion-item");
+        if (acc.length) {
+          dados.cla_id = acc.data("cla_id") || acc.data("claid") || null;
+          dados.classe = acc
+            .find(".accordion-header, .accordion-button")
+            .first()
+            .text()
+            .trim();
+        }
+
+        requisicoes.push(dados);
+      }
+    });
+
+    jqForm.find('input[name="json_requisicoes"]').remove();
+    jqForm.append(
+      `<input type="hidden" name="json_requisicoes" value='${JSON.stringify(
+        requisicoes,
+      )}'>`,
+    );
+
+    if (tipo > 0) {
+      /** tipo igual a 1, foi chamado pelo botão Enviar Requisição */
+      // jQuery(form).trigger("submit");
+      validaForm(event, "bt_enviar");
     } else {
-      jQuery(form).trigger("submit");
+      return true;
     }
   } else {
-    return true;
+    return false;
   }
 }
 
 async function enviarAteRequisicoes(event) {
-  const trs = jQuery("tr").toArray();
+  // const trs = jQuery("tr.linha_produto").toArray();
+  const trs = jQuery("tr.linha_produto")
+    .filter(function () {
+      return this.dataset.alter === "true" && this.id?.trim();
+    })
+    .toArray();
 
-  for (let tr of trs) {
-    if (tr.id != "" && tr.id != undefined) {
-      const idBase = parseInt(tr.id);
+  for (const tr of trs) {
+    // for (let tr of trs) {
+    // if (tr.id != "" && tr.id != undefined) {
+    const idBase = parseInt(tr.id);
 
+    var lf = jQuery("#fab_" + idBase).text();
+    var ctafab = jQuery("#ctafb_" + idBase).val();
+    var lp = jQuery("#lot_" + idBase).text();
+    var ctalot = jQuery("#ctalt_" + idBase).val();
+    var ctamis = jQuery("#ctami_" + idBase).val();
+    var qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
+    var qtde = jQuery("#qt_" + idBase).text();
+    var aten = jQuery("#rpa_atendida_" + idBase).val();
+    var canc = jQuery("#rpa_cancelada_" + idBase).val();
+    var saldo = jQuery("#sl_" + idBase).text();
+    fabok = false;
+    lotof = false;
+    misok = true;
+
+    if (lf == "SN") {
+      if (parseInt(ctafab) >= parseInt(qtcaixa)) {
+        fabok = true;
+      } else if (parseInt(ctafab) > 0) {
+        fabok = false;
+      }
+    } else if (lf == "NN") {
+      fabok = true;
+    } else if (lf == "SS") {
+      if (parseInt(ctafab) == parseInt(qtde) - parseInt(canc)) {
+        fabok = true;
+      } else if (parseInt(ctafab) > 0) {
+        fabok = false;
+      }
+    }
+    if (lp == "SN") {
+      if (parseInt(ctalot) >= parseInt(qtcaixa)) {
+        lotok = true;
+      } else if (parseInt(ctalot) > 0) {
+        lotok = false;
+      }
+    } else if (lp == "NN") {
+      if (parseInt(aten) == parseInt(qtde) - parseInt(canc)) {
+        lotok = true;
+      }
+    } else if (lp == "SS") {
+      if (parseInt(ctalot) == parseInt(qtde) - parseInt(canc)) {
+        lotok = true;
+      } else if (parseInt(ctalot) > 0) {
+        lotok = false;
+      }
+    }
+    msg = 0;
+    //NÃO SCANIEI NENHUM PRODUTO E SCANIEI OU FABRICANTE OU MISTURADOR
+    if (parseInt(aten) == 0 && parseInt(ctafab) > 0) {
+      event.preventDefault();
+      event.stopPropagation();
+      resposta = await boxAlert(40, true, "", false, 1, false);
+      return false;
+    } else if (
+      (aten > 0 || ctafab > 0 || ctalot > 0 || canc > 0) &&
+      (parseInt(saldo) > 0 || !lotok || !fabok)
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (parseInt(saldo) === 0 && !fabok) {
+        resposta = await boxAlert(38, true, "", false, 1, false);
+        return false;
+      } else {
+        resposta = await boxAlert(33, false, "", false, 1, true);
+        return resposta; // Interrompe o processamento
+      }
+    }
+    // }
+  }
+  return true;
+}
+
+async function enviarConfRequisicoes(event) {
+  const trs = jQuery("tr.linha_produto").toArray();
+  const form = document.getElementById("form1");
+  const jqForm = jQuery(form);
+  // const trs = jQuery("tr.linha_produto")
+  //   .filter(function () {
+  //     return this.dataset.alter === "true" && this.id?.trim();
+  //   })
+  //   .toArray();
+
+  for (const tr of trs) {
+    // for (let tr of trs) {
+    //   if (tr.id != "" && tr.id != undefined) {
+    const idBase = parseInt(tr.id);
+    var confer = jQuery("#rpa_conferida_" + idBase).val();
+    var checkd = jQuery("#btok_" + idBase).is(":checked");
+    var aprova = jQuery("#apr_" + idBase).text();
+    if (parseInt(confer) != parseInt(aprova) || checkd) {
+      if (checkd) {
+        aprova = confer;
+      }
+      teminsp = true;
+      jqForm.find('input[name="aprova_' + idBase + "]").remove();
+      jqForm.append(
+        `<input type="hidden" name="aprova_` +
+          idBase +
+          `" value="` +
+          aprova +
+          `">`,
+      );
+    }
+
+    var conf = jQuery("#rpa_conferida_" + idBase).val();
+    var ctafab = jQuery("#ctafb_" + idBase).val();
+    var ctalot = jQuery("#ctalt_" + idBase).val();
+    var ctamis = jQuery("#ctami_" + idBase).val();
+    if (parseInt(conf) > 0 || parseInt(ctamis) > 0 || parseInt(ctafab) > 0) {
       var lf = jQuery("#fab_" + idBase).text();
-      var ctafab = jQuery("#ctafb_" + idBase).val();
       var lp = jQuery("#lot_" + idBase).text();
-      var ctalot = jQuery("#ctalt_" + idBase).val();
-      var ctamis = jQuery("#ctami_" + idBase).val();
+      var lm = jQuery("#mis_" + idBase).text();
       var qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
       var qtde = jQuery("#qt_" + idBase).text();
-      var aten = jQuery("#rpa_atendida_" + idBase).val();
-      var canc = jQuery("#rpa_cancelada_" + idBase).val();
+      var canc = jQuery("#ca_" + idBase).text();
       var saldo = jQuery("#sl_" + idBase).text();
       fabok = false;
-      lotof = false;
-      misok = true;
+      lotok = false;
+      misok = false;
 
       if (lf == "SN") {
         if (parseInt(ctafab) >= parseInt(qtcaixa)) {
@@ -941,9 +1066,7 @@ async function enviarAteRequisicoes(event) {
           lotok = false;
         }
       } else if (lp == "NN") {
-        if (parseInt(aten) == parseInt(qtde) - parseInt(canc)) {
-          lotok = true;
-        }
+        lotok = true;
       } else if (lp == "SS") {
         if (parseInt(ctalot) == parseInt(qtde) - parseInt(canc)) {
           lotok = true;
@@ -951,169 +1074,89 @@ async function enviarAteRequisicoes(event) {
           lotok = false;
         }
       }
-      msg = 0;
-      //NÃO SCANIEI NENHUM PRODUTO E SCANIEI OU FABRICANTE OU MISTURADOR
-      if (parseInt(aten) == 0 && parseInt(ctafab) > 0) {
-        event.preventDefault();
-        event.stopPropagation();
-        resposta = await boxAlert(40, true, "", false, 1, false);
-        return false;
-      } else if (
-        (aten > 0 || ctafab > 0 || ctalot > 0 || canc > 0) &&
-        (parseInt(saldo) > 0 || !lotok || !fabok)
-      ) {
-        event.preventDefault();
-        event.stopPropagation();
-        if (parseInt(saldo) === 0 && !fabok) {
-          resposta = await boxAlert(38, true, "", false, 1, false);
-          return false;
-        } else {
-          resposta = await boxAlert(33, false, "", false, 1, true);
-          return resposta; // Interrompe o processamento
-        }
-      }
-    }
-  }
-  return true;
-}
-
-async function enviarConfRequisicoes(event) {
-  const trs = jQuery("tr").toArray();
-
-  for (let tr of trs) {
-    if (tr.id != "" && tr.id != undefined) {
-      const idBase = parseInt(tr.id);
-      var conf = jQuery("#rpa_conferida_" + idBase).val();
-      var ctafab = jQuery("#ctafb_" + idBase).val();
-      var ctalot = jQuery("#ctalt_" + idBase).val();
-      var ctamis = jQuery("#ctami_" + idBase).val();
-      if (parseInt(conf) > 0 || parseInt(ctamis) > 0 || parseInt(ctafab) > 0) {
-        var lf = jQuery("#fab_" + idBase).text();
-        var lp = jQuery("#lot_" + idBase).text();
-        var lm = jQuery("#mis_" + idBase).text();
-        var qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
-        var qtde = jQuery("#qt_" + idBase).text();
-        var canc = jQuery("#ca_" + idBase).text();
-        var saldo = jQuery("#sl_" + idBase).text();
-        fabok = false;
-        lotok = false;
-        misok = false;
-
-        if (lf == "SN") {
-          if (parseInt(ctafab) >= parseInt(qtcaixa)) {
-            fabok = true;
-          } else if (parseInt(ctafab) > 0) {
-            fabok = false;
-          }
-        } else if (lf == "NN") {
-          fabok = true;
-        } else if (lf == "SS") {
-          if (parseInt(ctafab) == parseInt(qtde) - parseInt(canc)) {
-            fabok = true;
-          } else if (parseInt(ctafab) > 0) {
-            fabok = false;
-          }
-        }
-        if (lp == "SN") {
-          if (parseInt(ctalot) >= parseInt(qtcaixa)) {
-            lotok = true;
-          } else if (parseInt(ctalot) > 0) {
-            lotok = false;
-          }
-        } else if (lp == "NN") {
-          lotok = true;
-        } else if (lp == "SS") {
-          if (parseInt(ctalot) == parseInt(qtde) - parseInt(canc)) {
-            lotok = true;
-          } else if (parseInt(ctalot) > 0) {
-            lotok = false;
-          }
-        }
-        if (lm == "SN") {
-          if (parseInt(ctamis) >= parseInt(qtcaixa)) {
-            misok = true;
-          } else if (parseInt(ctamis) > 0) {
-            misok = false;
-          }
-        } else if (lm == "NN") {
+      if (lm == "SN") {
+        if (parseInt(ctamis) >= parseInt(qtcaixa)) {
           misok = true;
-        } else if (lm == "SS") {
-          if (parseInt(ctamis) == parseInt(qtde) - parseInt(canc)) {
-            misok = true;
-          } else if (parseInt(ctamis) > 0) {
-            misok = false;
-          }
+        } else if (parseInt(ctamis) > 0) {
+          misok = false;
         }
-      }
-      msg = 0;
-      //NÃO SCANIEI NENHUM PRODUTO E SCANIEI OU FABRICANTE OU MISTURADOR
-      if (
-        parseInt(conf) == 0 &&
-        (parseInt(ctafab) > 0 || parseInt(ctamis) > 0)
-      ) {
-        msg = 40;
-      }
-      if (parseInt(conf) > 0) {
-        // SCANIEI PELO MENOS 1 PRODUTO
-        if (parseInt(saldo) > 0) {
-          msg = 9;
-        } else if (parseInt(saldo) == 0 && (!fabok || !misok)) {
-          msg = 38;
-        }
-      }
-      if (msg > 0) {
-        event.preventDefault();
-        event.stopPropagation();
-        if (msg == 9) {
-          resposta = await boxAlert(msg, false, "", false, 1, true);
-          if (resposta) {
-            var qtnacaixa = parseInt(jQuery("#qtdemb_" + idBase).val());
-            qtconferida = Math.ceil(parseInt(ctalot) / qtnacaixa);
-            if (lf == "SN") {
-              if (parseInt(ctafab) >= parseInt(qtconferida)) {
-                fabok = true;
-              } else if (parseInt(ctafab) > 0) {
-                fabok = false;
-              }
-            } else if (lf == "NN") {
-              fabok = true;
-            } else if (lf == "SS") {
-              if (parseInt(ctafab) == parseInt(ctalot)) {
-                fabok = true;
-              } else if (parseInt(ctafab) > 0) {
-                fabok = false;
-              }
-            }
-            if (lm == "SN") {
-              if (parseInt(ctamis) >= parseInt(qtconferida)) {
-                misok = true;
-              } else if (parseInt(ctamis) > 0) {
-                misok = false;
-              }
-            } else if (lp == "NN") {
-              misok = true;
-            } else if (lp == "SS") {
-              if (parseInt(ctamis) == parseInt(ctalot)) {
-                misok = true;
-              } else if (parseInt(ctamis) > 0) {
-                misok = false;
-              }
-            }
-            if (!fabok || !misok) {
-              msg = 38;
-              resposta = await boxAlert(msg, true, "", false, 1, false);
-              resposta = false;
-            }
-          }
-          return resposta;
-        } else {
-          resposta = await boxAlert(msg, true, "", false, 1, false);
-          return false;
+      } else if (lm == "NN") {
+        misok = true;
+      } else if (lm == "SS") {
+        if (parseInt(ctamis) == parseInt(qtde) - parseInt(canc)) {
+          misok = true;
+        } else if (parseInt(ctamis) > 0) {
+          misok = false;
         }
       }
     }
+    msg = 0;
+    //NÃO SCANIEI NENHUM PRODUTO E SCANIEI OU FABRICANTE OU MISTURADOR
+    if (parseInt(conf) == 0 && (parseInt(ctafab) > 0 || parseInt(ctamis) > 0)) {
+      msg = 40;
+    }
+    if (parseInt(conf) > 0) {
+      // SCANIEI PELO MENOS 1 PRODUTO
+      if (parseInt(saldo) > 0) {
+        msg = 9;
+      } else if (parseInt(saldo) == 0 && (!fabok || !misok)) {
+        msg = 38;
+      }
+    }
+    if (msg > 0) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (msg == 9) {
+        resposta = await boxAlert(msg, false, "", false, 1, true);
+        if (resposta) {
+          var qtnacaixa = parseInt(jQuery("#qtdemb_" + idBase).val());
+          qtconferida = Math.ceil(parseInt(ctalot) / qtnacaixa);
+          if (lf == "SN") {
+            if (parseInt(ctafab) >= parseInt(qtconferida)) {
+              fabok = true;
+            } else if (parseInt(ctafab) > 0) {
+              fabok = false;
+            }
+          } else if (lf == "NN") {
+            fabok = true;
+          } else if (lf == "SS") {
+            if (parseInt(ctafab) == parseInt(ctalot)) {
+              fabok = true;
+            } else if (parseInt(ctafab) > 0) {
+              fabok = false;
+            }
+          }
+          if (lm == "SN") {
+            if (parseInt(ctamis) >= parseInt(qtconferida)) {
+              misok = true;
+            } else if (parseInt(ctamis) > 0) {
+              misok = false;
+            }
+          } else if (lp == "NN") {
+            misok = true;
+          } else if (lp == "SS") {
+            if (parseInt(ctamis) == parseInt(ctalot)) {
+              misok = true;
+            } else if (parseInt(ctamis) > 0) {
+              misok = false;
+            }
+          }
+          if (!fabok || !misok) {
+            msg = 38;
+            resposta = await boxAlert(msg, true, "", false, 1, false);
+            resposta = false;
+          }
+        }
+        return resposta;
+      } else {
+        resposta = await boxAlert(msg, true, "", false, 1, false);
+        return false;
+      }
+    } else {
+      return true;
+    }
+    // }
   }
-  return true;
 }
 
 async function gerarOcorrencia(tela, indice) {
@@ -1121,12 +1164,14 @@ async function gerarOcorrencia(tela, indice) {
   telid = tela;
   regid = jQuery("#req_id").val();
   proid = jQuery("#proid_" + indice).val();
+  repid = jQuery("#repid_" + indice).val();
   lotlote = jQuery("#lotlote_" + indice).val();
   titulo = "Gerar Ocorrência";
   dados = JSON.stringify({
     pro_id: proid,
     lot_lote: lotlote,
     req_id: regid,
+    rep_id: repid,
     tel_id: telid,
   });
   const retornoAjax = await executaAjaxWait(url, "html", dados);
@@ -1196,7 +1241,17 @@ function enviarInspecao(event) {
       const idBase = parseInt(tr.id);
       var confer = jQuery("#cfe_" + idBase).text();
       var checkd = jQuery("#btok_" + idBase).is(":checked");
+      var atendi = jQuery("#ate_" + idBase).text();
       var aprova = jQuery("#apr_" + idBase).text();
+      var diverg = atendi - confer;
+      jqForm.find('input[name="diverg_' + idBase + "]").remove();
+      jqForm.append(
+        `<input type="hidden" name="diverg_` +
+          idBase +
+          `" value="` +
+          diverg +
+          `">`,
+      );
       if (parseInt(confer) != parseInt(aprova) || checkd) {
         teminsp = true;
         jqForm.find('input[name="aprova_' + idBase + "]").remove();
