@@ -38,6 +38,11 @@ class ConfigDicDadosModel extends Model
     {
         $this->DBGroup          = 'dbEstoque';
         $db      = db_connect($this->DBGroup);
+        $pre = '';
+        $url = base_url();
+        if (!str_contains($url, 'dev.')) {
+            $pre = 'prd_';
+        }
         $builder = $db->table('information_schema.tables');
         $builder
             ->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
@@ -45,11 +50,11 @@ class ConfigDicDadosModel extends Model
         if ($nome_tabela) {
             $builder->where('table_name', $nome_tabela);
         }
-        $builder->where('table_schema', 'estoque_db');
+        $builder->where('table_schema', $pre . 'estoque_db');
         $builder->orderBy('table_name', 'ASC');
 
         $ret = $builder->get()->getResultArray();
-        debug($builder->getLastQuery());
+        // debug($db->getLastQuery());
 
         $this->DBGroup          = 'dbProduto';
         $db      = db_connect($this->DBGroup);
@@ -60,7 +65,7 @@ class ConfigDicDadosModel extends Model
         if ($nome_tabela) {
             $builder->where('table_name', $nome_tabela);
         }
-        $builder->where('table_schema', 'produto_db');
+        $builder->where('table_schema', $pre . 'produto_db');
         $builder->orderBy('table_name', 'ASC');
 
         $ret2 = $builder->get()->getResultArray();
@@ -78,7 +83,7 @@ class ConfigDicDadosModel extends Model
         if ($nome_tabela) {
             $builder->where('table_name', $nome_tabela);
         }
-        $builder->where('table_schema', 'ocorrencia_db');
+        $builder->where('table_schema', $pre . 'ocorrencia_db');
         $builder->orderBy('table_name', 'ASC');
         $ret3 = $builder->get()->getResultArray();
         foreach ($ret3 as $reg) {
@@ -95,7 +100,7 @@ class ConfigDicDadosModel extends Model
         if ($nome_tabela) {
             $builder->where('table_name', $nome_tabela);
         }
-        $builder->where('table_schema', 'config_ceqweb_db');
+        $builder->where('table_schema', $pre . 'config_ceqweb_db');
         $builder->orderBy('table_name', 'ASC');
         $ret4 = $builder->get()->getResultArray();
         foreach ($ret4 as $reg) {
@@ -262,16 +267,16 @@ class ConfigDicDadosModel extends Model
     function getDbGroupAndSchema(?string $nome_tabela): array
     {
         $url = base_url();
-        if (ENVIRONMENT === 'development') {
+        if (str_contains($url, 'dev.')) {
             $prefixMap = [
-                'vw_est' => ['dbGroup' => 'dbEstoque',    'schema' => 'estoque_db'],
-                'est'    => ['dbGroup' => 'dbEstoque',    'schema' => 'estoque_db'],
-                'vw_oco' => ['dbGroup' => 'dbOcorrencia', 'schema' => 'ocorrencia_db'],
-                'oco'    => ['dbGroup' => 'dbOcorrencia', 'schema' => 'ocorrencia_db'],
-                'vw_pro' => ['dbGroup' => 'dbProduto',    'schema' => 'produto_db'],
-                'pro'    => ['dbGroup' => 'dbProduto',    'schema' => 'produto_db'],
-                'vw_cfg' => ['dbGroup' => 'default',      'schema' => 'config_ceqweb_db'],
-                'cfg'    => ['dbGroup' => 'default',      'schema' => 'config_ceqweb_db'],
+                'vw_est' => ['dbGroup' => 'dbEstoque',    'schema' => 'dev_estoque_db'],
+                'est'    => ['dbGroup' => 'dbEstoque',    'schema' => 'dev_estoque_db'],
+                'vw_oco' => ['dbGroup' => 'dbOcorrencia', 'schema' => 'dev_ocorrencia_db'],
+                'oco'    => ['dbGroup' => 'dbOcorrencia', 'schema' => 'dev_ocorrencia_db'],
+                'vw_pro' => ['dbGroup' => 'dbProduto',    'schema' => 'dev_produto_db'],
+                'pro'    => ['dbGroup' => 'dbProduto',    'schema' => 'dev_produto_db'],
+                'vw_cfg' => ['dbGroup' => 'default',      'schema' => 'dev_config_ceqweb_db'],
+                'cfg'    => ['dbGroup' => 'default',      'schema' => 'dev_config_ceqweb_db'],
             ];
         } else {
             $prefixMap = [

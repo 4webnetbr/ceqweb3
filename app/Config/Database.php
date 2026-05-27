@@ -46,10 +46,10 @@ class Database extends Config
 
         $this->default = [
             'DSN'      => '',
-            'hostname' => env('database.hostname', 'localhost'),
-            'username' => 'estoque_user',
-            'password' => 'n3hoUV3LwAIyE2gv8C55',
-            'database' => 'config_ceqweb_db',
+            'hostname' => env('database.hostname', 'localhostNao'),
+            'username' => 'dev_user',
+            'password' => 'NI0j4@EUEAWpD#OrdVB',
+            'database' => 'dev_config_ceqweb_db',
             'DBDriver' => 'MySQLi',
             'DBPrefix' => '',
             'pConnect' => false,
@@ -66,10 +66,10 @@ class Database extends Config
 
         $this->dbEstoque = [
             'DSN'      => '',
-            'hostname' => env('database.hostname', 'localhost'),
-            'username' => 'estoque_user',
-            'password' => 'n3hoUV3LwAIyE2gv8C55',
-            'database' => 'estoque_db',
+            'hostname' => env('database.hostname', 'localhostNao'),
+            'username' => 'dev_user',
+            'password' => 'NI0j4@EUEAWpD#OrdVB',
+            'database' => 'dev_estoque_db',
             'DBDriver' => 'MySQLi',
             'DBPrefix' => '',
             'pConnect' => false,
@@ -86,10 +86,10 @@ class Database extends Config
 
         $this->dbProduto = [
             'DSN'      => '',
-            'hostname' => env('database.hostname', 'localhost'),
-            'username' => 'estoque_user',
-            'password' => 'n3hoUV3LwAIyE2gv8C55',
-            'database' => 'produto_db',
+            'hostname' => env('database.hostname', 'localhostNao'),
+            'username' => 'dev_user',
+            'password' => 'NI0j4@EUEAWpD#OrdVB',
+            'database' => 'dev_produto_db',
             'DBDriver' => 'MySQLi',
             'DBPrefix' => '',
             'pConnect' => false,
@@ -106,10 +106,10 @@ class Database extends Config
 
         $this->dbOcorrencia = [
             'DSN'      => '',
-            'hostname' => env('database.hostname', 'localhost'),
-            'username' => 'estoque_user',
-            'password' => 'n3hoUV3LwAIyE2gv8C55',
-            'database' => 'ocorrencia_db',
+            'hostname' => env('database.hostname', 'localhostNao'),
+            'username' => 'dev_user',
+            'password' => 'NI0j4@EUEAWpD#OrdVB',
+            'database' => 'dev_ocorrencia_db',
             'DBDriver' => 'MySQLi',
             'DBPrefix' => '',
             'pConnect' => false,

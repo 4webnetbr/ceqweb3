@@ -43,13 +43,13 @@ if (strlen($ajuda) > 5) {
       <?= $icone; ?>
     </div>
     <div class='d-inline-flex float-start col-11 ps-3'>
-      <?= "<span id='legenda' style='display:contents;font-size:calc(1.3rem + 0.3vw);line-height: " . $heig . "'>" .
+      <?= "<span id='legenda' style='font-size:calc(1.3rem + 0.3vw);line-height: " . $heig . "'>" .
         $desc_metodo . " " . $title . "</span>"; ?>
     </div>
     <?
     if ($desc_edicao != '') { ?>
       <div class='d-inline-flex float-start col-11 ps-3'>
-        <?= "<span id='desc_edicao' style='font-size:calc(1rem + 0.1vw);line-height: 1.5rem'>" .
+        <?= "<span id='desc_edicao' style='display:contents;font-size:calc(1rem + 0.1vw);line-height: 1.5rem'>" .
           $desc_edicao . "</span>"; ?>
       </div>
     <?
@@ -89,7 +89,7 @@ if (strlen($ajuda) > 5) {
         </div>
         <div class="align-items-start txt-bt-manut ">Cancelar</div>
       </button>
-      <button id="bt_salvar" class="btn btn-primary bt-manut btn-sm mb-2 ms-1 float-end" form='form1' type='submit'>
+      <button id="bt_salvar" class="btn btn-primary bt-manut btn-sm mb-2 ms-1 float-end" type='button'>
         <div class="align-items-center py-15 text-start float-start font-weight-bold" style="">
           <i class="fas fa-save" style="font-size: 2rem;"></i>
         </div>
