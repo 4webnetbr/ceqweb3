@@ -28,19 +28,41 @@ class CfgDicionario extends BaseController
     }
     public function add()
     {
-        $gerador = new \App\Services\SqlGeneratorService();
 
-        // 1. Contexto (Passo 1) — ajuste pros nomes reais das suas tabelas
-        $contexto = $this->dicionario->getSchemaContext(['est_requisicao', 'est_requisicao_produto', 'est_requisicao_produto_atendimento', 'pro_sap_produto', 'pro_sap_lote']);
+        $validator = new \App\Services\SqlValidator(1000);
 
-        // 2. Pergunta do usuário
-        $pergunta = 'Quero os produtos com as quantidades atendidas do dia 01/05/2026 até o dia 20/05/2026, que a quantidade atendida seja maior que a aprovada, e me mostre a diferença, se a quantidade aprovada for igual a -1, considere aprovada a quantidade conferida e me mostre apenas produtos que a quantidade atendida seja maior que 0';
+        $tabelas = ['est_requisicao_produto_atendimento', 'pro_sap_produto'];
+        $schema  = $this->dicionario->getSchemaEstruturado($tabelas);
 
-        // 3. Gera o SQL (Passo 2)
-        $sql = $gerador->gerarSql($pergunta, $contexto);
+        $casos = [
+            // legítimo (só tabelas autorizadas)
+            "SELECT p.pro_despro FROM dev_estoque_db.est_requisicao_produto_atendimento a JOIN dev_produto_db.pro_sap_produto p ON a.pro_id = p.pro_id LIMIT 100",
+            // ataque: tentar ler uma tabela sensível que NÃO está no relatório
+            "SELECT * FROM dev_config_ceqweb_db.cfg_usuario LIMIT 100",
+        ];
+
+        $saida = '';
+        foreach ($casos as $sql) {
+            try {
+                $validator->validarTabelas($sql, $schema);
+                $saida .= "✅ TABELAS OK\n\n";
+            } catch (\Throwable $e) {
+                $saida .= "🚫 BARRADO: {$e->getMessage()}\n\n";
+            }
+        }
+
+        return $this->response->setContentType('text/plain')->setBody($saida);
+        // // 1. Contexto (Passo 1) — ajuste pros nomes reais das suas tabelas
+        // $contexto = $this->dicionario->getSchemaContext(['est_requisicao', 'est_requisicao_produto', 'est_requisicao_produto_atendimento', 'pro_sap_produto', 'pro_sap_lote']);
+
+        // // 2. Pergunta do usuário
+        // $pergunta = 'Quero os produtos com as quantidades atendidas do dia 01/05/2026 até o dia 20/05/2026, que a quantidade atendida seja maior que a aprovada, e me mostre a diferença, se a quantidade aprovada for igual a -1, considere aprovada a quantidade conferida e me mostre apenas produtos que a quantidade atendida seja maior que 0';
+
+        // // 3. Gera o SQL (Passo 2)
+        // $sql = $gerador->gerarSql($pergunta, $contexto);
 
 
-        return $this->response->setContentType('text/plain')->setBody($sql);
+        // return $this->response->setContentType('text/plain')->setBody($sql);
         // Use os nomes reais das suas tabelas de requisição de estoque:
         // $contexto = $this->dicionario->getSchemaContext(['est_requisicao', 'est_requisicao_produto', 'est_requisicao_produto_atendimento', 'pro_sap_produto', 'pro_sap_lote']);
 

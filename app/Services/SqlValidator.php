@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use RuntimeException;
+use PhpMyAdmin\SqlParser\Parser;
+use PhpMyAdmin\SqlParser\Utils\Query;
 
 class SqlValidator
 {
@@ -15,16 +17,40 @@ class SqlValidator
      */
     protected array $palavrasProibidas = [
         // escrita / DDL
-        'INSERT', 'UPDATE', 'DELETE', 'DROP', 'ALTER', 'TRUNCATE',
-        'CREATE', 'REPLACE', 'RENAME', 'MERGE',
+        'INSERT',
+        'UPDATE',
+        'DELETE',
+        'DROP',
+        'ALTER',
+        'TRUNCATE',
+        'CREATE',
+        'REPLACE',
+        'RENAME',
+        'MERGE',
         // permissões / administração
-        'GRANT', 'REVOKE', 'SET', 'LOCK', 'UNLOCK', 'FLUSH', 'KILL',
+        'GRANT',
+        'REVOKE',
+        'SET',
+        'LOCK',
+        'UNLOCK',
+        'FLUSH',
+        'KILL',
         // procedures / execução dinâmica
-        'CALL', 'EXEC', 'EXECUTE', 'HANDLER', 'PREPARE', 'DEALLOCATE',
+        'CALL',
+        'EXEC',
+        'EXECUTE',
+        'HANDLER',
+        'PREPARE',
+        'DEALLOCATE',
         // acesso a arquivos / sistema (CRÍTICO)
-        'INTO', 'OUTFILE', 'DUMPFILE', 'LOAD_FILE', 'LOAD',
+        'INTO',
+        'OUTFILE',
+        'DUMPFILE',
+        'LOAD_FILE',
+        'LOAD',
         // negação de serviço
-        'SLEEP', 'BENCHMARK',
+        'SLEEP',
+        'BENCHMARK',
     ];
 
     public function __construct(int $limiteMaximo = 1000)
@@ -98,5 +124,47 @@ class SqlValidator
         }
 
         return $sql . ' LIMIT ' . $this->limiteMaximo;
+    }
+
+    /**
+     * Camada 2: garante que o SQL só referencia tabelas autorizadas.
+     * $schema é a saída de ConfigDicDadosModel::getSchemaEstruturado()
+     * — a MESMA fonte usada para montar o contexto da IA, então os
+     * nomes de schema batem automaticamente em dev e em produção.
+     */
+    public function validarTabelas(string $sql, array $schema): void
+    {
+        // Conjunto de tabelas permitidas. Guardo nas duas formas
+        // (schema.tabela e só tabela) para casar com qualquer
+        // formato que o parser devolva.
+        $autorizadas = [];
+        foreach ($schema as $tabela => $info) {
+            $sch = strtolower($info['schema'] ?? '');
+            $tab = strtolower($tabela);
+            if ($sch !== '') {
+                $autorizadas[$sch . '.' . $tab] = true;
+            }
+            $autorizadas[$tab] = true;
+        }
+
+        $parser = new Parser($sql);
+
+        // Se o parser não conseguiu analisar com segurança, barra.
+        if (! empty($parser->errors)) {
+            throw new \RuntimeException('SQL não pôde ser analisado com segurança.');
+        }
+        if (empty($parser->statements[0])) {
+            throw new \RuntimeException('Nenhum comando SQL válido encontrado.');
+        }
+
+        $usadas = Query::getTables($parser->statements[0]);
+
+        foreach ($usadas as $ref) {
+            $norm = strtolower(str_replace('`', '', trim($ref)));
+
+            if (! isset($autorizadas[$norm])) {
+                throw new \RuntimeException("Tabela não autorizada no relatório: {$ref}");
+            }
+        }
     }
 }
