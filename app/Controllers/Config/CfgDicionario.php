@@ -26,10 +26,31 @@ class CfgDicionario extends BaseController
     {
         echo view('vw_semacesso', $this->data);
     }
+    public function add()
+    {
+        $gerador = new \App\Services\SqlGeneratorService();
+
+        // 1. Contexto (Passo 1) — ajuste pros nomes reais das suas tabelas
+        $contexto = $this->dicionario->getSchemaContext(['est_requisicao', 'est_requisicao_produto', 'est_requisicao_produto_atendimento', 'pro_sap_produto', 'pro_sap_lote']);
+
+        // 2. Pergunta do usuário
+        $pergunta = 'Quero os produtos com as quantidades atendidas do dia 01/05/2026 até o dia 20/05/2026, que a quantidade atendida seja maior que a aprovada, e me mostre a diferença, se a quantidade aprovada for igual a -1, considere aprovada a quantidade conferida e me mostre apenas produtos que a quantidade atendida seja maior que 0';
+
+        // 3. Gera o SQL (Passo 2)
+        $sql = $gerador->gerarSql($pergunta, $contexto);
+
+
+        return $this->response->setContentType('text/plain')->setBody($sql);
+        // Use os nomes reais das suas tabelas de requisição de estoque:
+        // $contexto = $this->dicionario->getSchemaContext(['est_requisicao', 'est_requisicao_produto', 'est_requisicao_produto_atendimento', 'pro_sap_produto', 'pro_sap_lote']);
+
+        // return $this->response->setContentType('text/plain')
+        //     ->setBody($contexto);
+    }
 
     public function index()
     {
-        $this->data['colunas'] = ['Tabela', 'Banco', 'Tabela', 'Registros','Descrição',  'Ação'];
+        $this->data['colunas'] = ['Tabela', 'Banco', 'Tabela', 'Registros', 'Descrição',  'Ação'];
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
 
         echo view('vw_lista', $this->data);
@@ -156,7 +177,6 @@ class CfgDicionario extends BaseController
             ? $dados['table_rows']
             : '';
         $this->tab_regi = $regi->create();
-
     }
 
     public function def_campos_campos($tabela)
@@ -195,7 +215,5 @@ class CfgDicionario extends BaseController
         $trel->valor = '';
         $trel->valor = relacion_tabela($relac);
         $this->tab_trel = $trel->create();
-
     }
-
 }

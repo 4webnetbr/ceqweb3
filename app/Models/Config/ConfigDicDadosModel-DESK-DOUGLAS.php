@@ -4,7 +4,7 @@
  * Summary of namespace App\Models\Config
  * Classe para tratamento das Tabelas e Campos do Sistema
  * Trabalha com várias bases de dados ao mesmo tempo
- *
+ * 
  * Criada por: Douglas Junior Ferreira
  * Dezembro/2023
  */
@@ -15,13 +15,13 @@ use CodeIgniter\Model;
 
 class ConfigDicDadosModel extends Model
 {
-    protected $DBGroup = 'default';
+    protected $DBGroup          = 'default';
 
-    protected $table      = 'information_schema.tables';
-    protected $primaryKey = 'table_name';
-    protected $returnType = 'array';
+    protected $table            = 'information_schema.tables';
+    protected $primaryKey       = 'table_name';
+    protected $returnType       = 'array';
 
-    protected $allowedFields = [
+    protected $allowedFields    = [
         'table_name',
         'table_rows',
         'table_comment',
@@ -36,11 +36,11 @@ class ConfigDicDadosModel extends Model
      */
     public function getTabelas($nome_tabela = false)
     {
-        $this->DBGroup = 'dbEstoque';
-        $db            = db_connect($this->DBGroup);
-        $pre           = '';
-        $url           = base_url();
-        if (! str_contains($url, 'dev.')) {
+        $this->DBGroup          = 'dbEstoque';
+        $db      = db_connect($this->DBGroup);
+        $pre = 'dev_';
+        $url = base_url();
+        if (!str_contains($url, 'dev.')) {
             $pre = 'prd_';
         }
         $builder = $db->table('information_schema.tables');
@@ -56,9 +56,9 @@ class ConfigDicDadosModel extends Model
         $ret = $builder->get()->getResultArray();
         // debug($db->getLastQuery());
 
-        $this->DBGroup = 'dbProduto';
-        $db            = db_connect($this->DBGroup);
-        $builder       = $db->table('information_schema.tables');
+        $this->DBGroup          = 'dbProduto';
+        $db      = db_connect($this->DBGroup);
+        $builder = $db->table('information_schema.tables');
         $builder
             ->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
 
@@ -73,9 +73,9 @@ class ConfigDicDadosModel extends Model
             array_push($ret, $reg);
         }
 
-        $this->DBGroup = 'dbOcorrencia';
-        $db            = db_connect($this->DBGroup);
-        $builder       = $db->table('information_schema.tables');
+        $this->DBGroup          = 'dbOcorrencia';
+        $db      = db_connect($this->DBGroup);
+        $builder = $db->table('information_schema.tables');
 
         $builder
             ->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
@@ -90,9 +90,9 @@ class ConfigDicDadosModel extends Model
             array_push($ret, $reg);
         }
 
-        $this->DBGroup = 'default';
-        $db            = db_connect($this->DBGroup);
-        $builder       = $db->table('information_schema.tables');
+        $this->DBGroup          = 'default';
+        $db      = db_connect($this->DBGroup);
+        $builder = $db->table('information_schema.tables');
 
         $builder
             ->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
@@ -118,9 +118,9 @@ class ConfigDicDadosModel extends Model
     public function getTabelaSearch($nome_tabela)
     {
         $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
-        $db       = db_connect($dbGrSche['dbGroup']);
-        $builder  = $db->table($this->table);
-        $array    = ['table_name' => $nome_tabela . '%'];
+        $db      = db_connect($dbGrSche['dbGroup']);
+        $builder = $db->table($this->table);
+        $array = ['table_name' => $nome_tabela . '%'];
         $builder
             ->select(['table_name', 'table_rows', 'table_comment'])
             ->like($array);
@@ -141,16 +141,16 @@ class ConfigDicDadosModel extends Model
     public function getRelacionamentos($nome_tabela)
     {
         $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
-        $array    = ['kc.table_name' => $nome_tabela];
+        $array = ['kc.table_name' => $nome_tabela];
         $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
-        $db       = db_connect($dbGrSche['dbGroup']);
-        $builder  = $db->table('information_schema.KEY_COLUMN_USAGE kc');
+        $db      = db_connect($dbGrSche['dbGroup']);
+        $builder = $db->table('information_schema.KEY_COLUMN_USAGE kc');
 
         // $builder = $this->builder('information_schema.KEY_COLUMN_USAGE kc');
-        $builder->select('CONSTRAINT_NAME,
-                            kc.TABLE_NAME,
-                            kc.COLUMN_NAME,
-                            kc.REFERENCED_TABLE_NAME,
+        $builder->select('CONSTRAINT_NAME, 
+                            kc.TABLE_NAME, 
+                            kc.COLUMN_NAME, 
+                            kc.REFERENCED_TABLE_NAME, 
                             kc.REFERENCED_COLUMN_NAME,
                             tb.TABLE_COMMENT');
         $builder->join('information_schema.TABLES tb', 'tb.TABLE_NAME = kc.REFERENCED_TABLE_NAME', 'inner');
@@ -172,21 +172,21 @@ class ConfigDicDadosModel extends Model
     public function getCampos($nome_tabela)
     {
         $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
-        $db       = db_connect($dbGrSche['dbGroup']);
-        $query    = $db->query("SELECT TABLE_NAME,
-                            COLUMN_NAME,
-                            IS_NULLABLE,
-                            DATA_TYPE,
-                            COALESCE(`CHARACTER_MAXIMUM_LENGTH`,NUMERIC_PRECISION) AS COLUMN_SIZE,
-                            NUMERIC_SCALE,
-                            COLUMN_COMMENT,
+        $db = db_connect($dbGrSche['dbGroup']);
+        $query = $db->query("SELECT TABLE_NAME, 
+                            COLUMN_NAME, 
+                            IS_NULLABLE, 
+                            DATA_TYPE, 
+                            COALESCE(`CHARACTER_MAXIMUM_LENGTH`,NUMERIC_PRECISION) AS COLUMN_SIZE, 
+                            NUMERIC_SCALE, 
+                            COLUMN_COMMENT, 
                             COLUMN_KEY,
                             CONCAT(COLUMN_COMMENT,' - ',COLUMN_NAME) AS NOME_COMPLETO
                             FROM information_schema.columns
                             WHERE TABLE_NAME = '" . $nome_tabela . "'
                             AND TABLE_SCHEMA = '" . $dbGrSche['schema'] . "'");
         $ret = $query->getResultArray();
-        $lq  = $query  = $db->getLastQuery();
+        $lq = $query = $db->getLastQuery();
         // debug($lq);
         // debug($ret);
         return $ret;
@@ -202,15 +202,14 @@ class ConfigDicDadosModel extends Model
     public function getDetalhesCampo($nome_tabela, $nome_campo)
     {
         $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
-        // debug($dbGrSche);
-        $db       = db_connect($dbGrSche['dbGroup']);
-        $consulta = "SELECT TABLE_NAME,
-                            COLUMN_NAME,
-                            IS_NULLABLE,
-                            DATA_TYPE,
-                            COALESCE(`CHARACTER_MAXIMUM_LENGTH`,NUMERIC_PRECISION) AS COLUMN_SIZE,
-                            NUMERIC_SCALE,
-                            COLUMN_COMMENT,
+        $db = db_connect($dbGrSche['dbGroup']);
+        $consulta = "SELECT TABLE_NAME, 
+                            COLUMN_NAME, 
+                            IS_NULLABLE, 
+                            DATA_TYPE, 
+                            COALESCE(`CHARACTER_MAXIMUM_LENGTH`,NUMERIC_PRECISION) AS COLUMN_SIZE, 
+                            NUMERIC_SCALE, 
+                            COLUMN_COMMENT, 
                             COLUMN_KEY,
                             CONCAT(COLUMN_COMMENT,' - ',COLUMN_NAME) AS NOME_COMPLETO
                             FROM information_schema.columns
@@ -221,16 +220,16 @@ class ConfigDicDadosModel extends Model
             for ($n = 0; $n < count($nome_campo); $n++) {
                 $str_nome_campo .= "'" . $nome_campo[$n] . "',";
             }
-            $str_nome_campo  = rtrim($str_nome_campo, ",");
-            $consulta       .= "AND column_name IN ($str_nome_campo) ";
+            $str_nome_campo = rtrim($str_nome_campo, ",");
+            $consulta .= "AND column_name IN ($str_nome_campo) ";
         } else {
             $consulta .= "AND column_name = '" . $nome_campo . "' ";
         }
         // debug($consulta, true);
 
         $query = $db->query($consulta);
-        $ret   = $query->getResultArray();
-        $lq    = $query    = $db->getLastQuery();
+        $ret = $query->getResultArray();
+        $lq = $query = $db->getLastQuery();
         // debug($lq);
         // debug($ret);
         return $ret;
@@ -245,16 +244,16 @@ class ConfigDicDadosModel extends Model
     public function getCampoChave($nome_tabela)
     {
         $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
-        $array    = ['table_name' => $nome_tabela];
+        $array = ['table_name' => $nome_tabela];
         // $db = db_connect();
         $db      = db_connect($this->DBGroup);
         $builder = $db;
         // $builder = $this->builder('information_schema.columns');
-        $builder->select('TABLE_NAME, COLUMN_NAME,
-                                IS_NULLABLE,
-                                DATA_TYPE,
-                                COALESCE(`CHARACTER_MAXIMUM_LENGTH`, NUMERIC_PRECISION) AS COLUMN_SIZE,
-                                COLUMN_COMMENT,
+        $builder->select('TABLE_NAME, COLUMN_NAME, 
+                                IS_NULLABLE, 
+                                DATA_TYPE, 
+                                COALESCE(`CHARACTER_MAXIMUM_LENGTH`, NUMERIC_PRECISION) AS COLUMN_SIZE, 
+                                COLUMN_COMMENT, 
                                 COLUMN_KEY');
         $builder->where($array);
         $builder->where('COLUMN_KEY', 'PRI');
@@ -265,30 +264,30 @@ class ConfigDicDadosModel extends Model
         return $ret;
     }
 
-    public function getDbGroupAndSchema(?string $nome_tabela): array
+    function getDbGroupAndSchema(?string $nome_tabela): array
     {
         $url = base_url();
         if (str_contains($url, 'dev.')) {
             $prefixMap = [
-                'vw_est' => ['dbGroup' => 'dbEstoque', 'schema' => 'estoque_db'],
-                'est'    => ['dbGroup' => 'dbEstoque', 'schema' => 'estoque_db'],
-                'vw_oco' => ['dbGroup' => 'dbOcorrencia', 'schema' => 'ocorrencia_db'],
-                'oco'    => ['dbGroup' => 'dbOcorrencia', 'schema' => 'ocorrencia_db'],
-                'vw_pro' => ['dbGroup' => 'dbProduto', 'schema' => 'produto_db'],
-                'pro'    => ['dbGroup' => 'dbProduto', 'schema' => 'produto_db'],
-                'vw_cfg' => ['dbGroup' => 'default', 'schema' => 'config_ceqweb_db'],
-                'cfg'    => ['dbGroup' => 'default', 'schema' => 'config_ceqweb_db'],
+                'vw_est' => ['dbGroup' => 'dbEstoque',    'schema' => 'dev_estoque_db'],
+                'est'    => ['dbGroup' => 'dbEstoque',    'schema' => 'dev_estoque_db'],
+                'vw_oco' => ['dbGroup' => 'dbOcorrencia', 'schema' => 'dev_ocorrencia_db'],
+                'oco'    => ['dbGroup' => 'dbOcorrencia', 'schema' => 'dev_ocorrencia_db'],
+                'vw_pro' => ['dbGroup' => 'dbProduto',    'schema' => 'dev_produto_db'],
+                'pro'    => ['dbGroup' => 'dbProduto',    'schema' => 'dev_produto_db'],
+                'vw_cfg' => ['dbGroup' => 'default',      'schema' => 'dev_config_ceqweb_db'],
+                'cfg'    => ['dbGroup' => 'default',      'schema' => 'dev_config_ceqweb_db'],
             ];
         } else {
             $prefixMap = [
-                'vw_est' => ['dbGroup' => 'dbEstoque', 'schema' => 'prd_estoque_db'],
-                'est'    => ['dbGroup' => 'dbEstoque', 'schema' => 'prd_estoque_db'],
+                'vw_est' => ['dbGroup' => 'dbEstoque',    'schema' => 'prd_estoque_db'],
+                'est'    => ['dbGroup' => 'dbEstoque',    'schema' => 'prd_estoque_db'],
                 'vw_oco' => ['dbGroup' => 'dbOcorrencia', 'schema' => 'prd_ocorrencia_db'],
                 'oco'    => ['dbGroup' => 'dbOcorrencia', 'schema' => 'prd_ocorrencia_db'],
-                'vw_pro' => ['dbGroup' => 'dbProduto', 'schema' => 'prd_produto_db'],
-                'pro'    => ['dbGroup' => 'dbProduto', 'schema' => 'prd_produto_db'],
-                'vw_cfg' => ['dbGroup' => 'default', 'schema' => 'prd_config_ceqweb_db'],
-                'cfg'    => ['dbGroup' => 'default', 'schema' => 'prd_config_ceqweb_db'],
+                'vw_pro' => ['dbGroup' => 'dbProduto',    'schema' => 'prd_produto_db'],
+                'pro'    => ['dbGroup' => 'dbProduto',    'schema' => 'prd_produto_db'],
+                'vw_cfg' => ['dbGroup' => 'default',      'schema' => 'prd_config_ceqweb_db'],
+                'cfg'    => ['dbGroup' => 'default',      'schema' => 'prd_config_ceqweb_db'],
             ];
         }
 
@@ -303,5 +302,99 @@ class ConfigDicDadosModel extends Model
 
         // Retorna nulo caso nenhum prefixo conhecido seja encontrado
         return ['dbGroup' => null, 'schema' => null];
+    }
+
+
+    /**
+     * Summary of getSchemaEstruturado
+     * Monta um array estruturado do schema (colunas + FKs) das tabelas
+     * informadas, reaproveitando getCampos() e getRelacionamentos().
+     * Resolve sozinho o dbGroup/schema de cada tabela pelo prefixo.
+     *
+     * Criada por: Claude / Dezembro 2025 (gerador de relatórios em linguagem natural)
+     *
+     * @param string[] $tabelas Lista de tabelas a incluir
+     * @return array<string, array>
+     */
+    public function getSchemaEstruturado(array $tabelas): array
+    {
+        $schema = [];
+
+        foreach ($tabelas as $tabela) {
+            $dbGrSche = $this->getDbGroupAndSchema($tabela);
+
+            // Pula tabela com prefixo desconhecido (não sabemos o banco)
+            if ($dbGrSche['schema'] === null) {
+                continue;
+            }
+
+            $campos = $this->getCampos($tabela);
+            $fks    = $this->getRelacionamentos($tabela);
+
+            $schema[$tabela] = [
+                'dbGroup' => $dbGrSche['dbGroup'],
+                'schema'  => $dbGrSche['schema'],
+                'columns' => [],
+                'foreign_keys' => [],
+            ];
+
+            foreach ($campos as $c) {
+                $schema[$tabela]['columns'][] = [
+                    'name'  => $c['COLUMN_NAME'],
+                    'type'  => $c['DATA_TYPE'],
+                    'label' => $c['COLUMN_COMMENT'] ?: null, // seu rótulo
+                    'key'   => $c['COLUMN_KEY'],             // PRI, MUL, UNI
+                ];
+            }
+
+            foreach ($fks as $fk) {
+                $schema[$tabela]['foreign_keys'][] = [
+                    'column'     => $fk['COLUMN_NAME'],
+                    'ref_table'  => $fk['REFERENCED_TABLE_NAME'],
+                    'ref_column' => $fk['REFERENCED_COLUMN_NAME'],
+                ];
+            }
+        }
+
+        return $schema;
+    }
+
+    /**
+     * Summary of getSchemaContext
+     * Monta o texto legível (com os rótulos/COMMENT) que será injetado
+     * no prompt da LLM para a geração de SQL.
+     *
+     * @param string[] $tabelas Lista de tabelas a incluir
+     * @return string
+     */
+    public function getSchemaContext(array $tabelas): string
+    {
+        $schema = $this->getSchemaEstruturado($tabelas);
+        $out    = [];
+
+        foreach ($schema as $tabela => $info) {
+            // Qualifica com o schema, pois o sistema é multi-banco
+            $out[] = "Tabela: {$info['schema']}.{$tabela}";
+
+            foreach ($info['columns'] as $col) {
+                $line = "  - {$col['name']} ({$col['type']})";
+                if ($col['label']) {
+                    $line .= ": {$col['label']}";
+                }
+                if ($col['key'] === 'PRI') {
+                    $line .= " [chave primária]";
+                }
+                $out[] = $line;
+            }
+
+            foreach ($info['foreign_keys'] as $fk) {
+                $out[] = "  - FK: {$fk['column']} referencia "
+                    . "{$fk['ref_table']}.{$fk['ref_column']}";
+            }
+
+            $out[] = '';
+        }
+
+        return implode("\n", $out);
     }
 }

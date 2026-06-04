@@ -38,7 +38,7 @@ class ConfigDicDadosModel extends Model
     {
         $this->DBGroup          = 'dbEstoque';
         $db      = db_connect($this->DBGroup);
-        $pre = '';
+        $pre = 'dev_';
         $url = base_url();
         if (!str_contains($url, 'dev.')) {
             $pre = 'prd_';
@@ -302,5 +302,99 @@ class ConfigDicDadosModel extends Model
 
         // Retorna nulo caso nenhum prefixo conhecido seja encontrado
         return ['dbGroup' => null, 'schema' => null];
+    }
+
+
+    /**
+     * Summary of getSchemaEstruturado
+     * Monta um array estruturado do schema (colunas + FKs) das tabelas
+     * informadas, reaproveitando getCampos() e getRelacionamentos().
+     * Resolve sozinho o dbGroup/schema de cada tabela pelo prefixo.
+     *
+     * Criada por: Claude / Dezembro 2025 (gerador de relatórios em linguagem natural)
+     *
+     * @param string[] $tabelas Lista de tabelas a incluir
+     * @return array<string, array>
+     */
+    public function getSchemaEstruturado(array $tabelas): array
+    {
+        $schema = [];
+
+        foreach ($tabelas as $tabela) {
+            $dbGrSche = $this->getDbGroupAndSchema($tabela);
+
+            // Pula tabela com prefixo desconhecido (não sabemos o banco)
+            if ($dbGrSche['schema'] === null) {
+                continue;
+            }
+
+            $campos = $this->getCampos($tabela);
+            $fks    = $this->getRelacionamentos($tabela);
+
+            $schema[$tabela] = [
+                'dbGroup' => $dbGrSche['dbGroup'],
+                'schema'  => $dbGrSche['schema'],
+                'columns' => [],
+                'foreign_keys' => [],
+            ];
+
+            foreach ($campos as $c) {
+                $schema[$tabela]['columns'][] = [
+                    'name'  => $c['COLUMN_NAME'],
+                    'type'  => $c['DATA_TYPE'],
+                    'label' => $c['COLUMN_COMMENT'] ?: null, // seu rótulo
+                    'key'   => $c['COLUMN_KEY'],             // PRI, MUL, UNI
+                ];
+            }
+
+            foreach ($fks as $fk) {
+                $schema[$tabela]['foreign_keys'][] = [
+                    'column'     => $fk['COLUMN_NAME'],
+                    'ref_table'  => $fk['REFERENCED_TABLE_NAME'],
+                    'ref_column' => $fk['REFERENCED_COLUMN_NAME'],
+                ];
+            }
+        }
+
+        return $schema;
+    }
+
+    /**
+     * Summary of getSchemaContext
+     * Monta o texto legível (com os rótulos/COMMENT) que será injetado
+     * no prompt da LLM para a geração de SQL.
+     *
+     * @param string[] $tabelas Lista de tabelas a incluir
+     * @return string
+     */
+    public function getSchemaContext(array $tabelas): string
+    {
+        $schema = $this->getSchemaEstruturado($tabelas);
+        $out    = [];
+
+        foreach ($schema as $tabela => $info) {
+            // Qualifica com o schema, pois o sistema é multi-banco
+            $out[] = "Tabela: {$info['schema']}.{$tabela}";
+
+            foreach ($info['columns'] as $col) {
+                $line = "  - {$col['name']} ({$col['type']})";
+                if ($col['label']) {
+                    $line .= ": {$col['label']}";
+                }
+                if ($col['key'] === 'PRI') {
+                    $line .= " [chave primária]";
+                }
+                $out[] = $line;
+            }
+
+            foreach ($info['foreign_keys'] as $fk) {
+                $out[] = "  - FK: {$fk['column']} referencia "
+                    . "{$fk['ref_table']}.{$fk['ref_column']}";
+            }
+
+            $out[] = '';
+        }
+
+        return implode("\n", $out);
     }
 }
