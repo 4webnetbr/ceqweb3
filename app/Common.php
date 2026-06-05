@@ -1,14 +1,14 @@
 <?php
 // require('vendor/autoload.php');
 
-use WebSocket\Client;
 use App\Libraries\Campos;
 use App\Libraries\MyCampo;
-use App\Models\Config\ConfigMenuModel;
-use App\Models\Config\ConfigTelaModel;
 use App\Models\Config\ConfigDicDadosModel;
-use App\Models\Config\ConfigTelaListaModel;
+use App\Models\Config\ConfigMenuModel;
 use App\Models\Config\ConfigPerfilItemModel;
+use App\Models\Config\ConfigTelaListaModel;
+use App\Models\Config\ConfigTelaModel;
+use WebSocket\Client;
 
 /**
  * The goal of this file is to allow developers a location
@@ -24,7 +24,6 @@ use App\Models\Config\ConfigPerfilItemModel;
  * @see: https://codeigniter4.github.io/CodeIgniter4/
  */
 
-
 /**
  * montaMenu
  * @param mixed $perfil_usu
@@ -36,13 +35,13 @@ function montaMenu($perfil_usu, $tipo_usu, $ordenacao = false)
 {
     // debug('Ordenação '.$ordenacao);
     // var_dump($ordenacao);
-    $menu    = new ConfigMenuModel();
-    $retorno = $menu->getMenuCompleto($perfil_usu, $tipo_usu);
-    $ret_menu = [];
-    $opc = -1;
-    $niv1 = -1;
-    $niv2 = -1;
-    $niv_atual  = 0;
+    $menu      = new ConfigMenuModel();
+    $retorno   = $menu->getMenuCompleto($perfil_usu, $tipo_usu);
+    $ret_menu  = [];
+    $opc       = -1;
+    $niv1      = -1;
+    $niv2      = -1;
+    $niv_atual = 0;
     // debug(count($retorno), true);
     for ($m = 0; $m < count($retorno); $m++) {
         $opc_menu = $retorno[$m];
@@ -51,24 +50,24 @@ function montaMenu($perfil_usu, $tipo_usu, $ordenacao = false)
             if (strpbrk($opc_menu['pit_permissao'], 'C')) {
                 $ret_menu[$opc] = $opc_menu;
             }
-            $niv1 = -1;
-            $niv2 = -1;
+            $niv1      = -1;
+            $niv2      = -1;
             $niv_atual = 0;
         }
         if ($opc_menu['men_hierarquia'] == '2') { //Menu
             $opc++;
-            $niv1 = 0;
-            $niv2 = -1;
-            $niv_atual = 1;
+            $niv1           = 0;
+            $niv2           = -1;
+            $niv_atual      = 1;
             $ret_menu[$opc] = $opc_menu;
         }
         if ($opc_menu['men_hierarquia'] == '3') { //Submenu
-            $niv2 = 0;
-            $niv_atual = 2;
+            $niv2                          = 0;
+            $niv_atual                     = 2;
             $ret_menu[$opc]['niv1'][$niv1] = $opc_menu;
         }
         if ($opc_menu['men_hierarquia'] == '4') {
-            if (strpbrk($opc_menu['pit_permissao'], 'C') || !$perfil_usu) {
+            if (strpbrk($opc_menu['pit_permissao'], 'C') || ! $perfil_usu) {
                 if ($niv_atual == 2) {
                     if ($retorno[$m]['men_submenu_id'] > 0) {
                         $ret_menu[$opc]['niv1'][$niv1]['niv2'][$niv2] = $opc_menu;
@@ -109,15 +108,15 @@ function montaMenu($perfil_usu, $tipo_usu, $ordenacao = false)
         } else {
             $opc_menu = $ret_menu[$m];
             if ($opc_menu['men_hierarquia'] == '2') {
-                if (!isset($opc_menu['niv1']) || count($opc_menu['niv1']) == 0) {
+                if (! isset($opc_menu['niv1']) || count($opc_menu['niv1']) == 0) {
                     unset($ret_menu[$m]);
                 } else {
                     for ($s = count($opc_menu['niv1']) - 1; $s >= 0; $s--) {
                         $opc_sub = $opc_menu['niv1'][$s];
                         if ($opc_sub['men_hierarquia'] == '3') {
                             if (
-                                !array_key_exists('niv2', $opc_sub)
-                                || !isset($opc_sub['niv2'])
+                                ! array_key_exists('niv2', $opc_sub)
+                                || ! isset($opc_sub['niv2'])
                                 || count($opc_sub['niv2']) == 0
                             ) {
                                 unset($ret_menu[$m]['niv1'][$s]);
@@ -132,17 +131,16 @@ function montaMenu($perfil_usu, $tipo_usu, $ordenacao = false)
         if (isset($ret_menu[$m])) {
             $opc_menu = $ret_menu[$m];
             if ($opc_menu['men_hierarquia'] == '2') {
-                if (!isset($opc_menu['niv1']) || count($opc_menu['niv1']) == 0) {
+                if (! isset($opc_menu['niv1']) || count($opc_menu['niv1']) == 0) {
                     unset($ret_menu[$m]);
                 }
             }
         }
     }
-    $arr = array_values($ret_menu);
+    $arr      = array_values($ret_menu);
     $ret_menu = $arr;
     return $ret_menu;
 }
-
 
 function montaListaTelas()
 {
@@ -155,7 +153,7 @@ function montaListaTelas()
 
 function montaListaItensPerfil($perfil, $telas)
 {
-    $ret = [];
+    $ret      = [];
     $itperfil = new ConfigPerfilItemModel();
     foreach ($telas as $key => $value) {
         $permis = $itperfil->getItemPerfilClasse($perfil, $key);
@@ -178,9 +176,9 @@ function montaListagem($data_lis, $chave)
 {
     $dicionario = new ConfigDicDadosModel();
 
-    $lista = $chave . $data_lis['listagem'];
-    $arr_lista = explode(',', $lista);
-    $tabela = $data_lis['tabela'];
+    $lista      = $chave . $data_lis['listagem'];
+    $arr_lista  = explode(',', $lista);
+    $tabela     = $data_lis['tabela'];
     $arr_campos = [];
     array_push($arr_campos, $dicionario->getDetalhesCampo($tabela, $arr_lista));
     $cols = [];
@@ -199,12 +197,16 @@ function montaListagem($data_lis, $chave)
 
 function montaColunasLista($data_lis, $chave)
 {
-    $telaLista    = new ConfigTelaListaModel();
+    $telaLista = new ConfigTelaListaModel();
 
-    $lista = $telaLista->getListagem($data_lis['tel_id']);
+    $lista      = $telaLista->getListagem($data_lis['tel_id']);
     $arr_campos = array_column($lista, 'lis_rotulo');
     array_unshift($arr_campos, $chave);
-    array_push($arr_campos, "Ação");
+
+    $temacao     = $data_lis['temacao'] ?? true;
+    if ($temacao) {
+        array_push($arr_campos, "Ação");
+    }
 
     // debug($arr_campos);
     return $arr_campos;
@@ -212,37 +214,39 @@ function montaColunasLista($data_lis, $chave)
 
 function montaColunasCampos($data_lis, $chave)
 {
-    $telaLista    = new ConfigTelaListaModel();
+    $telaLista = new ConfigTelaListaModel();
 
-    $lista = $telaLista->getListagem($data_lis['tel_id']);
+    $lista      = $telaLista->getListagem($data_lis['tel_id']);
     $arr_campos = array_column($lista, 'lis_campo');
     array_unshift($arr_campos, $chave);
     // debug($arr_campos);e
     return $arr_campos;
 }
 
-
-
 function montaListaColunas($data_lis, $chave, $dados, $nome)
 {
     $telaLista = new ConfigTelaListaModel();
 
-    $lista = $telaLista->getListagem($data_lis['tel_id']);
+    $lista  = $telaLista->getListagem($data_lis['tel_id']);
     $fields = array_column($lista, 'lis_campo');
     // Mostra o botão de exclusão por padrão
     $exclusao = isset($data_lis['exclusao']) ? $data_lis['exclusao'] : true;
-    $edicao = isset($data_lis['edicao']) ? $data_lis['edicao'] : true;
+    $edicao   = isset($data_lis['edicao']) ? $data_lis['edicao'] : true;
     array_unshift($fields, $chave);
-    array_push($fields, 'acao');
+
+    $temacao     = $data_lis['temacao'] ?? true;
+    if ($temacao) {
+        array_push($fields, 'acao');
+    }
     $result = [];
     for ($p = 0; $p < sizeof($dados); $p++) {
-        $dat_i = $dados[$p];
-        $temativo = false;
-        $ativo = 0;
-        $inativa = '';
+        $dat_i        = $dados[$p];
+        $temativo     = false;
+        $ativo        = 0;
+        $inativa      = '';
         $podeinativar = true;
-        $podeeditar = true;
-        if (!isset($dat_i['tabela']) || $dat_i['tabela'] != 'cfg_status') {
+        $podeeditar   = true;
+        if (! isset($dat_i['tabela']) || $dat_i['tabela'] != 'cfg_status') {
             if (isset($dat_i['stt_exclusao'])) {
                 if (trim($dat_i['stt_exclusao']) == 'N') {
                     $podeinativar = false;
@@ -267,53 +271,53 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
                 break;
             }
         }
-        $edit = '';
+        $edit   = '';
         $exclui = '';
         if ((strlen($data_lis['permissao']) <= 3 && //se não tem todos os acessos
                 strpbrk($data_lis['permissao'], 'C')) ||
             (strpbrk($data_lis['permissao'], 'C') &&
-                !$podeeditar)
+                ! $podeeditar)
         ) { // mas tem acesso de consulta
-            $url_con = $data_lis['controler'] . '/show/' . $dat_i[$chave];
-            $bt_con = new MyCampo();
-            $bt_con->id = $bt_con->nome = 'bt_show';
-            $bt_con->classep = 'btn btn-outline-info btn-sm border-0 mx-0 fs-0';
-            $bt_con->i_cone = "<i class='far fa-eye'></i>";
-            $bt_con->label = "";
-            $bt_con->place = "Consulta";
+            $url_con          = $data_lis['controler'] . '/show/' . $dat_i[$chave];
+            $bt_con           = new MyCampo();
+            $bt_con->id       = $bt_con->nome       = 'bt_show';
+            $bt_con->classep  = 'btn btn-outline-info btn-sm border-0 mx-0 fs-0';
+            $bt_con->i_cone   = "<i class='far fa-eye'></i>";
+            $bt_con->label    = "";
+            $bt_con->place    = "Consulta";
             $bt_con->funcChan = "redireciona('{$url_con}',event)";
-            $edit = $bt_con->crBotao();
+            $edit             = $bt_con->crBotao();
         }
         if (strpbrk($data_lis['permissao'], 'E')) {
             if ($podeeditar && $edicao) {
-                $url_edi = $data_lis['controler'] . '/edit/' . $dat_i[$chave];
-                $bt_edt = new MyCampo();
-                $bt_edt->id = $bt_edt->nome = 'bt_edit';
-                $bt_edt->classep = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0';
-                $bt_edt->i_cone = "<i class='fas fa-edit'></i>";
-                $bt_edt->label = "";
-                $bt_edt->place = "Alterar";
+                $url_edi          = $data_lis['controler'] . '/edit/' . $dat_i[$chave];
+                $bt_edt           = new MyCampo();
+                $bt_edt->id       = $bt_edt->nome       = 'bt_edit';
+                $bt_edt->classep  = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0';
+                $bt_edt->i_cone   = "<i class='fas fa-edit'></i>";
+                $bt_edt->label    = "";
+                $bt_edt->place    = "Alterar";
                 $bt_edt->funcChan = "redireciona('{$url_edi}',event)";
-                $edit = $bt_edt->crBotao();
+                $edit             = $bt_edt->crBotao();
             }
         }
         if ($temativo) {
             if ($podeinativar && strpbrk($data_lis['permissao'], 'X')) {
-                $url_ati = $data_lis['controler'] . '/ativinativ/' . $dat_i[$chave] . '/1';
-                $bt_ati = new MyCampo();
-                $bt_ati->id = $bt_ati->nome = 'bt_ativinat';
-                $bt_ati->label = "";
-                $bt_ati->i_cone = "<i class='fa-solid fa-toggle-off fa-rotate-270'></i>";
-                $bt_ati->place = "Ativar";
-                $bt_ati->classep = 'btn btn-outline-secondary btn-sm border-0 mx-0 fs-0';
+                $url_ati          = $data_lis['controler'] . '/ativinativ/' . $dat_i[$chave] . '/1';
+                $bt_ati           = new MyCampo();
+                $bt_ati->id       = $bt_ati->nome       = 'bt_ativinat';
+                $bt_ati->label    = "";
+                $bt_ati->i_cone   = "<i class='fa-solid fa-toggle-off fa-rotate-270'></i>";
+                $bt_ati->place    = "Ativar";
+                $bt_ati->classep  = 'btn btn-outline-secondary btn-sm border-0 mx-0 fs-0';
                 $bt_ati->funcChan = "ativInativ('{$url_ati}','{$dat_i[$nome]}', false)";
                 if ($ativo) {
                     // debug('etq_ativo '.$dat_i['etq_ativo']);
                     // debug('etq_nome '.$dat_i[$nome]);
-                    $url_ina = $data_lis['controler'] . '/ativinativ/' . $dat_i[$chave] . '/0';
-                    $bt_ati->i_cone = "<i class='fa-solid fa-toggle-on fa-rotate-270'></i>";
-                    $bt_ati->place = "Inativar";
-                    $bt_ati->classep = 'btn btn-outline-success btn-sm border-0 mx-0 fs-0';
+                    $url_ina          = $data_lis['controler'] . '/ativinativ/' . $dat_i[$chave] . '/0';
+                    $bt_ati->i_cone   = "<i class='fa-solid fa-toggle-on fa-rotate-270'></i>";
+                    $bt_ati->place    = "Inativar";
+                    $bt_ati->classep  = 'btn btn-outline-success btn-sm border-0 mx-0 fs-0';
                     $bt_ati->funcChan = "ativInativ('{$url_ina}','{$dat_i[$nome]}', true)";
                 }
                 $inativa = $bt_ati->crBotao();
@@ -323,23 +327,23 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
             if ($podeinativar && $exclusao) {
                 $url_del = $data_lis['controler'] . '/delete/' . $dat_i[$chave];
 
-                $bt_del = new MyCampo();
-                $bt_del->id = $bt_del->nome = 'bt_delete';
-                $bt_del->classep = 'btn btn-outline-danger btn-sm border-0 mx-0 fs-0';
-                $bt_del->i_cone = "<i class='far fa-trash-alt'></i>";
-                $bt_del->label = "";
-                $bt_del->place = "Excluir";
+                $bt_del           = new MyCampo();
+                $bt_del->id       = $bt_del->nome       = 'bt_delete';
+                $bt_del->classep  = 'btn btn-outline-danger btn-sm border-0 mx-0 fs-0';
+                $bt_del->i_cone   = "<i class='far fa-trash-alt'></i>";
+                $bt_del->label    = "";
+                $bt_del->place    = "Excluir";
                 $bt_del->funcChan = "excluir('{$url_del}','{$dat_i[$nome]}')";
-                $exclui = $bt_del->crBotao();
+                $exclui           = $bt_del->crBotao();
             }
         }
 
         // se for a tela de menus
         if ($chave == 'men_id') {
-            $dados[$p]['men_modulo'] = "<i class='" . $dat_i['mod_icone'] . "'></i> " . $dat_i['mod_nome'];
-            $dados[$p]['men_tela'] = $dat_i['tel_nome'];
+            $dados[$p]['men_modulo']   = "<i class='" . $dat_i['mod_icone'] . "'></i> " . $dat_i['mod_nome'];
+            $dados[$p]['men_tela']     = $dat_i['tel_nome'];
             $dados[$p]['men_etiqueta'] = "<i class='" . $dat_i['men_icone'] . "'></i> " . $dat_i['men_etiqueta'];
-            $dados[$p]['men_caminho'] = "<i class='" . $dat_i['men_icone'] . "'></i> " . $dat_i['men_etiqueta'];
+            $dados[$p]['men_caminho']  = "<i class='" . $dat_i['men_icone'] . "'></i> " . $dat_i['men_etiqueta'];
             if ($dat_i['men_menupai_id'] > 0) {
                 $dados[$p]['men_caminho'] = "<i class='" . $dat_i['pai_icone'] . "'></i> " .
                     $dat_i['pai_etiqueta'] . " <i class='fas fa-level-up-alt fa-rotate-90'></i> " .
@@ -365,8 +369,8 @@ function montaListaColunas($data_lis, $chave, $dados, $nome)
         }
         $dados[$p]['acao'] = rtrim($dados[$p]['acao']);
         $dados[$p]['acao'] .= "</div>";
-        $retor = $dados[$p];
-        $res = [];
+        $retor             = $dados[$p];
+        $res               = [];
         for ($f = 0; $f < count($fields); $f++) {
             // testa se o campo é uma data
             if (strlen($fields[$f]) > 100) {
@@ -426,26 +430,29 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
 {
     $telaLista = new ConfigTelaListaModel();
 
-    $lista = $telaLista->getListagem($data_lis['tel_id']);
-    $fields = array_column($lista, 'lis_campo');
-    $exclusao = $data_lis['exclusao'] ?? true;
-    $edicao = $data_lis['edicao'] ?? true;
-    $consulta = $data_lis['consulta'] ?? true;
+    $lista       = $telaLista->getListagem($data_lis['tel_id']);
+    $fields      = array_column($lista, 'lis_campo');
+    $exclusao    = $data_lis['exclusao'] ?? true;
+    $edicao      = $data_lis['edicao'] ?? true;
+    $consulta    = $data_lis['consulta'] ?? true;
     $allconsulta = $data_lis['allconsulta'] ?? false;
+    $temacao     = $data_lis['temacao'] ?? true;
 
     array_unshift($fields, $chave);
-    array_push($fields, 'acao');
+    if ($temacao) {
+        array_push($fields, 'acao');
+    }
 
     $result = [];
 
     foreach ($dados as $ent) {
-        $temativo = false;
-        $ativo = 0;
-        $inativa = '';
+        $temativo     = false;
+        $ativo        = 0;
+        $inativa      = '';
         $podeinativar = true;
-        $podeeditar = true;
+        $podeeditar   = true;
 
-        if (!property_exists($ent, 'tabela') || $ent->tabela !== 'cfg_status') {
+        if (! property_exists($ent, 'tabela') || $ent->tabela !== 'cfg_status') {
             if (property_exists($ent, 'stt_exclusao') && trim($ent->stt_exclusao) === 'N') {
                 $podeinativar = false;
             }
@@ -466,10 +473,10 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
         }
 
         // Botões
-        $edit = '';
+        $edit   = '';
         $exclui = '';
 
-        $id_valor = $ent->{$chave};
+        $id_valor   = $ent->{$chave};
         $nome_valor = $ent->{$nome};
 
         if (
@@ -478,76 +485,78 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
                 $consulta &&
                 (
                     (strlen($data_lis['permissao']) <= 3 && strpbrk($data_lis['permissao'], 'C')) ||
-                    (strpbrk($data_lis['permissao'], 'C') && !$podeeditar)
+                    (strpbrk($data_lis['permissao'], 'C') && ! $podeeditar)
                 )
             )
         ) {
-            $url_con = $data_lis['controler'] . '/show/' . $id_valor;
-            $bt_con = new MyCampo();
-            $bt_con->id = $bt_con->nome = 'bt_show';
-            $bt_con->classep = 'btn btn-outline-info btn-sm border-0 mx-0 fs-0';
-            $bt_con->i_cone = "<i class='far fa-eye'></i>";
-            $bt_con->place = "Consultar";
+            $url_con          = $data_lis['controler'] . '/show/' . $id_valor;
+            $bt_con           = new MyCampo();
+            $bt_con->id       = $bt_con->nome       = 'bt_show';
+            $bt_con->classep  = 'btn btn-outline-info btn-sm border-0 mx-0 fs-0';
+            $bt_con->i_cone   = "<i class='far fa-eye'></i>";
+            $bt_con->place    = "Consultar";
             $bt_con->funcChan = "redireciona('{$url_con}',event)";
-            $edit = $bt_con->crBotao();
+            $edit             = $bt_con->crBotao();
         }
 
         if (strpbrk($data_lis['permissao'], 'E') && $podeeditar && $edicao) {
-            $url_edi = $data_lis['controler'] . '/edit/' . $id_valor;
-            $bt_edt = new MyCampo();
-            $bt_edt->id = $bt_edt->nome = 'bt_edit';
-            $bt_edt->classep = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0';
-            $bt_edt->i_cone = "<i class='fas fa-edit'></i>";
-            $bt_edt->place = "Alterar";
+            $url_edi          = $data_lis['controler'] . '/edit/' . $id_valor;
+            $bt_edt           = new MyCampo();
+            $bt_edt->id       = $bt_edt->nome       = 'bt_edit';
+            $bt_edt->classep  = 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0';
+            $bt_edt->i_cone   = "<i class='fas fa-edit'></i>";
+            $bt_edt->place    = "Alterar";
             $bt_edt->funcChan = "redireciona('{$url_edi}',event)";
-            $edit .= $bt_edt->crBotao();
+            $edit             .= $bt_edt->crBotao();
         }
 
         if ($temativo && $podeinativar && strpbrk($data_lis['permissao'], 'X')) {
-            $url_ati = $data_lis['controler'] . '/ativinativ/' . $id_valor . '/1';
-            $bt_ati = new MyCampo();
-            $bt_ati->id = $bt_ati->nome = 'bt_ativinat';
-            $bt_ati->i_cone = "<i class='fa-solid fa-toggle-off fa-rotate-270'></i>";
-            $bt_ati->place = "Ativar";
-            $bt_ati->classep = 'btn btn-outline-secondary btn-sm border-0 mx-0 fs-0';
+            $url_ati          = $data_lis['controler'] . '/ativinativ/' . $id_valor . '/1';
+            $bt_ati           = new MyCampo();
+            $bt_ati->id       = $bt_ati->nome       = 'bt_ativinat';
+            $bt_ati->i_cone   = "<i class='fa-solid fa-toggle-off fa-rotate-270'></i>";
+            $bt_ati->place    = "Ativar";
+            $bt_ati->classep  = 'btn btn-outline-secondary btn-sm border-0 mx-0 fs-0';
             $bt_ati->funcChan = "ativInativ('{$url_ati}','{$nome_valor}', false)";
             if ($ativo) {
-                $url_ina = $data_lis['controler'] . '/ativinativ/' . $id_valor . '/0';
-                $bt_ati->i_cone = "<i class='fa-solid fa-toggle-on fa-rotate-270'></i>";
-                $bt_ati->place = "Inativar";
-                $bt_ati->classep = 'btn btn-outline-success btn-sm border-0 mx-0 fs-0';
+                $url_ina          = $data_lis['controler'] . '/ativinativ/' . $id_valor . '/0';
+                $bt_ati->i_cone   = "<i class='fa-solid fa-toggle-on fa-rotate-270'></i>";
+                $bt_ati->place    = "Inativar";
+                $bt_ati->classep  = 'btn btn-outline-success btn-sm border-0 mx-0 fs-0';
                 $bt_ati->funcChan = "ativInativ('{$url_ina}','{$nome_valor}', true)";
             }
             $inativa = $bt_ati->crBotao();
         }
 
         if (strpbrk($data_lis['permissao'], 'X') && $podeinativar && $exclusao) {
-            $url_del = $data_lis['controler'] . '/delete/' . $id_valor;
-            $bt_del = new MyCampo();
-            $bt_del->id = $bt_del->nome = 'bt_delete';
-            $bt_del->classep = 'btn btn-outline-danger btn-sm border-0 mx-0 fs-0';
-            $bt_del->i_cone = "<i class='far fa-trash-alt'></i>";
-            $bt_del->place = "Excluir";
+            $url_del          = $data_lis['controler'] . '/delete/' . $id_valor;
+            $bt_del           = new MyCampo();
+            $bt_del->id       = $bt_del->nome       = 'bt_delete';
+            $bt_del->classep  = 'btn btn-outline-danger btn-sm border-0 mx-0 fs-0';
+            $bt_del->i_cone   = "<i class='far fa-trash-alt'></i>";
+            $bt_del->place    = "Excluir";
             $bt_del->funcChan = "excluir('{$url_del}','{$nome_valor}')";
-            $exclui = $bt_del->crBotao();
+            $exclui           = $bt_del->crBotao();
         }
 
-        $ent->acao = "<div class='col-12 d-flex justify-content-between flex-nowrap'>" . rtrim("{$edit} {$exclui} {$inativa}");
+        if ($temacao) {
+            $ent->acao = "<div class='col-12 d-flex justify-content-between flex-nowrap'>" . rtrim("{$edit} {$exclui} {$inativa}");
 
-        if (property_exists($ent, 'acao_person') && is_array($ent->acao_person)) {
-            foreach ($ent->acao_person as $bt) {
-                $name = '';
-                $inserirbotao = true;
-                if (preg_match('/name=["\']?([^"\'>\s]+)["\']?/', $bt, $matches)) {
-                    $name = $matches[1];
+            if (property_exists($ent, 'acao_person') && is_array($ent->acao_person)) {
+                foreach ($ent->acao_person as $bt) {
+                    $name         = '';
+                    $inserirbotao = true;
+                    if (preg_match('/name=["\']?([^"\'>\s]+)["\']?/', $bt, $matches)) {
+                        $name = $matches[1];
+                    }
+                    if ($inserirbotao) {
+                        $ent->acao .= $bt . ' ';
+                    }
                 }
-                if ($inserirbotao) {
-                    $ent->acao .= $bt . ' ';
-                }
+                // $ent->acao = rtrim($ent->acao);
             }
-            // $ent->acao = rtrim($ent->acao);
+            $ent->acao .= "</div>";
         }
-        $ent->acao .= "</div>";
 
         // Montar linha de colunas
         $linha = [];
@@ -587,25 +596,24 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
     return $result;
 }
 
-
 function montaListaEditColunas($colunas, $data_lis, $chave, $dados, $nome, $detalhe = false)
 {
-    $fields = $colunas;
+    $fields   = $colunas;
     $exclusao = isset($data_lis['exclusao']) ? $data_lis['exclusao'] : true;
-    $edicao = isset($data_lis['edicao']) ? $data_lis['edicao'] : true;
+    $edicao   = isset($data_lis['edicao']) ? $data_lis['edicao'] : true;
     array_unshift($fields, $chave);
     array_push($fields, 'acao');
     // debug($fields);
     $result = [];
     for ($p = 0; $p < sizeof($dados); $p++) {
-        $dat_i = (array) $dados[$p];
-        $dados[$p] = $dat_i;
-        $temativo = false;
-        $ativo = false;
-        $inativa = '';
+        $dat_i        = (array) $dados[$p];
+        $dados[$p]    = $dat_i;
+        $temativo     = false;
+        $ativo        = false;
+        $inativa      = '';
         $podeinativar = true;
-        $podeeditar = true;
-        if (!isset($dat_i['tabela']) || $dat_i['tabela'] != 'cfg_status') {
+        $podeeditar   = true;
+        if (! isset($dat_i['tabela']) || $dat_i['tabela'] != 'cfg_status') {
             if (isset($dat_i['stt_exclusao'])) {
                 if (trim($dat_i['stt_exclusao']) == 'N') {
                     $podeinativar = false;
@@ -626,21 +634,21 @@ function montaListaEditColunas($colunas, $data_lis, $chave, $dados, $nome, $deta
                 }
             }
         }
-        $edit = '';
+        $edit   = '';
         $exclui = '';
         if ((strlen($data_lis['permissao']) < 3 && //se não tem todos os acessos
                 strpbrk($data_lis['permissao'], 'C')) ||
             (strpbrk($data_lis['permissao'], 'C') &&
-                !$podeeditar)
+                ! $podeeditar)
         ) { // mas tem acesso de consulta
             $edit = anchor(
                 $data_lis['controler'] . '/show/' . $dat_i[$chave],
                 '<i class="far fa-eye"></i>',
                 [
-                    'class' => 'btn btn-outline-info btn-sm mx-1',
-                    'data-mdb-toggle' => 'tooltip',
+                    'class'              => 'btn btn-outline-info btn-sm mx-1',
+                    'data-mdb-toggle'    => 'tooltip',
                     'data-mdb-placement' => 'top',
-                    'title' => 'Detalhes',
+                    'title'              => 'Detalhes',
                 ]
             );
         }
@@ -650,10 +658,10 @@ function montaListaEditColunas($colunas, $data_lis, $chave, $dados, $nome, $deta
                     $data_lis['controler'] . '/edit/' . $dat_i[$chave],
                     '<i class="far fa-edit"></i>',
                     [
-                        'class' => 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0',
-                        'data-mdb-toggle' => 'tooltip',
+                        'class'              => 'btn btn-outline-warning btn-sm border-0 mx-0 fs-0',
+                        'data-mdb-toggle'    => 'tooltip',
                         'data-mdb-placement' => 'top',
-                        'title' => 'Alterar',
+                        'title'              => 'Alterar',
                     ]
                 );
             }
@@ -663,7 +671,7 @@ function montaListaEditColunas($colunas, $data_lis, $chave, $dados, $nome, $deta
                 $url_ati = $data_lis['controler'] . '/ativinativ/' . $dat_i[$chave] . '/1';
                 $url_ina = $data_lis['controler'] . '/ativinativ/' . $dat_i[$chave] . '/0';
                 $inativa =
-                    "<button class='btn btn-outline-secondary btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
+                    "<button type='button' class='btn btn-outline-secondary btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip'
                     data-mdb-placement='top' title='Ativar' onclick='ativInativ(\"" .
                     $url_ati .
                     "\",\"" .
@@ -671,7 +679,7 @@ function montaListaEditColunas($colunas, $data_lis, $chave, $dados, $nome, $deta
                     "\",false)'><i class='fa-solid fa-toggle-off fa-rotate-270'></i></button>";
                 if ($ativo) {
                     $inativa =
-                        "<button class='btn btn-outline-success btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
+                        "<button type='button' class='btn btn-outline-success btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip'
                     data-mdb-placement='top' title='Inativar' onclick='ativInativ(\"" .
                         $url_ina .
                         "\",\"" .
@@ -685,7 +693,7 @@ function montaListaEditColunas($colunas, $data_lis, $chave, $dados, $nome, $deta
                 $url_del =
                     $data_lis['controler'] . '/delete/' . $dat_i[$chave];
                 $exclui =
-                    "<button class='btn btn-outline-danger btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip' 
+                    "<button type='button' class='btn btn-outline-danger btn-sm border-0 mx-0 fs-0' data-mdb-toggle='tooltip'
                         data-mdb-placement='top' title='Excluir' onclick='excluir(\"" .
                     $url_del .
                     "\",\"" .
@@ -713,7 +721,7 @@ function montaListaEditColunas($colunas, $data_lis, $chave, $dados, $nome, $deta
         $dados[$p]['acao'] = $edit . ' ' . $exclui . ' ' . $inativa;
         // debug($dados[$p]['acao']);
         $retor = $dados[$p];
-        $res = [];
+        $res   = [];
         for ($f = 0; $f < count($fields); $f++) {
             // testa se o campo é uma data
             if (strlen($fields[$f]) > 100) {
@@ -766,7 +774,6 @@ function montaListaEditColunas($colunas, $data_lis, $chave, $dados, $nome, $deta
     return $result;
 }
 
-
 function mostra_botao($campo, $condic)
 {
     $valido = false;
@@ -809,7 +816,6 @@ function mostra_botao($campo, $condic)
     return $valido;
 }
 
-
 /**
  * ordenaSelecionados
  * @param array $lista
@@ -820,7 +826,7 @@ function ordenaSelecionados($lista, $selecionados)
 {
     // debug($lista,false);
     $campos_lis = [];
-    $selec = explode(",", $selecionados);
+    $selec      = explode(",", $selecionados);
     // debug($selecionados, true);
     foreach ($selec as $skey => $svalue) {
         foreach ($lista as $lkey => $lvalue) {
@@ -843,9 +849,9 @@ function monta_filtro($data_lis, $dados_base)
 {
     $dicionario = new ConfigDicDadosModel();
 
-    $lista = $data_lis['filtros'];
-    $arr_lista = explode(',', $lista);
-    $tabela = $data_lis['tabela'];
+    $lista      = $data_lis['filtros'];
+    $arr_lista  = explode(',', $lista);
+    $tabela     = $data_lis['tabela'];
     $arr_campos = [];
     // array_push($arr_campos, $this->dicionario->getCampoChave($tabela)[0]);
     for ($l = 0; $l < count($arr_lista); $l++) {
@@ -855,16 +861,16 @@ function monta_filtro($data_lis, $dados_base)
     for ($c = 0; $c < count($arr_campos); $c++) {
         $opcoes = array_column($dados_base, $arr_campos[$c]['COLUMN_NAME'], $arr_campos[$c]['COLUMN_NAME']);
 
-        $filt = new Campos();
-        $filt->objeto   = 'select';
-        $filt->nome     = $arr_campos[$c]['COLUMN_NAME'];
-        $filt->id       = $arr_campos[$c]['COLUMN_NAME'];
-        $filt->label    = $arr_campos[$c]['COLUMN_COMMENT'];
+        $filt              = new Campos();
+        $filt->objeto      = 'select';
+        $filt->nome        = $arr_campos[$c]['COLUMN_NAME'];
+        $filt->id          = $arr_campos[$c]['COLUMN_NAME'];
+        $filt->label       = $arr_campos[$c]['COLUMN_COMMENT'];
         $filt->obrigatorio = false;
-        $filt->size     = $arr_campos[$c]['COLUMN_SIZE'];
-        $filt->opcoes   = $opcoes;
-        $filt->tipo_form = 'inline';
-        $filtro = $filt->create();
+        $filt->size        = $arr_campos[$c]['COLUMN_SIZE'];
+        $filt->opcoes      = $opcoes;
+        $filt->tipo_form   = 'inline';
+        $filtro            = $filt->create();
 
         array_push($filtros, $filtro);
     }
@@ -872,8 +878,7 @@ function monta_filtro($data_lis, $dados_base)
     return $filtros;
 }
 
-
-if (!function_exists('envia_msg_ws')) {
+if (! function_exists('envia_msg_ws')) {
     function envia_msg_ws($controler, $mensagem, $tipo = 'Servidor', $usuario = 0, $id = 0)
     {
         try {
@@ -883,8 +888,8 @@ if (!function_exists('envia_msg_ws')) {
                         'verify_peer'       => false,
                         'verify_peer_name'  => false,
                         'allow_self_signed' => true,
-                    ]
-                ])
+                    ],
+                ]),
             ]);
 
             if ($client) {
@@ -901,41 +906,10 @@ if (!function_exists('envia_msg_ws')) {
                 $client->send(json_encode($msg));
                 $client->close();
 
-                log_message('info', 'Enviou Mensagem WS: ' . $msg['msg'] . ' Usuário ' . $usuario);
+                log_message('info', 'Enviou Mensagem WS: ' . json_encode($msg['msg']) . ' Usuário ' . $usuario);
             }
         } catch (\Throwable $e) {
             log_message('error', 'Erro ao enviar WS: ' . $e->getMessage());
         }
     }
 }
-
-// function envia_msg_ws($controler, $mensagem, $tipo = 'Servidor', $usuario = 0, $id = 0)
-// {
-//     // $client = new Client("wss://estoque.ceqnep.com.br/ws");
-// $client = new Client("ws://127.0.0.1:8443/ws", [
-//     'context' => stream_context_create([
-//         'ssl' => [
-//             'verify_peer' => false,
-//             'verify_peer_name' => false,
-//             'allow_self_signed' => true,
-//         ]
-//     ])
-// ]);
-
-//     if ($client) {
-//         log_message('info', 'Conectou ao Servidor');
-//         $msg['msg']         = $mensagem;
-//         $msg['controler']   = $controler;
-//         $msg['tipo']        = $tipo;
-//         $msg['usuario']     = $usuario;
-//         $msg['id']          = $id;
-//         // debug($msg);
-//         $client->send(json_encode($msg));
-//         log_message('info', 'Enviou Mensagem ' . $msg['msg']);
-//     } else {
-//         log_message('info', 'Não conectou no Cliente');
-
-//     }
-//     // $client->close();
-//     return;
-// }

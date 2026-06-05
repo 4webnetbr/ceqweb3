@@ -156,7 +156,6 @@
     </form>
 </div>
 <script src="<?= base_url('assets/jscript/bootstrap-select.js'); ?>"></script>
-<script src="<?= base_url('assets/jscript/my_fields.js'); ?>"></script>
 <script src="<?= base_url('assets/jscript/my_consulta.js'); ?>"></script>
 
 <script src="<?= base_url('assets/jscript/summernote-lite.js'); ?>"></script>
@@ -173,7 +172,7 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 
-<script src="<?= base_url('assets/jscript/my_mask.js?noc=' . time()); ?>"></script>
+<script src="<?= base_url('assets/jscript/my_mask.js'); ?>"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fontawesome-iconpicker/3.2.0/js/fontawesome-iconpicker.min.js" integrity="sha512-7dlzSK4Ulfm85ypS8/ya0xLf3NpXiML3s6HTLu4qDq7WiJWtLLyrXb9putdP3/1umwTmzIvhuu9EW7gHYSVtCQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fontawesome-iconpicker/3.2.0/css/fontawesome-iconpicker.min.css" integrity="sha512-BfgviGirSi7OFeVB2z9bxp856rzU1Tyy9Dtq2124oRUZSKXIQqpy+2LPuafc2zMd8dNUa+F7cpxbvUsZZXFltQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
