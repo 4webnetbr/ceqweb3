@@ -13,7 +13,7 @@ class EntDeposito extends Entity
         'dep_desDep'       => null,
         'dep_aceNeg'       => null,
         'dep_codDescricao' => null,
-        'dep_padrao'       => null,
+        'dep_padrao'       => 'N',
         'dep_reserva'      => null,
     ];
 
@@ -77,15 +77,15 @@ class EntDeposito extends Entity
         $config['Largura']     = 50;
         $config['Leitura']     = false;
         $config['Obrigatorio'] = false;
-        
+
         $ret['dep_reserva'] = criaSelectRelativo(
             'est_sap_deposito',
-            'dep_reserva',
-            'dep_reserva',
+            'dep_codDep',
+            'dep_codDescricao',
             $dados['dep_reserva'] ?? '',
             1,
             'est_sap_deposito',
-            $reservas,          
+            $reservas,
             $config,
             'dep_reserva'
         );

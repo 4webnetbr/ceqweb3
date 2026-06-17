@@ -14,52 +14,55 @@
   </div>
   <!-- fim da div de mensagem -->
   <!-- div do status do servidor -->
-<!-- websocket status -->
-  <div id="stat_server" class="col-1 float-start d-block justify-content-center px-0 mt-1"  role="button" title="Servidor Conectado" onclick="executa_php()">
+  <!-- websocket status -->
+  <div id="stat_server" class="col-1 float-start d-block justify-content-center px-0 mt-1" role="button" title="Servidor Conectado" onclick="executa_php()">
     <i class="fa-solid fa-satellite-dish antenaLeft"></i>
-    
+
     <div class="ws-link">
       <div class="packet packet-right"></div>
       <div class="packet packet-left"></div>
     </div>
-    
+
     <i class="fa-solid fa-satellite-dish antenaRight"></i>
   </div>
   <!-- div do identificador da tela -->
   <div class="col-1 float-start d-block px-0"><?= $identificador; ?></div>
 </div>
 
-  <!-- <div id="stat_server" class="col-1 float-start d-grid text-success cursor-pointer truck-icon pt-1" role="button" title="Servidor Conectado" onclick="executa_php()"> -->
-    <!-- <i class="fa-solid fa-truck-moving"></i> -->
-    <!-- <div class="ws-container">
+<!-- <div id="stat_server" class="col-1 float-start d-grid text-success cursor-pointer truck-icon pt-1" role="button" title="Servidor Conectado" onclick="executa_php()"> -->
+<!-- <i class="fa-solid fa-truck-moving"></i> -->
+<!-- <div class="ws-container">
       <i class="fa-solid fa-wifi"></i>
       <div class="packet"></div>
       <i class="fa-solid fa-wifi"></i>
     </div> -->
-  <!-- </div> -->
+<!-- </div> -->
 
 <style>
-/* ocupa altura total do rodapé */
-.antenaLeft, .antenaRight{
-  display: inline-block; /* necessário para transform funcionar corretamente */
-  float: inline-start;
-  position: relative;
-  left: 0px;
-  color: #0dcaf0;
-  animation: antenaPulseLeft 1.2s linear infinite;
-}
-.antenaRight{
+  /* ocupa altura total do rodapé */
+  .antenaLeft,
+  .antenaRight {
+    display: inline-block;
+    /* necessário para transform funcionar corretamente */
+    float: inline-start;
+    position: relative;
+    left: 0px;
+    color: #0dcaf0;
+    animation: antenaPulseLeft 1.2s linear infinite;
+  }
+
+  .antenaRight {
     transform: scaleX(-1);
     color: #198754;
     left: -10px;
     animation: antenaPulseRight 1.5s linear infinite;
-}
+  }
 
-/* ===================== */
-/* Linha conexão         */
-/* ===================== */
+  /* ===================== */
+  /* Linha conexão         */
+  /* ===================== */
 
-.ws-link {
+  .ws-link {
     display: inline-block;
     float: inline-start;
     position: relative;
@@ -67,108 +70,139 @@
     height: 10px;
     background: rgba(0, 0, 0, .0);
     left: -5px;
-    width: 65%;
-}
-
-.packet {
-  position: absolute;
-  /* top: 2px; */
-  width: 20px;
-  height: 98%;
-  border-radius: 2px;
-}
-
-.packet-right {
-  position: absolute;
-  top: 0;
-  width: 18px;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, #0dcaf0);
-  animation: moveRight 1.5s linear infinite;
-
-  clip-path: polygon(
-    0% 0%,
-    85% 0%,
-    100% 50%,
-    85% 100%,
-    0% 100%
-  );
-}
-
-.packet-left {
-  position: absolute;
-  top: 0;
-  width: 18px;
-  height: 100%;
-  background: linear-gradient(270deg, transparent, #198754);
-  animation: moveLeft 1.2s linear infinite;
-
-  clip-path: polygon(
-    15% 0%,
-    100% 0%,
-    100% 100%,
-    15% 100%,
-    0% 50%
-  );
-}
-#rodape.parado .fa-satellite-dish {
-  color: var(--bs-danger) !important; /* vermelho bootstrap */
-  animation: pulse;
-}
-
-#rodape.parado .packet-right {
-  animation:
-    moveRight 1.2s linear infinite paused,
-    blinkRed 1s ease-in-out infinite;
-}
-
-#rodape.parado .packet-left {
-  animation:
-    moveLeft 1.5s linear infinite paused,
-    blinkRed 1s ease-in-out infinite;
-}
-
-#rodape.parado .packet {
-  background: var(--bs-danger);
-}
-/* piscar */
-@keyframes blinkRed {
-  0%,100% { opacity: .3; }
-  50% { opacity: 1; }
-}
-
-@keyframes moveRight {
-  0% { left: -20px; }
-  100% { left: 100%; }
-}
-
-@keyframes moveLeft {
-  0% { left: 100%; }
-  100% { left: -20px; }
-}
-@keyframes antenaPulseLeft {
-  0%, 90% {
-    transform: scale(1);
+    width: 60%;
   }
 
-  100% {
-    transform: scale(1.15);
-  }
-}
-@keyframes antenaPulseRight {
-  0%, 90% {
-    transform: scaleX(-1);
+  .packet {
+    position: absolute;
+    /* top: 2px; */
+    width: 20px;
+    height: 98%;
+    border-radius: 2px;
   }
 
-  100% {
-    transform: scaleX(-1.15);
+  .packet-right {
+    position: absolute;
+    top: 0;
+    width: 18px;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, #0dcaf0);
+    animation: moveRight 1.5s linear infinite;
+
+    clip-path: polygon(0% 0%,
+        85% 0%,
+        100% 50%,
+        85% 100%,
+        0% 100%);
   }
-}
-@keyframes pulse {
-  0%,100% { opacity: .3; }
-  50% { opacity: 1; }
-}
-/* .ws-container {
+
+  .packet-left {
+    position: absolute;
+    top: 0;
+    width: 18px;
+    height: 100%;
+    background: linear-gradient(270deg, transparent, #198754);
+    animation: moveLeft 1.2s linear infinite;
+
+    clip-path: polygon(15% 0%,
+        100% 0%,
+        100% 100%,
+        15% 100%,
+        0% 50%);
+  }
+
+  #rodape.parado .fa-satellite-dish {
+    color: var(--bs-danger) !important;
+    /* vermelho bootstrap */
+    animation: pulse;
+  }
+
+  #rodape.parado .packet-right {
+    animation:
+      moveRight 1.2s linear infinite paused,
+      blinkRed 1s ease-in-out infinite;
+  }
+
+  #rodape.parado .packet-left {
+    animation:
+      moveLeft 1.5s linear infinite paused,
+      blinkRed 1s ease-in-out infinite;
+  }
+
+  #rodape.parado .packet {
+    background: var(--bs-danger);
+  }
+
+  /* piscar */
+  @keyframes blinkRed {
+
+    0%,
+    100% {
+      opacity: .3;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes moveRight {
+    0% {
+      left: -20px;
+    }
+
+    100% {
+      left: 100%;
+    }
+  }
+
+  @keyframes moveLeft {
+    0% {
+      left: 100%;
+    }
+
+    100% {
+      left: -20px;
+    }
+  }
+
+  @keyframes antenaPulseLeft {
+
+    0%,
+    90% {
+      transform: scale(1);
+    }
+
+    100% {
+      transform: scale(1.15);
+    }
+  }
+
+  @keyframes antenaPulseRight {
+
+    0%,
+    90% {
+      transform: scaleX(-1);
+    }
+
+    100% {
+      transform: scaleX(-1.15);
+    }
+  }
+
+  @keyframes pulse {
+
+    0%,
+    100% {
+      opacity: .3;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+
+  /* .ws-container {
     display: flex;
     align-items: center;
     gap: 40px;

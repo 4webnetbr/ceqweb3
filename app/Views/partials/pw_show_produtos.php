@@ -3,23 +3,23 @@ if (!isset($show)) {
     $show = false;
 }
 ?>
-<div class="accordion" id="accProdutos">
+<div class="accordion mb-5" id="accProdutos">
     <div class="accordion-item">
-        <h2 class="accordion-header" id="headprod<?= $produtos[0]['req_id'] ?? '' ?>">
-            <button class="accordion-button" type="button" 
-                data-bs-target="#collapseprod<?= $produtos[0]['req_id'] ?? '' ?>" aria-expanded="true"
-                aria-controls="collapseprod<?= $produtos[0]['req_id'] ?? '' ?>" data-proid="<?= $produtos[0]['req_id'] ?? '' ?>">
+        <h2 class="accordion-header" id="headprod<?php echo $produtos[0]['req_id'] ?? '' ?>">
+            <button class="accordion-button" type="button"
+                data-bs-target="#collapseprod<?php echo $produtos[0]['req_id'] ?? '' ?>" aria-expanded="true"
+                aria-controls="collapseprod<?php echo $produtos[0]['req_id'] ?? '' ?>" data-proid="<?php echo $produtos[0]['req_id'] ?? '' ?>">
                 <div class='col-12 text-center'>Produtos</div>
             </button>
         </h2>
-        <div id="collapse<?= $produtos[0]['req_id'] ?>" class="accordion-collapse collapse show border border-2" aria-labelledby="heading<?= $produtos[0]['req_id'] ?>" data-bs-parent="#accProdutos">
-            <div class="accordion-body p-0" style="max-height:49vh; height:49vh; overflow-y: auto">
-                <table class="display table table-bordered table-sm table-striped table-hover text-center align-middle tabela-pequena">
-                    <thead class="table-info">
-                        <tr>
+        <div id="collapse<?php echo $produtos[0]['req_id'] ?>" class="accordion-collapse collapse show " aria-labelledby="heading<?php echo $produtos[0]['req_id'] ?>" data-bs-parent="#accProdutos">
+            <div class="accordion-body p-0" style="max-height:49vh; height:49vh; overflow-y: auto;border-top: 1px solid white;">
+                <table class="display compact table table-sm table-striped table-hover table-vertical-borders col-12 no-footer tabela-pequena"  aria-describedby="table_info">
+                    <thead class="table-default bg-table-blue-dark col-12 overflow-x-auto">
+                        <tr class=' w-100' style='min-height:39px; height:39px;'>
                             <?
                             for ($c = 0; $c < count($colunas); $c++) { ?>
-                                <th><?= $colunas[$c]; ?></th>
+                                <th class="sticky-top text-center align-middle text-wrap"><?php echo $colunas[$c]; ?></th>
                             <?
                             }
                             ?>
@@ -27,10 +27,10 @@ if (!isset($show)) {
                     </thead>
                     <tbody style="max-height: 45vh; overflow-y: auto;">
                         <?php foreach ($produtos as $produto): ?>
-                            <tr id='<?= $produto[0] ?>'>
+                            <tr class='linha_produto' id='<?php echo $produto[0] ?>'>
                                 <?
                                 for ($c = 1; $c < count($produto); $c++) { ?>
-                                    <th><?= $produto[$c]; ?></th>
+                                    <td><?php echo $produto[$c]; ?></td>
                                 <?
                                 }
                                 ?>

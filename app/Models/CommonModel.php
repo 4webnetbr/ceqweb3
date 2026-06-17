@@ -175,7 +175,7 @@ class CommonModel extends Model
 
         // debug($builder->getCompiledSelect(), true);
         $ret = $builder->get()->getResultArray();
-        // $sql = $this->db->getLastQuery();
+        // $sql = $db->getLastQuery();
         // debug($sql, false);
         return $ret;
     }

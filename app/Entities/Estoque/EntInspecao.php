@@ -22,6 +22,7 @@ class EntInspecao extends EntRequisicao
         'req_repetedias'        => 0,
         'req_percseguranca'     => 0,
         'req_observacao'        => null,
+        'req_original'          => null,
         'stt_id'                => null,
         'usu_nome'              => null,
         'stt_nome'              => null,

@@ -5,10 +5,11 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Libraries\Campos;
 use App\Models\Config\ConfigUsuarioModel;
+use CodeIgniter\Events\Events;
 
 class Login extends BaseController
 {
-    private $login = '' ;
+    private $login = '';
     public $usuario_config;
     public $data;
     public $usu_login;
@@ -20,7 +21,7 @@ class Login extends BaseController
     {
         $this->usuario_config = new ConfigUsuarioModel();
         $this->data['styles'] = 'login';
-        $this->data['scripts'] = 'my_fields,my_mask';
+        $this->data['scripts'] = 'my_mask';
     }
 
     public function defCampos()
@@ -58,7 +59,7 @@ class Login extends BaseController
         $entrar->tipo    = 'submit';
         $entrar->nome    = 'bt_entrar';
         $entrar->id      = 'bt_entrar';
-        $entrar->label   = '<i class="bi bi-door-open"></i> Entrar';
+        $entrar->label   = '<i class="fa-solid fa-door-open"></i> Entrar';
         $entrar->hint    = 'Acessar o Sistema';
         $entrar->classs  = 'btn-primary mx-1 my-2 px-3';
         $this->bt_entrar = $entrar->create();
@@ -68,7 +69,7 @@ class Login extends BaseController
         $limpar->tipo    = 'reset';
         $limpar->nome    = 'bt_limpar';
         $limpar->id      = 'bt_limpar';
-        $limpar->label   = '<i class="bi bi-eraser"></i> Limpar';
+        $limpar->label   = '<i class="fa-solid fa-eraser"></i> Limpar';
         $limpar->hint    = 'Limpar os Dados';
         $limpar->classs  = 'btn-secondary mx-1 my-2 px-3';
         $this->bt_limpar = $limpar->create();
@@ -78,13 +79,6 @@ class Login extends BaseController
     {
         if (session()->logged_in === true) {
             session()->destroy();
-            // $sessionCookieName = config('App')->sessionCookieName; // Nome padrão é 'ci_session'
-            // $sessionValue = $this->request->getCookie($sessionCookieName);
-            // $sessionPath = WRITEPATH . 'session'; // Diretório onde as sessões são armazenadas
-            // $sessionFile = $sessionPath . DIRECTORY_SEPARATOR . 'ci_session' . $sessionValue;
-            // if(file_exists($sessionFile)){
-            //     unlink($sessionFile);
-            // }
         }
         $logo                   = base_url('assets/images/logo_header.jpg');
 
@@ -122,14 +116,14 @@ class Login extends BaseController
         $log_config =  $this->usuario_config->usuLogonConfig($data);
         if (!$log_config) {
             $session->setFlashdata('msg', 'Usuário não Encontrado');
-            return redirect()->to('/');
+            return redirect()->to('/login');
         } else {
-            $conf_senha = (md5($senha) == trim($log_config[0]['usu_senha']));
+            $conf_senha = (md5($senha) == trim($log_config[0]->usu_senha));
             if (!$conf_senha) {
                 $session->setFlashdata('msg', 'Senha não corresponde ao Usuário!');
-                return redirect()->to('/');
+                return redirect()->to('/login');
             } else {
-                $img_name       = 'usu_' . $log_config[0]['usu_id'] . '.jpg';
+                $img_name       = 'usu_' . $log_config[0]->usu_id . '.jpg';
                 $sem_avat       = base_url('assets/images/sem_avatar.png');
                 $logo_def       = base_url('assets/images/logo_header.png');
                 $icone          = base_url('assets/images/favicon.ico');
@@ -140,21 +134,21 @@ class Login extends BaseController
                 } else {
                     $avatar = $sem_avat;
                 }
-                if ($log_config[0]['dash_usuario'] != '') {
-                    $dash = $log_config[0]['dash_usuario'];
+                if ($log_config[0]->dash_usuario != '') {
+                    $dash = $log_config[0]->dash_usuario;
                 } else {
-                    $dash = $log_config[0]['dash_perfil'];
+                    $dash = $log_config[0]->dash_perfil;
                 }
 
                 // GRAVAR SESSÃO
                 $newdata = [
-                    'usu_id'        => $log_config[0]['usu_id'],
-                    'usu_nome'      => $log_config[0]['usu_nome'],
-                    'usu_login'     => $log_config[0]['usu_login'],
-                    'usu_perfil_id' => $log_config[0]['prf_id'],
-                    'usu_perfil'    => $log_config[0]['prf_nome'],
+                    'usu_id'        => $log_config[0]->usu_id,
+                    'usu_nome'      => $log_config[0]->usu_nome,
+                    'usu_login'     => $log_config[0]->usu_login,
+                    'usu_perfil_id' => $log_config[0]->prf_id,
+                    'usu_perfil'    => $log_config[0]->prf_nome,
                     'usu_dashboard' => $dash,
-                    'usu_whats'     => isset($log_config[0]['usu_whats']) ? $log_config[0]['usu_whats'] : 'N',
+                    'usu_whats'     => isset($log_config[0]->usu_whats) ? $log_config[0]->usu_whats : 'N',
                     'usu_avatar'    => $avatar,
                     'logo'          => $logo_def,
                     'icone'         => $icone,
@@ -162,7 +156,8 @@ class Login extends BaseController
                     'ismobile'      => $mobile
                 ];
                 $session->set($newdata);
-                $usuarioId = $log_config[0]['usu_id'] ?? null;
+
+                $usuarioId = $log_config[0]->usu_id ?? null;
 
                 if ($usuarioId) {
                     $cookieNome = 'pguser_' . $usuarioId;

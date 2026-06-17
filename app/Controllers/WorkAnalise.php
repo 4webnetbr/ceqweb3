@@ -19,6 +19,7 @@ class WorkAnalise extends BaseController
             ob_end_clean();
         }
         $inicio = date('d/m/Y H:i:s');
+        // debug("$inicio Iniciando WorkAnalise... \n");
         echo "$inicio Iniciando WorkAnalise... \n";
 
         $analise        = new MicrobAnaliseModel();
@@ -31,6 +32,7 @@ class WorkAnalise extends BaseController
         $saldoestObjs = $busca->buscaEstoqueDeposito('QUA', '');
         $saldoest = is_array($saldoestObjs) ? $saldoestObjs : iterator_to_array($saldoestObjs);
         if (empty($saldoest)) {
+            // debug("Sem saldo encontrado. \n");
             echo "Sem saldo encontrado. \n";
             return;
         }
@@ -39,6 +41,7 @@ class WorkAnalise extends BaseController
             return !(($item->codigoLote === 'N/A' && $item->estoqueDeposito == 0) ||
                 ($item->codigoLote !== 'N/A' && $item->quantidadeEstoque == 0));
         });
+        // debug(count($saldoestFiltrado) . " Produtos no Estoque Quarentena... \n");
         echo count($saldoestFiltrado) . " Produtos no Estoque Quarentena... \n";
 
         $saldoestArr = array_map(fn($obj) => (array) $obj, array_values($saldoestFiltrado));
@@ -67,6 +70,7 @@ class WorkAnalise extends BaseController
             $prodproc   = $saldo['codigoProduto'];
             $loteproc   = $saldo['codigoLote'];
             $quantidade = str_replace(['.', ','], '', $saldo['quantidadeEstoque']);
+            // debug(" Produto " . $prodproc . " Lote " . $loteproc . " ...\n");
             echo " Produto " . $prodproc . " Lote " . $loteproc . " ...\n";
 
             if (!isset($prods[$prodproc]) || $prods[$prodproc]->cla_micro !== 'S') {
@@ -74,17 +78,22 @@ class WorkAnalise extends BaseController
             }
 
             $prod = $prods[$prodproc];
-            $loteInfo = $lotes[$loteproc] ?? [
+            $loteInfo = $lotes[$loteproc] ?? (object) [
                 'lot_lote'     => $loteproc,
                 'lot_entrada'  => $saldo['entrada'],
                 'lot_validade' => $saldo['validade'],
                 'stt_id'       => null,
             ];
+            // debug('LoteInfo:');
+            // debug($loteInfo);
+            // debug($loteInfo->stt_id);
             $loteInfo->lot_entrada = $saldo['entrada'];
 
             $analiseKey = $prodproc . '-' . $loteproc;
             $analis = $analisesAssoc[$analiseKey] ?? null;
             $geramovimentacao = false;
+            // debug("Análise");
+            // debug($analis);
 
             if ($loteInfo->stt_id == 8) {
                 if (is_null($analis) || $analis['stt_id'] == 16) {
@@ -115,7 +124,6 @@ class WorkAnalise extends BaseController
                     $geramovimentacao = true;
                 }
             }
-
             if ($geramovimentacao && $analis && $analis['stt_id'] == 15) {
                 if ($movim) {
                     (new SoapSapiens())->transfProdutosSapiens(
@@ -136,7 +144,7 @@ class WorkAnalise extends BaseController
             }
         }
 
-        echo count($analisesToSave) . " Análises criadas \n";
+        // debug(count($analisesToSave) . " Análises criadas \n");
 
         $msgsocket = "";
 
@@ -153,6 +161,7 @@ class WorkAnalise extends BaseController
             // echo count($analisesToSave) . " análises salvas.\n";
         }
 
+        echo count($analisesToSave) . " Análises criadas \n";
         echo count($lotesToUpdate) . " Lotes Atualizados \n";
         if (!empty($lotesToUpdate)) {
             if (method_exists($lote, 'updateBatch')) {

@@ -3,24 +3,25 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
-use App\Models\Config\ConfigMenuModel;
-use App\Models\Config\ConfigTelaModel;
-use App\Models\Produt\ProdutLoteModel;
-use App\Models\Config\ConfigModuloModel;
-use App\Models\Config\ConfigStatusModel;
-use App\Models\Config\ConfigUsuarioModel;
-use App\Models\Produt\ProdutFamiliaModel;
-use App\Models\Produt\ProdutProdutoModel;
 use App\Models\Config\ConfigDicDadosModel;
 use App\Models\Config\ConfigEtiquetaModel;
-use App\Models\Estoqu\EstoquDepositoModel;
-use App\Models\Ocorre\OcorreTipoAcaoModel;
 use App\Models\Config\ConfigImpressoraModel;
+use App\Models\Config\ConfigMenuModel;
+use App\Models\Config\ConfigModuloModel;
+use App\Models\Config\ConfigStatusModel;
+use App\Models\Config\ConfigTelaModel;
+use App\Models\Config\ConfigUsuarioModel;
+use App\Models\Estoqu\EstoquDepositoModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
-use App\Models\Produt\ProdutIngredienteModel;
-use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
+use App\Models\Ocorre\OcorreTipoAcaoModel;
+use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
+use App\Models\Produt\ProdutFamiliaModel;
+use App\Models\Produt\ProdutIngredienteModel;
+use App\Models\Produt\ProdutLoteModel;
+use App\Models\Produt\ProdutProdutoModel;
+use stdClass;
 
 class Buscas extends BaseController
 {
@@ -446,8 +447,6 @@ class Buscas extends BaseController
 
     public function buscaProdutoporLote()
     {
-        $lotesm = new ProdutLoteModel();
-
         $ret = new \stdClass();
         $busca = $this->request->getVar('busca');
         // debug($busca);
@@ -455,7 +454,9 @@ class Buscas extends BaseController
             $sutid = $this->request->getVar('sutid');
             $classes = (new OcorreSubtOcorrenciaModel())->getClassePorSubtipo($sutid) ?? null;
             $idsClasses = array_column($classes, 'cla_id');
+            $lotesm = new ProdutLoteModel();
             $lote   = $lotesm->getLoteClasse($busca, $idsClasses);
+            // debug($lote, true);
 
             if (empty($lote)) {
                 $ret->lotid = '-1';
@@ -530,12 +531,12 @@ class Buscas extends BaseController
 
         if (!empty($_REQUEST['busca'])) {
             $tmovs    = new EstoquTipoMovimentacaoModel();
-            $tmovimen = $tmovs->getTipoMovimentacao($_REQUEST['busca']);
-
+            $tmovimen = $tmovs->getTipoMovimentacaoParaRequisicao($_REQUEST['busca']);
             if (empty($tmovimen)) {
                 $ret->id   = '-1';
                 $ret->text = 'Tipo de Movimentação não encontrado...';
             } else {
+                // debug($tmovimen[0], true);
                 $ret->id     = $tmovimen[0]->tmo_id;
                 $ret->depori = $tmovimen[0]->dep_codorigem;
                 $ret->depdes = $tmovimen[0]->dep_coddestino;
@@ -758,8 +759,10 @@ class Buscas extends BaseController
 
         if ($_REQUEST['busca']) {
             $perfilId = session()->get('usu_perfil_id');
+            $classe   = session()->get('cla_id') ?? false;
+            $telaid   = session()->get('tel_id') ?? false;
             $subtipos = new OcorreSubtOcorrenciaModel();
-            $lst = $subtipos->getSubtOcorrenciaPorTipo($_REQUEST['busca'], $perfilId);
+            $lst = $subtipos->getSubtOcorrenciaPorTipo($_REQUEST['busca'], $perfilId, $classe, $telaid);
             if (empty($lst)) {
                 $o = new \stdClass();
                 $o->id   = -1;
@@ -935,11 +938,15 @@ class Buscas extends BaseController
         echo json_encode($ret);
     }
 
+
     public function buscaProdutosMergeEstoques($id, $deposito, $tipo)
     {
         $modrequisicao = new EstoquRequisicaoModel();
         $modprodutos   = new ProdutProdutoModel();
         $produtos = $modrequisicao->getRequisicaoProdutos($id, $tipo);
+        if (count($produtos) == 0) {
+            return [];
+        }
         // debug($produtos, true);
         // array_column mudando para o OBJ
         $pro_ids = array_unique(array_map(
@@ -957,9 +964,14 @@ class Buscas extends BaseController
         $dados_ceq_produto = $modprodutos
             ->getProdutoEstoqueCeqweb($pro_ids, $deposito);
 
-        // debug($dados_est_produto, true);
+        $prefixos = ['rep_id', 'pro_', 'prc_'];
+        $dados_ceq_produto = $this->filtrarPorPrefixos($dados_ceq_produto, $prefixos);
+        // debug($dados_ceq_produto);
+
+
         $dados_est_produto = $modprodutos
             ->getProdutoEstoque($pro_ids, $deposito);
+        // debug($dados_est_produto, true);
 
         $resultadoIndexado = [];
 
@@ -977,6 +989,8 @@ class Buscas extends BaseController
                 (array) $itemEstoque
             );
         }
+        // debug($resultadoIndexado, false);
+        // debug($dados_ceq_produto, true);
 
         // 3. Merge com ceqweb
         foreach ($dados_ceq_produto as $itemCeq) {
@@ -995,6 +1009,28 @@ class Buscas extends BaseController
         );
 
         $resultado = array_values($resultado);
+
+        return $resultado;
+    }
+
+    public function filtrarPorPrefixos(array $itens, array $prefixos): array
+    {
+        $resultado = [];
+
+        foreach ($itens as $item) {
+            $objFiltrado = new \stdClass();
+
+            foreach ($item as $chave => $valor) {
+                foreach ($prefixos as $prefixo) {
+                    if (str_starts_with($chave, $prefixo)) {
+                        $objFiltrado->{$chave} = $valor;
+                        break;
+                    }
+                }
+            }
+
+            $resultado[] = $objFiltrado;
+        }
 
         return $resultado;
     }

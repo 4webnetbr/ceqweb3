@@ -66,23 +66,26 @@ class OcorreTipoAcaoModel extends Model
         return $data;
     }
 
-    
-    public function getTipoAcao($tpa_id = false)
+
+    public function getTipoAcao(int|array|null $tpa_id = null)
     {
         $builder = $this->builder();
         $builder->select('*');
-    
+
         // Filtra por tipo de ação específico, se informado
-        if ($tpa_id) {
-            $builder->where('tpa_id', $tpa_id);
+        if (!empty($tpa_id)) {
+            if (is_array($tpa_id)) {
+                $builder->whereIn('tpa_id', $tpa_id);
+            } else {
+                $builder->where('tpa_id', $tpa_id);
+            }
         }
-    
         $builder->where('tpa_excluido', null);
         $builder->orderBy('tpa_ativo, tpa_nome');
-    
+
         return $builder->get()->getResult();
     }
-    
+
     public function getTipoAcaoSearch($termo)
     {
         // Inicializa o builder da tabela do model
@@ -90,7 +93,7 @@ class OcorreTipoAcaoModel extends Model
         $builder->select(['tpa_id', 'tpa_nome']);
         $builder->where('tpa_excluido', null);
         $builder->like('tpa_nome', $termo . '%');
-    
+
         return $builder->get()->getResult();
     }
 }

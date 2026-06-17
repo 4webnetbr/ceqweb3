@@ -28,6 +28,7 @@ class OcorreOcorrenciaModel extends Model
         'lot_id',
         'oco_qtd',
         'oco_data',
+        'oco_data_fim',
         'stt_id',
         'tmo_id',
         'oco_justi',

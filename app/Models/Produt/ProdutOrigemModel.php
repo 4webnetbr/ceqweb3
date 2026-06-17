@@ -17,10 +17,11 @@ class ProdutOrigemModel extends Model
     protected $returnType       = EntProdutProduto::class;
     protected $useSoftDeletes   = false;
 
-    protected $allowedFields    = [ 'ori_codOri',
-                                    'ori_desOri',
-                                    'ori_codDescricao',
-                                ];
+    protected $allowedFields    = [
+        'ori_codOri',
+        'ori_desOri',
+        'ori_codDescricao',
+    ];
 
     // Callbacks
     protected $allowCallbacks = true;
@@ -52,21 +53,32 @@ class ProdutOrigemModel extends Model
     public function getOrigem($ori_id = false)
     {
         $this->builder()->select('*');
-    
+
         if ($ori_id) {
             $this->builder()->where('ori_codOri', $ori_id);
         }
-    
+
         return $this->builder()->get()->getResult();
     }
-    
+    public function getOrigensByCodigos(array $codigos): array
+    {
+        if ($codigos === []) {
+            return [];
+        }
+
+        return $this->builder()
+            ->select('*')
+            ->whereIn('ori_codOri', $codigos)
+            ->get()
+            ->getResult();
+    }
     public function getOrigemSearch($termo)
     {
         $array = ['ori_desOri' => $termo . '%'];
-    
+
         $this->builder()->select('*');
         $this->builder()->like($array);
-    
+
         return $this->builder()->get()->getResult();
     }
 }

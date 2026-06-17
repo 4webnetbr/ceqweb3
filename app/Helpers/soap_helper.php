@@ -11,7 +11,7 @@ use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
         $produto                = model(ProdutProdutoModel::class);
         $tipomovimento          = model(EstoquTipoMovimentacaoModel::class);
         $common                 = model(CommonModel::class);
-
+		// debug($movimentos, true);
         $soaptrf = new SoapSapiens();
         for ($m = 0; $m < count($movimentos); $m++) {
             $mov = $movimentos[$m];
@@ -27,9 +27,9 @@ use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
             $qtdmov = str_replace(['.', ','], '', $qtdmov);
             // BUSCA TIPO MOVIMENTO
             $movim  = $tipomovimento->getTipoMovimentacao($mov['id']);
-            $codtns = $movim[0]['tmo_transacao_erp'];
-            $depori = $movim[0]['dep_codorigem']; 
-            $depdes = $movim[0]['dep_coddestino'];
+            $codtns = $movim->tmo_transacao_erp;
+            $depori = $movim->dep_codorigem; 
+            $depdes = $movim->dep_coddestino;
             if ($reserva) {
                 $reserva = strtoupper($reserva);
                 if ($reserva === 'A') {
@@ -73,11 +73,11 @@ use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
                         $qtdmov = str_replace(['.', ','], '', $qtdmov);
                         // BUSCA TIPO MOVIMENTO
                         $movim  = $tipomovimento->getTipoMovimentacao($rev['id']);
-                        $codtns = $movim[0]['tmo_transacao_erp'];
+                        $codtns = $movim->tmo_transacao_erp;
                         // deposito de destino é a origem, para reverter
-                        $depdes = $movim[0]['dep_codorigem'];
+                        $depdes = $movim->dep_codorigem;
                         // depósito de origem é o destino, para reverter
-                        $depori = $movim[0]['dep_coddestino'];
+                        $depori = $movim->dep_coddestino;
                         $valida = data_br($rev['lot_validade']);
 
                         log_message('info', 'Movimento Reverso '.json_encode($movim));

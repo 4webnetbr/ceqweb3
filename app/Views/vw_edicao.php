@@ -1,20 +1,20 @@
-<?= $this->extend('templates/default_template') ?>
-<?= $this->section('header'); ?>
-<?= view('strut/vw_titulo'); ?>
-<?= $this->endSection(); ?>
+<?php echo $this->extend('templates/default_template') ?>
+<?php echo $this->section('header'); ?>
+<?php echo view('strut/vw_titulo'); ?>
+<?php echo $this->endSection(); ?>
 
-<?= $this->section('menu'); ?>
-<?= view('strut/vw_menu'); ?>
-<?= $this->endSection(); ?>
-<?= $this->section('footer'); ?>
-<?= view('strut/vw_rodape'); ?>
-<?= $this->endSection(); ?>
+<?php echo $this->section('menu'); ?>
+<?php echo view('strut/vw_menu'); ?>
+<?php echo $this->endSection(); ?>
+<?php echo $this->section('footer'); ?>
+<?php echo view('strut/vw_rodape'); ?>
+<?php echo $this->endSection(); ?>
 
 
-<?= $this->section('content');
+<?php echo $this->section('content');
 ?>
 
-<?php if (!empty($forca_alteracao)) : ?>
+<?php if (! empty($forca_alteracao)): ?>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             document.getElementById("form1")?.setAttribute("data-alter", "true");
@@ -25,7 +25,7 @@
 
 <div id='content' class='container page-content bg-light m-0'>
     <!-- <div id='content' class='vh-auto page-content dashboard dashboard-app dashboard-content '> -->
-    <form id="form1" data-alter method="post" action="<?= site_url($controler . "/" . $destino) ?>"
+    <form id="form1" data-alter method="post" action="<?php echo site_url($controler . "/" . $destino) ?>"
         class="col-12" enctype="multipart/form-data">
         <?
         if (sizeof($secoes)) {
@@ -149,20 +149,19 @@
         ?>
     </form>
 </div>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="<?= base_url('assets/jscript/my_fields.js'); ?>"></script>
+<script src="<?php echo base_url('assets/jscript/my_fields.js'); ?>"></script>
 
-<script src="<?= base_url('assets/jscript/bootstrap-select.js'); ?>"></script>
-<script src="<?= base_url('assets/jscript/summernote-lite.js'); ?>"></script>
-<script src="<?= base_url('assets/jscript/jquery.bootstrap-duallistbox.js'); ?>"></script>
+<script src="<?php echo base_url('assets/jscript/bootstrap-select.js'); ?>"></script>
+<script src="<?php echo base_url('assets/jscript/summernote-lite.js'); ?>"></script>
+<script src="<?php echo base_url('assets/jscript/jquery.bootstrap-duallistbox.js'); ?>"></script>
 
 <!-- include summernote-pt-BR -->
-<script src="<?= base_url('assets/jscript/summ-lang/summernote-pt-BR.js'); ?>"></script>
+<script src="<?php echo base_url('assets/jscript/summ-lang/summernote-pt-BR.js'); ?>"></script>
 
-<link rel="stylesheet" href="<?= base_url('assets/css/summernote-lite.css'); ?>">
-<link rel="stylesheet" href="<?= base_url('assets/css/summernote.min.css'); ?>">
-<link rel="stylesheet" href="<?= base_url('assets/css/bootstrap-duallistbox.css'); ?>">
-<link rel="stylesheet" href="<?= base_url('assets/css/bootstrap-select.css'); ?>">
+<link rel="stylesheet" href="<?php echo base_url('assets/css/summernote-lite.css'); ?>">
+<link rel="stylesheet" href="<?php echo base_url('assets/css/summernote.min.css'); ?>">
+<link rel="stylesheet" href="<?php echo base_url('assets/css/bootstrap-duallistbox.css'); ?>">
+<link rel="stylesheet" href="<?php echo base_url('assets/css/bootstrap-select.css'); ?>">
 
 
 <!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjscript/latest/moment.min.js"></script> -->
@@ -171,18 +170,17 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 
-<script src="<?= base_url('assets/jscript/my_mask.js'); ?>"></script>
-<script src="<?= base_url('assets/jscript/my_consulta.js'); ?>"></script>
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fontawesome-iconpicker/3.2.0/js/fontawesome-iconpicker.min.js" integrity="sha512-7dlzSK4Ulfm85ypS8/ya0xLf3NpXiML3s6HTLu4qDq7WiJWtLLyrXb9putdP3/1umwTmzIvhuu9EW7gHYSVtCQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fontawesome-iconpicker/3.2.0/css/fontawesome-iconpicker.min.css" integrity="sha512-BfgviGirSi7OFeVB2z9bxp856rzU1Tyy9Dtq2124oRUZSKXIQqpy+2LPuafc2zMd8dNUa+F7cpxbvUsZZXFltQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 
-<!-- <script src="<?= base_url('assets/jscript/my_consulta.js'); ?>"></script> -->
+<script src="<?php echo base_url('assets/jscript/my_mask.js'); ?>"></script>
+<script src="<?php echo base_url('assets/jscript/my_consulta.js'); ?>"></script>
 <script>
     // carregamentos_iniciais();
-    <?php if (!isset($forca_submit)): ?>
+    <?php if (! isset($forca_submit)): ?>
         jQuery("#form1").attr('data-alter', false);
     <?php else: ?>
         jQuery("#form1").attr('data-alter', true);
@@ -200,4 +198,4 @@ if (isset($script)) {
     echo $script;
 }
 ?>
-<?= $this->endSection(); ?>
+<?php echo $this->endSection(); ?>

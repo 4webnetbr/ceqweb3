@@ -55,7 +55,7 @@ class BuscasSapiens extends BaseController
         $soapfab = new SoapSapiens('ceqweb_integra');
         // debug($soapdep, false);
         $ret_fabs = $soapfab->fabricanteSapiens('ConsultarFabricante');
-        if(isset($ret_fabs->erro)){
+        if (isset($ret_fabs->erro)) {
             $ret_fabs->retorno = [];
         }
         return $ret_fabs->retorno;
@@ -78,6 +78,19 @@ class BuscasSapiens extends BaseController
         $soappro = new SoapSapiens('ceqweb_integra');
         // debug($codLot, true);
         $ret_pros = $soappro->lotesSapiens('ConsultarLote', $codLot);
+
+        if (isset($ret_pros->retorno)) {
+            return $ret_pros->retorno;
+        } else {
+            return false;
+        }
+    }
+
+    public function buscaLotesFaltante($codLot = '')
+    {
+        $soappro = new SoapSapiens('ceqweb_integra');
+        // debug($codLot, true);
+        $ret_pros = $soappro->lotesSapiens('ConsultarUnicoLote', $codLot);
 
         if (isset($ret_pros->retorno)) {
             return $ret_pros->retorno;

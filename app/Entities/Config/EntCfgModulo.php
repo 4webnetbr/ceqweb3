@@ -12,6 +12,7 @@ class EntCfgModulo extends Entity
         'mod_id'       => null,
         'mod_nome'     => null,
         'mod_icone'    => null,
+        'mod_dbgroup'  => null,
         'mod_ativo'    => 'A',
         'mod_excluido' => null,
     ];
@@ -53,6 +54,22 @@ class EntCfgModulo extends Entity
         $icon->valor = $dados['mod_icone'] ?? '';
         $icon->leitura = $show;
         $ret['mod_icone'] = $icon->crInput();
+
+        // Banco de Dados do Módulo
+        $dbOpcoes = [
+            ''              => '-- Selecione --',
+            'default'       => 'Configuração (config_ceqweb_db)',
+            'dbEstoque'     => 'Estoque (estoque_db)',
+            'dbProduto'     => 'Produto (produto_db)',
+            'dbOcorrencia'  => 'Ocorrência (ocorrencia_db)',
+        ];
+        $dbg = new MyCampo('cfg_modulo', 'mod_dbgroup');
+        $dbg->label = 'Banco de Dados';
+        $dbg->valor = $dados['mod_dbgroup'] ?? '';
+        $dbg->selecionado = $dbg->valor;
+        $dbg->opcoes = $dbOpcoes;
+        $dbg->leitura = $show;
+        $ret['mod_dbgroup'] = $dbg->crSelect();
 
         // Opções de status
         $op = ['A' => 'Ativo', 'I' => 'Inativo'];

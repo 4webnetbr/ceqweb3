@@ -24,7 +24,7 @@ class SoapSapiens
         }
     }
 
-    public function transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida)
+    public function transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida, $msg = '')
     {
         $options = [
             'connection_timeout' => 5, // segundos
@@ -121,11 +121,11 @@ class SoapSapiens
         if ($depdes == null || $depdes == '') {
             $depdes = 'Baixa';
         }
-        $movim = $movdb->insertMovimento($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida, $status, $msgretorno);
+        $movim = $movdb->insertMovimento($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida, $status, $msg . '<br>' . $msgretorno);
         return $ret;
     }
 
-    public function movimProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida)
+    public function movimProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida, $msg = '')
     {
         $options = [
             'connection_timeout' => 5, // segundos
@@ -201,7 +201,7 @@ class SoapSapiens
 
         $movdb = new MovimMonModel();
         $depdes = 'Baixa';
-        $movim = $movdb->insertMovimento($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida, $status, $msgretorno);
+        $movim = $movdb->insertMovimento($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida, $status, $msg . '<br>' . $msgretorno);
         return $ret;
     }
 
@@ -271,8 +271,8 @@ class SoapSapiens
             'password'        => 'soPR#JOV@omVs',
             'encryption'      => 0,
             'parameters'      => array(
-                'codEmp'      => 1,
-                'codFil'      => 1,
+                'codEmp'   => 1,
+                'codFil'    => 1,
             )
         );
         #Sobrescrevendo endpoint do serviço
@@ -433,6 +433,7 @@ class SoapSapiens
             // sucesso
 
         } catch (\SoapFault $e) {
+            // debug($e->getMessage());
             // falha de conexão ou erro na resposta
             log_message('error', 'Erro SOAP: ' . $e->getMessage());
 

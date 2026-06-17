@@ -1,4 +1,5 @@
 <?php
+
 namespace Config;
 
 use CodeIgniter\Config\Services;
@@ -80,6 +81,11 @@ $routes->group('CriaPdf2025', static function ($routes) {
     $routes->match(['GET', 'POST'], 'PrintRequisicaoEstoq/(:any)', 'CriaPdf2025::PrintRequisicaoEstoq/$1', ['as' => 'criapdf2025_match_two']);
     $routes->match(['GET', 'POST'], 'PrintOcorrencia/(:any)', 'CriaPdf2025::PrintOcorrencia/$1', ['as' => 'criapdf2025_print_ocorrencia']);
 });
+$routes->group('CriamPdf2026', static function ($routes) {
+    $routes->match(['GET', 'POST'], 'PrintAnaRequisicao/(:any)', 'CriamPdf2026::PrintAnaRequisicao/$1', ['as' => 'CriamPdf2026_match']);
+    $routes->match(['GET', 'POST'], 'PrintRequisicaoEstoq/(:any)', 'CriamPdf2026::PrintRequisicaoEstoq/$1', ['as' => 'CriamPdf2026_match_two']);
+    $routes->match(['GET', 'POST'], 'PrintOcorrencia/(:any)', 'CriamPdf2026::PrintOcorrencia/$1', ['as' => 'CriamPdf2026_print_ocorrencia']);
+});
 
 // Grupo: CriaEtiqueta
 $routes->group('CriaEtiqueta', static function ($routes) {
@@ -114,6 +120,8 @@ $cfgControllers = [
     'CfgEtiqueta',
     'CfgEmpresa',
     'CfgImpressora',
+    'CfgRelatorio',
+    'OcoTipoAcao',
 ];
 
 foreach ($cfgControllers as $ctrl) {
@@ -187,7 +195,7 @@ $microControllers = [
     'AnaRequisicao',
 ];
 // Grupo: Micro
-foreach ($produtoControllers as $ctrl) {
+foreach ($microControllers as $ctrl) {
     $routes->group($ctrl, static function ($routes) use ($ctrl) {
         $name = strtolower($ctrl);
         $routes->get('/', "Micro\\$ctrl::index", ['as' => "{$name}_index"]);

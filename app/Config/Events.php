@@ -45,16 +45,16 @@ Events::on('access:log', static function (array $data): void {
     $service = service('accessLog');
 
     $service->insertAccessLog(
-        userId: $data['log_id_usuario'] ?? null,
-        userName: $data['log_usuario'] ?? null,
-        screen: $data['log_tela'] ?? '',
-        method: $data['log_metodo'] ?? '',
-        record: $data['log_registro'] ?? null,
-        userIp: $data['log_ip'] ?? null,
-        userAgent: $data['log_user_agent'] ?? null,
-        titulo: $data['log_titulo'] ?? null,
-        detalhe: $data['log_detalhe'] ?? null,
-        ambiente: $data['log_ambiente'] ?? null
+        userId: $data['log_id_usuario']  ?? null,
+        userName: $data['log_usuario']     ?? null,
+        screen: $data['log_tela']        ?? '',
+        method: $data['log_metodo']      ?? '',
+        record: $data['log_registro']    ?? null,
+        userIp: $data['log_ip']          ?? null,
+        userAgent: $data['log_user_agent']  ?? null,
+        titulo: $data['log_titulo']      ?? null,
+        detalhe: $data['log_detalhe']     ?? null,
+        ambiente: $data['log_ambiente']    ?? null
     );
 });
 
@@ -75,7 +75,12 @@ Events::on('pre_system', static function () {
      * --------------------------------------------------------------------
      * Debug Toolbar Listeners.
      * --------------------------------------------------------------------
-     * If you delete, they will no longer be collected.
+     * Se você deletar, eles não serão mais coletados.
+     *
+     * ATENÇÃO: O listener de DBQuery do Toolbar é registrado aqui dentro
+     * do pre_system. O listener customizado abaixo (fora deste bloco)
+     * é o único responsável pela lógica de negócio — sem duplicatas.
+     * --------------------------------------------------------------------
      */
     if (CI_DEBUG && ! is_cli()) {
         Events::on('DBQuery', 'CodeIgniter\Debug\Toolbar\Collectors\Database::collect');
@@ -83,67 +88,97 @@ Events::on('pre_system', static function () {
     }
 });
 
+/*
+ * --------------------------------------------------------------------
+ * Listener de DBQuery customizado
+ * --------------------------------------------------------------------
+ * Protegido contra recursão: queries internas disparadas por este
+ * próprio handler (ex.: consulta à cfg_tela) não acionam o handler
+ * novamente, evitando loop e duplicação de logs.
+ * --------------------------------------------------------------------
+ */
 Events::on('DBQuery', function ($query) {
-    $sql = strtolower($query->getQuery());
 
-    // Verifica se é INSERT ou UPDATE
-    if (preg_match('/^(insert into|update|delete from) `?(\w+)`?/i', $sql, $matches)) {
-        log_message('info', "Sql " . $sql);
-        $tabelaAfetada = $matches[2]; // Nome da tabela
-        if (substr($tabelaAfetada, 0, 3) != 'cfg') {
-            log_message('info', "Tabela Afetada " . $tabelaAfetada);
+    // Proteção contra re-entrada (loop/recursão)
+    static $isProcessing = false;
 
-            // Buscar qual Model usa essa tabela
-            $models = get_declared_classes();
-            $modelEncontrado = null;
-            $nomeModel = null;
-            log_message('info', "Models " . json_encode($tabelaAfetada));
-            foreach ($models as $model) {
-                if (is_subclass_of($model, \CodeIgniter\Model::class)) {
-                    $reflection = new \ReflectionClass($model);
+    if ($isProcessing) {
+        return;
+    }
 
-                    // Ignora classes abstratas
-                    if ($reflection->isAbstract()) {
-                        continue;
-                    }
+    $isProcessing = true;
 
-                    // Instancia a Model e pega o nome da tabela
-                    $instance = new $model();
+    try {
+        $sql = $query->getQuery();
 
-                    if (property_exists($instance, 'table') && $instance->table === $tabelaAfetada) {
-                        $modelEncontrado = $model;
-                        $reflection = new \ReflectionClass($modelEncontrado);
-                        $nomeModel = $reflection->getShortName();
+        // Verifica se é INSERT, UPDATE ou DELETE
+        if (! preg_match('/^(insert into|update|delete from)\s+`?(\w+)`?/i', $sql, $matches)) {
+            return;
+        }
 
-                        break;
-                    }
-                }
+        $tabelaAfetada = $matches[2];
+
+        // Ignora tabelas de configuração (prefixo cfg_)
+        if (str_starts_with($tabelaAfetada, 'cfg')) {
+            return;
+        }
+
+        log_message('info', 'Sql ' . $sql);
+        log_message('info', 'Tabela Afetada: ' . $tabelaAfetada);
+
+        // Busca qual Model usa essa tabela
+        $modelEncontrado = null;
+        $nomeModel       = null;
+
+        foreach (get_declared_classes() as $class) {
+            if (! is_subclass_of($class, \CodeIgniter\Model::class)) {
+                continue;
             }
-            log_message('info', "Model Encontrada " . $nomeModel);
 
-            if ($nomeModel) {
-                // Agora vamos buscar na tabela cfg_tela
-                // usando tel_model = $modelEncontrado
+            $reflection = new \ReflectionClass($class);
 
-                $db = \Config\Database::connect();
-                $builder = $db->table('cfg_tela');
-                $result = $builder->select('tel_controler')
-                    ->where('tel_model', $nomeModel)
-                    ->get()
-                    ->getRow();
+            if ($reflection->isAbstract()) {
+                continue;
+            }
 
-                if ($result) {
-                    $telController = $result->tel_controler;
-                    if ($telController != '') {
-                        envia_msg_ws($telController, $telController, 'AtualizarControler', session()->get('usu_id'), 1);
-                        log_message('info', "Tabela [$tabelaAfetada] atualizada. Model: [$modelEncontrado]. Controller: [$telController]");
-                    }
-                } else {
-                    log_message('warning', "Model [$modelEncontrado] encontrada, mas nenhum tel_controler correspondente na cfg_tela.");
-                }
-            } else {
-                log_message('warning', "Nenhuma Model encontrada para a tabela [$tabelaAfetada].");
+            $instance = new $class();
+
+            if (property_exists($instance, 'table') && $instance->table === $tabelaAfetada) {
+                $modelEncontrado = $class;
+                $nomeModel       = $reflection->getShortName();
+                break;
             }
         }
+
+        log_message('info', 'Model Encontrada: ' . ($nomeModel ?? 'nenhuma'));
+
+        if (! $nomeModel) {
+            log_message('warning', "Nenhuma Model encontrada para a tabela [{$tabelaAfetada}].");
+            return;
+        }
+
+        // Consulta cfg_tela para obter o controller associado
+        // (esta query interna não será reprocessada graças ao flag $isProcessing)
+        $db     = \Config\Database::connect();
+        $result = $db->table('cfg_tela')
+            ->select('tel_controler')
+            ->where('tel_model', $nomeModel)
+            ->get()
+            ->getRow();
+
+        if (! $result) {
+            log_message('warning', "Model [{$modelEncontrado}] encontrada, mas nenhum tel_controler correspondente na cfg_tela.");
+            return;
+        }
+
+        $telController = $result->tel_controler;
+
+        if ($telController !== '') {
+            envia_msg_ws($telController, $telController, 'AtualizarControler', 0, 1);
+            log_message('info', "Tabela [{$tabelaAfetada}] atualizada. Model: [{$modelEncontrado}]. Controller: [{$telController}]");
+        }
+    } finally {
+        // Garante que o flag é sempre liberado, mesmo em caso de exceção
+        $isProcessing = false;
     }
 });

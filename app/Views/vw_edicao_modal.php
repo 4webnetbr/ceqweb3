@@ -1,12 +1,12 @@
-<?= $this->extend('templates/ajax_template') ?>
-<?= $this->section('header_modal'); ?>
-<?= view('strut/vw_titulo_modal'); ?>
-<?= $this->endSection(); ?>
+<?php echo $this->extend('templates/ajax_template') ?>
+<?php echo $this->section('header_modal'); ?>
+<?php echo view('strut/vw_titulo_modal'); ?>
+<?php echo $this->endSection(); ?>
 
-<?= $this->section('content'); ?>
+<?php echo $this->section('content'); ?>
 <div id='content' class='container page-content bg-light m-0'>
     <!-- <div id='content' class='vh-auto page-content dashboard dashboard-app dashboard-content '> -->
-    <form id="form_modal" method="post" action="<?= site_url($controler . "/" . $destino) ?>" class="col-12" type="modal" enctype="multipart/form-data">
+    <form id="form_modal" method="post" action="<?php echo site_url($controler . "/" . $destino) ?>" class="col-12" type="modal" enctype="multipart/form-data">
         <?
         if (sizeof($secoes)) {
             $active = 'show active';
@@ -54,38 +54,20 @@
             echo "</div>";
         }
         ?>
-        <?php if (!empty($hidden)) : ?>
-            <?php foreach ($hidden as $h) : ?>
-                <input type="hidden" name="<?= $h['name'] ?>" value="<?= esc($h['value']) ?>">
+        <?php if (! empty($hidden)): ?>
+            <?php foreach ($hidden as $h): ?>
+                <input type="hidden" name="<?php echo $h['name'] ?>" value="<?php echo esc($h['value']) ?>">
             <?php endforeach; ?>
         <?php endif; ?>
     </form>
 </div>
 
-<script src="<?= base_url('assets/jscript/my_fields.js'); ?>"></script>
-<script src="<?= base_url('assets/jscript/summernote-lite.js'); ?>"></script>
-<script src="<?= base_url('assets/jscript/jquery.bootstrap-duallistbox.js'); ?>"></script>
-<!-- include summernote-pt-BR -->
-<script src="<?= base_url('assets/jscript/summ-lang/summernote-pt-BR.js'); ?>"></script>
-
-<link rel="stylesheet" href="<?= base_url('assets/css/summernote-lite.css'); ?>">
-<link rel="stylesheet" href="<?= base_url('assets/css/summernote.min.css'); ?>">
-<link rel="stylesheet" href="<?= base_url('assets/css/bootstrap-duallistbox.css'); ?>">
-
-<!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjscript/latest/moment.min.js"></script> -->
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
-
-<script src="<?= base_url('assets/jscript/my_mask.js?noc=' . time()); ?>"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fontawesome-iconpicker/3.2.0/js/fontawesome-iconpicker.min.js" integrity="sha512-7dlzSK4Ulfm85ypS8/ya0xLf3NpXiML3s6HTLu4qDq7WiJWtLLyrXb9putdP3/1umwTmzIvhuu9EW7gHYSVtCQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fontawesome-iconpicker/3.2.0/css/fontawesome-iconpicker.min.css" integrity="sha512-BfgviGirSi7OFeVB2z9bxp856rzU1Tyy9Dtq2124oRUZSKXIQqpy+2LPuafc2zMd8dNUa+F7cpxbvUsZZXFltQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0=" crossorigin="anonymous"></script>
+<script>
+    carregamentos_iniciais();
+</script>
 <?
 if (isset($script)) {
     echo $script;
 }
 ?>
-<?= $this->endSection(); ?>
+<?php echo $this->endSection(); ?>

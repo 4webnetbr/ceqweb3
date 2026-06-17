@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers\Produto;
 
 use App\Controllers\BaseController;
@@ -79,10 +80,8 @@ class Produto extends BaseController
             'data' => montaListaColunasEnt($this->data, 'pro_id', $dados_produto, $campos[1]),
         ];
         cache()->save('produto', $produto, 60000);
-        return $this->response
-            ->setContentType('application/json')
-            ->setJSON($produto);
-        //    echo json_encode($produto);
+
+        echo json_encode($produto);
     }
 
     /**
@@ -98,7 +97,7 @@ class Produto extends BaseController
             $dados_produtos = (array) $dados_produtos;
         }
 
-        $entity = new EntProdutProduto($dados_produtos);
+        $entity = new EntProdutProduto($dados_produtos, true);
         $fields = $entity->campos;
 
         $this->data['secoes']    = [];
@@ -113,10 +112,10 @@ class Produto extends BaseController
         $this->data['campos'][0][] = $fields['fam_codFam'];
         $this->data['campos'][0][] = $fields['pro_ctrlot'];
         $this->data['campos'][0][] = $fields['pro_despro'];
-        $this->data['campos'][0][] = $fields['cla_id'];
         $this->data['campos'][0][] = $fields['fab_codFab'];
-        $this->data['campos'][0][] = $fields['ing_id'];
+        $this->data['campos'][0][] = $fields['cla_id'];
         $this->data['campos'][0][] = $fields['pro_codbar_fabricante'];
+        $this->data['campos'][0][] = $fields['ing_id'];
         $this->data['campos'][0][] = $fields['pro_informacoes'];
 
         $this->data['desc_metodo'] = 'Aprovação de Produto';
@@ -171,10 +170,10 @@ class Produto extends BaseController
         $campos[0][] = $fields['fam_codFam'];
         $campos[0][] = $fields['pro_ctrlot'];
         $campos[0][] = $fields['pro_despro'];
-        $campos[0][] = $fields['cla_id'];
         $campos[0][] = $fields['fab_codFab'];
-        $campos[0][] = $fields['ing_id'];
+        $campos[0][] = $fields['cla_id'];
         $campos[0][] = $fields['pro_codbar_fabricante'];
+        $campos[0][] = $fields['ing_id'];
         $campos[0][] = $fields['pro_informacoes'];
 
         // Dados Estoque
@@ -190,17 +189,20 @@ class Produto extends BaseController
             $fieldceq['prc_id'],
             $fieldceq['pro_cplpro'],
             $fields['pro_qtdemb'],
-            'vazio2',
             $fieldceq['prc_qtdemb_ceq'],
+
             $fieldceq['prc_conf_req'],
-            $fieldceq['prc_etiq_misturador'],
-            $fieldceq['prc_etiq_produto'],
             $fieldceq['prc_pedido_caixa'],
+
+            "<div class='col-6 float-start d-inline-grid'>",
+            $fieldceq['prc_etiq_misturador'],
             $fieldceq['prc_codbar'],
-            $fieldceq['prc_cor_etiqueta_prod'],
             $fieldceq['prc_cor_etiqueta_mist'],
-            'vazio3',
-            'vazio3',
+            "</div>",
+            "<div class='col-6 float-start d-inline-grid'>",
+            $fieldceq['prc_etiq_produto'],
+            $fieldceq['prc_cor_etiqueta_prod'],
+            "</div>",
             $fieldceq['prc_deposito'],
         ];
 
@@ -233,7 +235,7 @@ class Produto extends BaseController
 
                 // Estoque Mínimo
                 $linha[] = "<div id='div_est_minimo[$index]' class='border border-2 col-6 d-inline-block mt-4 float-start pb-1' style='clear: left'>";
-                $linha[] = "<span class='col-3 bg-white border border-1 px-1 d-block position-relative' style='top: -12px;margin-bottom: -10px;left: 10px;'>Estoque Mínimo</span>";
+                $linha[] = "<span class='col-4 bg-white border border-1 px-1 d-block position-relative' style='top: -12px;margin-bottom: -10px;left: 10px;'>Estoque Mínimo</span>";
                 $linha[] = "<div class='border-0'>";
                 $linha[] = $fieldest['pre_mindiaanterior'];
                 $linha[] = $fieldest['pre_minimo'];
@@ -242,7 +244,7 @@ class Produto extends BaseController
 
                 // Estoque Máximo
                 $linha[] = "<div id='div_est_maximo[$index]' class='border border-2 col-6 d-inline-block mt-4 float-start pb-1'>";
-                $linha[] = "<span class='col-3 bg-white border border-1 px-1 d-block position-relative' style='top: -12px;margin-bottom: -10px;left: 10px;'>Estoque Máximo</span>";
+                $linha[] = "<span class='col-4 bg-white border border-1 px-1 d-block position-relative' style='top: -12px;margin-bottom: -10px;left: 10px;'>Estoque Máximo</span>";
                 $linha[] = "<div class='border-0'>";
                 $linha[] = $fieldest['pre_maxdiaanterior'];
                 $linha[] = $fieldest['pre_porcmaximo'];

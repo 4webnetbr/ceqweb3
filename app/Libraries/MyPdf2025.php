@@ -17,16 +17,15 @@ class MyPdf2025 extends FPDF
     protected $footer_center;
 
     //BARCODE
-    protected $T128;                                         // Tableau des codes 128
-    protected $ABCset = "";                                  // jeu des caractères éligibles au C128
-    protected $Aset = "";                                    // Set A du jeu des caractères éligibles
-    protected $Bset = "";                                    // Set B du jeu des caractères éligibles
-    protected $Cset = "";                                    // Set C du jeu des caractères éligibles
-    protected $SetFrom;                                      // Convertisseur source des jeux vers le tableau
-    protected $SetTo;                                        // Convertisseur destination des jeux vers le tableau
-    protected $JStart = array("A" => 103, "B" => 104, "C" => 105); // Caractères de sélection de jeu au début du C128
-    protected $JSwap = array("A" => 101, "B" => 100, "C" => 99);   // Caractères de changement de jeu
-
+    protected $T128;                                          // Tableau des codes 128
+    protected $ABCset = "";                                   // jeu des caractères éligibles au C128
+    protected $Aset   = "";                                   // Set A du jeu des caractères éligibles
+    protected $Bset   = "";                                   // Set B du jeu des caractères éligibles
+    protected $Cset   = "";                                   // Set C du jeu des caractères éligibles
+    protected $SetFrom;                                       // Convertisseur source des jeux vers le tableau
+    protected $SetTo;                                         // Convertisseur destination des jeux vers le tableau
+    protected $JStart = ["A" => 103, "B" => 104, "C" => 105]; // Caractères de sélection de jeu au début du C128
+    protected $JSwap  = ["A" => 101, "B" => 100, "C" => 99];  // Caractères de changement de jeu
 
     private $base_url;
     private $format;
@@ -34,166 +33,166 @@ class MyPdf2025 extends FPDF
     private $temfooter;
     private $angle;
     private $angulo;
-    var $B; // Negrito
-    var $I; // Itálico
-    var $U; // Sublinhado
-    var $HREF; // Hyperlink
-    var $ALIGN; // Alinhamento
-    var $FONTFAMILY; // Família de fontes
-    var $FONTSIZE; // Tamanho da fonte
-    var $COLOR; // Cor
-    var $TEXTCOLOR; // Cor do texto
-    var $BGCOLOR; // Cor de fundo
+    public $B;          // Negrito
+    public $I;          // Itálico
+    public $U;          // Sublinhado
+    public $HREF;       // Hyperlink
+    public $ALIGN;      // Alinhamento
+    public $FONTFAMILY; // Família de fontes
+    public $FONTSIZE;   // Tamanho da fonte
+    public $COLOR;      // Cor
+    public $TEXTCOLOR;  // Cor do texto
+    public $BGCOLOR;    // Cor de fundo
 
-
-    function __construct($temheader = true, $temfooter = true, $size = false)
+    public function __construct($temheader = true, $temfooter = true, $size = false)
     {
-        $config = config('Pdf');
-        $this->orientation          =   $config->orientation;
-        if (!$size) {
-            $this->size                 =   $config->size;
+        $config            = config('Pdf');
+        $this->orientation = $config->orientation;
+        if (! $size) {
+            $this->size = $config->size;
         } else {
-            $this->size                 =   $size;
+            $this->size = $size;
         }
-        $this->rotation             =   $config->rotation;
-        $this->units                =   $config->units;
-        $this->format               =   $config->format;
-        $this->head_title           =   $this->format($config->head_title);
-        $this->head_subtitle        =   $this->format($config->head_subtitle);
-        $this->footer_page_literal  =   $this->format($config->footer_page_literal);
+        $this->rotation            = $config->rotation;
+        $this->units               = $config->units;
+        $this->format              = $config->format;
+        $this->head_title          = $this->format($config->head_title);
+        $this->head_subtitle       = $this->format($config->head_subtitle);
+        $this->footer_page_literal = $this->format($config->footer_page_literal);
 
-        $this->base_url         =   $config->url_wrapper;
-        if ($this->base_url === TRUE)
+        $this->base_url = $config->url_wrapper;
+        if ($this->base_url === true) {
             $this->logo = base_url($config->logo);
-        else
+        } else {
             $this->logo = $config->logo;
+        }
 
         $this->temheader = $temheader;
         $this->temfooter = $temfooter;
         // lets construct the fpdf objet!
         parent::__construct($this->orientation, $this->units, $this->size);
 
-        $this->B = 0;
-        $this->I = 0;
-        $this->U = 0;
-        $this->HREF = '';
-        $this->ALIGN = 'left';
+        $this->B          = 0;
+        $this->I          = 0;
+        $this->U          = 0;
+        $this->HREF       = '';
+        $this->ALIGN      = 'left';
         $this->FONTFAMILY = 'Arial';
-        $this->FONTSIZE = 10;
-        $this->COLOR = array(0, 0, 0);
-        $this->TEXTCOLOR = array(0, 0, 0);
-        $this->BGCOLOR = array(255, 255, 255);
+        $this->FONTSIZE   = 10;
+        $this->COLOR      = [0, 0, 0];
+        $this->TEXTCOLOR  = [0, 0, 0];
+        $this->BGCOLOR    = [255, 255, 255];
 
-        $this->T128[] = array(2, 1, 2, 2, 2, 2);           //0 : [ ]               // composition des caractères
-        $this->T128[] = array(2, 2, 2, 1, 2, 2);           //1 : [!]
-        $this->T128[] = array(2, 2, 2, 2, 2, 1);           //2 : ["]
-        $this->T128[] = array(1, 2, 1, 2, 2, 3);           //3 : [#]
-        $this->T128[] = array(1, 2, 1, 3, 2, 2);           //4 : [$]
-        $this->T128[] = array(1, 3, 1, 2, 2, 2);           //5 : [%]
-        $this->T128[] = array(1, 2, 2, 2, 1, 3);           //6 : [&]
-        $this->T128[] = array(1, 2, 2, 3, 1, 2);           //7 : [']
-        $this->T128[] = array(1, 3, 2, 2, 1, 2);           //8 : [(]
-        $this->T128[] = array(2, 2, 1, 2, 1, 3);           //9 : [)]
-        $this->T128[] = array(2, 2, 1, 3, 1, 2);           //10 : [*]
-        $this->T128[] = array(2, 3, 1, 2, 1, 2);           //11 : [+]
-        $this->T128[] = array(1, 1, 2, 2, 3, 2);           //12 : [,]
-        $this->T128[] = array(1, 2, 2, 1, 3, 2);           //13 : [-]
-        $this->T128[] = array(1, 2, 2, 2, 3, 1);           //14 : [.]
-        $this->T128[] = array(1, 1, 3, 2, 2, 2);           //15 : [/]
-        $this->T128[] = array(1, 2, 3, 1, 2, 2);           //16 : [0]
-        $this->T128[] = array(1, 2, 3, 2, 2, 1);           //17 : [1]
-        $this->T128[] = array(2, 2, 3, 2, 1, 1);           //18 : [2]
-        $this->T128[] = array(2, 2, 1, 1, 3, 2);           //19 : [3]
-        $this->T128[] = array(2, 2, 1, 2, 3, 1);           //20 : [4]
-        $this->T128[] = array(2, 1, 3, 2, 1, 2);           //21 : [5]
-        $this->T128[] = array(2, 2, 3, 1, 1, 2);           //22 : [6]
-        $this->T128[] = array(3, 1, 2, 1, 3, 1);           //23 : [7]
-        $this->T128[] = array(3, 1, 1, 2, 2, 2);           //24 : [8]
-        $this->T128[] = array(3, 2, 1, 1, 2, 2);           //25 : [9]
-        $this->T128[] = array(3, 2, 1, 2, 2, 1);           //26 : [:]
-        $this->T128[] = array(3, 1, 2, 2, 1, 2);           //27 : [;]
-        $this->T128[] = array(3, 2, 2, 1, 1, 2);           //28 : [<]
-        $this->T128[] = array(3, 2, 2, 2, 1, 1);           //29 : [=]
-        $this->T128[] = array(2, 1, 2, 1, 2, 3);           //30 : [>]
-        $this->T128[] = array(2, 1, 2, 3, 2, 1);           //31 : [?]
-        $this->T128[] = array(2, 3, 2, 1, 2, 1);           //32 : [@]
-        $this->T128[] = array(1, 1, 1, 3, 2, 3);           //33 : [A]
-        $this->T128[] = array(1, 3, 1, 1, 2, 3);           //34 : [B]
-        $this->T128[] = array(1, 3, 1, 3, 2, 1);           //35 : [C]
-        $this->T128[] = array(1, 1, 2, 3, 1, 3);           //36 : [D]
-        $this->T128[] = array(1, 3, 2, 1, 1, 3);           //37 : [E]
-        $this->T128[] = array(1, 3, 2, 3, 1, 1);           //38 : [F]
-        $this->T128[] = array(2, 1, 1, 3, 1, 3);           //39 : [G]
-        $this->T128[] = array(2, 3, 1, 1, 1, 3);           //40 : [H]
-        $this->T128[] = array(2, 3, 1, 3, 1, 1);           //41 : [I]
-        $this->T128[] = array(1, 1, 2, 1, 3, 3);           //42 : [J]
-        $this->T128[] = array(1, 1, 2, 3, 3, 1);           //43 : [K]
-        $this->T128[] = array(1, 3, 2, 1, 3, 1);           //44 : [L]
-        $this->T128[] = array(1, 1, 3, 1, 2, 3);           //45 : [M]
-        $this->T128[] = array(1, 1, 3, 3, 2, 1);           //46 : [N]
-        $this->T128[] = array(1, 3, 3, 1, 2, 1);           //47 : [O]
-        $this->T128[] = array(3, 1, 3, 1, 2, 1);           //48 : [P]
-        $this->T128[] = array(2, 1, 1, 3, 3, 1);           //49 : [Q]
-        $this->T128[] = array(2, 3, 1, 1, 3, 1);           //50 : [R]
-        $this->T128[] = array(2, 1, 3, 1, 1, 3);           //51 : [S]
-        $this->T128[] = array(2, 1, 3, 3, 1, 1);           //52 : [T]
-        $this->T128[] = array(2, 1, 3, 1, 3, 1);           //53 : [U]
-        $this->T128[] = array(3, 1, 1, 1, 2, 3);           //54 : [V]
-        $this->T128[] = array(3, 1, 1, 3, 2, 1);           //55 : [W]
-        $this->T128[] = array(3, 3, 1, 1, 2, 1);           //56 : [X]
-        $this->T128[] = array(3, 1, 2, 1, 1, 3);           //57 : [Y]
-        $this->T128[] = array(3, 1, 2, 3, 1, 1);           //58 : [Z]
-        $this->T128[] = array(3, 3, 2, 1, 1, 1);           //59 : [[]
-        $this->T128[] = array(3, 1, 4, 1, 1, 1);           //60 : [\]
-        $this->T128[] = array(2, 2, 1, 4, 1, 1);           //61 : []]
-        $this->T128[] = array(4, 3, 1, 1, 1, 1);           //62 : [^]
-        $this->T128[] = array(1, 1, 1, 2, 2, 4);           //63 : [_]
-        $this->T128[] = array(1, 1, 1, 4, 2, 2);           //64 : [`]
-        $this->T128[] = array(1, 2, 1, 1, 2, 4);           //65 : [a]
-        $this->T128[] = array(1, 2, 1, 4, 2, 1);           //66 : [b]
-        $this->T128[] = array(1, 4, 1, 1, 2, 2);           //67 : [c]
-        $this->T128[] = array(1, 4, 1, 2, 2, 1);           //68 : [d]
-        $this->T128[] = array(1, 1, 2, 2, 1, 4);           //69 : [e]
-        $this->T128[] = array(1, 1, 2, 4, 1, 2);           //70 : [f]
-        $this->T128[] = array(1, 2, 2, 1, 1, 4);           //71 : [g]
-        $this->T128[] = array(1, 2, 2, 4, 1, 1);           //72 : [h]
-        $this->T128[] = array(1, 4, 2, 1, 1, 2);           //73 : [i]
-        $this->T128[] = array(1, 4, 2, 2, 1, 1);           //74 : [j]
-        $this->T128[] = array(2, 4, 1, 2, 1, 1);           //75 : [k]
-        $this->T128[] = array(2, 2, 1, 1, 1, 4);           //76 : [l]
-        $this->T128[] = array(4, 1, 3, 1, 1, 1);           //77 : [m]
-        $this->T128[] = array(2, 4, 1, 1, 1, 2);           //78 : [n]
-        $this->T128[] = array(1, 3, 4, 1, 1, 1);           //79 : [o]
-        $this->T128[] = array(1, 1, 1, 2, 4, 2);           //80 : [p]
-        $this->T128[] = array(1, 2, 1, 1, 4, 2);           //81 : [q]
-        $this->T128[] = array(1, 2, 1, 2, 4, 1);           //82 : [r]
-        $this->T128[] = array(1, 1, 4, 2, 1, 2);           //83 : [s]
-        $this->T128[] = array(1, 2, 4, 1, 1, 2);           //84 : [t]
-        $this->T128[] = array(1, 2, 4, 2, 1, 1);           //85 : [u]
-        $this->T128[] = array(4, 1, 1, 2, 1, 2);           //86 : [v]
-        $this->T128[] = array(4, 2, 1, 1, 1, 2);           //87 : [w]
-        $this->T128[] = array(4, 2, 1, 2, 1, 1);           //88 : [x]
-        $this->T128[] = array(2, 1, 2, 1, 4, 1);           //89 : [y]
-        $this->T128[] = array(2, 1, 4, 1, 2, 1);           //90 : [z]
-        $this->T128[] = array(4, 1, 2, 1, 2, 1);           //91 : [{]
-        $this->T128[] = array(1, 1, 1, 1, 4, 3);           //92 : [|]
-        $this->T128[] = array(1, 1, 1, 3, 4, 1);           //93 : [}]
-        $this->T128[] = array(1, 3, 1, 1, 4, 1);           //94 : [~]
-        $this->T128[] = array(1, 1, 4, 1, 1, 3);           //95 : [DEL]
-        $this->T128[] = array(1, 1, 4, 3, 1, 1);           //96 : [FNC3]
-        $this->T128[] = array(4, 1, 1, 1, 1, 3);           //97 : [FNC2]
-        $this->T128[] = array(4, 1, 1, 3, 1, 1);           //98 : [SHIFT]
-        $this->T128[] = array(1, 1, 3, 1, 4, 1);           //99 : [Cswap]
-        $this->T128[] = array(1, 1, 4, 1, 3, 1);           //100 : [Bswap]                
-        $this->T128[] = array(3, 1, 1, 1, 4, 1);           //101 : [Aswap]
-        $this->T128[] = array(4, 1, 1, 1, 3, 1);           //102 : [FNC1]
-        $this->T128[] = array(2, 1, 1, 4, 1, 2);           //103 : [Astart]
-        $this->T128[] = array(2, 1, 1, 2, 1, 4);           //104 : [Bstart]
-        $this->T128[] = array(2, 1, 1, 2, 3, 2);           //105 : [Cstart]
-        $this->T128[] = array(2, 3, 3, 1, 1, 1);           //106 : [STOP]
-        $this->T128[] = array(2, 1);                       //107 : [END BAR]
+        $this->T128[] = [2, 1, 2, 2, 2, 2]; //0 : [ ]               // composition des caractères
+        $this->T128[] = [2, 2, 2, 1, 2, 2]; //1 : [!]
+        $this->T128[] = [2, 2, 2, 2, 2, 1]; //2 : ["]
+        $this->T128[] = [1, 2, 1, 2, 2, 3]; //3 : [#]
+        $this->T128[] = [1, 2, 1, 3, 2, 2]; //4 : [$]
+        $this->T128[] = [1, 3, 1, 2, 2, 2]; //5 : [%]
+        $this->T128[] = [1, 2, 2, 2, 1, 3]; //6 : [&]
+        $this->T128[] = [1, 2, 2, 3, 1, 2]; //7 : [']
+        $this->T128[] = [1, 3, 2, 2, 1, 2]; //8 : [(]
+        $this->T128[] = [2, 2, 1, 2, 1, 3]; //9 : [)]
+        $this->T128[] = [2, 2, 1, 3, 1, 2]; //10 : [*]
+        $this->T128[] = [2, 3, 1, 2, 1, 2]; //11 : [+]
+        $this->T128[] = [1, 1, 2, 2, 3, 2]; //12 : [,]
+        $this->T128[] = [1, 2, 2, 1, 3, 2]; //13 : [-]
+        $this->T128[] = [1, 2, 2, 2, 3, 1]; //14 : [.]
+        $this->T128[] = [1, 1, 3, 2, 2, 2]; //15 : [/]
+        $this->T128[] = [1, 2, 3, 1, 2, 2]; //16 : [0]
+        $this->T128[] = [1, 2, 3, 2, 2, 1]; //17 : [1]
+        $this->T128[] = [2, 2, 3, 2, 1, 1]; //18 : [2]
+        $this->T128[] = [2, 2, 1, 1, 3, 2]; //19 : [3]
+        $this->T128[] = [2, 2, 1, 2, 3, 1]; //20 : [4]
+        $this->T128[] = [2, 1, 3, 2, 1, 2]; //21 : [5]
+        $this->T128[] = [2, 2, 3, 1, 1, 2]; //22 : [6]
+        $this->T128[] = [3, 1, 2, 1, 3, 1]; //23 : [7]
+        $this->T128[] = [3, 1, 1, 2, 2, 2]; //24 : [8]
+        $this->T128[] = [3, 2, 1, 1, 2, 2]; //25 : [9]
+        $this->T128[] = [3, 2, 1, 2, 2, 1]; //26 : [:]
+        $this->T128[] = [3, 1, 2, 2, 1, 2]; //27 : [;]
+        $this->T128[] = [3, 2, 2, 1, 1, 2]; //28 : [<]
+        $this->T128[] = [3, 2, 2, 2, 1, 1]; //29 : [=]
+        $this->T128[] = [2, 1, 2, 1, 2, 3]; //30 : [>]
+        $this->T128[] = [2, 1, 2, 3, 2, 1]; //31 : [?]
+        $this->T128[] = [2, 3, 2, 1, 2, 1]; //32 : [@]
+        $this->T128[] = [1, 1, 1, 3, 2, 3]; //33 : [A]
+        $this->T128[] = [1, 3, 1, 1, 2, 3]; //34 : [B]
+        $this->T128[] = [1, 3, 1, 3, 2, 1]; //35 : [C]
+        $this->T128[] = [1, 1, 2, 3, 1, 3]; //36 : [D]
+        $this->T128[] = [1, 3, 2, 1, 1, 3]; //37 : [E]
+        $this->T128[] = [1, 3, 2, 3, 1, 1]; //38 : [F]
+        $this->T128[] = [2, 1, 1, 3, 1, 3]; //39 : [G]
+        $this->T128[] = [2, 3, 1, 1, 1, 3]; //40 : [H]
+        $this->T128[] = [2, 3, 1, 3, 1, 1]; //41 : [I]
+        $this->T128[] = [1, 1, 2, 1, 3, 3]; //42 : [J]
+        $this->T128[] = [1, 1, 2, 3, 3, 1]; //43 : [K]
+        $this->T128[] = [1, 3, 2, 1, 3, 1]; //44 : [L]
+        $this->T128[] = [1, 1, 3, 1, 2, 3]; //45 : [M]
+        $this->T128[] = [1, 1, 3, 3, 2, 1]; //46 : [N]
+        $this->T128[] = [1, 3, 3, 1, 2, 1]; //47 : [O]
+        $this->T128[] = [3, 1, 3, 1, 2, 1]; //48 : [P]
+        $this->T128[] = [2, 1, 1, 3, 3, 1]; //49 : [Q]
+        $this->T128[] = [2, 3, 1, 1, 3, 1]; //50 : [R]
+        $this->T128[] = [2, 1, 3, 1, 1, 3]; //51 : [S]
+        $this->T128[] = [2, 1, 3, 3, 1, 1]; //52 : [T]
+        $this->T128[] = [2, 1, 3, 1, 3, 1]; //53 : [U]
+        $this->T128[] = [3, 1, 1, 1, 2, 3]; //54 : [V]
+        $this->T128[] = [3, 1, 1, 3, 2, 1]; //55 : [W]
+        $this->T128[] = [3, 3, 1, 1, 2, 1]; //56 : [X]
+        $this->T128[] = [3, 1, 2, 1, 1, 3]; //57 : [Y]
+        $this->T128[] = [3, 1, 2, 3, 1, 1]; //58 : [Z]
+        $this->T128[] = [3, 3, 2, 1, 1, 1]; //59 : [[]
+        $this->T128[] = [3, 1, 4, 1, 1, 1]; //60 : [\]
+        $this->T128[] = [2, 2, 1, 4, 1, 1]; //61 : []]
+        $this->T128[] = [4, 3, 1, 1, 1, 1]; //62 : [^]
+        $this->T128[] = [1, 1, 1, 2, 2, 4]; //63 : [_]
+        $this->T128[] = [1, 1, 1, 4, 2, 2]; //64 : [`]
+        $this->T128[] = [1, 2, 1, 1, 2, 4]; //65 : [a]
+        $this->T128[] = [1, 2, 1, 4, 2, 1]; //66 : [b]
+        $this->T128[] = [1, 4, 1, 1, 2, 2]; //67 : [c]
+        $this->T128[] = [1, 4, 1, 2, 2, 1]; //68 : [d]
+        $this->T128[] = [1, 1, 2, 2, 1, 4]; //69 : [e]
+        $this->T128[] = [1, 1, 2, 4, 1, 2]; //70 : [f]
+        $this->T128[] = [1, 2, 2, 1, 1, 4]; //71 : [g]
+        $this->T128[] = [1, 2, 2, 4, 1, 1]; //72 : [h]
+        $this->T128[] = [1, 4, 2, 1, 1, 2]; //73 : [i]
+        $this->T128[] = [1, 4, 2, 2, 1, 1]; //74 : [j]
+        $this->T128[] = [2, 4, 1, 2, 1, 1]; //75 : [k]
+        $this->T128[] = [2, 2, 1, 1, 1, 4]; //76 : [l]
+        $this->T128[] = [4, 1, 3, 1, 1, 1]; //77 : [m]
+        $this->T128[] = [2, 4, 1, 1, 1, 2]; //78 : [n]
+        $this->T128[] = [1, 3, 4, 1, 1, 1]; //79 : [o]
+        $this->T128[] = [1, 1, 1, 2, 4, 2]; //80 : [p]
+        $this->T128[] = [1, 2, 1, 1, 4, 2]; //81 : [q]
+        $this->T128[] = [1, 2, 1, 2, 4, 1]; //82 : [r]
+        $this->T128[] = [1, 1, 4, 2, 1, 2]; //83 : [s]
+        $this->T128[] = [1, 2, 4, 1, 1, 2]; //84 : [t]
+        $this->T128[] = [1, 2, 4, 2, 1, 1]; //85 : [u]
+        $this->T128[] = [4, 1, 1, 2, 1, 2]; //86 : [v]
+        $this->T128[] = [4, 2, 1, 1, 1, 2]; //87 : [w]
+        $this->T128[] = [4, 2, 1, 2, 1, 1]; //88 : [x]
+        $this->T128[] = [2, 1, 2, 1, 4, 1]; //89 : [y]
+        $this->T128[] = [2, 1, 4, 1, 2, 1]; //90 : [z]
+        $this->T128[] = [4, 1, 2, 1, 2, 1]; //91 : [{]
+        $this->T128[] = [1, 1, 1, 1, 4, 3]; //92 : [|]
+        $this->T128[] = [1, 1, 1, 3, 4, 1]; //93 : [}]
+        $this->T128[] = [1, 3, 1, 1, 4, 1]; //94 : [~]
+        $this->T128[] = [1, 1, 4, 1, 1, 3]; //95 : [DEL]
+        $this->T128[] = [1, 1, 4, 3, 1, 1]; //96 : [FNC3]
+        $this->T128[] = [4, 1, 1, 1, 1, 3]; //97 : [FNC2]
+        $this->T128[] = [4, 1, 1, 3, 1, 1]; //98 : [SHIFT]
+        $this->T128[] = [1, 1, 3, 1, 4, 1]; //99 : [Cswap]
+        $this->T128[] = [1, 1, 4, 1, 3, 1]; //100 : [Bswap]
+        $this->T128[] = [3, 1, 1, 1, 4, 1]; //101 : [Aswap]
+        $this->T128[] = [4, 1, 1, 1, 3, 1]; //102 : [FNC1]
+        $this->T128[] = [2, 1, 1, 4, 1, 2]; //103 : [Astart]
+        $this->T128[] = [2, 1, 1, 2, 1, 4]; //104 : [Bstart]
+        $this->T128[] = [2, 1, 1, 2, 3, 2]; //105 : [Cstart]
+        $this->T128[] = [2, 3, 3, 1, 1, 1]; //106 : [STOP]
+        $this->T128[] = [2, 1];             //107 : [END BAR]
 
-        for ($i = 32; $i <= 95; $i++) {                                            // jeux de caractères
+        for ($i = 32; $i <= 95; $i++) { // jeux de caractères
             $this->ABCset .= chr($i);
         }
         $this->Aset = $this->ABCset;
@@ -201,30 +200,30 @@ class MyPdf2025 extends FPDF
 
         for ($i = 0; $i <= 31; $i++) {
             $this->ABCset .= chr($i);
-            $this->Aset .= chr($i);
+            $this->Aset   .= chr($i);
         }
         for ($i = 96; $i <= 127; $i++) {
             $this->ABCset .= chr($i);
-            $this->Bset .= chr($i);
+            $this->Bset   .= chr($i);
         }
-        for ($i = 200; $i <= 210; $i++) {                                           // controle 128
+        for ($i = 200; $i <= 210; $i++) { // controle 128
             $this->ABCset .= chr($i);
-            $this->Aset .= chr($i);
-            $this->Bset .= chr($i);
+            $this->Aset   .= chr($i);
+            $this->Bset   .= chr($i);
         }
         $this->Cset = "0123456789" . chr(206);
 
-        for ($i = 0; $i < 96; $i++) {                                                   // convertisseurs des jeux A & B
+        for ($i = 0; $i < 96; $i++) { // convertisseurs des jeux A & B
             @$this->SetFrom["A"] .= chr($i);
             @$this->SetFrom["B"] .= chr($i + 32);
-            @$this->SetTo["A"] .= chr(($i < 32) ? $i + 64 : $i - 32);
-            @$this->SetTo["B"] .= chr($i);
+            @$this->SetTo["A"]   .= chr(($i < 32) ? $i + 64 : $i - 32);
+            @$this->SetTo["B"]   .= chr($i);
         }
-        for ($i = 96; $i < 107; $i++) {                                                 // contrôle des jeux A & B
+        for ($i = 96; $i < 107; $i++) { // contrôle des jeux A & B
             @$this->SetFrom["A"] .= chr($i + 104);
             @$this->SetFrom["B"] .= chr($i + 104);
-            @$this->SetTo["A"] .= chr($i);
-            @$this->SetTo["B"] .= chr($i);
+            @$this->SetTo["A"]   .= chr($i);
+            @$this->SetTo["B"]   .= chr($i);
         }
     }
 
@@ -234,7 +233,7 @@ class MyPdf2025 extends FPDF
      * @param none
      * @return none
      **/
-    function header()
+    public function header()
     {
         if ($this->temheader) {
 
@@ -250,15 +249,15 @@ class MyPdf2025 extends FPDF
      * @param none
      * @return none
      **/
-    function footer()
+    public function footer()
     {
         if ($this->temfooter) {
             $this->SetY(-10);
             $this->SetFont('Arial', '', 8);
-            $this->Cell(80, 3, utf8_decode('R. Professor Alfredo Valente, 1158 - Jd Gramados - Alm. Tamandaré - CEP 83.504-000'), 0, 0, 'L');
-            $this->Cell(0, 3, utf8_decode('+55 41 3657-7755'), 0, 0, 'C');
-            // $this->Cell(0,3,utf8_decode('E-mail: pelegrini@pelegrini.ind.br'),0,1,'R');
-            // $this->Cell(0,0,utf8_decode('Artefatos de Metais Pelegrini Ltda'),0,1,'L');
+            $this->Cell(80, 3, mb_convert_encoding('R. Professor Alfredo Valente, 1158 - Jd Gramados - Alm. Tamandaré - CEP 83.504-000', 'ISO-8859-1', 'UTF-8'), 0, 0, 'L');
+            $this->Cell(0, 3, mb_convert_encoding('+55 41 3657-7755', 'ISO-8859-1', 'UTF-8'), 0, 0, 'C');
+            // $this->Cell(0,3,mb_convert_encoding('E-mail: pelegrini@pelegrini.ind.br', 'ISO-8859-1', 'UTF-8'),0,1,'R');
+            // $this->Cell(0,0,mb_convert_encoding('Artefatos de Metais Pelegrini Ltda', 'ISO-8859-1', 'UTF-8'),0,1,'L');
             // $this->Cell(0,0,$this->footer_center,0,0,'C');
             $this->Cell(0, 3, "{$this->footer_page_literal} " . $this->PageNo() . '/{nb}', 0, 0, 'R');
         }
@@ -270,7 +269,7 @@ class MyPdf2025 extends FPDF
      * @param none
      * @return string
      **/
-    function get_logo()
+    public function get_logo()
     {
         return $this->logo;
     }
@@ -281,7 +280,7 @@ class MyPdf2025 extends FPDF
      * @param none
      * @return string
      **/
-    function get_orientation()
+    public function get_orientation()
     {
         return $this->orientation;
     }
@@ -292,7 +291,7 @@ class MyPdf2025 extends FPDF
      * @param none
      * @return string
      **/
-    function get_size()
+    public function get_size()
     {
         return $this->size;
     }
@@ -303,7 +302,7 @@ class MyPdf2025 extends FPDF
      * @param none
      * @return int
      **/
-    function get_rotation()
+    public function get_rotation()
     {
         return $this->rotation;
     }
@@ -314,7 +313,7 @@ class MyPdf2025 extends FPDF
      * @param none
      * @return string
      **/
-    function get_units()
+    public function get_units()
     {
         return $this->units;
     }
@@ -325,7 +324,7 @@ class MyPdf2025 extends FPDF
      * @param none
      * @return string
      **/
-    function get_head_title()
+    public function get_head_title()
     {
         return $this->head_title;
     }
@@ -336,7 +335,7 @@ class MyPdf2025 extends FPDF
      * @param none
      * @return string
      **/
-    function get_head_subtitle()
+    public function get_head_subtitle()
     {
         return $this->head_subtitle;
     }
@@ -347,7 +346,7 @@ class MyPdf2025 extends FPDF
      * @param none
      * @return string
      **/
-    function SetFooterCenter($footcenter)
+    public function SetFooterCenter($footcenter)
     {
         $this->footer_center = $footcenter;
     }
@@ -361,22 +360,25 @@ class MyPdf2025 extends FPDF
      * @return void
      **/
 
-    function Add_Page($orientation = NULL, $size = NULL, $rotation = NULL)
+    public function Add_Page($orientation = null, $size = null, $rotation = null)
     {
-        if (is_null($orientation))
+        if (is_null($orientation)) {
             $orientation = $this->orientation;
-        else
+        } else {
             $this->orientation = $orientation;
+        }
 
-        if (is_null($size))
+        if (is_null($size)) {
             $size = $this->size;
-        else
+        } else {
             $this->size = $size;
+        }
 
-        if (is_null($rotation))
+        if (is_null($rotation)) {
             $rotation = $this->rotation;
-        else
+        } else {
             $this->rotation = $rotation;
+        }
 
         $this->AddPage($this->orientation, $this->size, $this->rotation);
     }
@@ -403,11 +405,10 @@ class MyPdf2025 extends FPDF
      *                   Only used for destinations I and D.
      *                   The default value is false.
      **/
-    function render($dest = 'I', $name = 'document.pdf')
+    public function render($dest = 'I', $name = 'document.pdf')
     {
         $this->Output($dest, $name, $this->format);
     }
-
 
     /**
      * format function
@@ -415,9 +416,9 @@ class MyPdf2025 extends FPDF
      * @param string
      * @return string
      **/
-    function format($str)
+    public function format($str)
     {
-        return utf8_decode($str);
+        return mb_convert_encoding($str, 'ISO-8859-1', 'UTF-8');
     }
 
     /**
@@ -429,11 +430,11 @@ class MyPdf2025 extends FPDF
      * @return void
      **/
 
-    function ImageProp($image, $x, $y, $w, $h)
+    public function ImageProp($image, $x, $y, $w, $h)
     {
         list($width, $height) = getimagesize($image);
 
-        // Calculando a proporção 
+        // Calculando a proporção
         $ratio_orig = $width / $height;
 
         $worig = $w;
@@ -460,30 +461,30 @@ class MyPdf2025 extends FPDF
         }
         // acha o centro
         $dif = $worig - $w;
-        $x = $x + ($dif / 2);
+        $x   = $x + ($dif / 2);
 
         $dify = $horig - $h;
-        $y = $y + ($dify / 2);
+        $y    = $y + ($dify / 2);
 
         $this->Image($image, $x, $y, $w, $h);
 
         $this->setY($y + $h + 1);
     }
 
-    function EtiqTexto($etiq, $texto, $font, $tamfont, $h, $w, $border = 0, $ln = 0, $align = 'L', $preenche = 0, $negita = '')
+    public function EtiqTexto($etiq, $texto, $font, $tamfont, $h, $w, $border = 0, $ln = 0, $align = 'L', $preenche = 0, $negita = '')
     {
 
-        $coreFonts = ['arial','helvetica','times','courier','symbol','zapfdingbats'];
+        $coreFonts = ['arial', 'helvetica', 'times', 'courier', 'symbol', 'zapfdingbats'];
 
-        if (!is_string($font) || is_numeric($font) || !in_array(strtolower($font), $coreFonts)) {
+        if (! is_string($font) || is_numeric($font) || ! in_array(strtolower($font), $coreFonts)) {
             $font = 'Arial';
         }
-        
-        if (!is_string($negita)) {
+
+        if (! is_string($negita)) {
             $negita = '';
         }
-        
-        if (!is_numeric($tamfont)) {
+
+        if (! is_numeric($tamfont)) {
             $tamfont = 8;
         }
         $this->SetFont($font, 'B', $tamfont);
@@ -510,7 +511,7 @@ class MyPdf2025 extends FPDF
             // }
             // $x += $wt;
             $this->Cell($w, $h, formata_texto($texto), $border, $ln, $align, $preenche);
-            if ($w == 0  && $ln == 0) {
+            if ($w == 0 && $ln == 0) {
                 $x = $x + (strlen(formata_texto($texto)) * 2) + 10;
                 $this->SetX($x);
             }
@@ -524,9 +525,8 @@ class MyPdf2025 extends FPDF
         // $this->SetX($x);
     }
 
-
     // Função que interpreta o HTML e escreve no PDF
-    function WriteHTML($html)
+    public function WriteHTML($html)
     {
         // Remove quebras de linha
         $html = str_replace("\n", ' ', $html);
@@ -535,24 +535,26 @@ class MyPdf2025 extends FPDF
         foreach ($a as $i => $e) {
             if ($i % 2 == 0) {
                 // Texto
-                if ($this->HREF)
+                if ($this->HREF) {
                     $this->PutLink($this->HREF, $e);
-                else
+                } else {
                     $this->Write(5, $e);
+                }
             } else {
                 // Tag
                 // Se for tag de fechamento
-                if ($e[0] == '/')
+                if ($e[0] == '/') {
                     $this->CloseTag(strtoupper(substr($e, 1)));
-                else {
+                } else {
                     // Separa a tag dos atributos
-                    $a2 = explode(' ', $e);
-                    $tag = strtoupper(array_shift($a2));
-                    $attr = array();
+                    $a2   = explode(' ', $e);
+                    $tag  = strtoupper(array_shift($a2));
+                    $attr = [];
                     // Lê os atributos, se existirem
                     foreach ($a2 as $v) {
-                        if (preg_match('/([^=]*)=["\']?([^"\']*)["\']?/', $v, $a3))
+                        if (preg_match('/([^=]*)=["\']?([^"\']*)["\']?/', $v, $a3)) {
                             $attr[strtoupper($a3[1])] = $a3[2];
+                        }
                     }
                     $this->OpenTag($tag, $attr);
                 }
@@ -561,23 +563,31 @@ class MyPdf2025 extends FPDF
     }
 
     // Função para abrir uma tag e aplicar seus atributos/estilos
-    function OpenTag($tag, $attr)
+    public function OpenTag($tag, $attr)
     {
-        if ($tag == 'B' || $tag == 'I' || $tag == 'U')
+        if ($tag == 'B' || $tag == 'I' || $tag == 'U') {
             $this->SetStyle($tag, true);
-        if ($tag == 'A')
+        }
+
+        if ($tag == 'A') {
             $this->HREF = isset($attr['HREF']) ? $attr['HREF'] : '';
-        if ($tag == 'BR')
+        }
+
+        if ($tag == 'BR') {
             $this->Ln(5);
+        }
     }
 
     // Função para fechar uma tag e retirar os estilos aplicados
-    function CloseTag($tag)
+    public function CloseTag($tag)
     {
-        if ($tag == 'B' || $tag == 'I' || $tag == 'U')
+        if ($tag == 'B' || $tag == 'I' || $tag == 'U') {
             $this->SetStyle($tag, false);
-        if ($tag == 'A')
+        }
+
+        if ($tag == 'A') {
             $this->HREF = '';
+        }
 
         if ($tag == 'P') {
             $this->Ln(5);
@@ -585,22 +595,28 @@ class MyPdf2025 extends FPDF
     }
 
     // Função para alterar o estilo de fonte (negrito, itálico, sublinhado)
-    function SetStyle($tag, $enable)
+    public function SetStyle($tag, $enable)
     {
         // Atualiza o contador do estilo
         $this->$tag += ($enable ? 1 : -1);
-        $style = '';
-        if ($this->B > 0)
+        $style       = '';
+        if ($this->B > 0) {
             $style .= 'B';
-        if ($this->I > 0)
+        }
+
+        if ($this->I > 0) {
             $style .= 'I';
-        if ($this->U > 0)
+        }
+
+        if ($this->U > 0) {
             $style .= 'U';
+        }
+
         $this->SetFont('', $style);
     }
 
     // Função para inserir um hyperlink
-    function PutLink($URL, $txt)
+    public function PutLink($URL, $txt)
     {
         // Cor azul para links
         $this->SetTextColor(0, 0, 255);
@@ -613,18 +629,17 @@ class MyPdf2025 extends FPDF
         $this->SetTextColor(0);
     }
 
-
     //________________ Fonction encodage et dessin du code 128 _____________________
-    function Code128($x, $y, $code, $w, $h)
+    public function Code128($x, $y, $code, $w, $h)
     {
-        $Aguid = "";                                                                      // Création des guides de choix ABC
+        $Aguid = ""; // Création des guides de choix ABC
         $Bguid = "";
         $Cguid = "";
         for ($i = 0; $i < strlen($code); $i++) {
-            $needle = substr($code, $i, 1);
-            $Aguid .= ((strpos($this->Aset, $needle) === false) ? "N" : "O");
-            $Bguid .= ((strpos($this->Bset, $needle) === false) ? "N" : "O");
-            $Cguid .= ((strpos($this->Cset, $needle) === false) ? "N" : "O");
+            $needle  = substr($code, $i, 1);
+            $Aguid  .= ((strpos($this->Aset, $needle) === false) ? "N" : "O");
+            $Bguid  .= ((strpos($this->Bset, $needle) === false) ? "N" : "O");
+            $Cguid  .= ((strpos($this->Cset, $needle) === false) ? "N" : "O");
         }
 
         $SminiC = "OOOO";
@@ -633,60 +648,60 @@ class MyPdf2025 extends FPDF
         $crypt = "";
         while ($code > "") {
             // BOUCLE PRINCIPALE DE CODAGE
-            $i = strpos($Cguid, $SminiC);                                                // forçage du jeu C, si possible
+            $i = strpos($Cguid, $SminiC); // forçage du jeu C, si possible
             if ($i !== false) {
                 $Aguid[$i] = "N";
                 $Bguid[$i] = "N";
             }
 
-            if (substr($Cguid, 0, $IminiC) == $SminiC) {                                  // jeu C
-                $crypt .= chr(($crypt > "") ? $this->JSwap["C"] : $this->JStart["C"]);  // début Cstart, sinon Cswap
-                $made = strpos($Cguid, "N");                                             // étendu du set C
+            if (substr($Cguid, 0, $IminiC) == $SminiC) {                           // jeu C
+                $crypt .= chr(($crypt > "") ? $this->JSwap["C"] : $this->JStart["C"]); // début Cstart, sinon Cswap
+                $made   = strpos($Cguid, "N");                                         // étendu du set C
                 if ($made === false) {
                     $made = strlen($Cguid);
                 }
                 if (fmod($made, 2) == 1) {
-                    $made--;                                                            // seulement un nombre pair
+                    $made--; // seulement un nombre pair
                 }
                 for ($i = 0; $i < $made; $i += 2) {
-                    $crypt .= chr(strval(substr($code, $i, 2)));                          // conversion 2 par 2
+                    $crypt .= chr(strval(substr($code, $i, 2))); // conversion 2 par 2
                 }
                 $jeu = "C";
             } else {
-                $madeA = strpos($Aguid, "N");                                            // étendu du set A
+                $madeA = strpos($Aguid, "N"); // étendu du set A
                 if ($madeA === false) {
                     $madeA = strlen($Aguid);
                 }
-                $madeB = strpos($Bguid, "N");                                            // étendu du set B
+                $madeB = strpos($Bguid, "N"); // étendu du set B
                 if ($madeB === false) {
                     $madeB = strlen($Bguid);
                 }
-                $made = (($madeA < $madeB) ? $madeB : $madeA);                         // étendu traitée
-                $jeu = (($madeA < $madeB) ? "B" : "A");                                // Jeu en cours
+                $made = (($madeA < $madeB) ? $madeB : $madeA); // étendu traitée
+                $jeu  = (($madeA < $madeB) ? "B" : "A");       // Jeu en cours
 
                 $crypt .= chr(($crypt > "") ? $this->JSwap[$jeu] : $this->JStart[$jeu]); // début start, sinon swap
 
                 $crypt .= strtr(substr($code, 0, $made), $this->SetFrom[$jeu], $this->SetTo[$jeu]); // conversion selon jeu
 
             }
-            $code = substr($code, $made);                                           // raccourcir légende et guides de la zone traitée
+            $code  = substr($code, $made); // raccourcir légende et guides de la zone traitée
             $Aguid = substr($Aguid, $made);
             $Bguid = substr($Bguid, $made);
             $Cguid = substr($Cguid, $made);
-        }                                                                          // FIN BOUCLE PRINCIPALE
+        } // FIN BOUCLE PRINCIPALE
 
-        $check = ord($crypt[0]);                                                   // calcul de la somme de contrôle
+        $check = ord($crypt[0]); // calcul de la somme de contrôle
         for ($i = 0; $i < strlen($crypt); $i++) {
             $check += (ord($crypt[$i]) * $i);
         }
         $check %= 103;
 
-        $crypt .= chr($check) . chr(106) . chr(107);                               // Chaine cryptée complète
+        $crypt .= chr($check) . chr(106) . chr(107); // Chaine cryptée complète
 
-        $i = (strlen($crypt) * 11) - 8;                                            // calcul de la largeur du module
+        $i     = (strlen($crypt) * 11) - 8; // calcul de la largeur du module
         $modul = $w / $i;
 
-        for ($i = 0; $i < strlen($crypt); $i++) {                                      // BOUCLE D'IMPRESSION
+        for ($i = 0; $i < strlen($crypt); $i++) { // BOUCLE D'IMPRESSION
             $c = $this->T128[ord($crypt[$i])];
             for ($j = 0; $j < count($c); $j++) {
                 $this->Rect($x, $y, $c[$j] * $modul, $h, "F");
@@ -695,7 +710,7 @@ class MyPdf2025 extends FPDF
         }
     }
 
-    function Code39($x, $y, $code, $ext = true, $cks = false, $w = 0.4, $h = 20, $wide = true)
+    public function Code39($x, $y, $code, $ext = true, $cks = false, $w = 0.4, $h = 20, $wide = true)
     {
 
         //Imprime o codigo abaixo do codbar
@@ -710,19 +725,21 @@ class MyPdf2025 extends FPDF
             //Convert to upper case
             $code = strtoupper($code);
             //Check validity
-            if (!preg_match('|^[0-9A-Z. $/+%-]*$|', $code))
+            if (! preg_match('|^[0-9A-Z. $/+%-]*$|', $code)) {
                 $this->Error('Invalid barcode value: ' . $code);
+            }
         }
 
         //Compute checksum
-        if ($cks)
+        if ($cks) {
             $code .= $this->checksum_code39($code);
+        }
 
         //Add start and stop characters
         $code = '*' . $code . '*';
 
         //Conversion tables
-        $narrow_encoding = array(
+        $narrow_encoding = [
             '0' => '101001101101',
             '1' => '110100101011',
             '2' => '101100101011',
@@ -766,10 +783,10 @@ class MyPdf2025 extends FPDF
             '$' => '100100100101',
             '/' => '100100101001',
             '+' => '100101001001',
-            '%' => '101001001001'
-        );
+            '%' => '101001001001',
+        ];
 
-        $wide_encoding = array(
+        $wide_encoding  = [
             '0' => '101000111011101',
             '1' => '111010001010111',
             '2' => '101110001010111',
@@ -813,8 +830,8 @@ class MyPdf2025 extends FPDF
             '$' => '100010001000101',
             '/' => '100010001010001',
             '+' => '100010100010001',
-            '%' => '101000100010001'
-        );
+            '%' => '101000100010001',
+        ];
 
         $encoding = $wide ? $wide_encoding : $narrow_encoding;
 
@@ -823,25 +840,26 @@ class MyPdf2025 extends FPDF
 
         //Convert to bars
         $encode = '';
-        for ($i = 0; $i < strlen($code); $i++)
+        for ($i = 0; $i < strlen($code); $i++) {
             $encode .= $encoding[$code[$i]] . $gap;
+        }
 
         //Draw bars
         $this->draw_code39($encode, $x, $y, $w, $h);
     }
 
-    function checksum_code39($code)
+    public function checksum_code39($code)
     {
 
         //Compute the modulo 43 checksum
         // $chars = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-        // 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 
-        // 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 
-        // 'U', 'V', 'W', 'X', 'Y', 'Z', '-', '.', ' ', '$', 
+        // 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+        // 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+        // 'U', 'V', 'W', 'X', 'Y', 'Z', '-', '.', ' ', '$',
         // '/', '+', '%');
 
         //Compute the modulo 36 checksum
-        $chars = array(
+        $chars = [
             '0',
             '1',
             '2',
@@ -884,123 +902,123 @@ class MyPdf2025 extends FPDF
             '$',
             '/',
             '+',
-            '%'
-        );
+            '%',
+        ];
         $sum = 0;
         for ($i = 0; $i < strlen($code); $i++) {
-            $a = array_keys($chars, $code[$i]);
+            $a    = array_keys($chars, $code[$i]);
             $sum += $a[0];
         }
         $r = $sum % 43;
         return $chars[$r];
     }
 
-    function encode_code39_ext($code)
+    public function encode_code39_ext($code)
     {
 
         //Encode characters in extended mode
 
-        $encode = array(
-            chr(0) => '%U',
-            chr(1) => '$A',
-            chr(2) => '$B',
-            chr(3) => '$C',
-            chr(4) => '$D',
-            chr(5) => '$E',
-            chr(6) => '$F',
-            chr(7) => '$G',
-            chr(8) => '$H',
-            chr(9) => '$I',
-            chr(10) => '$J',
-            chr(11) => '£K',
-            chr(12) => '$L',
-            chr(13) => '$M',
-            chr(14) => '$N',
-            chr(15) => '$O',
-            chr(16) => '$P',
-            chr(17) => '$Q',
-            chr(18) => '$R',
-            chr(19) => '$S',
-            chr(20) => '$T',
-            chr(21) => '$U',
-            chr(22) => '$V',
-            chr(23) => '$W',
-            chr(24) => '$X',
-            chr(25) => '$Y',
-            chr(26) => '$Z',
-            chr(27) => '%A',
-            chr(28) => '%B',
-            chr(29) => '%C',
-            chr(30) => '%D',
-            chr(31) => '%E',
-            chr(32) => ' ',
-            chr(33) => '/A',
-            chr(34) => '/B',
-            chr(35) => '/C',
-            chr(36) => '/D',
-            chr(37) => '/E',
-            chr(38) => '/F',
-            chr(39) => '/G',
-            chr(40) => '/H',
-            chr(41) => '/I',
-            chr(42) => '/J',
-            chr(43) => '/K',
-            chr(44) => '/L',
-            chr(45) => '-',
-            chr(46) => '.',
-            chr(47) => '/O',
-            chr(48) => '0',
-            chr(49) => '1',
-            chr(50) => '2',
-            chr(51) => '3',
-            chr(52) => '4',
-            chr(53) => '5',
-            chr(54) => '6',
-            chr(55) => '7',
-            chr(56) => '8',
-            chr(57) => '9',
-            chr(58) => '/Z',
-            chr(59) => '%F',
-            chr(60) => '%G',
-            chr(61) => '%H',
-            chr(62) => '%I',
-            chr(63) => '%J',
-            chr(64) => '%V',
-            chr(65) => 'A',
-            chr(66) => 'B',
-            chr(67) => 'C',
-            chr(68) => 'D',
-            chr(69) => 'E',
-            chr(70) => 'F',
-            chr(71) => 'G',
-            chr(72) => 'H',
-            chr(73) => 'I',
-            chr(74) => 'J',
-            chr(75) => 'K',
-            chr(76) => 'L',
-            chr(77) => 'M',
-            chr(78) => 'N',
-            chr(79) => 'O',
-            chr(80) => 'P',
-            chr(81) => 'Q',
-            chr(82) => 'R',
-            chr(83) => 'S',
-            chr(84) => 'T',
-            chr(85) => 'U',
-            chr(86) => 'V',
-            chr(87) => 'W',
-            chr(88) => 'X',
-            chr(89) => 'Y',
-            chr(90) => 'Z',
-            chr(91) => '%K',
-            chr(92) => '%L',
-            chr(93) => '%M',
-            chr(94) => '%N',
-            chr(95) => '%O',
-            chr(96) => '%W',
-            chr(97) => '+A',
-            chr(98) => '+B',
-            chr(99) => '+C',
+        $encode = [
+            chr(0)   => '%U',
+            chr(1)   => '$A',
+            chr(2)   => '$B',
+            chr(3)   => '$C',
+            chr(4)   => '$D',
+            chr(5)   => '$E',
+            chr(6)   => '$F',
+            chr(7)   => '$G',
+            chr(8)   => '$H',
+            chr(9)   => '$I',
+            chr(10)  => '$J',
+            chr(11)  => '£K',
+            chr(12)  => '$L',
+            chr(13)  => '$M',
+            chr(14)  => '$N',
+            chr(15)  => '$O',
+            chr(16)  => '$P',
+            chr(17)  => '$Q',
+            chr(18)  => '$R',
+            chr(19)  => '$S',
+            chr(20)  => '$T',
+            chr(21)  => '$U',
+            chr(22)  => '$V',
+            chr(23)  => '$W',
+            chr(24)  => '$X',
+            chr(25)  => '$Y',
+            chr(26)  => '$Z',
+            chr(27)  => '%A',
+            chr(28)  => '%B',
+            chr(29)  => '%C',
+            chr(30)  => '%D',
+            chr(31)  => '%E',
+            chr(32)  => ' ',
+            chr(33)  => '/A',
+            chr(34)  => '/B',
+            chr(35)  => '/C',
+            chr(36)  => '/D',
+            chr(37)  => '/E',
+            chr(38)  => '/F',
+            chr(39)  => '/G',
+            chr(40)  => '/H',
+            chr(41)  => '/I',
+            chr(42)  => '/J',
+            chr(43)  => '/K',
+            chr(44)  => '/L',
+            chr(45)  => '-',
+            chr(46)  => '.',
+            chr(47)  => '/O',
+            chr(48)  => '0',
+            chr(49)  => '1',
+            chr(50)  => '2',
+            chr(51)  => '3',
+            chr(52)  => '4',
+            chr(53)  => '5',
+            chr(54)  => '6',
+            chr(55)  => '7',
+            chr(56)  => '8',
+            chr(57)  => '9',
+            chr(58)  => '/Z',
+            chr(59)  => '%F',
+            chr(60)  => '%G',
+            chr(61)  => '%H',
+            chr(62)  => '%I',
+            chr(63)  => '%J',
+            chr(64)  => '%V',
+            chr(65)  => 'A',
+            chr(66)  => 'B',
+            chr(67)  => 'C',
+            chr(68)  => 'D',
+            chr(69)  => 'E',
+            chr(70)  => 'F',
+            chr(71)  => 'G',
+            chr(72)  => 'H',
+            chr(73)  => 'I',
+            chr(74)  => 'J',
+            chr(75)  => 'K',
+            chr(76)  => 'L',
+            chr(77)  => 'M',
+            chr(78)  => 'N',
+            chr(79)  => 'O',
+            chr(80)  => 'P',
+            chr(81)  => 'Q',
+            chr(82)  => 'R',
+            chr(83)  => 'S',
+            chr(84)  => 'T',
+            chr(85)  => 'U',
+            chr(86)  => 'V',
+            chr(87)  => 'W',
+            chr(88)  => 'X',
+            chr(89)  => 'Y',
+            chr(90)  => 'Z',
+            chr(91)  => '%K',
+            chr(92)  => '%L',
+            chr(93)  => '%M',
+            chr(94)  => '%N',
+            chr(95)  => '%O',
+            chr(96)  => '%W',
+            chr(97)  => '+A',
+            chr(98)  => '+B',
+            chr(99)  => '+C',
             chr(100) => '+D',
             chr(101) => '+E',
             chr(102) => '+F',
@@ -1028,72 +1046,87 @@ class MyPdf2025 extends FPDF
             chr(124) => '%Q',
             chr(125) => '%R',
             chr(126) => '%S',
-            chr(127) => '%T'
-        );
+            chr(127) => '%T',
+        ];
 
         $code_ext = '';
         for ($i = 0; $i < strlen($code); $i++) {
-            if (ord($code[$i]) > 127)
+            if (ord($code[$i]) > 127) {
                 $this->Error('Invalid character: ' . $code[$i]);
+            }
+
             $code_ext .= $encode[$code[$i]];
         }
         return $code_ext;
     }
 
-    function draw_code39($code, $x, $y, $w, $h)
+    public function draw_code39($code, $x, $y, $w, $h)
     {
 
         //Draw bars
 
         for ($i = 0; $i < strlen($code); $i++) {
-            if ($code[$i] == '1')
+            if ($code[$i] == '1') {
                 $this->Rect($x + $i * $w, $y, $w, $h, 'F');
+            }
         }
     }
 
-    function Girar($angulo = 0, $x = -1, $y = -1)
+    public function Girar($angulo = 0, $x = -1, $y = -1)
     {
-        if ($x == -1) $x = $this->x;
+        if ($x == -1) {
+            $x = $this->x;
+        }
 
-        if ($y == -1) $y = $this->y;
+        if ($y == -1) {
+            $y = $this->y;
+        }
 
-        if ($this->angulo != 0) $this->_out('Q');
+        if ($this->angulo != 0) {
+            $this->_out('Q');
+        }
 
         $this->angulo = $angulo;
         if ($angulo != 0) {
             $angulo *= M_PI / 180;
-            $c = cos($angulo);
-            $s = sin($angulo);
-            $cx = $x * $this->k;
-            $cy = ($this->h - $y) * $this->k;
+            $c       = cos($angulo);
+            $s       = sin($angulo);
+            $cx      = $x * $this->k;
+            $cy      = ($this->h - $y) * $this->k;
 
             $this->_out(sprintf('q %.5f %.5f %.5f %.5f %.2f %.2f cm 1 0 0 1 %.2f %.2f cm', $c, $s, -$s, $c, $cx, $cy, -$cx, -$cy));
         }
     }
 
-    function Rotate($angle, $x = -1, $y = -1)
+    public function Rotate($angle, $x = -1, $y = -1)
     {
-        if ($x == -1)
+        if ($x == -1) {
             $x = $this->x;
-        if ($y == -1)
+        }
+
+        if ($y == -1) {
             $y = $this->y;
-        if ($this->angle != 0)
+        }
+
+        if ($this->angle != 0) {
             $this->_out('Q');
+        }
+
         $this->angle = $angle;
         if ($angle != 0) {
             $angle *= M_PI / 180;
-            $c = cos($angle);
-            $s = sin($angle);
-            $cx = $x * $this->k;
-            $cy = ($this->h - $y) * $this->k;
+            $c      = cos($angle);
+            $s      = sin($angle);
+            $cx     = $x * $this->k;
+            $cy     = ($this->h - $y) * $this->k;
             $this->_out(sprintf('q %.5F %.5F %.5F %.5F %.2F %.2F cm 1 0 0 1 %.2F %.2F cm', $c, $s, -$s, $c, $cx, $cy, -$cx, -$cy));
         }
     }
 
-    function MultiCellSafe($w, $h, $txt, $border = 0, $align = 'J', $fill = false)
+    public function MultiCellSafe($w, $h, $txt, $border = 0, $align = 'J', $fill = false)
     {
         // Calcula a altura do MultiCell antes de adicioná-lo
-        $nbLines = $this->GetStringWidth($txt) / ($w - 2);
+        $nbLines         = $this->GetStringWidth($txt) / ($w - 2);
         $multiCellHeight = ceil($nbLines) * $h;
 
         // Verifica se cabe na página antes de adicionar
@@ -1103,7 +1136,7 @@ class MyPdf2025 extends FPDF
         $this->MultiCell($w, $h, $txt, $border, $align, $fill);
     }
 
-    function CheckPageBreak($h)
+    public function CheckPageBreak($h)
     {
         // Posição Y atual
         $y = $this->GetY();
@@ -1119,36 +1152,38 @@ class MyPdf2025 extends FPDF
 
     public function calculaLinhas($largura, $texto)
     {
-        $texto = utf8_decode($texto);
+        $texto = mb_convert_encoding($texto, 'ISO-8859-1', 'UTF-8');
 
-        if (!isset($this->CurrentFont) || !isset($this->CurrentFont['cw'])) {
+        if (! isset($this->CurrentFont) || ! isset($this->CurrentFont['cw'])) {
             return 1;
         }
 
-        $cw = &$this->CurrentFont['cw'];
+        $cw   = &$this->CurrentFont['cw'];
         $wmax = ($largura - 2 * $this->cMargin) * 1000 / $this->FontSize;
 
-        $s = str_replace("\r", '', $texto);
-        $nb = strlen($s);
+        $s   = str_replace("\r", '', $texto);
+        $nb  = strlen($s);
         $sep = -1;
-        $i = 0;
-        $j = 0;
-        $l = 0;
-        $nl = 1;
+        $i   = 0;
+        $j   = 0;
+        $l   = 0;
+        $nl  = 1;
 
         while ($i < $nb) {
             $c = $s[$i];
             if ($c == "\n") {
                 $i++;
                 $sep = -1;
-                $j = $i;
-                $l = 0;
+                $j   = $i;
+                $l   = 0;
                 $nl++;
                 continue;
             }
-            if ($c == ' ') $sep = $i;
+            if ($c == ' ') {
+                $sep = $i;
+            }
 
-            if (!isset($cw[$c])) {
+            if (! isset($cw[$c])) {
                 $i++;
                 continue;
             }
@@ -1156,13 +1191,15 @@ class MyPdf2025 extends FPDF
             $l += $cw[$c];
             if ($l > $wmax) {
                 if ($sep == -1) {
-                    if ($i == $j) $i++;
+                    if ($i == $j) {
+                        $i++;
+                    }
                 } else {
                     $i = $sep + 1;
                 }
                 $sep = -1;
-                $j = $i;
-                $l = 0;
+                $j   = $i;
+                $l   = 0;
                 $nl++;
             } else {
                 $i++;
@@ -1170,4 +1207,87 @@ class MyPdf2025 extends FPDF
         }
         return $nl;
     }
-}                                                                             // FIN DE CLASSE
+
+    public function RotatedCell($w, $h, $txt, $border = 0, $ln = 0, $align = 'C', $fill = false)
+    {
+        $x = $this->GetX();
+        $y = $this->GetY();
+
+        // desenha célula
+        $this->Cell($w, $h, '', $border, 0, 'C', $fill);
+
+        // centro da célula
+        $cx = $x + ($w / 2);
+        $cy = $y + ($h / 2);
+
+        // rotaciona no centro
+        $this->Rotate(90, $cx, $cy);
+
+        // largura do texto após rotação vira altura
+        $this->SetXY($cx - ($h / 2), $cy - ($w / 2));
+
+        $this->Cell($h, $w, $txt, 0, 0, $align);
+
+        // reseta rotação
+        $this->Rotate(0);
+
+        // volta cursor
+        $this->SetXY($x + $w, $y);
+
+        if ($ln > 0) {
+            $this->Ln($h);
+        }
+    }
+
+    public function MultiCellLimited($w, $h, $txt, $border = 0, $align = 'L', $fill = false, $maxLines = 2, $maxCharsPerLine = 24)
+    {
+        // Limpa e limita o texto
+        $txt   = preg_replace('/\s+/', ' ', trim($txt));
+        $txt   = substr($txt, 0, $maxLines * $maxCharsPerLine);
+        $lines = str_split($txt, $maxCharsPerLine);
+        $lines = array_slice($lines, 0, $maxLines);
+        // $lines = $maxLines;
+
+        $totalLines = $maxLines;
+
+        // foreach ($lines as $i => $line) {
+        for ($i = 0; $i < $maxLines; $i++) {
+            $line    = $lines[$i] ?? '';
+            $isFirst = ($i == 0);
+            $isLast  = ($i == $totalLines - 1);
+            // Define bordas
+            if ($border) {
+                if ($maxLines == 1) {
+                    $lineBorder = 1;
+                } elseif ($isFirst) {
+                    $lineBorder = 'TLR';
+                } elseif ($isLast) {
+                    $lineBorder = 'BLR';
+                } else {
+                    $lineBorder = 'LR';
+                }
+            } else {
+                $lineBorder = 0;
+            }
+
+            // Última linha -> ln = 0, senão ln = 2 (quebra linha)
+            $ln = $isLast ? 0 : 2;
+            $hf = $h;
+            if (strlen(trim($line)) < $maxCharsPerLine && $isFirst) {
+                $hf = $h * 1.01;
+                // $this->Cell($w, $h * 2, $line, $lineBorder, 0, $align, $fill);
+            } else {
+            }
+            $this->Cell($w, $hf, $line, $lineBorder, $ln, $align, $fill);
+        }
+
+        // Preenche linhas vazias, se necessário
+        for ($i = $totalLines; $i < $maxLines; $i++) {
+            $isLast     = ($i == $maxLines - 1);
+            $lineBorder = $border ? ($isLast ? 'BLR' : 'LR') : 0;
+            $ln         = $isLast ? 0 : 2;
+
+            $this->Cell($w, $h, '', $lineBorder, $ln, $align, $fill);
+        }
+    }
+} // FIN DE CLASSE

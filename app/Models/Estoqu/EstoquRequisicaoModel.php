@@ -2,10 +2,9 @@
 
 namespace App\Models\Estoqu;
 
+use App\Entities\Estoque\EntInspecao;
 use App\Models\LogMonModel;
 use CodeIgniter\Model;
-use App\Entities\Estoque\EntInspecao;
-use App\Entities\Estoque\EntRequisicao;
 
 class EstoquRequisicaoModel extends Model
 {
@@ -13,17 +12,16 @@ class EstoquRequisicaoModel extends Model
     protected $table            = 'est_requisicao';
     protected $view             = 'vw_est_requisicao_lista_relac';
     protected $viewlista        = 'vw_est_requisicao_lista_relac';
-    protected $viewoutra        = 'vw_est_requisicao_produto_relac';
-    protected $viewatend        = 'vw_est_requisicao_produto_atendimento_relac';
+    protected $viewoutra        = 'vw_est_requisicao_produto_relac2';
+    protected $viewatend        = 'vw_est_requisicao_produto_atendimento_v2';
     protected $viewinspe        = 'vw_est_requisicao_produto_inspecao_relac';
     protected $primaryKey       = 'req_id';
     protected $useAutoIncremodt = true;
 
+    protected $returnType     = EntInspecao::class;
+    protected $useSoftDeletes = false;
 
-    protected $returnType       = EntInspecao::class;
-    protected $useSoftDeletes   = false;
-
-    protected $allowedFields    = [
+    protected $allowedFields = [
         'req_id',
         'req_data',
         'req_dataentrega',
@@ -37,18 +35,18 @@ class EstoquRequisicaoModel extends Model
         'req_percseguranca',
         'req_observacao',
         'stt_id',
+        'req_original',
 
     ];
 
     // Callbacks
     protected $allowCallbacks = true;
 
-    protected $afterInsert   = ['depoisInsert'];
-    protected $afterUpdate   = ['depoisUpdate'];
-    protected $afterDelete   = ['depoisDelete'];
+    protected $afterInsert = ['depoisInsert'];
+    protected $afterUpdate = ['depoisUpdate'];
+    protected $afterDelete = ['depoisDelete'];
 
     protected $logdb;
-
 
     protected function depoisInsert(array $data)
     {
@@ -70,7 +68,7 @@ class EstoquRequisicaoModel extends Model
 
     public function getRequisicaoLista($req_id = false, $status = false)
     {
-        $db = db_connect('dbEstoque');
+        $db      = db_connect('dbEstoque');
         $builder = $db->table($this->viewlista);
         $builder->select('*');
         if ($req_id) {
@@ -81,19 +79,19 @@ class EstoquRequisicaoModel extends Model
         }
         // $perfil = session()->get('usu_perfil_id');
         // $builder->like('prf_id', $perfil);
-        $builder->orderBy('req_data');
+        $builder->orderBy('stt_ordem, req_data DESC');
         return $builder->get()->getResult();
     }
 
     public function getRequisicao($req_id = false)
     {
-        $db = db_connect('dbEstoque');
+        $db      = db_connect('dbEstoque');
         $builder = $db->table($this->viewlista);
         $builder->select('*');
         if ($req_id) {
             $builder->where('req_id', $req_id);
         }
-        $builder->orderBy('req_data');
+        $builder->orderBy('stt_ordem, req_data');
         // debug($builder->getCompiledSelect(), true);
         $ret = $builder->get()->getResult();
         return $ret;
@@ -101,24 +99,41 @@ class EstoquRequisicaoModel extends Model
 
     public function getRequisicaoProdutos($req_id = false, $tipo = '')
     {
-        $db = db_connect('dbEstoque');
+        $db      = db_connect('dbEstoque');
         $builder = $db->table($this->viewatend);
         $builder->select('*');
         if ($req_id) {
             $builder->where('req_id', $req_id);
         }
         if ($tipo == 'conferencia') {
-            // $builder->where('rep_quantia = rpa_atendida + rpa_cancelada', null, false);
-            $builder->where('rpa_conferida', 0);
+            // data do atendimento não é nula
+            $builder->where('rpa_data IS NOT NULL');
+            // data da conferencia é nula
+            $builder->groupStart();
+            $builder->where('rpa_data_conferencia', null);
+            $builder->orWhere('rpa_conferida', -1);
+            $builder->groupEnd();
         }
-        // debug($builder->getCompiledSelect(), true);
         $ret = $builder->get()->getResult();
+        // debug($db->getLastQuery(), true);
+        return $ret;
+    }
+    public function getProdutosRequisicao($req_id = false)
+    {
+        $db      = db_connect('dbEstoque');
+        $builder = $db->table($this->viewoutra);
+        $builder->select('*');
+        if ($req_id) {
+            $builder->where('req_id', $req_id);
+        }
+        $ret = $builder->get()->getResult();
+        // debug($db->getLastQuery(), true);
         return $ret;
     }
 
     public function getRequisicaoRep($rep_id = false)
     {
-        $db = db_connect('dbEstoque');
+        $db      = db_connect('dbEstoque');
         $builder = $db->table($this->viewoutra);
         $builder->select('*');
         if ($rep_id) {
@@ -130,7 +145,7 @@ class EstoquRequisicaoModel extends Model
 
     public function getProdutoRequisicao($produto)
     {
-        $db = db_connect('dbEstoque');
+        $db      = db_connect('dbEstoque');
         $builder = $db->table($this->table);
         $builder->select('*');
         $builder->where('pro_id', $produto);
@@ -139,7 +154,7 @@ class EstoquRequisicaoModel extends Model
 
     public function getRequisicaoConferencia($req_id = false, $status = false)
     {
-        $db = db_connect('dbEstoque');
+        $db      = db_connect('dbEstoque');
         $builder = $db->table($this->viewlista);
         $builder->select('*');
         if ($req_id) {
@@ -152,7 +167,7 @@ class EstoquRequisicaoModel extends Model
         $builder->where('tmo_conferencia', 'S');
         // $perfil = session()->get('usu_perfil_id');
         // $builder->like('prf_id', $perfil);
-        $builder->orderBy('req_data');
+        $builder->orderBy('stt_ordem, req_data');
         return $builder->get()->getResult();
     }
 }

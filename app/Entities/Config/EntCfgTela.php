@@ -188,8 +188,10 @@ class EntCfgTela extends Entity
         $trel->label = 'Tabelas Relacionadas';
 
         if (!empty($tabela)) {
+            // debug($tabela);
             $relac = $dicionario->getRelacionamentos($tabela);
-            $trel->valor = relacion_tabela($relac);
+            // debug($relac);
+            $trel->valor = relacion_tabela($relac['relacionamentos']);
         } else {
             $trel->valor = '';
         }

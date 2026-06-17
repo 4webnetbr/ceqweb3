@@ -22,7 +22,7 @@ class OcoSubtOcorrencia extends BaseController
     /**
      * Construtor da Classe
      * construct
-    **/
+     **/
     public function __construct()
     {
         $this->data           = session()->getFlashdata('dados_tela');
@@ -164,7 +164,8 @@ class OcoSubtOcorrencia extends BaseController
         $tacao          = $tipoAcaoModel->getTOAcao($tpo_id);
         $entity = new EntOcoSubtOcorrencia();
 
-        // Gera campos da ação 
+        // Gera campos da ação
+
         for ($a = 0; $a < sizeof($tacao); $a++) {
             $total = sizeof($tacao);
             $fields = $entity->defCamposAcao($tacao[$a], $ind, $total);
@@ -363,6 +364,7 @@ class OcoSubtOcorrencia extends BaseController
         return $this->response->setJSON($ret);
     }
 
+
     /**
      * Gravação
      * store
@@ -406,21 +408,14 @@ class OcoSubtOcorrencia extends BaseController
             if ($exists > 0) {
                 throw new \Exception('MSG_8');
             }
+            if (empty($postado['sut_id'])) {
+                unset($postado['sut_id']);
+            }
 
             // Salvar Tipo de Ocorrência (principal)
             if (!$this->subtocorrencia->save($postado)) {
                 debug($postado);
                 throw new \Exception(implode('<br>', $this->subtocorrencia->errors()));
-            }
-
-            if (empty($postado['sut_id'])) {
-                unset($postado['sut_id']);
-
-                $this->subtocorrencia->insert($postado);
-                $sut_id = $this->subtocorrencia->getInsertID();
-            } else {
-                $sut_id = (int)$postado['sut_id'];
-                $this->subtocorrencia->update($sut_id, $postado);
             }
 
             // Recupera ID do tipo (novo ou existente)

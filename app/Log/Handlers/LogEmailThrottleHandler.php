@@ -2,115 +2,150 @@
 
 namespace App\Log\Handlers;
 
-use Throwable;
 use CodeIgniter\Email\Email;
-use Config\Cache as CacheConfig;
-use Config\Email as EmailConfig;
-use CodeIgniter\Cache\Handlers\FileHandler;
-use CodeIgniter\Log\Handlers\HandlerInterface;
+use CodeIgniter\Log\Handlers\FileHandler;
+use Throwable;
 
-class LogEmailThrottleHandler implements HandlerInterface
+class LogEmailThrottleHandler extends FileHandler
 {
     protected array $config;
     protected string $emailTo;
-    protected string $dateFormat = 'd-m-Y H:i:s';
+    // protected string $dateFormat = 'd-m-Y H:i:s';
+    protected $logPath;
 
     public function __construct(array $config)
     {
-        $this->config = $config;
-        $this->emailTo = $config['to'] ?? 'douglasjf1973@gmail.com';
+        // $this->config = $config;
+        parent::__construct($config);
+        $this->emailTo = 'douglas@4web.net.br';
+        $this->logPath = rtrim($this->path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
     }
 
     public function handle($level, $message): bool
     {
-        try {
-            $level = strtoupper($level);
-            $dataatual  = date($this->dateFormat);
+        // Trace temporário — remover após diagnóstico
+        file_put_contents(
+            WRITEPATH . 'logs/_trace.log',
+            get_class($this) . " -> $level\n",
+            FILE_APPEND
+        );
+        $debugFile = $this->logPath . '/emaildebug.log';
 
-            // Captura mensagem do log
+        try {
+
+            // file_put_contents($debugFile, "[1] START\n", FILE_APPEND);
+
+            $level = strtoupper((string) $level);
+            $dataatual = date('d/m/Y H:i:s');
+
+            // file_put_contents($debugFile, "[2] LEVEL: $level\n", FILE_APPEND);
+
             $text = $message instanceof Throwable
                 ? $message->__toString()
                 : (string) $message;
 
+            // file_put_contents($debugFile, "[3] MESSAGE OK\n", FILE_APPEND);
+
             // Informações básicas
             $ip        = $_SERVER['REMOTE_ADDR'] ?? 'desconhecido';
-            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'indefinido';
             $uri       = $_SERVER['REQUEST_URI'] ?? 'indefinido';
+            $module    = explode('/', trim((string) $uri, '/'))[0] ?? 'indefinido';
             $method    = $_SERVER['REQUEST_METHOD'] ?? 'indefinido';
-            $module    = explode('/', trim($uri, '/'))[0] ?? 'indefinido';
             $baseURL = config('App')->baseURL;
 
             // Dados do usuário
             $usuId   = $_SESSION['usu_id'] ?? 'não identificado';
             $usuNome = $_SESSION['usu_nome'] ?? 'não identificado';
 
-            // Cache (evitar repetições)
-            // Instancia o handler de cache diretamente
-            $cacheConfig = new CacheConfig();
-            $cache = new FileHandler($cacheConfig);
+            // file_put_contents($debugFile, "[4] SERVER DATA OK\n", FILE_APPEND);
 
-            // Criação da chave e verificação do hash
-            $cacheKey = 'log_email_hash_' . md5($level . '_' . $ip . '_' . $module);
-            $currentHash = md5($level . $text);
-            $lastHash = $cache->get($cacheKey);
+            // CACHE TESTE
+            try {
+                // file_put_contents($debugFile, "[5] CACHE INIT\n", FILE_APPEND);
 
-            if ($currentHash === $lastHash) {
-                // log_message('info', 'Erro Repetido ' . $text);
-                return false; // Log repetido, ignora envio
+                $cacheConfig = new \Config\Cache();
+                $cache = new \CodeIgniter\Cache\Handlers\FileHandler($cacheConfig);
+
+                $cacheKey = 'log_email_hash_' . md5($level . '_' . $ip . '_' . $module);
+                $currentHash = md5($level . $text);
+                $lastHash = $cache->get($cacheKey);
+
+                // file_put_contents($debugFile, "[6] CACHE GET OK\n", FILE_APPEND);
+
+                if ($currentHash === $lastHash) {
+                    // file_put_contents($debugFile, "[7] CACHE HIT (IGNORED)\n", FILE_APPEND);
+                    return true;
+                }
+
+                $cache->save($cacheKey, $currentHash, 600);
+
+                // file_put_contents($debugFile, "[8] CACHE SAVE OK\n", FILE_APPEND);
+            } catch (Throwable $e) {
+                file_put_contents($debugFile, "[ERRO CACHE] " . $e->getMessage() . "\n", FILE_APPEND);
             }
 
-            // Salva o novo hash com tempo de expiração
-            $cache->save($cacheKey, $currentHash, 600);
-            // Envio do e-mail
-            $emailConfig = new EmailConfig();
-            // log_message('info', 'EmailConfig '.json_encode($emailConfig));
-            $email = new Email($emailConfig);
-            // log_message('info', 'Email '.json_encode($email));
+            // EMAIL TESTE
+            try {
 
-            $email->setTo($this->emailTo);
-            $email->setSubject("DevCeqWeb3 Log automático em $dataatual - [$level]");
+                // file_put_contents($debugFile, "[9] EMAIL INIT\n", FILE_APPEND);
 
-            $body = <<<HTML
-<b>Nível:</b> $level<br>
-<b>Data:</b> $dataatual<br>
-<b>IP:</b> $ip<br>
-<b>Controler:</b> $module<br>
-<b>URI:</b> $uri<br>
-<b>Método:</b> $method<br>
-<b>Ambiente:</b>$baseURL<br><br>
+                $email = service('email');
 
-<b>Usuário logado:</b><br>
-ID: $usuId<br>
-Nome: $usuNome<br><br>
+                if (!$email) {
+                    file_put_contents($debugFile, "[ERRO] EMAIL SERVICE NULL\n", FILE_APPEND);
+                    return false;
+                }
 
-<b>Mensagem do log:</b><br>
-<pre>$text</pre>
-HTML;
+                $email->setTo($this->emailTo);
 
-            $email->setMessage($body);
+                $isRota404Anonima = str_starts_with(
+                    haystack: trim($text),
+                    needle: 'Rota 404'
+                ) && $usuId === 'não identificado';
 
-            /** Desabilitado o envio de email no Dev */
-            // $enviar = $email->send();
+                $subject = $isRota404Anonima
+                    ? "CeqWeb3 ROTA ERRADA em {$dataatual} - [{$level}]"
+                    : "CeqWeb3 Log automático em {$dataatual} - [{$level}]";
 
-            // if (!$enviar) {
-            //     file_put_contents(WRITEPATH . 'logs/email-handler-error.log', $email->printDebugger(['headers', 'subject', 'body']) . PHP_EOL, FILE_APPEND);
-            //     return false;
-            // }
-            // log_message('info', 'Enviar '.json_encode($enviar));
-            return true;
+                $email->setSubject($subject);
+
+                $body = <<<HTML
+                        <b>Nível:</b> $level<br>
+                        <b>Data:</b> $dataatual<br>
+                        <b>IP:</b> $ip<br>
+                        <b>Controler:</b> $module<br>
+                        <b>URI:</b> $uri<br>
+                        <b>Método:</b> $method<br>
+                        <b>Ambiente:</b>$baseURL<br><br>
+
+                        <b>Usuário logado:</b><br>
+                        ID: $usuId<br>
+                        Nome: $usuNome<br><br>
+
+                        <b>Mensagem do log:</b><br>
+                        <pre>$text</pre>
+                        HTML;
+
+
+                $email->setMessage($body);
+                // $email->setMessage($text);
+
+                // file_put_contents($debugFile, "[10] EMAIL READY\n", FILE_APPEND);
+
+                $enviar = @$email->send();
+
+                // file_put_contents($debugFile, "[11] EMAIL SEND: " . json_encode($enviar) . "\n", FILE_APPEND);
+
+                return true;
+            } catch (Throwable $e) {
+                file_put_contents($debugFile, "[ERRO EMAIL] " . $e->__toString() . "\n", FILE_APPEND);
+                return false;
+            }
         } catch (Throwable $e) {
-            file_put_contents(WRITEPATH . 'logs/email-handler-exception.log', $e->__toString() . PHP_EOL, FILE_APPEND);
+
+            file_put_contents($debugFile, "[ERRO GERAL] " . $e->__toString() . "\n", FILE_APPEND);
+
             return false;
         }
-    }
-
-    public function canHandle($level): bool
-    {
-        return in_array(strtolower($level), array_map('strtolower', $this->config['handles'] ?? []));
-    }
-
-    public function setDateFormat(string $format): void
-    {
-        $this->dateFormat = $format;
     }
 }

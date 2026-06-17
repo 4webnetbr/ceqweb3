@@ -12,11 +12,20 @@ function montaListaDados(tabela, url) {
   jQuery.fn.dataTable.moment("DD/MM/YYYY"); //Formatação sem Hora
 
   // monta o Datable
+  const $table = jQuery("#" + tabela);
+  const lastTitle = $table.find("thead th:last").text().trim();
+  ultimacoluna = "";
+  orderultima = true;
+  if (lastTitle === "Ação") {
+    ultimacoluna = "acao text-start text-nowrap";
+    orderultima = false;
+  }
   table = jQuery("#" + tabela).DataTable({
-    // "serverSide": true,
+    // serverSide: true,
+    // processing: false,
     ajax: {
       url: url,
-      type: "Post",
+      type: "POST",
       datatype: "json",
     },
     retrieve: true,
@@ -35,10 +44,11 @@ function montaListaDados(tabela, url) {
       { "max-width": "8em", targets: [-1] },
       { "min-width": "8em", targets: [-1] },
       { width: "8em", targets: [-1] },
-      { orderable: false, targets: [-1] },
-      { searchable: false, targets: [-1] },
-      { className: "acao text-start text-nowrap", targets: [-1] },
+      { orderable: orderultima, targets: [-1] },
+      { searchable: orderultima, targets: [-1] },
+      { className: ultimacoluna, targets: [-1] },
     ],
+
     buttons: {
       dom: {
         button: {

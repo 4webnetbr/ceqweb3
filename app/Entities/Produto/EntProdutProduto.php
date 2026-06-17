@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Entities\Produto;
 
 use App\Libraries\MyCampo;
@@ -218,7 +219,7 @@ class EntProdutProduto extends Entity
         $qtem->largura     = 50;
         $qtem->minimo      = 0;
         $qtem->maximo      = 9999;
-        $qtem->dispForm    = 'col-6';
+        $qtem->dispForm    = 'col-3';
         $ret['pro_qtdemb'] = $qtem->crInput();
 
         // Ingrediente
@@ -305,7 +306,7 @@ class EntProdutProduto extends Entity
         $qtem->maximo          = 9999;
         $qtem->size            = 4;
         $qtem->maxLength       = 4;
-        $qtem->dispForm        = 'col-6';
+        $qtem->dispForm        = 'col-3';
         $ret['prc_qtdemb_ceq'] = $qtem->crInput();
 
         // Confirma Requisição
@@ -313,7 +314,7 @@ class EntProdutProduto extends Entity
         $creq->valor         = (isset($dados['prc_conf_req'])) ? $dados['prc_conf_req'] : 'N';
         $creq->obrigatorio   = true;
         $creq->leitura       = $show;
-        $creq->dispForm      = 'col-4';
+        $creq->dispForm      = 'col-6';
         $creq->opcoes        = $simnao;
         $creq->selecionado   = $creq->valor;
         $ret['prc_conf_req'] = $creq->cr2opcoes();
@@ -404,7 +405,7 @@ class EntProdutProduto extends Entity
         // // Campo de Depósitos (múltiplo)
         // $valor = (string) $depositos;
         $config             = [];
-        $config['DispForm'] = 'col-6';
+        $config['DispForm'] = 'col-12';
         $config['Largura']  = 50;
 
         // $config['Opcoes'] = $opc_dep;

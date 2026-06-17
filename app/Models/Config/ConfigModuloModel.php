@@ -18,6 +18,7 @@ class ConfigModuloModel extends Model
     protected $allowedFields = [
         'mod_nome',
         'mod_icone',
+        'mod_dbgroup',
         'mod_ativo'
     ];
 

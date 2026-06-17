@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controllers\Estoque;
 
 use App\Controllers\BaseController;
@@ -16,7 +15,7 @@ use App\Models\Produt\ProdutProdutoModel;
 
 class Inspecao extends BaseController
 {
-    public $data = [];
+    public $data      = [];
     public $permissao = '';
     public $requisicao;
     public $requisicaoproduto;
@@ -53,7 +52,7 @@ class Inspecao extends BaseController
      * Erro de Acesso
      * erro
      */
-    function __erro()
+    public function __erro()
     {
         echo view('vw_semacesso', $this->data);
     }
@@ -63,7 +62,7 @@ class Inspecao extends BaseController
      */
     public function index()
     {
-        $this->data['colunas'] = montaColunasLista($this->data, 'req_id');
+        $this->data['colunas']   = montaColunasLista($this->data, 'req_id');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
     }
@@ -76,14 +75,14 @@ class Inspecao extends BaseController
     public function lista()
     {
         // if (!$requis = cache('requis')) {
-        $campos = montaColunasCampos($this->data, 'req_id');
+        $campos       = montaColunasCampos($this->data, 'req_id');
         $dados_requis = $this->requisicao->getRequisicaoLista(false, [25]);
         $dados_requis = filtrarRequisicoesPorPerfil($dados_requis);
         // debug($dados_requis, true);
         if ($dados_requis) {
             $req_ids_assoc = array_map(fn($r) => $r->req_id, $dados_requis);
 
-            $log = buscaLogTabela('est_requisicao', $req_ids_assoc);
+            $log      = buscaLogTabela('est_requisicao', $req_ids_assoc);
             $base_url = base_url($this->data['controler']);
             foreach ($dados_requis as $req) {
                 if ($req->req_id) {
@@ -92,7 +91,7 @@ class Inspecao extends BaseController
                     $url_con = $base_url . '/inspprodutos/' . $req->req_id;
 
                     $req->acao_person = [
-                        "<button class='btn btn-outline-success btn-sm border-0 mx-0 fs-0'
+                        "<button type='button' class='btn btn-outline-success btn-sm border-0 mx-0 fs-0'
                             title='Conferência'
                             onclick='redireciona(\"$url_con\")'>
                             <i class='fas fa-check'></i>
@@ -103,7 +102,7 @@ class Inspecao extends BaseController
         }
         // debug($dados_requis, true);
         $this->data['edicao'] = false;
-        $requis = [
+        $requis               = [
             'data' => montaListaColunasEnt($this->data, 'req_id', $dados_requis, $campos[1]),
         ];
         cache()->save('requis', $requis, 60000);
@@ -122,14 +121,14 @@ class Inspecao extends BaseController
         // Busca a requisição no banco e pega o primeiro registro retornado
         $requisicao = $this->requisicao->getRequisicao($id);
 
-        if (!$requisicao) {
-            return redirectWithError($this->data['controler'],41);
+        if (! $requisicao) {
+            return redirectWithError($this->data['controler'], 41);
             // session()->setFlashdata('erromsg', 'Requisição não encontrada.');
             // return redirect()->to(site_url($this->data['controler']));
         }
         $requisicaoRaw = $requisicao[0];
 
-        $requisicao    = new EntInspecao((array) $requisicaoRaw, $show, 'conf');
+        $requisicao = new EntInspecao((array) $requisicaoRaw, $show, 'conf');
 
         // OBJETOS
         $secao  = new \stdClass();
@@ -139,8 +138,8 @@ class Inspecao extends BaseController
         $fields = $requisicao->campos;
 
         // Define a primeira seção da tela
-        $secao->{0} = 'Dados Gerais';
-        $campos->{0} = [];
+        $secao->{0}    = 'Dados Gerais';
+        $campos->{0}   = [];
         $campos->{0}[] = $fields['req_id'];
         $campos->{0}[] = $fields['req_numero'];
         $campos->{0}[] = $fields['req_data'];
@@ -154,7 +153,7 @@ class Inspecao extends BaseController
             return ($item->rpa_atendida + $item->rpa_cancelada) == $item->rep_quantia;
         });
         $produtos = $filtrado;
-        $pro_ids = array_unique(array_map(fn($p) => $p->pro_id, $produtos));
+        $pro_ids  = array_unique(array_map(fn($p) => $p->pro_id, $produtos));
 
         $resultado = $produtos;
 
@@ -163,37 +162,37 @@ class Inspecao extends BaseController
             $prod = $resultado[$p];
 
             // Inicializa flags padrão de conferência
-            $prod->pre_cbmisturador  ??= 'N';
+            $prod->pre_cbmisturador ??= 'N';
             $prod->pre_undmisturador ??= 'N';
-            $prod->pre_cbfabricante  ??= 'N';
+            $prod->pre_cbfabricante ??= 'N';
             $prod->pre_undfabricante ??= 'N';
-            $prod->pre_cblote        ??= 'N';
-            $prod->pre_undlote       ??= 'N';
+            $prod->pre_cblote ??= 'N';
+            $prod->pre_undlote ??= 'N';
 
             $prod->bt_insvis = '';
             if ($prod->cla_insvis == 'S' && $prod->cla_insvisconf == 'S') {
-                $bt_insvis = new MyCampo();
-                $bt_insvis->id = $bt_insvis->nome = 'bt_insvis';
+                $bt_insvis           = new MyCampo();
+                $bt_insvis->id       = $bt_insvis->nome       = 'bt_insvis';
                 $bt_insvis->classep  = 'btn btn-outline-black btn-sm border-0 mx-0 fs-0';
                 $bt_insvis->i_cone   = "<i class='fa-solid fa-magnifying-glass-arrow-right'></i>";
                 $bt_insvis->label    = '';
                 $bt_insvis->place    = 'Inspeção';
                 $bt_insvis->funcChan = "gerarInspecao({$prod->rep_id})";
-                $prod->bt_insvis = $bt_insvis->crBotao();
+                $prod->bt_insvis     = $bt_insvis->crBotao();
             }
             $fieldsAten = $requisicao->defCamposProdutoAte($prod);
             $fieldsConf = $requisicao->defCamposProdutoConf($prod);
 
-            $prod->rpa_data         = data_br($prod->rpa_data);
+            $prod->rpa_data             = data_br($prod->rpa_data);
             $prod->rpa_data_conferencia = data_br($prod->rpa_data_conferencia);
-            $prod->saldo         = (int)$prod->rpa_atendida - (int)$prod->rpa_conferida;
+            $prod->saldo                = (int) $prod->rpa_atendida - (int) $prod->rpa_conferida;
         }
         // debug($resultado, true);
         $campos->{0}[] = view('partials/pw_produtos_inspecao', ['produtos' => array_map(fn($p) => (array) $p, $resultado)]);
 
         // Define dados principais da tela
         // $this->data['title']       = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
-        $this->data['metodo'] = 'index';
+        $this->data['metodo']      = 'index';
         $this->data['desc_edicao'] = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['destino']     = 'store';
         $this->data['scripts']     = 'my_requisicao';
@@ -209,12 +208,11 @@ class Inspecao extends BaseController
         echo view('vw_edicao', $this->data);
     }
 
-
     /**
      * Exclusão
      * delete
      *
-     * @param mixed $id 
+     * @param mixed $id
      * @return void
      */
     public function delete($id)
@@ -228,15 +226,14 @@ class Inspecao extends BaseController
         // Busca a requisição no banco e pega o primeiro registro retornado
         $requisicao = $this->requisicao->getRequisicao($id);
 
-        if (!$requisicao) {
-            return redirectWithError($this->data['controler'],41);
+        if (! $requisicao) {
+            return redirectWithError($this->data['controler'], 41);
             // session()->setFlashdata('erromsg', 'Requisição não encontrada.');
             // return redirect()->to(site_url($this->data['controler']));
         }
         $requisicaoRaw = $requisicao[0];
 
-        $requisicao    = new EntInspecao((array) $requisicaoRaw, $show, 'conf');
-
+        $requisicao = new EntInspecao((array) $requisicaoRaw, $show, 'conf');
 
         // OBJETOS
         $secao  = new \stdClass();
@@ -246,8 +243,8 @@ class Inspecao extends BaseController
         $fields = $requisicao->campos;
 
         // Define a primeira seção da tela
-        $secao->{0} = 'Dados Gerais';
-        $campos->{0} = [];
+        $secao->{0}    = 'Dados Gerais';
+        $campos->{0}   = [];
         $campos->{0}[] = $fields['req_id'];
         $campos->{0}[] = $fields['req_numero'];
         $campos->{0}[] = $fields['req_data'];
@@ -255,7 +252,7 @@ class Inspecao extends BaseController
         $campos->{0}[] = $fields['tmo_id'];
         $campos->{0}[] = "<div class='col-6'>.</div>";
 
-        $this->data['metodo'] = 'index';
+        $this->data['metodo']      = 'index';
         $this->data['desc_edicao'] = ' Requisição No. ' . str_pad($id, 6, '0', STR_PAD_LEFT);
         $this->data['destino']     = 'store';
         $this->data['scripts']     = 'my_requisicao';
@@ -279,7 +276,7 @@ class Inspecao extends BaseController
     public function store()
     {
         $postado = $this->request->getPost();
-        $ret = [];
+        $ret     = [];
 
         try {
             // AGRUPA DADOS
@@ -297,7 +294,7 @@ class Inspecao extends BaseController
                     ];
                     foreach ($postado as $campo => $val) {
                         if (str_ends_with($campo, "_$id") && $campo !== "repid_$id") {
-                            $nomeCampo = substr($campo, 0, -strlen("_$id"));
+                            $nomeCampo             = substr($campo, 0, -strlen("_$id"));
                             $dadosTemp[$nomeCampo] = $val;
                         }
                     }
@@ -322,25 +319,24 @@ class Inspecao extends BaseController
                     'rpa_conferida'        => $val['rpa_conferida'],
                     'rpa_data_conferencia' => date('Y-m-d H:i:s'),
                 ];
-                if (!$this->requisicaoate->update($val['repid'], $sql)) {
+                if (! $this->requisicaoate->update($val['repid'], $sql)) {
                     throw new \Exception('Erro ao gravar a conferência.');
                 }
             }
 
             $this->requisicao->transStart();
 
-            if (!$this->requisicao->update($postado['req_id'], ['stt_id' => 5])) {
+            if (! $this->requisicao->update($postado['req_id'], ['stt_id' => 5])) {
                 throw new \Exception('Erro ao atualizar status da requisição.');
             }
             $this->requisicaoate->transCommit();
             $this->requisicao->transCommit();
 
-
             // SUCESSO (IGUAL AO PADRÃO)
             $ret['erro'] = false;
             $ret['msg']  = 'Conferência gravada com sucesso!';
             session()->setFlashdata('msg', $ret['msg']);
-            $ret['url']  = site_url($this->data['controler']);
+            $ret['url'] = site_url($this->data['controler']);
         } catch (\Exception $e) {
             $this->requisicaoate->transRollback();
             $this->requisicao->transRollback();

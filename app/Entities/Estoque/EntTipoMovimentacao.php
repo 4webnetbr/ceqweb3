@@ -271,14 +271,21 @@ class EntTipoMovimentacao extends Entity
 
 
 
-    public function defCamposPrf(?object $dados = null, bool $show = false)
+    public function defCamposPrf(?object $dados = null, bool $show = false, $acesso = 'I')
     {
         $ret = [];
 
         // Lista de perfis disponíveis no sistema
+        $acces = 'Inclusão';
+        if ($acesso == 'A') {
+            $acces = 'Atendimento';
+        } else if ($acesso == 'C') {
+            $acces = 'Conferência';
+        }
         $config = [];
         $config['Largura']      = 50;
-        // $config['Leitura']      = $show;
+        $config['Label']        = 'Perfil de ' . $acces;
+        $config['DispForm']     = 'col-12';
         $config['Obrigatorio']  = true;
         $config['Selecionado']  = $dados->prf_id ?? [];
 
@@ -290,7 +297,8 @@ class EntTipoMovimentacao extends Entity
             3,
             'est_tipo_movimentacao_permissao',
             [],
-            $config
+            $config,
+            "prf_id[$acesso]"
         );
 
         return (object) $ret;

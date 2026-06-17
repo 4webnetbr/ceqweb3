@@ -2,22 +2,22 @@
 
 namespace App\Models\Produt;
 
+use App\Entities\Produto\EntProdutos;
 use App\Models\LogMonModel;
 use CodeIgniter\Model;
-use App\Entities\Produto\EntProdutos;
 
 class ProdutLoteModel extends Model
 {
-    protected $DBGroup          = 'dbProduto';
-    protected $table            = 'pro_sap_lote';
-    protected $view             = 'vw_pro_sap_lote_relac';
-    protected $primaryKey       = 'lot_id';
+    protected $DBGroup    = 'dbProduto';
+    protected $table      = 'pro_sap_lote';
+    protected $view       = 'vw_pro_sap_lote_relac';
+    protected $primaryKey = 'lot_id';
     // protected $useAutoIncremodt = false;
 
-    protected $returnType       = EntProdutos::class;
-    protected $useSoftDeletes   = false;
+    protected $returnType     = EntProdutos::class;
+    protected $useSoftDeletes = false;
 
-    protected $allowedFields    = [
+    protected $allowedFields = [
         'lot_id',
         'lot_codbar',
         'lot_codpro',
@@ -30,9 +30,9 @@ class ProdutLoteModel extends Model
     // Callbacks
     protected $allowCallbacks = true;
 
-    protected $afterInsert   = ['depoisInsert'];
-    protected $afterUpdate   = ['depoisUpdate'];
-    protected $afterDelete   = ['depoisDelete'];
+    protected $afterInsert = ['depoisInsert'];
+    protected $afterUpdate = ['depoisUpdate'];
+    protected $afterDelete = ['depoisDelete'];
 
     protected $logdb;
 
@@ -57,7 +57,7 @@ class ProdutLoteModel extends Model
     public function getLote($lot_id = false)
     {
         // Conecta ao banco de produtos
-        $db = db_connect('dbProduto');
+        $db      = db_connect('dbProduto');
         $builder = $db->table('vw_pro_sap_lote_relac');
         $builder->select('*');
 
@@ -71,7 +71,7 @@ class ProdutLoteModel extends Model
     public function getLoteId($lot_id = false)
     {
         // Conecta ao banco de produtos
-        $db = db_connect('dbProduto');
+        $db      = db_connect('dbProduto');
         $builder = $db->table('pro_sap_lote');
         $builder->select('*');
 
@@ -89,18 +89,17 @@ class ProdutLoteModel extends Model
         $builder = $db->table('pro_sap_lote');
         $builder->select('*');
 
-        if (!empty($validade)) {
+        if (! empty($validade)) {
             $builder->where('lot_validade', $validade);
         }
 
         return $builder->get()->getResult();
     }
 
-
     public function getLoteCodbar($codbar = false)
     {
         // Conecta ao banco de produtos
-        $db = db_connect('dbProduto');
+        $db      = db_connect('dbProduto');
         $builder = $db->table('vw_pro_sap_lote_relac');
         $builder->select('*');
 
@@ -111,18 +110,41 @@ class ProdutLoteModel extends Model
         return $builder->get()->getResult();
     }
 
+    public function getLotesByCodbars(array $codbars): array
+    {
+        if ($codbars === []) {
+            return [];
+        }
+
+        $db = db_connect('dbProduto');
+
+        return $db->table('vw_pro_sap_lote_relac')
+            ->select('*')
+            ->whereIn('lot_codbar', $codbars)
+            ->get()
+            ->getResult();
+    }
+
     public function getUltimoLote()
     {
         // Conecta ao banco de produtos
-        $db = db_connect('dbProduto');
+        $db      = db_connect('dbProduto');
         $builder = $db->table('pro_sap_lote');
         $builder->selectMax('lot_codbar');
         return $builder->get()->getResult();
     }
 
+    public function getLotesFaltantes()
+    {
+        // Conecta ao banco de produtos
+        $db      = db_connect('dbProduto');
+        $builder = $db->table('vw_lotes_faltantes');
+        return $builder->get()->getResult();
+    }
+
     public function getLoteSearch($termo)
     {
-        $db = db_connect('dbProduto');
+        $db      = db_connect('dbProduto');
         $builder = $db->table('vw_pro_sap_lote_relac');
 
         $builder->select('*');
@@ -139,10 +161,11 @@ class ProdutLoteModel extends Model
 
     public function getLoteClasse($termo, $classe)
     {
-        $db = db_connect('dbProduto');
-        $builder = $db->table('vw_pro_sap_lote_relac');
+        $db      = db_connect('dbProduto');
+        $builder = $db->table('vw_produto_lote_classe');
 
         $builder->select('*');
+        $builder->where('stt_id', 9);
 
         $builder->groupStart()
             ->like('lot_lote', $termo)
@@ -150,8 +173,7 @@ class ProdutLoteModel extends Model
             ->groupEnd();
 
         $builder->whereIn('cla_id', $classe);
-        $builder->where('stt_id', 9);
-        // $ret = $builder->get()->getResult();
+        $ret = $builder->get()->getResult();
         // debug($db->getLastQuery());
         return $ret;
     }
@@ -159,8 +181,8 @@ class ProdutLoteModel extends Model
     public function getLoteCodproLote($codpro, $lote)
     {
         // Monta filtro LIKE para lote
-        $array = ['lot_lote' => $lote];
-        $db = db_connect('dbProduto');
+        $array   = ['lot_lote' => $lote];
+        $db      = db_connect('dbProduto');
         $builder = $db->table('vw_pro_sap_lote_relac');
         $builder->select('*');
 
@@ -183,8 +205,8 @@ class ProdutLoteModel extends Model
     public function getLoteProduto($termo)
     {
         // Monta filtro por código do produto
-        $array = ['lot_codpro' => $termo];
-        $db = db_connect('dbProduto');
+        $array   = ['lot_codpro' => $termo];
+        $db      = db_connect('dbProduto');
         $builder = $db->table('vw_pro_sap_lote_relac');
         $builder->select('*');
         $builder->where($array);

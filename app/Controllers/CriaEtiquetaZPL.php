@@ -211,50 +211,56 @@ class CriaEtiquetaZPL extends BaseController
 
             // ---------- CÓDIGO DE BARRAS ----------
             if ($isBar) {
-                // Altura do barcode baseada no tamanho em pontos (aprox. 72pt = 25,4mm)
                 $alturaMM = $tamPt * 25.4 / 72;
                 $barH     = max(40, $this->mm2dot($alturaMM));
-                $dados    = $texto !== '' ? $texto : str_repeat('0', max(8, $caracteres));
 
-                // 1) Área TOTAL (100% da etiqueta) reservada ao barcode
-                $areaW = (int)$etqW; // largura total da etiqueta (em dots)
+                $dados = $texto !== '' ? $texto : str_repeat('0', max(8, $caracteres));
 
-                // 2) Largura desejada do BARCODE = % da etiqueta
-                $barTargetW = (int) round($areaW * ($colPct / 100));
+                $areaW = (int) $etqW;
 
-                // 3) Quiet zones laterais (margens) — ~1,2mm de cada lado
-                $quiet = max(8, (int) $this->mm2dot(0));
-                $usableW = max(10, $barTargetW - 2 * $quiet); // largura realmente útil pro desenho
+                // 90% da largura
+                $barTargetW = (int) floor($areaW * 0.9);
 
-                // 4) Estimativa de módulos do Code128 (usado por ^BC):
-                //    Aproxima: 35 módulos de overhead + ~11 módulos por caractere
+                // Quiet zone (~2mm)
+                $quiet = max(16, (int) $this->mm2dot(2));
+
+                $usableW = max(10, $barTargetW - (2 * $quiet));
+
                 $lenDados = max(strlen($dados), max(8, (int)$caracteres));
                 $modules  = 35 + (11 * $lenDados);
 
-                // 5) Calcula module width (largura do traço fino) para caber no espaço útil.
-                //    Limita entre 1 e 10 (limite prático pro ^BY).
+                // 🔥 cálculo base
                 $modW = (int) floor($usableW / $modules);
-                $modW = max(1, min(10, $modW));
 
-                // 6) Largura real do código resultante e centralização na etiqueta
-                $realBarW = ($modules * $modW);
-                // $xPos = $xBase + (int) round(($areaW - $realBarW) / 2);
-                $xPos = $xBase + (int) round(($areaW - $usableW) / 2);
-                // $xPos = $xBase;
+                // limites para 203 DPI
+                $modW = min(4, $modW); // só limita máximo primeiro
 
-                // Posição Y
+                // ⚠️ garante que cabe
+                while ($modW > 1 && ($modules * $modW) > $usableW) {
+                    $modW--;
+                }
+
+                // fallback mínimo
+                if ($modW < 1) {
+                    $modW = 1;
+                }
+
+                $realBarW = $modules * $modW;
+
+                // centralização
+                $xPos = $xBase + (int) round(($areaW - $realBarW) / 2);
+
                 $yPos = $baseY + $yCursor;
 
-                // 7) Emite ZPL: ^BY com module width, ^BC com altura e sem HRI (N)
                 $z .= "^FO{$xPos},{$yPos}";
-                $z .= "^BY{$modW}^BCN,{$barH},N,N,N^FD" . $this->escZpl($dados) . "^FS";
+                $z .= "^BY{$modW},2.5";
+                $z .= "^BCN,{$barH},N,N,N";
+                $z .= "^FD" . $this->escZpl($dados) . "^FS";
 
-                // 8) Respiro abaixo do barcode (1.2mm)
-                $yCursor  += ($barH + $this->mm2dot(1.2));
+                $yCursor += ($barH + $this->mm2dot(1));
                 $ocupouPct = 0;
                 continue;
             }
-
             // ---------- TEXTO ----------
             $hDots = $this->alturaLinhaFromTamanho($tamPt);
             $wDots = (int) round($hDots * 0.35);
@@ -537,7 +543,7 @@ class CriaEtiquetaZPL extends BaseController
                     $view,
                     $fields,
                     false,
-                    1
+                    3
                 );
             } else {
                 $dadosBase = [[]];
@@ -545,7 +551,14 @@ class CriaEtiquetaZPL extends BaseController
 
             $modelo = true;
         } else {
-            $dadosBase = cache()->get($chave) ?: [[]];
+            $redis = \Config\Services::redis();
+
+            $dadosJson = $redis->get($chave);
+
+            $dadosBase = $dadosJson
+                ? json_decode($dadosJson, true)
+                : [[]];
+            // $dadosBase = cache()->get($chave) ?: [[]];
         }
 
         // garante 1 item
@@ -558,7 +571,7 @@ class CriaEtiquetaZPL extends BaseController
         // =========================================================
         $qtia = max(1, (int) $qtia);
 
-        $maxLinhasPreview = 5;
+        $maxLinhasPreview = 2;
         $maxItensPreview  = $this->colunas * $maxLinhasPreview;
 
         $previewQtd = min($qtia, $maxItensPreview);
@@ -688,7 +701,14 @@ class CriaEtiquetaZPL extends BaseController
             }
             $modelo = true;
         } else {
-            $all = cache()->get($chave) ?: [];
+            $redis = \Config\Services::redis();
+
+            $dadosJson = $redis->get($chave);
+
+            $all = $dadosJson
+                ? json_decode($dadosJson, true)
+                : [[]];
+            // $all = cache()->get($chave) ?: [];
             // debug($all);
             $item = is_array($all[0] ?? null) || is_object($all[0] ?? null)
                 ? $all[0]
@@ -759,7 +779,7 @@ class CriaEtiquetaZPL extends BaseController
                 $view   = $model_atual->viewoutra;
             }
             $fields = array_filter(array_column($camp, 'etc_campo'), fn($f) => $f !== '0' && $f !== '1');
-            $dados = $this->common->getListaTabela($model_atual->DBGroup, $view, $fields, false, max(1, 10));
+            $dados = $this->common->getListaTabela($model_atual->DBGroup, $view, $fields, false, max(1, 5));
         }
         if (!$dados) $dados = [[]];
 

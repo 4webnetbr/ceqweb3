@@ -19,6 +19,7 @@ class EntOcoOcorrencia extends Entity
         'lot_id'        => null,
         'oco_qtd'       => null,
         'oco_data'      => null,
+        'oco_data_fim'      => null,
         'stt_id'        => null,
         'tmo_id'        => null,
         'oco_justi'     => null,
@@ -36,6 +37,8 @@ class EntOcoOcorrencia extends Entity
         'stt_id'   => 'integer',
         'tmo_id'   => 'integer',
         'req_id'   => 'integer',
+        'oco_data'   => 'datetime',
+        'oco_data_fim'   => 'datetime',
     ];
 
     public array $campos = [];
@@ -59,6 +62,10 @@ class EntOcoOcorrencia extends Entity
         $reqid->valor       = (isset($dados['req_id'])) ? $dados['req_id'] : '';
         $ret['req_id']      = $reqid->crOculto();
 
+        $repid              = new MyCampo('est_requisicao_produto_ocorrencia', 'rep_id');
+        $repid->valor       = (isset($dados['rep_id'])) ? $dados['rep_id'] : '';
+        $ret['rep_id']      = $repid->crOculto();
+
         // TIPO DE OCORRÊNCIA
         $config = [];
         $config['Label'] = 'Tipo de Ocorrência';
@@ -81,7 +88,7 @@ class EntOcoOcorrencia extends Entity
         // SUBTIPO
         $config['Label']   = 'Subtipo de Ocorrência';
         $config['Pai'] = 'tpo_id';
-        $config['Urlbusca'] = base_url('Buscas/buscaAcoesPorTipo');
+        $config['Urlbusca'] = base_url('Buscas/buscaSubtipoPorTipo');
 
         $ret['sut_id'] = criaSelectRelativo(
             '',
@@ -124,10 +131,6 @@ class EntOcoOcorrencia extends Entity
 
         $ret['cod_erp_show'] = $valid->crInput();
 
-        $claid = new MyCampo('pro_classe', 'cla_id');
-        $claid->valor = '';
-        $ret['cla_id'] = $claid->crOculto();
-
         // LOTE
         $lotid              = new MyCampo('oco_ocorrencia', 'lot_id');
         $lotid->valor       = (isset($dados['lot_id'])) ? $dados['lot_id'] : '';
@@ -145,7 +148,6 @@ class EntOcoOcorrencia extends Entity
         $lotVal = new MyCampo('oco_ocorrencia', 'lot_validade');
         $lotVal->valor = (isset($dados['lot_validade'])) ? $dados['lot_validade'] : '';
         $ret['lot_validade'] = $lotVal->crOculto();
-
 
         // VALIDADE (mostrar na tela) 
         $valid = new MyCampo('pro_sap_lote', 'lot_validade');
@@ -178,9 +180,14 @@ class EntOcoOcorrencia extends Entity
         // PRODUTO 
         $produto           = new MyCampo('pro_sap_produto', 'pro_despro');
         $produto->valor    = (isset($dados['pro_despro'])) ? $dados['pro_despro'] : '';
-        $produto->dispForm = 'col-6';
+        // $produto->dispForm = 'col-6';
         $produto->leitura  = true;
-        $ret['pro_despro'] = $produto->crInput();
+        // $ret['pro_despro'] = $produto->crInput();
+        $produto->linhas      = 2;
+        $produto->colunas     = 50;
+        $produto->largura     = 40;
+        $produto->dispForm    = 'col-6';
+        $ret['pro_despro'] = $produto->crTexto();
 
         // QUANTIDADE
         $qtd               = new MyCampo('oco_ocorrencia', 'oco_qtd');

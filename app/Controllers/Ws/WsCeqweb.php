@@ -3,6 +3,7 @@
 namespace App\Controllers\Ws;
 
 use App\Controllers\BuscasSapiens;
+use App\Entities\Estoque\EntDeposito;
 use App\Libraries\Notificacao;
 use App\Models\CommonModel;
 use App\Models\Config\ConfigPerfilItemModel;
@@ -148,7 +149,7 @@ class WsCeqweb extends ResourceController
             if ($tipo == 'I') {
                 $micro = $this->mode_produto->getProdutoCod($codErp);
                 $status = 9;
-                if (isset($micro[0]['cla_micro']) && $micro[0]['cla_micro'] == 'S') {
+                if (isset($micro[0]->cla_micro) && $micro[0]->cla_micro == 'S') {
                     $status = 8;
                 }
                 // VERIFICA SE O LOTE JÁ EXISTE
@@ -228,9 +229,16 @@ class WsCeqweb extends ResourceController
                 'dep_aceNeg'       => $dep->aceNeg,
                 'dep_codDescricao' => $dep->codDescricao,
             ];
-            // debug($dados);
+            // $entDep = new EntDeposito($dados);
             // save() insere ou atualiza dependendo da existência da chave primária
-            $this->mode_deposito->save($dados);
+            // $salva = $this->mode_deposito->save($dados);
+            $exists = $this->mode_deposito->where('dep_codDep', $dados['dep_codDep'])->first();
+
+            if ($exists) {
+                $this->mode_deposito->update($dados['dep_codDep'], $dados);
+            } else {
+                $this->mode_deposito->insert($dados);
+            }
         }
 
         log_message('info', 'Sincronização de depósitos finalizada.');
@@ -328,90 +336,422 @@ class WsCeqweb extends ResourceController
     /**
      * integraLotesBusca
      */
-    public function integraLotesBusca()
+    // public function integraLotesBusca()
+    // {
+    //     $ultimo = $this->mode_lote->getUltimoLote();
+    //     // debug($ultimo, true);
+
+    //     if (!isset($ultimo[0]->lot_codbar)) {
+    //         $ultimo[0]->lot_codbar = '';
+    //     }
+    //     $ultimo[0]->lot_codbar = '0000000227777';
+    //     // debug($ultimo, true);
+    //     log_message('info', 'Ultimo Lote ' . $ultimo[0]->lot_codbar);
+    //     log_message('info', 'Início do BuscaLotes ' . date('d/m/Y H:i:s'));
+
+    //     $r_lots = $this->busca_sap->buscaLotes($ultimo[0]->lot_codbar);
+    //     // debug($r_lots, true);
+    //     log_message('info', 'Final do BuscaLotes ' . date('d/m/Y H:i:s'));
+
+    //     if ($r_lots) {
+
+    //         if (!is_array($r_lots)) {
+    //             $a_lots = [];
+    //             $a_lots[0] = $r_lots;
+    //             $r_lots = $a_lots;
+    //         }
+
+    //         log_message('info', 'Lotes Retornados ' . json_encode($r_lots));
+    //         log_message('info', 'Total de Lotes  ' . count($r_lots));
+    //         // debug('Total de Lotes  ' . count($r_lots));
+    //         $origem = new ProdutOrigemModel();
+
+    //         for ($d = 0; $d < count($r_lots); $d++) {
+    //             $lot = $r_lots[$d]; // OBJETO
+    //             // debug($lot);
+    //             log_message('info', 'Contador de Lote  ' . $d);
+    //             // log_message('info', 'Lote  ' . json_encode($lot));
+
+    //             $lcodori = $lot->codori ?? null;
+    //             $temori = $origem->getOrigem($lcodori);
+
+    //             if ($temori) {
+
+    //                 $lcodpro = $lot->codpro ?? null;
+    //                 $micro = $this->mode_produto->getProdutoCod($lcodpro);
+    //                 $status = 9;
+
+    //                 if (isset($micro[0]->stt_disponivel) && $micro[0]->stt_disponivel == 'S') {
+    //                     if (isset($micro[0]->cla_micro) && $micro[0]->cla_micro == 'S') {
+    //                         $status = 8;
+    //                         if (isset($micro[0]->stt_id) && $micro[0]->stt_id == 1) {
+    //                             $status = 8;
+    //                         } else {
+    //                             $status = 9;
+    //                         }
+    //                     } else {
+    //                         $status = 9;
+    //                     }
+    //                 } else {
+    //                     $status = 8;
+    //                 }
+
+    //                 $lcodbar = $lot->codbar ?? null;
+    //                 $lcodlot = $lot->codlot ?? null;
+    //                 $ldatenv = $lot->datenv ?? null;
+    //                 $ldatval = $lot->datval ?? null;
+
+    //                 $lots = new \stdClass();
+    //                 $lots->lot_codbar   = $lcodbar;
+    //                 $lots->lot_codpro   = $lcodpro;
+    //                 $lots->lot_lote     = $lcodlot;
+    //                 $lots->lot_entrada  = data_db($ldatenv);
+    //                 $lots->lot_validade = data_db($ldatval);
+    //                 $lots->stt_id       = $status;
+
+    //                 $tem = $this->mode_lote->getLoteCodbar($lcodbar);
+    //                 // debug($lots, true); 
+    //                 if ($tem) {
+    //                     $this->mode_lote->update($tem[0]->lot_id, (array) $lots);
+    //                 } else {
+    //                     $this->mode_lote->insert((array) $lots);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+    public function integraLotesFaltantes(): void
     {
-        $ultimo = $this->mode_lote->getUltimoLote();
-        // debug($ultimo, true);
+        $faltantes = $this->mode_lote->getLotesFaltantes();
+        // debug($faltantes, true); 
+        for ($f = 0; $f < count($faltantes); $f++) {
+            $faltaCodbar = $faltantes[$f]->lot_codbar_faltante;
+            // debug($faltaCodbar);
+            envia_msg_ws('Lote', 'Lote Faltante ' . $faltaCodbar, 'MsgServer', session()->get('usu_id'), 1);
 
-        if (!isset($ultimo[0]->lot_codbar)) {
-            $ultimo[0]->lot_codbar = '';
-        }
+            log_message('info', 'Lote Faltante ' . $faltaCodbar);
+            log_message('info', 'Início do BuscaLotes ' . date('d/m/Y H:i:s'));
 
-        log_message('info', 'Ultimo Lote ' . $ultimo[0]->lot_codbar);
-        log_message('info', 'Início do BuscaLotes ' . date('d/m/Y H:i:s'));
+            $r_lots = $this->busca_sap->buscaLotesFaltante($faltaCodbar);
+            log_message('info', 'Final do BuscaLotes ' . date('d/m/Y H:i:s'));
 
-        $r_lots = $this->busca_sap->buscaLotes($ultimo[0]->lot_codbar);
-
-        log_message('info', 'Final do BuscaLotes ' . date('d/m/Y H:i:s'));
-
-        if ($r_lots) {
-
-            if (!is_array($r_lots)) {
-                $a_lots = [];
-                $a_lots[0] = $r_lots;
-                $r_lots = $a_lots;
+            if (empty($r_lots)) {
+                log_message('info', 'Nenhum lote retornado.');
+                continue;
             }
 
-            log_message('info', 'Lotes Retornados ' . json_encode($r_lots));
-            log_message('info', 'Total de Lotes  ' . count($r_lots));
+            if (!is_array($r_lots)) {
+                $r_lots = [$r_lots];
+            }
+            // debug($r_lots[0], true);
 
-            $origem = new ProdutOrigemModel();
+            // log_message('info', 'Lote Retornado ' . json_decode($r_lots));
+            $origemModel = new ProdutOrigemModel();
 
-            for ($d = 0; $d < count($r_lots); $d++) {
-                $lot = $r_lots[$d]; // OBJETO
+            $lot = $r_lots[0];
+            $codori = $lot->codori ?? null;
+            $codpro = $lot->codpro ?? null;
+            $codbar = $lot->codbar ?? null;
+            $codlot = $lot->codlot ?? null;
+            $datenv = $lot->datenv ?? null;
+            $datval = $lot->datval ?? null;
 
-                log_message('info', 'Contador de Lote  ' . $d);
-                log_message('info', 'Lote  ' . json_encode($lot));
+            $origensExistentes = $origemModel->getOrigensByCodigos([$codori]);
+            $produtosExistentes = $this->mode_produto->getProdutosByCodigos([$codpro]);
+            $lotesExistentes = $this->mode_lote->getLotesByCodbars([$codbar]);
 
-                $lcodori = $lot->codori ?? null;
-                $temori = $origem->getOrigem($lcodori);
+            $origemIndex = [];
+            foreach ($origensExistentes as $origem) {
+                $key = (string) ($origem->ori_codOri ?? '');
+                if ($key !== '') {
+                    $origemIndex[$key] = $origem;
+                }
+            }
+            if (count($origemIndex) == 0) {
+                $lots = [
+                    'lot_codbar'   => $codbar,
+                    'lot_codpro'   => $codpro,
+                    'lot_lote'     => $codlot,
+                    'lot_entrada'  => data_db($datenv),
+                    'lot_validade' => data_db($datval),
+                    'stt_id'       => 8,
+                ];
+                $db = db_connect('dbProduto');
+                $db->transStart();
 
-                if ($temori) {
-
-                    $lcodpro = $lot->codpro ?? null;
-                    $micro = $this->mode_produto->getProdutoCod($lcodpro);
-                    $status = 9;
-
-                    if (isset($micro[0]->stt_disponivel) && $micro[0]->stt_disponivel == 'S') {
-                        if (isset($micro[0]->cla_micro) && $micro[0]->cla_micro == 'S') {
-                            $status = 8;
-                            if (isset($micro[0]->stt_id) && $micro[0]->stt_id == 1) {
-                                $status = 8;
-                            } else {
-                                $status = 9;
-                            }
-                        } else {
-                            $status = 9;
-                        }
-                    } else {
-                        $status = 8;
+                $this->mode_lote->insert($lots);
+                $db->transComplete();
+            } else {
+                $produtoIndex = [];
+                foreach ($produtosExistentes as $produto) {
+                    $key = trim((string) ($produto->pro_codpro ?? ''));
+                    if ($key !== '') {
+                        $produtoIndex[$key] = $produto;
                     }
+                }
 
+                $loteIndex = [];
+                foreach ($lotesExistentes as $loteExistente) {
+                    $assinatura = $this->montarAssinaturaLote(
+                        $loteExistente->lot_codbar ?? null,
+                        $loteExistente->lot_lote ?? null,
+                        $loteExistente->lot_codpro ?? null
+                    );
+
+                    $loteIndex[$assinatura] = $loteExistente;
+                }
+
+                $insertData = [];
+                $updateData = [];
+                $assinaturasProcessadas = [];
+
+                foreach ($r_lots as $index => $lot) {
+                    log_message('info', 'Processando lote ' . $index . ' - ' . $lot->codlot);
+                    envia_msg_ws('Lote', 'Processando lote ' . $index . ' - ' . $lot->codlot, 'MsgServer', session()->get('usu_id'), 1);
+
+                    $lcodori = $lot->codori ?? null;
+                    $lcodpro = trim((string) ($lot->codpro ?? ''));
                     $lcodbar = $lot->codbar ?? null;
                     $lcodlot = $lot->codlot ?? null;
                     $ldatenv = $lot->datenv ?? null;
                     $ldatval = $lot->datval ?? null;
 
-                    $lots = new \stdClass();
-                    $lots->lot_codbar   = $lcodbar;
-                    $lots->lot_codpro   = $lcodpro;
-                    $lots->lot_lote     = $lcodlot;
-                    $lots->lot_entrada  = data_db($ldatenv);
-                    $lots->lot_validade = data_db($ldatval);
-                    $lots->stt_id       = $status;
+                    if ($lcodori === null || $lcodori === '') {
+                        continue;
+                    }
 
-                    $tem = $this->mode_lote->getLoteCodbar($lcodbar);
+                    if (!isset($origemIndex[(string) $lcodori])) {
+                        continue;
+                    }
 
-                    if ($tem) {
-                        $this->mode_lote->update($tem[0]->lot_id, (array) $lots);
+                    $assinatura = $this->montarAssinaturaLote($lcodbar, $lcodlot, $lcodpro);
+
+                    if (isset($assinaturasProcessadas[$assinatura])) {
+                        log_message('warning', 'Lote duplicado no retorno ignorado: ' . $assinatura);
+                        continue;
+                    }
+
+                    $assinaturasProcessadas[$assinatura] = true;
+
+                    $micro = $produtoIndex[$lcodpro] ?? null;
+                    $status = $this->definirStatusLote($micro);
+
+                    $lots = [
+                        'lot_codbar'   => $lcodbar,
+                        'lot_codpro'   => $lcodpro,
+                        'lot_lote'     => $lcodlot,
+                        'lot_entrada'  => data_db($ldatenv),
+                        'lot_validade' => data_db($ldatval),
+                        'stt_id'       => $status,
+                    ];
+
+                    if (isset($loteIndex[$assinatura])) {
+                        $lots['lot_id'] = $loteIndex[$assinatura]->lot_id;
+                        $updateData[] = $lots;
                     } else {
-                        $this->mode_lote->insert((array) $lots);
+                        $insertData[] = $lots;
                     }
                 }
+
+                $db = db_connect('dbProduto');
+                $db->transStart();
+
+                foreach (array_chunk($insertData, 3000) as $chunk) {
+                    if ($chunk !== []) {
+                        $this->mode_lote->insertBatch($chunk);
+                    }
+                }
+
+                foreach (array_chunk($updateData, 3000) as $chunk) {
+                    if ($chunk !== []) {
+                        $this->mode_lote->updateBatch($chunk, 'lot_id');
+                    }
+                }
+
+                $db->transComplete();
             }
         }
+        // log_message('info', 'Total inserts: ' . count($insertData));
+        // log_message('info', 'Total updates: ' . count($updateData));
     }
 
+    public function integraLotesBusca(): void
+    {
+        $ultimo = $this->mode_lote->getUltimoLote();
+
+        $ultimoCodbar = $ultimo[0]->lot_codbar ?? '';
+        // $ultimoCodbar = '0000000229900'; // remova em produção se for teste
+
+        log_message('info', 'Ultimo Lote ' . $ultimoCodbar);
+        log_message('info', 'Início do BuscaLotes ' . date('d/m/Y H:i:s'));
+
+        $r_lots = $this->busca_sap->buscaLotes($ultimoCodbar);
+
+        log_message('info', 'Final do BuscaLotes ' . date('d/m/Y H:i:s'));
+
+        if (empty($r_lots)) {
+            log_message('info', 'Nenhum lote retornado.');
+            return;
+        }
+
+        if (!is_array($r_lots)) {
+            $r_lots = [$r_lots];
+        }
+
+        $origemModel = new ProdutOrigemModel();
+
+        $codoriList = [];
+        $codproList = [];
+        $codbarList = [];
+
+        foreach ($r_lots as $lot) {
+            $codori = $lot->codori ?? null;
+            $codpro = $lot->codpro ?? null;
+            $codbar = $lot->codbar ?? null;
+
+            if ($codori !== null && $codori !== '') {
+                $codoriList[] = (string) $codori;
+            }
+
+            if ($codpro !== null && $codpro !== '') {
+                $codproList[] = trim((string) $codpro);
+            }
+
+            if ($codbar !== null && $codbar !== '') {
+                $codbarList[] = (string) $codbar;
+            }
+        }
+
+        $codoriList = array_values(array_unique($codoriList));
+        $codproList = array_values(array_unique($codproList));
+        $codbarList = array_values(array_unique($codbarList));
+
+        $origensExistentes = $origemModel->getOrigensByCodigos($codoriList);
+        $produtosExistentes = $this->mode_produto->getProdutosByCodigos($codproList);
+        $lotesExistentes = $this->mode_lote->getLotesByCodbars($codbarList);
+
+        $origemIndex = [];
+        foreach ($origensExistentes as $origem) {
+            $key = (string) ($origem->ori_codOri ?? '');
+            if ($key !== '') {
+                $origemIndex[$key] = $origem;
+            }
+        }
+
+        $produtoIndex = [];
+        foreach ($produtosExistentes as $produto) {
+            $key = trim((string) ($produto->pro_codpro ?? ''));
+            if ($key !== '') {
+                $produtoIndex[$key] = $produto;
+            }
+        }
+
+        $loteIndex = [];
+        foreach ($lotesExistentes as $loteExistente) {
+            $assinatura = $this->montarAssinaturaLote(
+                $loteExistente->lot_codbar ?? null,
+                $loteExistente->lot_lote ?? null,
+                $loteExistente->lot_codpro ?? null
+            );
+
+            $loteIndex[$assinatura] = $loteExistente;
+        }
+
+        $insertData = [];
+        $updateData = [];
+        $assinaturasProcessadas = [];
+
+        foreach ($r_lots as $index => $lot) {
+            log_message('info', 'Processando lote ' . $index . ' - ' . $lot->codlot);
+
+            $lcodori = $lot->codori ?? null;
+            $lcodpro = trim((string) ($lot->codpro ?? ''));
+            $lcodbar = $lot->codbar ?? null;
+            $lcodlot = $lot->codlot ?? null;
+            $ldatenv = $lot->datenv ?? null;
+            $ldatval = $lot->datval ?? null;
+
+            if ($lcodori === null || $lcodori === '') {
+                continue;
+            }
+
+            if (!isset($origemIndex[(string) $lcodori])) {
+                continue;
+            }
+
+            $assinatura = $this->montarAssinaturaLote($lcodbar, $lcodlot, $lcodpro);
+
+            if (isset($assinaturasProcessadas[$assinatura])) {
+                log_message('warning', 'Lote duplicado no retorno ignorado: ' . $assinatura);
+                continue;
+            }
+
+            $assinaturasProcessadas[$assinatura] = true;
+
+            $micro = $produtoIndex[$lcodpro] ?? null;
+            $status = $this->definirStatusLote($micro);
+
+            $lots = [
+                'lot_codbar'   => $lcodbar,
+                'lot_codpro'   => $lcodpro,
+                'lot_lote'     => $lcodlot,
+                'lot_entrada'  => data_db($ldatenv),
+                'lot_validade' => data_db($ldatval),
+                'stt_id'       => $status,
+            ];
+
+            if (isset($loteIndex[$assinatura])) {
+                $lots['lot_id'] = $loteIndex[$assinatura]->lot_id;
+                $updateData[] = $lots;
+            } else {
+                $insertData[] = $lots;
+            }
+        }
+
+        $db = db_connect('dbProduto');
+        $db->transStart();
+
+        foreach (array_chunk($insertData, 3000) as $chunk) {
+            if ($chunk !== []) {
+                $this->mode_lote->insertBatch($chunk);
+            }
+        }
+
+        foreach (array_chunk($updateData, 3000) as $chunk) {
+            if ($chunk !== []) {
+                $this->mode_lote->updateBatch($chunk, 'lot_id');
+            }
+        }
+
+        $db->transComplete();
+
+        log_message('info', 'Total inserts: ' . count($insertData));
+        log_message('info', 'Total updates: ' . count($updateData));
+    }
+    private function montarAssinaturaLote(
+        ?string $codbar,
+        ?string $lote,
+        ?string $codpro
+    ): string {
+        return trim((string) $codbar) . '-' . trim((string) $lote) . '-' . trim((string) $codpro);
+    }
+
+    private function definirStatusLote(?object $micro): int
+    {
+        $sttDisponivel = $micro->stt_disponivel ?? null;
+        $claMicro = $micro->cla_micro ?? null;
+        $sttId = $micro->stt_id ?? null;
+
+        if ($sttDisponivel === 'S') {
+            if ($claMicro === 'S') {
+                return ((int) $sttId === 1) ? 8 : 9;
+            }
+
+            return 9;
+        }
+
+        return 8;
+    }
     /**
      * integraProdutoFabricante
      */

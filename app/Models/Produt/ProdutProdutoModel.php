@@ -108,7 +108,26 @@ class ProdutProdutoModel extends Model
 
         return $builder->get()->getResult();
     }
+    public function getProdutosByCodigos(array $codigos): array
+    {
+        if ($codigos === []) {
+            return [];
+        }
 
+        $codigos = array_map(
+            static fn(string $codigo): string => trim($codigo),
+            $codigos
+        );
+
+        $db = db_connect('dbProduto');
+        $builder = $db->table('vw_pro_sap_produto_relac');
+
+        return $builder
+            ->select('*')
+            ->whereIn('pro_codpro', $codigos)
+            ->get()
+            ->getResult();
+    }
     public function getProdutoCodLista($pro_cod = false, $dispon = false)
     {
         $db = db_connect('dbProduto');
@@ -324,9 +343,9 @@ class ProdutProdutoModel extends Model
         }
         $builder->orderBy('cla_ordem, pro_despro, pro_codpro, lot_validade');
         $builder->groupBy('pro_codpro,lot_lote');
-        // debug($builder->getCompiledSelect());
         // $cs = $builder->getCompiledSelect();
         $ret = $builder->get()->getResult();
+        // debug($db->getLastQuery(), true);
 
         return $ret;
     }
@@ -347,5 +366,30 @@ class ProdutProdutoModel extends Model
         $builder->whereIn('pro_codPro', $pro_id);
         $builder->delete();
         return true;
+    }
+
+    public function getProdutosByLista($lista)
+    {
+        $db = db_connect('dbProduto');
+        $builder = $db->table('pro_sap_produto pro ');
+        $builder->select('
+            pro.pro_id,
+            pro.pro_codpro,
+            pro.pro_despro,
+            pro.cla_id,
+            pro.pro_ctrlot,
+            pro.stt_id');
+        $builder->whereIn('TRIM(pro.pro_codpro)', $lista);
+        return $builder->get()->getResult();
+    }
+
+    public function getLotesByLista($lista, $todosLotes)
+    {
+        $db = db_connect('dbProduto');
+        $builder = $db->table('pro_sap_lote');
+        $builder->select('lot_id, lot_codpro, lot_lote, lot_codbar');
+        $builder->whereIn('lot_codpro', $lista);
+        $builder->whereIn('lot_lote', $todosLotes);
+        return $builder->get()->getResult();
     }
 }

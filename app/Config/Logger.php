@@ -37,14 +37,27 @@ class Logger extends BaseConfig
      */
     public array $handlers = [
 
-        FileHandler::class => [
-            'handles' => ['critical', 'alert', 'emergency', 'debug', 'error', 'info', 'notice', 'warning'],
-        ],
+        // \CodeIgniter\Log\Handlers\FileHandler::class => [
+        //     'handles' => ['critical', 'alert', 'emergency', 'debug', 'error', 'info', 'notice', 'warning'],
+        //     'path'    => WRITEPATH . 'logs/',
+        // ],
 
+        // FileHandler::class => [
+        //     'handles' => ['critical', 'alert', 'emergency', 'debug', 'error', 'info', 'notice', 'warning'],
+        // ],
+
+        // \App\Log\Handlers\WorkerHandler::class => [
+        //     'handles' => ['info', 'error', 'debug'],
+        //     'path'           => WRITEPATH . 'logs/cron/',  // ← corrigido
+        //     'filenameFormat'  => 'workanalise-{date}',
+        // ],
+
+        // Handler exclusivo dos workers — caminho e formato próprios
         \App\Log\Handlers\WorkerHandler::class => [
-            'handles' => ['info', 'error', 'debug'],
-            'path' => WRITEPATH . 'logs/',
-            'filenameFormat'  => 'workanalise-{date}',
+            'handles'        => ['info', 'error', 'debug'],
+            'path'           => WRITEPATH . 'logs/cron/',
+            'filenameFormat' => 'workanalise-{date}',
+            'dateFormat'     => 'd/m/Y H:i:s',
         ],
 
         \App\Log\Handlers\MultiLevelFileHandler::class => [
@@ -63,53 +76,8 @@ class Logger extends BaseConfig
 
         \App\Log\Handlers\LogEmailThrottleHandler::class => [
             'handles' => ['error', 'critical', 'alert', 'emergency'],
-            'to' => 'douglas@4web.net.br',
+            // 'to' => 'douglas@4web.net.br',
+            'path' => WRITEPATH . 'logs/',
         ],
     ];
 }
-
-
-            /*
-        //  * --------------------------------------------------------------------
-        //  * File Handler padrão
-        //  * --------------------------------------------------------------------
-        //  */
-        // // FileHandler::class => [
-        // //    'handles' => [],
-        // // ],
-
-        // /*
-        //  * Handler customizado para logs de Worker
-        //  */
-        // \App\Log\Handlers\WorkerHandler::class => [
-        //     'handles' => ['info', 'error', 'debug'],
-        //     'fileExtension'   => 'log',
-        //     'filePermissions' => 0644,
-        //     'path'            => WRITEPATH . 'logs/',
-        //     'filenameFormat'  => 'workanalise-{date}',
-        //     'dateFormat'      => 'Y-m-d H:i:s',
-        // ],
-
-        // /*
-        //  * Handler customizado para logs separados por nível
-        //  */
-        // \App\Log\Handlers\MultiLevelFileHandler::class => [
-        //     'handles' => [
-        //         'info',
-        //         'debug',
-        //         'error',
-        //         'warning',
-        //         'critical',
-        //         'alert',
-        //         'emergency',
-        //         'notice',
-        //         'log',
-        //     ],
-        //     'filePermissions' => 0644,
-        //     'path' => WRITEPATH . 'logs/',
-        // ],
-        
-        // \App\Log\Handlers\LogEmailThrottleHandler::class => [
-        //     'handles' => ['error', 'critical', 'alert', 'emergency'],
-        //     'to' => 'douglas@4web.net.br',
-        // ],

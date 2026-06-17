@@ -2,9 +2,9 @@
 
 namespace App\Models\Estoqu;
 
+use App\Entities\Estoque\EntDeposito;
 use App\Models\LogMonModel;
 use CodeIgniter\Model;
-use App\Entities\Estoque\EntMovimento;
 
 class EstoquDepositoModel extends Model
 {
@@ -15,7 +15,7 @@ class EstoquDepositoModel extends Model
     protected $viewoutra   = 'est_sap_deposito';
     protected $primaryKey  = 'dep_codDep';
 
-    protected $returnType       = EntMovimento::class;
+    protected $returnType       = EntDeposito::class;
     protected $useSoftDeletes   = false;
 
     protected $allowedFields    = [

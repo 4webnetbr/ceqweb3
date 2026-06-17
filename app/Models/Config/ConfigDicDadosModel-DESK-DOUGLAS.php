@@ -138,29 +138,227 @@ class ConfigDicDadosModel extends Model
      * @param mixed $nome_tabela
      * @return array
      */
-    public function getRelacionamentos($nome_tabela)
+    // public function getRelacionamentos($nome_tabela)
+    // {
+    //     $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
+    //     $array = ['kc.table_name' => $nome_tabela];
+    //     $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
+    //     $db      = db_connect($dbGrSche['dbGroup']);
+    //     $builder = $db->table('information_schema.KEY_COLUMN_USAGE kc');
+
+    //     // $builder = $this->builder('information_schema.KEY_COLUMN_USAGE kc');
+    //     $builder->select('CONSTRAINT_NAME, 
+    //                         kc.TABLE_NAME, 
+    //                         kc.COLUMN_NAME, 
+    //                         kc.REFERENCED_TABLE_NAME, 
+    //                         kc.REFERENCED_COLUMN_NAME,
+    //                         tb.TABLE_COMMENT');
+    //     $builder->join('information_schema.TABLES tb', 'tb.TABLE_NAME = kc.REFERENCED_TABLE_NAME', 'inner');
+    //     $builder->where($array);
+    //     $builder->where('kc.table_schema', $dbGrSche['schema']);
+    //     $builder->where('REFERENCED_TABLE_SCHEMA IS NOT NULL');
+
+    //     // debug($builder->getCompiledSelect(), true);
+    //     $ret = $builder->get()->getResultArray();
+    //     return $ret;
+    // }
+
+    public function getRelacionamentos($nome_tabela, $completo = 0)
     {
         $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
-        $array = ['kc.table_name' => $nome_tabela];
-        $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
-        $db      = db_connect($dbGrSche['dbGroup']);
+        $db = db_connect($dbGrSche['dbGroup']);
+
+        // Obtém os relacionamentos diretos da tabela base (com constraint)
+        $relacionamentos_base = $this->_obterRelacionamentosTabela(
+            $db,
+            $nome_tabela,
+            $dbGrSche['schema']
+        );
+
+        // Obtém potenciais relacionamentos sem constraint (por padrão de nomenclatura)
+        $relacionamentos_potenciais = $this->_obterRelacionamentosPotenciais(
+            $db,
+            $nome_tabela,
+            $dbGrSche['schema'],
+            $relacionamentos_base
+        );
+
+        // Mescla os dois tipos de relacionamentos
+        $relacionamentos_completos = array_merge($relacionamentos_base, $relacionamentos_potenciais);
+
+        // Se completo = 0, retorna apenas os relacionamentos da tabela base
+        if ($completo == 0) {
+            return $relacionamentos_completos;
+        }
+
+        // Se completo = 1, expande para incluir relacionamentos das tabelas relacionadas
+        $resultado = [
+            'tabela_base' => $nome_tabela,
+            'relacionamentos_diretos' => $relacionamentos_completos,
+            'relacionamentos_expandidos' => []
+        ];
+
+        // Para cada tabela referenciada, obter seus relacionamentos
+        $tabelas_processadas = [$nome_tabela];
+
+        foreach ($relacionamentos_completos as $rel) {
+            $tabela_ref = $rel['REFERENCED_TABLE_NAME'];
+
+            if (!in_array($tabela_ref, $tabelas_processadas)) {
+                $tabelas_processadas[] = $tabela_ref;
+
+                $rels_base = $this->_obterRelacionamentosTabela(
+                    $db,
+                    $tabela_ref,
+                    $dbGrSche['schema']
+                );
+
+                $rels_potenciais = $this->_obterRelacionamentosPotenciais(
+                    $db,
+                    $tabela_ref,
+                    $dbGrSche['schema'],
+                    $rels_base
+                );
+
+                $rels_expandidos = array_merge($rels_base, $rels_potenciais);
+
+                if (!empty($rels_expandidos)) {
+                    $resultado['relacionamentos_expandidos'][] = [
+                        'tabela' => $tabela_ref,
+                        'relacionamentos' => $rels_expandidos
+                    ];
+                }
+            }
+        }
+
+        return $resultado;
+    }
+
+    /**
+     * Obtém relacionamentos com constraint definido no banco
+     */
+    private function _obterRelacionamentosTabela($db, $nome_tabela, $schema)
+    {
         $builder = $db->table('information_schema.KEY_COLUMN_USAGE kc');
 
-        // $builder = $this->builder('information_schema.KEY_COLUMN_USAGE kc');
-        $builder->select('CONSTRAINT_NAME, 
-                            kc.TABLE_NAME, 
-                            kc.COLUMN_NAME, 
-                            kc.REFERENCED_TABLE_NAME, 
-                            kc.REFERENCED_COLUMN_NAME,
-                            tb.TABLE_COMMENT');
-        $builder->join('information_schema.TABLES tb', 'tb.TABLE_NAME = kc.REFERENCED_TABLE_NAME', 'inner');
-        $builder->where($array);
-        $builder->where('kc.table_schema', $dbGrSche['schema']);
-        $builder->where('REFERENCED_TABLE_SCHEMA IS NOT NULL');
+        $builder->select(
+            'CONSTRAINT_NAME, 
+        kc.TABLE_NAME, 
+        kc.COLUMN_NAME, 
+        kc.REFERENCED_TABLE_NAME, 
+        kc.REFERENCED_COLUMN_NAME,
+        tb.TABLE_COMMENT,
+        "constraint" as tipo_relacao'
+        );
 
-        // debug($builder->getCompiledSelect(), true);
-        $ret = $builder->get()->getResultArray();
-        return $ret;
+        $builder->join(
+            'information_schema.TABLES tb',
+            'tb.TABLE_NAME = kc.REFERENCED_TABLE_NAME AND tb.TABLE_SCHEMA = kc.REFERENCED_TABLE_SCHEMA',
+            'inner'
+        );
+
+        $builder->where('kc.TABLE_NAME', $nome_tabela);
+        $builder->where('kc.TABLE_SCHEMA', $schema);
+        $builder->where('kc.REFERENCED_TABLE_SCHEMA IS NOT NULL', null, false);
+
+        return $builder->get()->getResultArray();
+    }
+
+    /**
+     * Obtém potenciais relacionamentos por padrão de nomenclatura
+     * (campos que terminam com _id e tabelas correspondentes existem)
+     */
+    private function _obterRelacionamentosPotenciais($db, $nome_tabela, $schema, $relacionamentos_com_constraint)
+    {
+        // Campos já mapeados por constraint
+        $campos_com_constraint = [];
+        foreach ($relacionamentos_com_constraint as $rel) {
+            $campos_com_constraint[] = $rel['COLUMN_NAME'];
+        }
+
+        // Obter informações das colunas da tabela
+        $builder = $db->table('information_schema.COLUMNS');
+        $builder->select('COLUMN_NAME, COLUMN_TYPE');
+        $builder->where('TABLE_NAME', $nome_tabela);
+        $builder->where('TABLE_SCHEMA', $schema);
+        $colunas = $builder->get()->getResultArray();
+
+        $relacionamentos_potenciais = [];
+
+        foreach ($colunas as $coluna) {
+            $nome_coluna = $coluna['COLUMN_NAME'];
+
+            // Verifica se é um campo *_id e não tem constraint
+            if (
+                preg_match('/^(.+)_id$/i', $nome_coluna, $matches) &&
+                !in_array($nome_coluna, $campos_com_constraint)
+            ) {
+
+                $prefixo = $matches[1];
+
+                // Procura por tabelas que começam com o prefixo
+                $tabelas_candidatas = $this->_procurarTabelasCorrespondentes(
+                    $db,
+                    $prefixo,
+                    $schema
+                );
+
+                foreach ($tabelas_candidatas as $tabela_cand) {
+                    $nome_tabela_ref = $tabela_cand['TABLE_NAME'];
+                    $comentario_tabela = $tabela_cand['TABLE_COMMENT'];
+
+                    // Verifica se a tabela tem coluna de ID
+                    $builder = $db->table('information_schema.COLUMNS');
+                    $builder->where('TABLE_NAME', $nome_tabela_ref);
+                    $builder->where('TABLE_SCHEMA', $schema);
+                    $builder->where('COLUMN_NAME', 'id');
+                    $existe_id = $builder->get()->getNumRows() > 0;
+
+                    if (!$existe_id) {
+                        // Tenta com o mesmo padrão: prefixo_id
+                        $builder = $db->table('information_schema.COLUMNS');
+                        $builder->where('TABLE_NAME', $nome_tabela_ref);
+                        $builder->where('TABLE_SCHEMA', $schema);
+                        $builder->where('COLUMN_NAME', $prefixo . '_id');
+                        $existe_id = $builder->get()->getNumRows() > 0;
+                        $coluna_ref = $existe_id ? $prefixo . '_id' : 'id';
+                    } else {
+                        $coluna_ref = 'id';
+                    }
+
+                    if ($existe_id) {
+                        $relacionamentos_potenciais[] = [
+                            'CONSTRAINT_NAME' => null,
+                            'TABLE_NAME' => $nome_tabela,
+                            'COLUMN_NAME' => $nome_coluna,
+                            'REFERENCED_TABLE_NAME' => $nome_tabela_ref,
+                            'REFERENCED_COLUMN_NAME' => $coluna_ref,
+                            'TABLE_COMMENT' => $comentario_tabela,
+                            'tipo_relacao' => 'potencial' // Indica que é sem constraint
+                        ];
+                    }
+                }
+            }
+        }
+
+        return $relacionamentos_potenciais;
+    }
+
+    /**
+     * Procura por tabelas que correspondem ao padrão de nomenclatura
+     */
+    private function _procurarTabelasCorrespondentes($db, $prefixo, $schema)
+    {
+        $builder = $db->table('information_schema.TABLES');
+        $builder->select('TABLE_NAME, TABLE_COMMENT');
+        $builder->where('TABLE_SCHEMA', $schema);
+        $builder->groupStart()
+            ->like('TABLE_NAME', $prefixo . '%', 'after')
+            ->orLike('TABLE_NAME', '%_' . $prefixo, 'before')
+            ->groupEnd();
+        $builder->limit(5); // Limita candidatos
+
+        return $builder->get()->getResultArray();
     }
 
     /**

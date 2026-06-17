@@ -43,6 +43,7 @@ class Familia extends BaseController
      */
     public function index()
     {
+        $this->data['temacao']   = false; // não tem ação
         $this->data['colunas'] = montaColunasLista($this->data, 'fam_codFam,');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
@@ -53,16 +54,16 @@ class Familia extends BaseController
      */
     public function lista()
     {
-            $campos = montaColunasCampos($this->data, 'fam_codFam');
-            $dados_tela = $this->familias->getFamilia();
+        $campos = montaColunasCampos($this->data, 'fam_codFam');
+        $dados_tela = $this->familias->getFamilia();
 
-            $this->data['edicao'] = false;
-            $this->data['exclusao'] = false;
-
-            $familias = [
-                'data' => montaListaColunasEnt($this->data, 'fam_codFam', $dados_tela, $campos[1]),
-            ];
-            cache()->save('familias', $familias, 60000);
+        $this->data['edicao'] = false;
+        $this->data['exclusao'] = false;
+        $this->data['temacao'] = false; // não tem ação
+        $familias = [
+            'data' => montaListaColunasEnt($this->data, 'fam_codFam', $dados_tela, $campos[1]),
+        ];
+        cache()->save('familias', $familias, 60000);
         echo json_encode($familias);
     }
 
@@ -70,7 +71,7 @@ class Familia extends BaseController
     //     $integ = new WsCeqweb();
     //     $integ->integraFamilia();
 
-	// 	$dados_familias = $this->familias->getFamilia($id);
+    // 	$dados_familias = $this->familias->getFamilia($id);
     //     $fields = $this->familias->defCampos($dados_familias[0], true);
 
     //     $secao[0] = 'Dados Gerais'; 
@@ -78,8 +79,8 @@ class Familia extends BaseController
     //     $campos[0][1] = $fields['fam_desFam'];
     //     $campos[0][2] = $fields['fam_codDescricao'];
     //     $campos[0][3] = $fields['ori_codOri'];
-        
-	// 	$this->data['secoes']     = $secao;
+
+    // 	$this->data['secoes']     = $secao;
     //     $this->data['campos']     = $campos;
     //     $this->data['destino']    = 'store';
     //     // BUSCAR DADOS DO LOG

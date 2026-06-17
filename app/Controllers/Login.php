@@ -25,41 +25,27 @@ class Login extends BaseController
 
     public function defCampos()
     {
-        $login        = new MyCampo('cfg_usuario', 'usu_login');
-        $login->tipo  = 'login';
-        $login->valor = '';
-        // $login->nome        = 'usu_login';
-        // $login->id          = 'usu_login';
-        // $login->label       = 'Usuário';
-        // $login->place       = 'Usuário';
+        $login              = new MyCampo('cfg_usuario', 'usu_login');
+        $login->tipo        = 'login';
+        $login->valor       = '';
         $login->obrigatorio = true;
-        // $login->hint        = 'Informe o Usuário';
-        $login->size    = 25;
-        $login->tamanho = 25;
-        // $login->tipo_form   = 'vertical';
-        $this->usu_login = $login->crInput();
+        $login->size        = 21;
+        // $login->tamanho     = 21;
+        $this->usu_login    = $login->crInput();
 
-        $senha = new MyCampo('cfg_usuario', 'usu_senha');
-        // $senha->objeto      = 'input';
-        $senha->tipo  = 'password';
-        $senha->valor = '';
-        // $senha->nome        = 'usu_senha';
-        // $senha->id          = 'usu_senha';
-        // $senha->label       = 'Senha';
-        // $senha->place       = 'Senha';
+        $senha              = new MyCampo('cfg_usuario', 'usu_senha');
+        $senha->tipo        = 'password';
+        $senha->valor       = '';
         $senha->obrigatorio = true;
-        // $senha->hint        = 'Informe a Senha';
-        $senha->size      = 15;
-        $senha->maxLength = 8;
-        // $senha->largura   = 35;
-        // $senha->tipo_form   = 'vertical';
-        $this->usu_senha = $senha->crInput();
+        $senha->size        = 15;
+        $senha->maxLength   = 15;
+        $this->usu_senha    = $senha->crInput();
 
         $bt_ent          = new MyCampo();
         $bt_ent->tipo    = 'submit';
         $bt_ent->id      = $bt_ent->nome      = 'bt_entrar';
         $bt_ent->classep = 'btn btn-primary btn-sm border-0 mx-3 my-2 px-4 py-2';
-        $bt_ent->i_cone  = "<i class='bi bi-door-open'></i> Entrar";
+        $bt_ent->i_cone  = "<i class='fa-solid fa-door-open'></i> Entrar";
         $bt_ent->place   = "Acessar o Sistema";
         $this->bt_entrar = $bt_ent->crBotao();
 
@@ -67,13 +53,16 @@ class Login extends BaseController
         $bt_res->tipo    = 'reset';
         $bt_res->id      = $bt_res->nome      = 'bt_reset';
         $bt_res->classep = 'btn btn-secondary btn-sm border-0 my-2 px-4 py-2';
-        $bt_res->i_cone  = "<i class='bi bi-eraser'></i> Limpar";
+        $bt_res->i_cone  = "<i class='fa-solid fa-eraser'></i> Limpar";
         $bt_res->place   = "Limpar as Credenciais";
         $this->bt_limpar = $bt_res->crBotao();
     }
 
     public function index()
     {
+        if (session()->logged_in === true) {
+            session()->destroy();
+        }
         $logo = base_url('assets/images/logo_header.jpg');
 
         $this->defCampos();
@@ -120,7 +109,7 @@ class Login extends BaseController
                 $img_name = 'usu_' . $log_config[0]->usu_id . '.jpg';
                 $sem_avat = base_url('assets/images/sem_avatar.png');
                 $logo_def = base_url('assets/images/logo_header.png');
-                $icone    = base_url('assets/images/favicon.ico');
+                $icone    = base_url('assets/images/icone.png');
                 $path_ser = FCPATH . 'assets/uploads/usuario/';
                 $img_path = site_url('assets/uploads/usuario/');
                 if (file_exists($path_ser . $img_name)) {
@@ -156,28 +145,16 @@ class Login extends BaseController
                 if ($usuarioId) {
                     $cookieNome = 'pguser_' . $usuarioId;
 
-                    if ($this->request->getCookie($cookieNome)) {
-                        $usuariocook = $this->request->getCookie($cookieNome);
-                        $dash        = $usuariocook;
+                    $paginasalva = $this->request->getCookie($cookieNome) ?? '';
+                    // debug($paginasalva, true);
+                    if ($paginasalva != '') {
+                        // $usuariocook = $this->request->getCookie($cookieNome);
+                        $dash = $paginasalva;
                     }
                 }
 
                 return redirect()->to('/' . $dash);
             }
         }
-    }
-
-    public function logout()
-    {
-        $request = service('request');
-        $tabId = $request->getHeaderLine('Tab-ID')
-            ?: ($_COOKIE['tabId'] ?? null);
-
-        $userId = session()->get('usu_id');
-        // se já expirou
-        $sessionService = new \App\Services\RedisSessionService();
-        $sessionService->removeTab($userId, $tabId);
-        // session()->destroy();
-        return redirect()->to('/login');
     }
 }

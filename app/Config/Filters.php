@@ -1,4 +1,5 @@
 <?php
+
 namespace Config;
 
 use CodeIgniter\Config\BaseConfig;
@@ -42,6 +43,8 @@ class Filters extends BaseConfig
                     'utils/*',
                     'criapdf2025',
                     'criapdf2025/*',
+                    'criampdf2026',
+                    'criampdf2026/*',
                     'criaetiqueta',
                     'criaetiqueta/*',
                     'criaetiquetaZPL',
@@ -60,14 +63,14 @@ class Filters extends BaseConfig
                     'home',
                     'home/*',
                     'websocket',
-                    'websocket/*',
-                ],
+                    'websocket/*'
+                ]
             ],
             'limpezaAuto',
             // 'honeypot',
             // 'csrf',
         ],
-        'after'  => [
+        'after' => [
             'toolbar',
             'accessLog' => [
                 'except' => [
@@ -84,8 +87,8 @@ class Filters extends BaseConfig
                     'workanalise',
                     'workanalise/*',
                     'websocket',
-                    'websocket/*',
-                ],
+                    'websocket/*'
+                ]
             ],
 
             // 'honeypot',

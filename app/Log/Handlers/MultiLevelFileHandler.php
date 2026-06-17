@@ -17,6 +17,7 @@ class MultiLevelFileHandler extends FileHandler
 
     public function handle($level, $message): bool
     {
+        // _trace.log mostrará a pilha de chamadas
         $level = strtolower($level);
 
         $customLevels = [
@@ -26,7 +27,7 @@ class MultiLevelFileHandler extends FileHandler
             'warning'  => 'warn',
             'critical' => 'crit',
             'alert'    => 'aler',
-            'emergency'=> 'emer',
+            'emergency' => 'emer',
             'notice'   => 'noti',
         ];
 

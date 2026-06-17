@@ -1,4 +1,5 @@
 <?php
+
 namespace Config;
 
 use CodeIgniter\Cache\Handlers\DummyHandler;
@@ -164,18 +165,5 @@ class Cache extends BaseConfig
         'predis'    => PredisHandler::class,
         'redis'     => RedisHandler::class,
         'wincache'  => WincacheHandler::class,
-    ];
-
-    public $default = [
-        'handler'       => 'redis',
-        'backupHandler' => 'file',
-        'prefix'        => '',
-        'redis'         => [
-            'host'     => '127.0.0.1',
-            'password' => null,
-            'port'     => 6379,
-            'timeout'  => 0,
-            'database' => 0,
-        ],
     ];
 }

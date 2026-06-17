@@ -22,13 +22,25 @@ final class AccessLogFilter implements FilterInterface
     ];
 
     private array $excludedExtensions = [
-        'css','js','map','jpg','jpeg','png','gif','svg',
-        'webp','ico','woff','woff2','ttf','eot','pdf','zip'
+        'css',
+        'js',
+        'map',
+        'jpg',
+        'jpeg',
+        'png',
+        'gif',
+        'svg',
+        'webp',
+        'ico',
+        'woff',
+        'woff2',
+        'ttf',
+        'eot',
+        'pdf',
+        'zip'
     ];
 
-    public function before(RequestInterface $request, $arguments = null)
-    {
-    }
+    public function before(RequestInterface $request, $arguments = null) {}
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
@@ -69,7 +81,7 @@ final class AccessLogFilter implements FilterInterface
             'log_detalhe'    => $detalhe,
             'log_registro'   => $id,
             'log_ip'         => $request->getIPAddress(),
-            'log_user_agent' => $platform.'<br>'.$browser.' - '.$version,
+            'log_user_agent' => $platform . '<br>' . $browser . ' - ' . $version,
             'log_ambiente'   => $ambiente,
         ]);
     }

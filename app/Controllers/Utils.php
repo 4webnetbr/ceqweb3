@@ -27,7 +27,7 @@ class Utils extends BaseController
     }
 
     public function executa_php(){
-      passthru('php app/Websocket/workerman.php start');
+      passthru('php index.php ServerCeqwebLoop &');
 
       echo json_encode([]);
     }

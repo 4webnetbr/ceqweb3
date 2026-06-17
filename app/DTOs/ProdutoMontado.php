@@ -54,7 +54,7 @@ class ProdutoMontado
         $this->pro_consumo_proximo   = 0;
         $this->pro_minimo   = 0;
         $this->pro_maximo   = 0;
-        $this->pro_requisicao   = 0;
+        $this->pro_requisicao   = (int) ($data['pro_requisicao'] ?? 0);
 
         // Inicializamos com objetos "vazios" inicialmente
         $this->loteori = new LoteOrigem();

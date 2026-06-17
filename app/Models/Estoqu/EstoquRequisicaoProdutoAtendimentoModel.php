@@ -18,16 +18,16 @@ class EstoquRequisicaoProdutoAtendimentoModel extends Model
     protected $useSoftDeletes   = false;
 
     protected $allowedFields    = [
-            'rpa_id',
-            'rep_id',
-            'pro_id',
-            'rpa_cancelada',
-            'rpa_atendida',
-            'rpa_data',
-            'rpa_conferida',
-            'rpa_data_conferencia',
-            'rpa_aprovada',
-            'rpa_data_inspecao'
+        'rpa_id',
+        'rep_id',
+        'pro_id',
+        'rpa_cancelada',
+        'rpa_atendida',
+        'rpa_data',
+        'rpa_conferida',
+        'rpa_data_conferencia',
+        'rpa_aprovada',
+        'rpa_data_inspecao'
     ];
 
     // protected $deletedField  = 'req_excluido';
@@ -63,7 +63,7 @@ class EstoquRequisicaoProdutoAtendimentoModel extends Model
     protected function depoisUpdate(array $data)
     {
         $logdb = new LogMonModel();
-        $registro = $data['id'][0];
+        $registro = $data['id'][0] ?? $data['id'];
         $log = $logdb->insertLog($this->table, 'Alteração', $registro, $data['data']);
         return $data;
     }
@@ -91,6 +91,16 @@ class EstoquRequisicaoProdutoAtendimentoModel extends Model
         return $builder->get()->getResultArray();
     }
 
+    public function getRequisicaoProdutoAtendimento($req_id)
+    {
+        $db = db_connect('dbEstoque');
+        $builder = $db->table('est_requisicao_produto_atendimento');
+        $builder->join('est_requisicao_produto', 'est_requisicao_produto.rep_id = est_requisicao_produto_atendimento.rep_id');
+        $builder->select('*');
+        $builder->where('est_requisicao_produto.req_id', $req_id);
+        return $builder->get()->getResultArray();
+    }
+
     public function getProdutoRequisicao($produto)
     {
         $db = db_connect('dbEstoque');
@@ -104,6 +114,15 @@ class EstoquRequisicaoProdutoAtendimentoModel extends Model
     {
         $db = db_connect('dbEstoque');
         $builder = $db->table('vw_saldo_requisicao_produto');
+        $builder->select('*');
+        $builder->where('req_id', $requisicao);
+        return $builder->get()->getResultArray();
+    }
+
+    public function getRequisicaoPendencias($requisicao)
+    {
+        $db = db_connect('dbEstoque');
+        $builder = $db->table('vw_est_requisicao_produto_pendencias');
         $builder->select('*');
         $builder->where('req_id', $requisicao);
         return $builder->get()->getResultArray();

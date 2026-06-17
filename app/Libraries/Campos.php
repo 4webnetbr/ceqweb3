@@ -70,7 +70,6 @@ class Campos
     public $classs          = '';
     public $tipo_arquivo    = '';
     public $hint            = '';
-    public string $accept   = '';
     public $minimo          = 0;
     public $maximo          = 50;
     public $step            = 1;
@@ -589,7 +588,7 @@ class Campos
             'name'          => $this->nome,
             'id'            => $this->id,
             'value'         => $this->valor,
-            'autocomplete'  => 'new-generation',
+            'autocomplete'  => 'off',
             'size'            => $this->size,
             'maxlength'     => isset($this->max_size) ? $this->max_size : $this->size,
             'hint'          => $this->hint,
@@ -614,6 +613,7 @@ class Campos
         }
         if ($this->obrigatorio === true && $this->tipo != 'login' && $this->tipo != 'password' && $this->tipo != 'senha') {
             $field['required'] = true;
+            $field['autocomplete'] = 'off';
         }
         if ($this->hint != '') {
             $field['data-mdb-toggle'] = "tooltip";
@@ -679,7 +679,7 @@ class Campos
             case 'datetime-local':
                 break;
             case 'senha':
-                $resp .= "<span class='input-group-text input-group-addon' id='ad_$this->nome'><i class='bi bi-key'></i></span>";
+                $resp .= "<span class='input-group-text input-group-addon' id='ad_$this->nome'><i class='fa-solid fa-key'></i></span>";
                 break;
             case 'password':
                 $fieldpassoculto = array(
@@ -694,7 +694,7 @@ class Campos
                 $field['onblur']             = 'validaSenha(this);oculta_passinfo();' . $this->funcao_blur;
                 // $field['pattern'] = '/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[$*&@#])(?:([0-9a-zA-Z$*&@#])(?!\1)) {6,8}$/';
                 $field['aria-describedby'] = 'ad_' . $this->nome;
-                $resp .= "<span class='input-group-text input-group-addon' id='ad_$this->nome'><i class='bi bi-key'></i></span>";
+                $resp .= "<span class='input-group-text input-group-addon' id='ad_$this->nome'><i class='fa-solid fa-key'></i></span>";
                 break;
             case 'email':
                 $field['type'] = 'email';
@@ -832,7 +832,7 @@ class Campos
         }
         $resp .= form_input($field);
         if ($this->tipo == 'password' || $this->tipo == 'senha') {
-            $resp .= "<span name='show_password' class='input-group-text input-group-append show_password bi bi-eye-slash-fill' id='ada_$this->nome' data-field='$this->nome'></span>";
+            $resp .= "<span name='show_password' class='input-group-text input-group-append fa-solid fa-eye-slash show_password' id='ada_$this->nome' data-field='$this->nome'></span>";
         }
         if ($this->obrigatorio) {
             $resp .= "<div class='invalid-feedback'>";

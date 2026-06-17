@@ -1,11 +1,10 @@
 <?php
-
 namespace App\Libraries;
 
-use App\Models\NotificaMonModel;
-use App\Models\Config\ConfigUsuarioModel;
-use App\Models\Produt\ProdutProdutoModel;
 use App\Models\Config\ConfigPerfilItemModel;
+use App\Models\Config\ConfigUsuarioModel;
+use App\Models\NotificaMonModel;
+use App\Models\Produt\ProdutProdutoModel;
 
 class Notificacao
 {
@@ -16,17 +15,17 @@ class Notificacao
     public $modpermis;
     public $modprodutos;
 
-    function gravaNotifica($controler, $registro, $msg, $tipo)
+    public function gravaNotifica($controler, $registro, $msg, $tipo)
     {
         log_message('info', 'Entrou no GravaNotifica ');
         $this->mode_notifica = new NotificaMonModel();
         $this->mode_perfil   = new ConfigPerfilItemModel();
 
-        $usuarioOrigem = 0; // Representa o sistema (Sapiens)
+        $usuarioOrigem  = 0; // Representa o sistema (Sapiens)
         $userOrigemNome = 'Sapiens';
 
         // Extrai o nome do controller sem namespace
-        $pos = strrpos($controler, "\\");
+        $pos         = strrpos($controler, "\\");
         $nomeControl = ($pos !== false) ? substr($controler, $pos + 1) : $controler;
 
         log_message('info', 'Controller: ' . $controler);
@@ -35,12 +34,12 @@ class Notificacao
         $usuarios = $this->mode_perfil->getPermissaoTelaUsuario(false, false, false, $nomeControl);
         log_message('info', 'Usuários encontrados: ' . json_encode($usuarios));
 
-        if (!empty($usuarios)) {
-            $dataHora = data_br(date('Y-m-d H:i:s'));
+        if (! empty($usuarios)) {
+            $dataHora         = data_br(date('Y-m-d H:i:s'));
             $mensagemCompleta = "{$msg} em {$dataHora} por: {$userOrigemNome}";
 
             foreach ($usuarios as $usu) {
-                $usuDest = $usu['usu_id'];
+                $usuDest   = $usu['usu_id'];
                 $permissao = $usu['pit_permissao'];
 
                 log_message('info', "Usuário Destino: {$usuDest} | Permissão: {$permissao}");
@@ -68,23 +67,23 @@ class Notificacao
 
     public function verNotifica()
     {
-        $this->modnotif = new NotificaMonModel();
-        $this->modusuario = new ConfigUsuarioModel();
-        $this->modpermis = new ConfigPerfilItemModel();
+        $this->modnotif    = new NotificaMonModel();
+        $this->modusuario  = new ConfigUsuarioModel();
+        $this->modpermis   = new ConfigPerfilItemModel();
         $this->modprodutos = new ProdutProdutoModel();
 
-        $ret = [];
-        $dados = $_REQUEST;
+        $ret    = [];
+        $dados  = $_REQUEST;
         // debug($_REQUEST,true);
-        $usuario   = $dados['usuario'];
-        $notificacoes = $this->modnotif->getNotificaAberta();
+        $usuario       = $dados['usuario'];
+        $notificacoes  = $this->modnotif->getNotificaAberta();
         // debug($notificcoes, true);
-        $lstnotif = '';
-        $lstnotif .= "<button id='li_todas' name='li_todas' class='btn btn-primary fs-7 col-12 d-block' style='line-height: 1rem' onclick='viuNotifica(0)' ><i class='fas fa-check me-3' style='font-size: 1rem;' aria-hidden='true'></i>Todas Lidas</button>";
+        $lstnotif  = '';
+        $lstnotif .= "<button type='button' id='li_todas' name='li_todas' class='btn btn-primary fs-7 col-12 d-block' style='line-height: 1rem' onclick='viuNotifica(0)' ><i class='fas fa-check me-3' style='font-size: 1rem;' aria-hidden='true'></i>Todas Lidas</button>";
         $lstnotif .= "<div id='notificacoes' class='col-11 overflow-y-auto'>";
-        $totnotif = 0;
+        $totnotif  = 0;
         if (count($notificacoes) > 0) {
-            $count = 0;
+            $count  = 0;
             $ultimo = '';
             for ($n = 0; $n < count($notificacoes); $n++) {
                 if ($usuario == $notificacoes[$n]->not_id_usuario) {
@@ -94,7 +93,7 @@ class Notificacao
                     $tipo  = $notif->not_tipo;
                     $metod = 'edit';
                     $class = "App\\Controllers\\" . $notif->not_controler;
-                    $pos = strrpos($notif->not_controler, "\\");
+                    $pos   = strrpos($notif->not_controler, "\\");
                     if ($pos != '') {
                         $controler = substr($notif->not_controler, $pos + 1);
                     } else {
@@ -114,7 +113,7 @@ class Notificacao
                         }
                         // debug($controler, true);
                         if ($controler == 'Produto') {
-                            $prods = $this->modprodutos->getProdutoCod($notif->not_id_registro);
+                            $prods                  = $this->modprodutos->getProdutoCod($notif->not_id_registro);
                             $notif->not_id_registro = $prods[0]['pro_id'];
                         }
                         $link = base_url($controler . '/' . $metod . '/' . $notif->not_id_registro);
@@ -124,14 +123,14 @@ class Notificacao
                     // debug($link);
                     $lstnotif .= "<div class='" . (++$count % 2 ? "even" : "odd") . " p-1 border-2 border-bottom border-dark'>";
                     $lstnotif .= "<div class='fst-italic fs-7'>" . data_br($notif->not_data) . "</div>";
-                    $lstnotif .= "<a href='$link' onclick='viuNotifica(\"" . (string)$notif->_id . "\")'>" . $notif->not_texto . "</a>";
+                    $lstnotif .= "<a href='$link' onclick='viuNotifica(\"" . (string) $notif->_id . "\")'>" . $notif->not_texto . "</a>";
                     $lstnotif .= "</div>";
-                    $ultimo = $notif->not_id_registro;
+                    $ultimo   = $notif->not_id_registro;
                     // }
                 }
             }
         }
-        $lstnotif .= "</div>";
+        $lstnotif    .= "</div>";
         $ret['novo'] = $totnotif;
         $ret['html'] = $lstnotif;
         echo json_encode($ret);
@@ -142,7 +141,7 @@ class Notificacao
         $this->modnotif = new NotificaMonModel();
 
         $dados = $_REQUEST;
-        $id   = $dados['id'];
+        $id    = $dados['id'];
         if ($id == 0) { // marca todas
             $usuario = session()->get('usu_id');
             // debug($usuario);

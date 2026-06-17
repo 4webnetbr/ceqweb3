@@ -43,10 +43,11 @@ class Fabricante extends BaseController
      */
     public function index()
     {
-            $integ = new WsCeqweb();
-            $integ->integraFabricante();
+        $integ = new WsCeqweb();
+        $integ->integraFabricante();
 
-            $this->data['colunas'] = montaColunasLista($this->data, 'fab_codFab,');
+        $this->data['temacao']   = false; // não tem ação
+        $this->data['colunas'] = montaColunasLista($this->data, 'fab_codFab,');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
     }
@@ -57,28 +58,29 @@ class Fabricante extends BaseController
      */
     public function lista()
     {
-            $campos = montaColunasCampos($this->data, 'fab_codFab');
-            $dados_tela = $this->fabricantes->getFabricante();
-            $this->data['edicao']   = false;
-            $this->data['exclusao'] = false;
-            $fabricantes = [
-                'data' => montaListaColunasEnt($this->data, 'fab_codFab', $dados_tela, $campos[1]),
-            ];
-            cache()->save('fabricantes', $fabricantes, 60000);
+        $campos = montaColunasCampos($this->data, 'fab_codFab');
+        $dados_tela = $this->fabricantes->getFabricante();
+        $this->data['edicao']   = false;
+        $this->data['exclusao'] = false;
+        $this->data['temacao']   = false; // não tem ação
+        $fabricantes = [
+            'data' => montaListaColunasEnt($this->data, 'fab_codFab', $dados_tela, $campos[1]),
+        ];
+        cache()->save('fabricantes', $fabricantes, 60000);
         echo json_encode($fabricantes);
     }
 
     // public function show($id){
 
-	// 	$dados_fabricantes = $this->fabricantes->getFabricante($id);
+    // 	$dados_fabricantes = $this->fabricantes->getFabricante($id);
     //     $fields = $this->fabricantes->defCampos($dados_fabricantes[0], true);
 
     //     $secao[0] = 'Dados Gerais'; 
     //     $campos[0][0] = $fields['fab_codFab']; 
     //     $campos[0][1] = $fields['fab_nomFab'];
     //     $campos[0][2] = $fields['fab_apeFab'];
-        
-	// 	$this->data['secoes']     = $secao;
+
+    // 	$this->data['secoes']     = $secao;
     //     $this->data['campos']     = $campos;
     //     $this->data['destino']    = 'store';
 

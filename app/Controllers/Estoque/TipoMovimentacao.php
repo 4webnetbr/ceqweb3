@@ -112,8 +112,12 @@ class TipoMovimentacao extends BaseController
         $campos[1][0][] = $fieldsMov->bt_del;
 
         $secao[2] = 'Permissões';
-        $fieldsPrf = $mov->defCamposPrf(null, false);
-        $campos[2][0] = $fieldsPrf->prf_id;
+        $fieldsPrf = $mov->defCamposPrf(null, false, 'I');
+        $campos[2][] = $fieldsPrf->prf_id;
+        $fieldsPrf = $mov->defCamposPrf(null, false, 'A');
+        $campos[2][] = $fieldsPrf->prf_id;
+        $fieldsPrf = $mov->defCamposPrf(null, false, 'C');
+        $campos[2][] = $fieldsPrf->prf_id;
 
         $this->data['secoes']  = $secao;
         $this->data['campos']  = $campos;
@@ -234,16 +238,23 @@ class TipoMovimentacao extends BaseController
 
         $secao[2] = 'Permissões';
         $dados_per = $this->tpmov->getTipoMovimentacaoPermissao($id);
-        $permiss['prf_id'] = [];
+        // $permiss['prf_id'] = [];
+        $permiss['I']['prf_id'] = [];
+        $permiss['A']['prf_id'] = [];
+        $permiss['C']['prf_id'] = [];
 
         if (count($dados_per) > 0) {
             for ($p = 0; $p < count($dados_per); $p++) {
-                array_push($permiss['prf_id'], $dados_per[$p]->prf_id);
+                array_push($permiss[$dados_per[$p]->tmp_acesso]['prf_id'], $dados_per[$p]->prf_id);
             }
         }
-
-        $fields = $entity->defCamposPrf((object) $permiss, $show);
-        $campos[2][0] = $fields->prf_id;
+        // debug($permiss);
+        $fieldsPrf = $entity->defCamposPrf((object) $permiss['I'], false, 'I');
+        $campos[2][] = $fieldsPrf->prf_id;
+        $fieldsPrf = $entity->defCamposPrf((object) $permiss['A'], false, 'A');
+        $campos[2][] = $fieldsPrf->prf_id;
+        $fieldsPrf = $entity->defCamposPrf((object) $permiss['C'], false, 'C');
+        $campos[2][] = $fieldsPrf->prf_id;
 
         $this->data['secoes'] = $secao;
         $this->data['campos'] = $campos;
@@ -333,6 +344,7 @@ class TipoMovimentacao extends BaseController
         $ret = [];
         $ret['erro'] = false;
         $postado = $this->request->getPost();
+        // debug($postado, true);
 
         $exists = $this->common->verificaUnico($this->tpmov, 'tmo_nome', $postado['tmo_nome'], 'tmo_id', $postado['tmo_id']);
         if ($exists > 0) {
@@ -392,19 +404,28 @@ class TipoMovimentacao extends BaseController
 
                 // GRAVAÇÃO DOS PERFIS
                 $this->common->deleteReg("dbEstoque", "est_tipo_movimentacao_permissao", "tmo_id = " . $tmo_id);
-                foreach ($postado['prf_id'] as $key => $value) {
-                    $sql_prf = [
-                        'tmo_id' => $tmo_id,
-                        'prf_id' => $postado['prf_id'][$key],
-                        'tmp_atualizado' => $data_atu,
-                    ];
-                    $prf_id = $this->common->insertReg('dbEstoque', 'est_tipo_movimentacao_permissao', $sql_prf);
-                    if (!$prf_id) {
-                        $this->tpmov->transRollback();
+                // foreach ($postado['prf_id'] as $key => $value) {
+                //     $sql_prf = [
+                //         'tmo_id' => $tmo_id,
+                //         'prf_id' => $postado['prf_id'][$key],
+                //         'tmp_atualizado' => $data_atu,
+                //     ];
+                foreach ($postado['prf_id'] as $acesso => $items) {
+                    foreach ($items as $item) {
+                        $sql_prf = [
+                            'tmo_id'         => $tmo_id,
+                            'prf_id'         => $item[0], // pega o valor interno
+                            'tmp_acesso'     => $acesso,  // I, A ou C
+                            'tmp_atualizado' => $data_atu,
+                        ];
+                        $prf_id = $this->common->insertReg('dbEstoque', 'est_tipo_movimentacao_permissao', $sql_prf);
+                        if (!$prf_id) {
+                            $this->tpmov->transRollback();
 
-                        $ret['erro'] = true;
-                        $erros = $this->common->errors();
-                        $ret['msg'] = 'Não foi possível gravar as Permissões do Tipo de Movimentação, Verifique!';
+                            $ret['erro'] = true;
+                            $erros = $this->common->errors();
+                            $ret['msg'] = 'Não foi possível gravar as Permissões do Tipo de Movimentação, Verifique!';
+                        }
                     }
                 }
             } else {

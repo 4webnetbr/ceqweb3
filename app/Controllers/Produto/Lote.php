@@ -44,9 +44,6 @@ class Lote extends BaseController
      */
     public function index()
     {
-        $integ = new WsCeqweb();
-        $integ->integraLotesBusca();
-
         $this->data['colunas'] = montaColunasLista($this->data, 'lot_id,');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
         echo view('vw_lista', $this->data);
@@ -57,6 +54,10 @@ class Lote extends BaseController
      */
     public function lista()
     {
+        $integ = new WsCeqweb();
+        // $integ->integraLotesBusca();
+        $integ->integraLotesFaltantes();
+
         $campos = montaColunasCampos($this->data, 'lot_id');
         $dados_lote = $this->lotes->getLote();
         $dados_lote = filtrarPorPerfil($dados_lote);

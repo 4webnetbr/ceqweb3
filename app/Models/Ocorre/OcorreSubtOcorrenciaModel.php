@@ -2,9 +2,9 @@
 
 namespace App\Models\Ocorre;
 
+use App\Entities\Ocorrencia\EntOcoSubtOcorrencia;
 use App\Models\LogMonModel;
 use CodeIgniter\Model;
-use App\Entities\Ocorrencia\EntOcoSubtOcorrencia;
 
 class OcorreSubtOcorrenciaModel extends Model
 {
@@ -14,10 +14,10 @@ class OcorreSubtOcorrenciaModel extends Model
     protected $primaryKey       = 'sut_id';
     protected $useAutoIncrement = true;
 
-    protected $returnType       = EntOcoSubtOcorrencia::class;
-    protected $useSoftDeletes   = false;
+    protected $returnType     = EntOcoSubtOcorrencia::class;
+    protected $useSoftDeletes = false;
 
-    protected $allowedFields    = [
+    protected $allowedFields = [
         'sut_id',
         'sut_nome',
         'sut_ativo',
@@ -31,13 +31,12 @@ class OcorreSubtOcorrenciaModel extends Model
         'sut_nome' => 'required|max_length[50]|min_length[5]',
     ];
     protected $validationMessages = [
-        'sut_nome'   => [
+        'sut_nome' => [
             'required'   => 'O campo Nome do Tipo da Ocorrência é Obrigatório',
             'max_lenght' => 'O Campo deve Conter no Máximo 50 Caracteres',
             'min_lenght' => 'O Campo Devente Conter no Minimo 5 Caracteres',
         ],
     ];
-
 
     // Callbacks
     protected $allowCallbacks = true;
@@ -66,7 +65,6 @@ class OcorreSubtOcorrenciaModel extends Model
         return $data;
     }
 
-
     public function getSubtOcorrencia($sut_id = false)
     {
         $db = db_connect('dbOcorrencia');
@@ -91,10 +89,10 @@ class OcorreSubtOcorrenciaModel extends Model
         return $ret;
     }
 
-    public function getSubtOcorrenciaPorTipo($tpo_id = null, $prfid = false, $claid = false)
+    public function getSubtOcorrenciaPorTipo($tpo_id = null, $prfid = false, $classe = false, $tela = false)
     {
         // Conecta ao banco de Ocorrência
-        $db = db_connect('dbOcorrencia');
+        $db      = db_connect('dbOcorrencia');
         $builder = $db->table('vw_oco_subt_ocorrencia_relac');
         $builder->select('*');
 
@@ -102,11 +100,14 @@ class OcorreSubtOcorrenciaModel extends Model
         if ($tpo_id !== null) {
             $builder->where('tpo_id', $tpo_id);
         }
-        if ($prfid !== null) {
+        if ($prfid) {
             $builder->where("FIND_IN_SET($prfid, prf_id) >", 0, false);
         }
-        if ($claid !== null) {
-            $builder->where("FIND_IN_SET($claid, cla_id) >", 0, false);
+        if ($classe) {
+            $builder->where("FIND_IN_SET($classe, cla_id) >", 0, false);
+        }
+        if ($tela) {
+            $builder->where("FIND_IN_SET($tela, tel_id) >", 0, false);
         }
 
         $builder->where('sut_ativo', 'A');
@@ -121,7 +122,7 @@ class OcorreSubtOcorrenciaModel extends Model
 
     public function getTOTelasAplicaveis($sut_id = false)
     {
-        $db = db_connect('dbOcorrencia');
+        $db      = db_connect('dbOcorrencia');
         $builder = $db->table('vw_oco_subt_campo_relac');
 
         $builder->select('*');
@@ -133,15 +134,18 @@ class OcorreSubtOcorrenciaModel extends Model
         return $builder->get()->getResult();
     }
 
-    public function getTOAcao($sut_id = false)
+    public function getTOAcao($sut_id = false, $tpa_id = false)
     {
-        $db = db_connect('dbOcorrencia');
+        $db      = db_connect('dbOcorrencia');
         $builder = $db->table('oco_subt_ocorrencia_acao');
         $builder->select('*');
 
         // Filtra pelo modelo de ocorrência
         if ($sut_id) {
             $builder->where('sut_id', $sut_id);
+        }
+        if ($tpa_id) {
+            $builder->where('tpa_id', $tpa_id);
         }
         $builder->orderBy('sut_id');
 
@@ -175,7 +179,6 @@ class OcorreSubtOcorrenciaModel extends Model
         return $builder->get()->getResult();
     }
 
-
     public function getSubTipo($tpo_id)
     {
         $db = db_connect('dbOcorrencia');
@@ -189,7 +192,6 @@ class OcorreSubtOcorrenciaModel extends Model
 
         return $row;
     }
-
 
     public function getTelaByTpoTpa(int $tpo_id, int $tpa_id)
     {
@@ -205,7 +207,6 @@ class OcorreSubtOcorrenciaModel extends Model
 
         return $row ? (int) $row->tel_id : null;
     }
-
 
     public function getAcaoConfigurada(int $sut_id)
     {
@@ -255,7 +256,7 @@ class OcorreSubtOcorrenciaModel extends Model
         return $builder->get()->getResult();
     }
 
-    public function getClassePorSubtipo(int $sut_id)
+    public function getClassePorSubtipo($sut_id)
     {
         $db = db_connect('dbOcorrencia');
 

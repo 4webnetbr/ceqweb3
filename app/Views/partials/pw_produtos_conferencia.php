@@ -2,48 +2,53 @@
 if (!isset($show)) {
     $show = false;
 }
+$indice = $produtos[0]->req_id ?? 0;
 ?>
-<div class="accordion" id="accProdutos">
+<div class="accordion mb-5" id="accProdutos">
     <div class="accordion-item">
-        <h2 class="accordion-header" id="headprod<?= $produtos[0]->req_id ?>">
-            <button class="accordion-button" type="button" 
-                data-bs-target="#collapseprod<?= $produtos[0]->req_id ?>" aria-expanded="true"
-                aria-controls="collapseprod<?= $produtos[0]->req_id ?>" data-proid="<?= $produtos[0]->req_id ?>">
+        <h2 class="accordion-header" id="headprod<?php echo $indice ?>">
+            <button class="accordion-button" type="button"
+                data-bs-target="#collapseprod<?php echo $indice ?>" aria-expanded="true"
+                aria-controls="collapseprod<?php echo $indice ?>" data-proid="<?php echo $indice ?>">
                 <div class='col-12 text-center'>Produtos</div>
             </button>
         </h2>
-        <div id="collapseprod<?= $produtos[0]->req_id ?>" class="accordion-collapse collapse show border border-2" aria-labelledby="headprod<?= $produtos[0]->req_id ?>" data-bs-parent="#accProdutos">
-            <div class="accordion-body p-0" style="max-height:49vh; height:auto; overflow-y: auto">
-                <table class="display table table-bordered table-sm table-striped table-hover text-center align-middle tabela-pequena">
-                    <thead class="table-info">
-                        <tr>
+        <div id="collapseprod<?php echo $indice ?>" class="accordion-collapse collapse show" aria-labelledby="headprod<?php echo $indice ?>" data-bs-parent="#accProdutos">
+            <div class="accordion-body p-0" style="max-height:49vh; height:auto; overflow-y: auto;border-top: 1px solid white;">
+                <table class="display compact table table-sm table-info table-striped table-hover table-vertical-borders col-12 no-footer dataTable tabela-pequena" aria-describedby="table_info">
+                    <thead class="table-default bg-table-blue-dark col-12 overflow-x-auto">
+                        <tr class=' w-100' style='min-height:39px; height:39px;'>
                             <?
                             if (!$show) { ?>
-                                <th>Status</th>
+                                <th class="sticky-top text-center align-middle text-wrap">Status</th>
                             <? } ?>
-                            <th>Cód.ERP</th>
-                            <th>Descrição</th>
-                            <th>Fabricante</th>
-                            <th>LF</th>
-                            <th>Lote</th>
-                            <th>LP</th>
-                            <th>Validade</th>
-                            <th>LM</th>
-                            <th>Caixas</th>
-                            <th>Qtde.<br>Requerida</th>
-                            <th>Qtde.<br>Atendida</th>
-                            <th>Qtde.<br>Cancelada</th>
-                            <th>Qtde.<br>Conferida</th>
-                            <th>Saldo</th>
+                            <th class="sticky-top text-center align-middle text-wrap">Cód.ERP</th>
+                            <th class="sticky-top text-center align-middle text-wrap">Descrição</th>
+                            <th class="sticky-top text-center align-middle text-wrap">Fabricante</th>
+                            <th class="sticky-top text-center align-middle text-wrap">Lote <br>Validade</th>
+                            <th class="sticky-top text-center align-middle text-wrap" title='Lote do Fornecedor'>LF</th>
+                            <th class="sticky-top text-center align-middle text-wrap" title='Lote do Produto'>LP</th>
+                            <th class="sticky-top text-center align-middle text-wrap" title='Lote do Misturador'>LM</th>
+                            <th class="sticky-top text-center align-middle text-wrap">Caixas</th>
+                            <th class="sticky-top text-center align-middle text-wrap">Qtde.<br>Requerida</th>
+                            <th class="sticky-top text-center align-middle text-wrap">Qtde.<br>Atendida</th>
+                            <th class="sticky-top text-center align-middle text-wrap">Qtde.<br>Cancelada</th>
+                            <th class="sticky-top text-center align-middle text-wrap">Qtde.<br>Conferida</th>
+                            <th class="sticky-top text-center align-middle text-wrap">Saldo</th>
                             <?
                             if (!$show) { ?>
-                                <th>OCR</th>
-                                <th>Inspeção<br>Visual</th>
+                                <th class="sticky-top text-center align-middle text-wrap" title='Registro de Ocorrências'>OCR</th>
+                                <th class="sticky-top text-center align-middle text-wrap" title='Registro de Conformidade'>Conform.</th>
                             <? } ?>
                         </tr>
                     </thead>
                     <tbody style="max-height: 45vh; overflow-y: auto;">
-                        <?php foreach ($produtos as $produto):
+                        <?
+                        if (count($produtos) == 0) {
+                            echo "<tr><td colspan='50'>Nenhum produto disponível para Conferência</td></tr>";
+                        }
+                        $zeb = 0;
+                        foreach ($produtos as $produto):
                             // debug($produto, true);
                             $corlegenda = 'bg-white';
                             $corleglote = 'border-secondary';
@@ -51,77 +56,82 @@ if (!isset($show)) {
                                 $corlegenda = 'bg-danger';
                             }
                         ?>
-                            <tr id='<?= $produto->rep_id ?>'>
+                            <tr class='linha_produto <?php echo ($zeb % 2 == 0) ? 'even' : 'odd'; ?>' id='<?php echo $produto->rep_id ?>'>
                                 <?
                                 if (!$show) { ?>
                                     <td>
-                                        <div id='stt_<?= $produto->rep_id ?>' class='rounded-circle border border-2 <?= $corlegenda; ?>' style='width: 25px; height: 25px'></div>
+                                        <div id='stt_<?php echo $produto->rep_id ?>' class='rounded-circle border border-2 <?php echo $corlegenda; ?>' style='width: 25px; height: 25px'></div>
                                     </td>
                                 <? } ?>
                                 <td>
-                                    <input type='hidden' id='repid_<?= $produto->rep_id ?>' name='repid_<?= $produto->rep_id ?>' value='<?= $produto->rep_id ?>'></input>
-                                    <input type='hidden' id='rpaid_<?= $produto->rep_id ?>' name='rpaid_<?= $produto->rep_id ?>' value='<?= $produto->rpa_id ?>'></input>
-                                    <input type='hidden' id='cbfab_<?= $produto->rep_id ?>' name='cbfab_<?= $produto->rep_id ?>' value='<?= $produto->pre_cbfabricante ?>'></input>
-                                    <input type='hidden' id='undfab_<?= $produto->rep_id ?>' name='undfab_<?= $produto->rep_id ?>' value='<?= $produto->pre_undfabricante ?>'></input>
-                                    <input type='hidden' id='cblot_<?= $produto->rep_id ?>' name='cblot_<?= $produto->rep_id ?>' value='<?= $produto->pre_cblote ?>'></input>
-                                    <input type='hidden' id='undlot_<?= $produto->rep_id ?>' name='undlot_<?= $produto->rep_id ?>' value='<?= $produto->pre_undlote ?>'></input>
-                                    <input type='hidden' id='cfreq_<?= $produto->rep_id ?>' name='cfreq_<?= $produto->rep_id ?>' value='<?= $produto->prc_conf_req ?>'></input>
-                                    <input type='hidden' id='ctalt_<?= $produto->rep_id ?>' name='ctalt_<?= $produto->rep_id ?>' value='0'></input>
-                                    <input type='hidden' id='ctafb_<?= $produto->rep_id ?>' name='ctafb_<?= $produto->rep_id ?>' value='0'></input>
-                                    <input type='hidden' id='ctami_<?= $produto->rep_id ?>' name='ctami_<?= $produto->rep_id ?>' value='0'></input>
-                                    <input type='hidden' id='proid_<?= $produto->rep_id ?>' name='proid_<?= $produto->rep_id ?>' value='<?= $produto->pro_id ?>'></input>
-                                    <input type='hidden' id='lotlote_<?= $produto->rep_id ?>' name='lotlote_<?= $produto->rep_id ?>' value='<?= $produto->lot_lote ?>'></input>
-                                    <input type='hidden' id='repqtia_<?= $produto->rep_id ?>' name='repqtia_<?= $produto->rep_id ?>' value='<?= $produto->rep_quantia ?>'></input>
-                                    <input type='hidden' id='qtdemb_<?= $produto->rep_id ?>' name='qtdemb_<?= $produto->rep_id ?>' value='<?= $produto->pro_qtdemb ?>'></input>
-                                    <?= $produto->pro_codpro ?>
+                                    <input type='hidden' id='repid_<?php echo $produto->rep_id ?>' name='repid_<?php echo $produto->rep_id ?>' value='<?php echo $produto->rep_id ?>'></input>
+                                    <input type='hidden' id='rpaid_<?php echo $produto->rep_id ?>' name='rpaid_<?php echo $produto->rep_id ?>' value='<?php echo $produto->rpa_id ?>'></input>
+                                    <input type='hidden' id='cbfab_<?php echo $produto->rep_id ?>' name='cbfab_<?php echo $produto->rep_id ?>' value='<?php echo $produto->pre_cbfabricante ?>'></input>
+                                    <input type='hidden' id='undfab_<?php echo $produto->rep_id ?>' name='undfab_<?php echo $produto->rep_id ?>' value='<?php echo $produto->pre_undfabricante ?>'></input>
+                                    <input type='hidden' id='cblot_<?php echo $produto->rep_id ?>' name='cblot_<?php echo $produto->rep_id ?>' value='<?php echo $produto->pre_cblote ?>'></input>
+                                    <input type='hidden' id='undlot_<?php echo $produto->rep_id ?>' name='undlot_<?php echo $produto->rep_id ?>' value='<?php echo $produto->pre_undlote ?>'></input>
+                                    <input type='hidden' id='cfreq_<?php echo $produto->rep_id ?>' name='cfreq_<?php echo $produto->rep_id ?>' value='<?php echo $produto->prc_conf_req ?>'></input>
+                                    <input type='hidden' id='ctalt_<?php echo $produto->rep_id ?>' name='ctalt_<?php echo $produto->rep_id ?>' value='0'></input>
+                                    <input type='hidden' id='ctafb_<?php echo $produto->rep_id ?>' name='ctafb_<?php echo $produto->rep_id ?>' value='0'></input>
+                                    <input type='hidden' id='ctami_<?php echo $produto->rep_id ?>' name='ctami_<?php echo $produto->rep_id ?>' value='0'></input>
+                                    <input type='hidden' id='proid_<?php echo $produto->rep_id ?>' name='proid_<?php echo $produto->rep_id ?>' value='<?php echo $produto->pro_id ?>'></input>
+                                    <input type='hidden' id='lotlote_<?php echo $produto->rep_id ?>' name='lotlote_<?php echo $produto->rep_id ?>' value='<?php echo $produto->lot_lote ?>'></input>
+                                    <input type='hidden' id='repqtia_<?php echo $produto->rep_id ?>' name='repqtia_<?php echo $produto->rep_id ?>' value='<?php echo $produto->rep_quantia ?>'></input>
+                                    <input type='hidden' id='qtdemb_<?php echo $produto->rep_id ?>' name='qtdemb_<?php echo $produto->rep_id ?>' value='<?php echo $produto->pro_qtdemb ?>'></input>
+                                    <?php echo $produto->pro_codpro ?>
                                 </td>
-                                <td class='text-start'><?= $produto->pro_despro ?></td>
-                                <td id='<?= $produto->pro_codbar_fabricante ?>' data-id='cbFab' class='text-start'><?= $produto->fab_apeFab ?></td>
+                                <td id='<?php echo $produto->prc_codbar ?>' data-codbar='<?php echo $produto->prc_codbar ?>'
+                                    data-id='cbMis' class='text-start'><?php echo $produto->pro_despro ?></td>
+                                <td id='<?php echo $produto->pro_codbar_fabricante ?>' data-codbar='<?php echo $produto->pro_codbar_fabricante ?>'
+                                    data-id='cbFab' class='text-start'><?php echo $produto->fab_apeFab ?></td>
+                                <td id='<?php echo $produto->lot_codbar ?>' data-codbar='<?php echo $produto->lot_codbar ?>'
+                                    data-id='cbLot' class='text-start'><?php echo $produto->lot_lote . "<br>" . data_br($produto->lot_validade) ?></td>
                                 <? if (!$show) { ?>
                                     <td>
-                                        <div id='fab_<?= $produto->rep_id ?>' class='rounded-circle border border-2  <?= $corleglote; ?> p-1' style='width: 25px; height: 25px'><?= $produto->pre_cbfabricante . $produto->pre_undfabricante ?></div>
+                                        <div id='fab_<?php echo $produto->rep_id ?>' class='rounded-circle border border-2  <?php echo $corleglote; ?> p-1' style='width: 25px; height: 25px'><?php echo $produto->pre_cbfabricante . $produto->pre_undfabricante ?></div>
                                     </td>
                                 <? } else { ?>
                                     <td>
-                                        <div id='fab_<?= $produto->rep_id ?>' class='p-1'><?= $produto->pre_cbfabricante . $produto->pre_undfabricante ?></div>
+                                        <div id='fab_<?php echo $produto->rep_id ?>' class='p-1'><?php echo $produto->pre_cbfabricante . $produto->pre_undfabricante ?></div>
                                     </td>
                                 <? } ?>
-                                <td id='<?= $produto->lot_codbar ?>' data-id='cbLot' class='text-start'><?= $produto->lot_lote ?></td>
                                 <? if (!$show) { ?>
                                     <td>
-                                        <div id='lot_<?= $produto->rep_id ?>' class='rounded-circle  border border-2 <?= $corleglote; ?> p-1' style='width: 25px; height: 25px'><?= $produto->pre_cblote . $produto->pre_undlote ?></div>
+                                        <div id='lot_<?php echo $produto->rep_id ?>' class='rounded-circle  border border-2 <?php echo $corleglote; ?> p-1' style='width: 25px; height: 25px'><?php echo $produto->pre_cblote . $produto->pre_undlote ?></div>
                                     </td>
                                 <? } else { ?>
                                     <td>
-                                        <div id='lot_<?= $produto->rep_id ?>' class='p-1'><?= $produto->pre_cblote . $produto->pre_undlote ?></div>
+                                        <div id='lot_<?php echo $produto->rep_id ?>' class='p-1'><?php echo $produto->pre_cblote . $produto->pre_undlote ?></div>
                                     </td>
                                 <? } ?>
-                                <td id='<?= $produto->prc_codbar ?>' data-id='cbMis'><?= data_br($produto->lot_validade) ?></td>
                                 <? if (!$show) { ?>
                                     <td>
-                                        <div id='mis_<?= $produto->rep_id ?>' class='rounded-circle  border border-2 <?= $corleglote; ?> p-1' style='width: 25px; height: 25px'><?= $produto->pre_cbmisturador . $produto->pre_undmisturador ?></div>
+                                        <div id='mis_<?php echo $produto->rep_id ?>' class='rounded-circle  border border-2 <?php echo $corleglote; ?> p-1' style='width: 25px; height: 25px'><?php echo $produto->pre_cbmisturador . $produto->pre_undmisturador ?></div>
                                     </td>
                                 <? } else { ?>
                                     <td>
-                                        <div id='mis_<?= $produto->rep_id ?>' class='p-1'><?= $produto->pre_cblote . $produto->pre_undlote ?></div>
+                                        <div id='mis_<?php echo $produto->rep_id ?>' class='p-1'><?php echo $produto->pre_cblote . $produto->pre_undlote ?></div>
                                     </td>
                                 <? } ?>
-                                <td id='cx_<?= $produto->rep_id ?>'><?= $produto->qtd_caixa ?></td>
-                                <td id='qt_<?= $produto->rep_id ?>'><?= $produto->rep_quantia ?></td>
-                                <td id='at_<?= $produto->rep_id ?>'><?= $produto->rpa_atendida ?></td>
-                                <td id='ca_<?= $produto->rep_id ?>'><?= $produto->rpa_cancelada ?></td>
-                                <td id='cf_<?= $produto->rep_id ?>'><?= $produto->rpa_conferida ?></td>
-                                <td id='sl_<?= $produto->rep_id ?>'><?= $produto->saldo ?></td>
+                                <td id='cx_<?php echo $produto->rep_id ?>' class='text-end'><?php echo $produto->qtd_caixa ?></td>
+                                <td id='qt_<?php echo $produto->rep_id ?>' class='text-end'><?php echo $produto->rep_quantia ?></td>
+                                <td id='at_<?php echo $produto->rep_id ?>' class='text-end'><?php echo $produto->rpa_atendida ?></td>
+                                <td id='ca_<?php echo $produto->rep_id ?>' class='text-end'><?php echo $produto->rpa_cancelada ?></td>
+                                <td id='cf_<?php echo $produto->rep_id ?>' class='text-end'><?php echo $produto->rpa_conferida ?></td>
+                                <td id='sl_<?php echo $produto->rep_id ?>' class='text-end'><?php echo $produto->saldo ?></td>
                                 <? if (!$show) { ?>
                                     <td>
-                                        <?= $produto->bt_ocorre; ?>
+                                        <?php echo $produto->bt_ocorre; ?>
                                     </td>
                                     <td>
-                                        <?= $produto->bt_insvis; ?>
+                                        <span id='apr_<?php echo $produto->rep_id ?>' class='d-none'></span>
+                                        <?php echo $produto->bt_insvis; ?>
                                     </td>
                                 <? } ?>
                             </tr>
-                        <?php endforeach; ?>
+                        <?php
+                            $zeb++;
+                        endforeach; ?>
                     </tbody>
                 </table>
             </div>

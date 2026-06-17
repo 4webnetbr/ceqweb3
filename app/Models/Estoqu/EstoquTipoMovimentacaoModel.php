@@ -175,7 +175,7 @@ class EstoquTipoMovimentacaoModel extends Model
     public function getTipoMovimentacaoParaRequisicao($tmo_id = false)
     {
         $db = db_connect('dbEstoque');
-        $builder = $db->table('vw_est_tipo_movimentacao_relac_lista');
+        $builder = $db->table('vw_est_tipo_movimentacao_para_requisicao');
         $builder->select('*');
 
         if ($tmo_id) {
@@ -184,6 +184,18 @@ class EstoquTipoMovimentacaoModel extends Model
         $builder->where('tmo_requisicao', 'S');
         $builder->orderBy('tmo_ativo, tmo_nome');
 
-        return $builder->get()->getResultArray();
+        return $builder->get()->getResult();
+    }
+
+    /** Usado para retornar 1 ou mais de 1 movimentos */
+    public function getTipoMovimentacaoMovim($tmo_id = false)
+    {
+        $db = db_connect('dbEstoque');
+        $builder = $db->table('vw_est_tipo_movimentacao_movimento_relac');
+        $builder->select('*');
+        if ($tmo_id) {
+            $builder->where('tmo_id', $tmo_id);
+        }
+        return $builder->get()->getResult();
     }
 }
