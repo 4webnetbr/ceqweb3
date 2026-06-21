@@ -249,60 +249,120 @@ function busca_dados_material(orig, obj, url, base) {
   }
 }
 
+// function prevEtiqueta(url) {
+//   const campos = [];
+//   jQuery("#etqPreview").html("Renderizando...");
+
+//   jQuery('select[name^="etc_campo["]').each(function () {
+//     const index = jQuery(this)
+//       .attr("name")
+//       .match(/\[(\d+)\]/)[1];
+
+//     let campo = {
+//       etc_campo: jQuery(`select[name="etc_campo[${index}]"]`).val(),
+//       etc_codbar:
+//         jQuery(`input[name="etc_codbar[${index}]"]:checked`).val() || "N",
+//       etc_rotulo: jQuery(`input[name="etc_rotulo[${index}]"]`).val(),
+//       etc_caracteres: jQuery(`input[name="etc_caracteres[${index}]"]`).val(),
+//       etc_linhas: jQuery(`input[name="etc_linhas[${index}]"]`).val(),
+//       etc_colunas: jQuery(`input[name="etc_colunas[${index}]"]`).val(),
+//       etc_fonte: jQuery(`select[name="etc_fonte[${index}]"]`).val(),
+//       etc_tamanho: jQuery(`input[name="etc_tamanho[${index}]"]`).val(),
+//       etc_alinhamento: jQuery(`select[name="etc_alinhamento[${index}]"]`).val(),
+//       etc_negrito:
+//         jQuery(`input[name="etc_negrito[${index}]"]:checked`).val() || "N",
+//       etc_italico:
+//         jQuery(`input[name="etc_italico[${index}]"]:checked`).val() || "N",
+//       etc_sublinhado:
+//         jQuery(`input[name="etc_sublinhado[${index}]"]:checked`).val() || "N",
+//     };
+
+//     if (campo.etc_campo !== null && campo.etc_campo !== "") {
+//       campos.push(campo);
+//     }
+//   });
+
+//   const let_id = jQuery('select[name="let_id"]').val();
+//   const tel_id = jQuery('select[name="tel_id"]').val();
+
+//   jQuery.ajax({
+//     url: url,
+//     method: "POST",
+//     contentType: "application/json",
+//     data: JSON.stringify({
+//       let_id: let_id,
+//       tel_id: tel_id,
+//       campos: campos,
+//     }),
+//     // xhrFields: {
+//     //   responseType: "blob",
+//     // },
+//     success: function (res) {
+//       imgRetornada =
+//         "<img src='data:image/png;base64," +
+//         res.imagem +
+//         "' style='width:95%' />";
+//       jQuery("#etqPreview").html(imgRetornada);
+//     },
+//   });
+// }
+
+let debounceTimer;
+
 function prevEtiqueta(url) {
+  clearTimeout(debounceTimer);
+
+  debounceTimer = setTimeout(() => {
+    prevEtiquetaExecuta(url);
+  }, 1000); // 1 segundos
+}
+function prevEtiquetaExecuta(url) {
+  const $preview = jQuery("#etqPreview");
+  $preview.html("Renderizando...");
+
   const campos = [];
-  jQuery("#etqPreview").html("Renderizando...");
 
   jQuery('select[name^="etc_campo["]').each(function () {
-    const index = jQuery(this)
-      .attr("name")
-      .match(/\[(\d+)\]/)[1];
+    const $this = jQuery(this);
+    const index = $this.attr("name").match(/\[(\d+)\]/)[1];
 
-    let campo = {
-      etc_campo: jQuery(`select[name="etc_campo[${index}]"]`).val(),
-      etc_codbar:
-        jQuery(`input[name="etc_codbar[${index}]"]:checked`).val() || "N",
-      etc_rotulo: jQuery(`input[name="etc_rotulo[${index}]"]`).val(),
-      etc_caracteres: jQuery(`input[name="etc_caracteres[${index}]"]`).val(),
-      etc_linhas: jQuery(`input[name="etc_linhas[${index}]"]`).val(),
-      etc_colunas: jQuery(`input[name="etc_colunas[${index}]"]`).val(),
-      etc_fonte: jQuery(`select[name="etc_fonte[${index}]"]`).val(),
-      etc_tamanho: jQuery(`input[name="etc_tamanho[${index}]"]`).val(),
-      etc_alinhamento: jQuery(`select[name="etc_alinhamento[${index}]"]`).val(),
-      etc_negrito:
-        jQuery(`input[name="etc_negrito[${index}]"]:checked`).val() || "N",
-      etc_italico:
-        jQuery(`input[name="etc_italico[${index}]"]:checked`).val() || "N",
-      etc_sublinhado:
-        jQuery(`input[name="etc_sublinhado[${index}]"]:checked`).val() || "N",
+    const getVal = (selector) => jQuery(selector).val();
+    const getChecked = (selector) => jQuery(selector + ":checked").val() || "N";
+
+    const campo = {
+      etc_campo: getVal(`select[name="etc_campo[${index}]"]`),
+      etc_codbar: getChecked(`input[name="etc_codbar[${index}]"]`),
+      etc_rotulo: getVal(`input[name="etc_rotulo[${index}]"]`),
+      etc_caracteres: getVal(`input[name="etc_caracteres[${index}]"]`),
+      etc_linhas: getVal(`input[name="etc_linhas[${index}]"]`),
+      etc_colunas: getVal(`input[name="etc_colunas[${index}]"]`),
+      etc_fonte: getVal(`select[name="etc_fonte[${index}]"]`),
+      etc_tamanho: getVal(`input[name="etc_tamanho[${index}]"]`),
+      etc_alinhamento: getVal(`select[name="etc_alinhamento[${index}]"]`),
+      etc_negrito: getChecked(`input[name="etc_negrito[${index}]"]`),
+      etc_italico: getChecked(`input[name="etc_italico[${index}]"]`),
+      etc_sublinhado: getChecked(`input[name="etc_sublinhado[${index}]"]`),
     };
 
-    if (campo.etc_campo !== null && campo.etc_campo !== "") {
+    if (campo.etc_campo) {
       campos.push(campo);
     }
   });
 
-  const let_id = jQuery('select[name="let_id"]').val();
-  const tel_id = jQuery('select[name="tel_id"]').val();
+  const payload = {
+    let_id: jQuery('select[name="let_id"]').val(),
+    tel_id: jQuery('select[name="tel_id"]').val(),
+    campos: campos,
+  };
 
   jQuery.ajax({
-    url: url,
+    url,
     method: "POST",
     contentType: "application/json",
-    data: JSON.stringify({
-      let_id: let_id,
-      tel_id: tel_id,
-      campos: campos,
-    }),
-    // xhrFields: {
-    //   responseType: "blob",
-    // },
+    data: JSON.stringify(payload),
     success: function (res) {
-      imgRetornada =
-        "<img src='data:image/png;base64," +
-        res.imagem +
-        "' style='width:95%' />";
-      jQuery("#etqPreview").html(imgRetornada);
+      const img = `<img src="data:image/png;base64,${res.imagem}" style="width:95%" />`;
+      $preview.html(img);
     },
   });
 }
@@ -311,158 +371,331 @@ var lotok = false;
 var fabok = false;
 var misok = false;
 
-function validaCodBar(obj) {
-  codbar = obj.value;
-  if (codbar.length > 0) {
-    let origem = "aten";
-    let msgqterrada = 32;
-    const controller = jQuery("#controler").val();
-    if (controller.toLowerCase() === "confrequisicao") {
-      origem = "conf";
-      msgqterrada = 34;
-      validaCodBarConf(obj);
-    }
-    if (codbar.length < 13) {
-      codbar = String(codbar).padStart(13, "0");
-    }
-    codbar = extrairCodBarFab(codbar);
-    var tdCodbar = jQuery("#" + codbar);
+// function validaCodBarAnt(obj) {
+//   codbar = obj.value;
+//   if (codbar.length > 0) {
+//     let origem = "aten";
+//     let msgqterrada = 32;
+//     const controller = jQuery("#controler").val();
+//     if (controller.toLowerCase() === "confrequisicao") {
+//       origem = "conf";
+//       msgqterrada = 34;
+//       validaCodBarConf(obj);
+//     }
+//     if (codbar.length < 13) {
+//       const pos = codbar.indexOf("789");
+//       if (pos === -1) {
+//         codbar = String(codbar).padStart(13, "0");
+//       }
+//     }
+//     codbar = extrairCodBarFab(codbar);
+//     var tdCodbar = jQuery("#" + codbar);
 
-    if (tdCodbar.length) {
-      // Encontra a <tr> pai
-      var linha = tdCodbar.closest("tr")[0]; // pega a linha
+//     if (tdCodbar.length) {
+//       // Encontra a <tr> pai
+//       var linha = tdCodbar.closest("tr")[0]; // pega a linha
 
-      // Extrai o ID base (assumindo que o codbar está na mesma linha do stt_169)
-      var idBase = linha.id;
+//       // Extrai o ID base (assumindo que o codbar está na mesma linha do stt_169)
+//       var idBase = linha.id;
 
-      let saldoatual = parseInt(jQuery("#sl_" + idBase).text());
-      saldo = saldoatual;
-      var tipo = tdCodbar[0].dataset.id;
-      var qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
-      var qtde = jQuery("#qt_" + idBase).text();
-      var canc = jQuery("#rpa_cancelada_" + idBase).val();
+//       let saldoatual = parseInt(jQuery("#sl_" + idBase).text());
+//       saldo = saldoatual;
+//       var tipo = tdCodbar[0].dataset.id;
+//       var qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
+//       var qtde = jQuery("#qt_" + idBase).text();
+//       var canc = jQuery("#rpa_cancelada_" + idBase).val();
 
-      if (tipo == "cbFab") {
-        // SCANEOU CODIGO DO FABRICANTE
-        var ctafab = jQuery("#ctafb_" + idBase).val();
-        ctafab++;
-        jQuery("#ctafb_" + idBase).val(ctafab);
+//       if (tipo == "cbFab") {
+//         // SCANEOU CODIGO DO FABRICANTE
+//         var ctafab = jQuery("#ctafb_" + idBase).val();
+//         ctafab++;
+//         jQuery("#ctafb_" + idBase).val(ctafab);
 
-        var lf = jQuery("#fab_" + idBase).text();
-        var ctafab = jQuery("#ctafb_" + idBase).val();
-        // var fabok = false;
-        if (lf == "SN") {
-          if (parseInt(ctafab) == parseInt(qtcaixa)) {
-            fabok = true;
-            var lp = jQuery("#lot_" + idBase).text();
-            if (lp == "NN") {
-              var qtnacaixa = parseInt(jQuery("#qtdemb_" + idBase).val());
-              qtatendida = ctafab * qtnacaixa;
-              qtdpen = qtde - canc;
-              qtatendida = Math.min(qtatendida, qtdpen);
-              jQuery("#rpa_atendida_" + idBase).val(qtatendida);
-            }
-          } else if (parseInt(ctafab) > parseInt(qtcaixa)) {
-            boxAlert(msgqterrada, false, "", true, 1, false);
-            obj.value = "";
-            obj.focus();
-            return;
-          } else {
-            fabok = false;
-            // jQuery("#fab_" + idBase).removeClass("border-secondary");
-            // jQuery("#fab_" + idBase).addClass("border-warning bg-warning");
-          }
-        } else if (lf == "NN") {
-          fabok = true;
-        } else if (lf == "SS") {
-          if (parseInt(ctafab) == parseInt(qtde) - parseInt(canc)) {
-            fabok = true;
-          } else if (parseInt(ctafab) > parseInt(qtde) - parseInt(canc)) {
-            ctafab--;
-            jQuery("#ctafb_" + idBase).val(ctafab);
-            boxAlert(msgqterrada, false, "", true, 1, false);
-            obj.value = "";
-            obj.focus();
-            return;
-          } else {
-            fabok = false;
-          }
-        }
-      } else if (tipo == "cbLot") {
-        // SCANEOU CÓDIGO DO LOTE
-        if (parseInt(saldoatual) == 0) {
-          boxAlert(msgqterrada, false, "", true, 1, false);
-          obj.value = "";
-          obj.focus();
-          return;
-        } else {
-          var ctalot = jQuery("#ctalt_" + idBase).val();
-          ctalot++;
-          jQuery("#ctalt_" + idBase).val(ctalot);
-          jQuery("#rpa_atendida_" + idBase).val(ctalot);
-        }
-        var lp = jQuery("#lot_" + idBase).text();
-        var ctalot = jQuery("#ctalt_" + idBase).val();
-        // lotok = false;
-        if (lp == "SN") {
-          var qtnacaixa = parseInt(jQuery("#qtdemb_" + idBase).val());
-          qtatendida = ctalot * qtnacaixa;
-          qtdpen = qtde - canc;
-          qtatendida = Math.min(qtatendida, qtdpen);
-          jQuery("#rpa_atendida_" + idBase).val(qtatendida);
-          if (parseInt(ctalot) == parseInt(qtcaixa)) {
-            jQuery("#rpa_cancelada_" + idBase).prop("disabled", true);
-            jQuery("#rpa_cancelada_" + idBase).prop("readonly", true);
-            saldo = 0;
-            jQuery("#sl_" + idBase).text(saldo);
-            lotok = true;
-          } else {
-            lotok = false;
-            // jQuery("#lot_" + idBase).removeClass("border-secondary");
-            // jQuery("#lot_" + idBase).addClass("border-warning bg-warning");
-          }
-        } else if (lp == "SS") {
-          if (parseInt(ctalot) == parseInt(qtde) - parseInt(canc)) {
-            lotok = true;
-            // jQuery("#lot_" + idBase).removeClass("border-secondary");
-            // jQuery("#lot_" + idBase).removeClass("border-warning bg-warning");
-            // jQuery("#lot_" + idBase).addClass("border-success bg-success");
-            jQuery("#rpa_cancelada_" + idBase).prop("disabled", true);
-            jQuery("#rpa_cancelada_" + idBase).prop("readonly", true);
-          } else {
-            lotok = false;
-            // jQuery("#lot_" + idBase).removeClass("border-secondary");
-            // jQuery("#lot_" + idBase).addClass("border-warning bg-warning");
-          }
-          saldo = qtde - canc - ctalot;
-          jQuery("#sl_" + idBase).text(saldo);
-        }
-      }
+//         var lf = jQuery("#fab_" + idBase).text();
+//         var ctafab = jQuery("#ctafb_" + idBase).val();
+//         // var fabok = false;
+//         if (lf == "SN") {
+//           if (parseInt(ctafab) == parseInt(qtcaixa)) {
+//             fabok = true;
+//             var lp = jQuery("#lot_" + idBase).text();
+//             if (lp == "NN") {
+//               var qtnacaixa = parseInt(jQuery("#qtdemb_" + idBase).val());
+//               qtatendida = ctafab * qtnacaixa;
+//               qtdpen = qtde - canc;
+//               qtatendida = Math.min(qtatendida, qtdpen);
+//               jQuery("#rpa_atendida_" + idBase).val(qtatendida);
+//             }
+//           } else if (parseInt(ctafab) > parseInt(qtcaixa)) {
+//             ctafab--;
+//             jQuery("#ctafb_" + idBase).val(ctafab);
+//             boxAlert(msgqterrada, false, "", true, 1, false);
+//             obj.value = "";
+//             obj.focus();
+//             return;
+//           } else {
+//             fabok = false;
+//             // jQuery("#fab_" + idBase).removeClass("border-secondary");
+//             // jQuery("#fab_" + idBase).addClass("border-warning bg-warning");
+//           }
+//         } else if (lf == "NN") {
+//           fabok = true;
+//         } else if (lf == "SS") {
+//           if (parseInt(ctafab) == parseInt(qtde) - parseInt(canc)) {
+//             fabok = true;
+//           } else if (parseInt(ctafab) > parseInt(qtde) - parseInt(canc)) {
+//             ctafab--;
+//             jQuery("#ctafb_" + idBase).val(ctafab);
+//             boxAlert(msgqterrada, false, "", true, 1, false);
+//             obj.value = "";
+//             obj.focus();
+//             return;
+//           } else {
+//             fabok = false;
+//           }
+//         }
+//       } else if (tipo == "cbLot") {
+//         // SCANEOU CÓDIGO DO LOTE
+//         if (parseInt(saldoatual) == 0) {
+//           boxAlert(msgqterrada, false, "", true, 1, false);
+//           obj.value = "";
+//           obj.focus();
+//           return;
+//         } else {
+//           var ctalot = jQuery("#ctalt_" + idBase).val();
+//           ctalot++;
+//           jQuery("#ctalt_" + idBase).val(ctalot);
+//           jQuery("#rpa_atendida_" + idBase).val(ctalot);
+//         }
+//         var lp = jQuery("#lot_" + idBase).text();
+//         var ctalot = jQuery("#ctalt_" + idBase).val();
+//         // lotok = false;
+//         if (lp == "SN") {
+//           var qtnacaixa = parseInt(jQuery("#qtdemb_" + idBase).val());
+//           qtatendida = ctalot * qtnacaixa;
+//           qtdpen = qtde - canc;
+//           qtatendida = Math.min(qtatendida, qtdpen);
+//           jQuery("#rpa_atendida_" + idBase).val(qtatendida);
+//           if (parseInt(ctalot) == parseInt(qtcaixa)) {
+//             jQuery("#rpa_cancelada_" + idBase).prop("disabled", true);
+//             jQuery("#rpa_cancelada_" + idBase).prop("readonly", true);
+//             saldo = 0;
+//             jQuery("#sl_" + idBase).text(saldo);
+//             lotok = true;
+//           } else {
+//             lotok = false;
+//             // jQuery("#lot_" + idBase).removeClass("border-secondary");
+//             // jQuery("#lot_" + idBase).addClass("border-warning bg-warning");
+//           }
+//         } else if (lp == "SS") {
+//           if (parseInt(ctalot) == parseInt(qtde) - parseInt(canc)) {
+//             lotok = true;
+//             // jQuery("#lot_" + idBase).removeClass("border-secondary");
+//             // jQuery("#lot_" + idBase).removeClass("border-warning bg-warning");
+//             // jQuery("#lot_" + idBase).addClass("border-success bg-success");
+//             jQuery("#rpa_cancelada_" + idBase).prop("disabled", true);
+//             jQuery("#rpa_cancelada_" + idBase).prop("readonly", true);
+//           } else {
+//             lotok = false;
+//             // jQuery("#lot_" + idBase).removeClass("border-secondary");
+//             // jQuery("#lot_" + idBase).addClass("border-warning bg-warning");
+//           }
+//           saldo = qtde - canc - ctalot;
+//           jQuery("#sl_" + idBase).text(saldo);
+//         }
+//       }
+//       linha.dataset.alter = "true";
+//     } else {
+//       obj.value = "";
+//       boxAlert(10, true);
+//       obj.focus();
+//     }
+//     acertaSaldoReq(jQuery("#rpa_atendida_" + idBase));
+//     obj.value = "";
+//     obj.focus();
+//   }
+//   // }
+// }
 
-      // fundo = "";
-      // if ((ctafab > 0 || ctalot > 0) && (!lotok || !fabok) && saldo > 0) {
-      //   fundo = "bg-warning";
-      // } else if ((lotok && fabok) || (saldo == 0 && canc == 0)) {
-      //   fundo = "bg-success";
-      // } else if (lotok && fabok && canc > 0) {
-      //   fundo = "bg-danger";
-      // }
-      // jQuery("#stt_" + idBase).removeClass("bg-white");
-      // jQuery("#stt_" + idBase).removeClass("bg-warning");
-      // jQuery("#stt_" + idBase).removeClass("bg-success");
-      // jQuery("#stt_" + idBase).removeClass("bg-danger");
-      // jQuery("#stt_" + idBase).addClass(fundo);
-    } else {
-      obj.value = "";
-      boxAlert(10, true);
-      obj.focus();
-    }
-    acertaSaldoReq(jQuery("#rpa_atendida_" + idBase));
-    obj.value = "";
-    obj.focus();
-  }
-  // }
-}
+// function validaCodBar(obj) {
+//   codbar = obj.value;
+//   if (codbar.length > 0) {
+//     let origem = "aten";
+//     let msgqterrada = 32;
+//     const controller = jQuery("#controler").val();
+//     if (controller.toLowerCase() === "confrequisicao") {
+//       origem = "conf";
+//       msgqterrada = 34;
+//       validaCodBarConf(obj);
+//     }
+//     // if (codbar.length < 13) {
+//     //   const pos = codbar.indexOf("789");
+//     //   if (pos === -1) {
+//     //     codbar = String(codbar).padStart(13, "0");
+//     //   }
+//     // }
+//     // codbar = extrairCodBarFab(codbar);
+//     let codbarOriginal = String(codbar).trim();
+
+//     let codbarPossiveis =
+//       codbarOriginal.length < 13
+//         ? [codbarOriginal.padStart(8, "0"), codbarOriginal.padStart(13, "0")]
+//         : [extrairCodBarFab(codbarOriginal)];
+
+//     codbarPossiveis = [...new Set(codbarPossiveis)];
+
+//     let codbarEncontrado = null;
+//     let tdsCodbar = jQuery();
+
+//     codbarPossiveis.some(function (cod) {
+//       const tds = jQuery('td[data-codbar="' + cod + '"]');
+
+//       if (tds.length) {
+//         codbarEncontrado = cod;
+//         tdsCodbar = tds;
+//         return true;
+//       }
+
+//       return false;
+//     });
+
+//     if (codbarEncontrado) {
+//       codbar = codbarEncontrado;
+//     }
+
+//     // var tdsCodbar = jQuery('td[data-codbar="' + codbar + '"]');
+
+//     var idBase = 0;
+//     if (tdsCodbar.length) {
+//       var total = tdsCodbar.length;
+//       tdsCodbar.each(function (index) {
+//         var primeiro = index === 0;
+//         var ultimo = index === total - 1;
+
+//         var tdCodbar = jQuery(this)[0];
+//         var linha = tdCodbar.closest("tr");
+//         // Extrai o ID base (assumindo que o codbar está na mesma linha do stt_169)
+//         idBase = linha.id;
+
+//         let saldoatual = parseInt(jQuery("#sl_" + idBase).text());
+//         saldo = saldoatual;
+//         var tipo = tdCodbar.dataset.id;
+//         var qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
+//         var qtde = jQuery("#qt_" + idBase).text();
+//         var canc = jQuery("#rpa_cancelada_" + idBase).val();
+
+//         if (tipo == "cbFab") {
+//           // SCANEOU CODIGO DO FABRICANTE
+//           var ctafab = jQuery("#ctafb_" + idBase).val();
+//           ctafab++;
+//           jQuery("#ctafb_" + idBase).val(ctafab);
+
+//           var lf = jQuery("#fab_" + idBase).text();
+//           var ctafab = jQuery("#ctafb_" + idBase).val();
+//           // var fabok = false;
+//           if (lf == "SN") {
+//             if (parseInt(ctafab) == parseInt(qtcaixa)) {
+//               fabok = true;
+//               var lp = jQuery("#lot_" + idBase).text();
+//               if (lp == "NN") {
+//                 var qtnacaixa = parseInt(jQuery("#qtdemb_" + idBase).val());
+//                 qtatendida = ctafab * qtnacaixa;
+//                 qtdpen = qtde - canc;
+//                 qtatendida = Math.min(qtatendida, qtdpen);
+//                 jQuery("#rpa_atendida_" + idBase).val(qtatendida);
+//               }
+//             } else if (parseInt(ctafab) > parseInt(qtcaixa)) {
+//               ctafab--;
+//               jQuery("#ctafb_" + idBase).val(ctafab);
+//               if (!ultimo) {
+//                 return true; // Pula para a próxima iteração sem mostrar o alerta
+//               } else if (ultimo) {
+//                 boxAlert(msgqterrada, false, "", true, 1, false);
+//                 obj.value = "";
+//                 obj.focus();
+//                 return;
+//               }
+//             } else {
+//               fabok = false;
+//             }
+//           } else if (lf == "NN") {
+//             fabok = true;
+//           } else if (lf == "SS") {
+//             if (parseInt(ctafab) == parseInt(qtde) - parseInt(canc)) {
+//               fabok = true;
+//             } else if (parseInt(ctafab) > parseInt(qtde) - parseInt(canc)) {
+//               ctafab--;
+//               jQuery("#ctafb_" + idBase).val(ctafab);
+//               if (!ultimo) {
+//                 return true; // Pula para a próxima iteração sem mostrar o alerta
+//               } else if (ultimo) {
+//                 boxAlert(msgqterrada, false, "", true, 1, false);
+//                 obj.value = "";
+//                 obj.focus();
+//                 return;
+//               }
+//             } else {
+//               fabok = false;
+//             }
+//           }
+//         } else if (tipo == "cbLot") {
+//           // SCANEOU CÓDIGO DO LOTE
+//           if (parseInt(saldoatual) == 0) {
+//             boxAlert(msgqterrada, false, "", true, 1, false);
+//             obj.value = "";
+//             obj.focus();
+//             return;
+//           } else {
+//             var ctalot = jQuery("#ctalt_" + idBase).val();
+//             ctalot++;
+//             jQuery("#ctalt_" + idBase).val(ctalot);
+//             jQuery("#rpa_atendida_" + idBase).val(ctalot);
+//           }
+//           var lp = jQuery("#lot_" + idBase).text();
+//           var ctalot = jQuery("#ctalt_" + idBase).val();
+//           // lotok = false;
+//           if (lp == "SN") {
+//             var qtnacaixa = parseInt(jQuery("#qtdemb_" + idBase).val());
+//             qtatendida = ctalot * qtnacaixa;
+//             qtdpen = qtde - canc;
+//             qtatendida = Math.min(qtatendida, qtdpen);
+//             jQuery("#rpa_atendida_" + idBase).val(qtatendida);
+//             if (parseInt(ctalot) == parseInt(qtcaixa)) {
+//               jQuery("#rpa_cancelada_" + idBase).prop("disabled", true);
+//               jQuery("#rpa_cancelada_" + idBase).prop("readonly", true);
+//               saldo = 0;
+//               jQuery("#sl_" + idBase).text(saldo);
+//               lotok = true;
+//             } else {
+//               lotok = false;
+//               // jQuery("#lot_" + idBase).removeClass("border-secondary");
+//               // jQuery("#lot_" + idBase).addClass("border-warning bg-warning");
+//             }
+//           } else if (lp == "SS") {
+//             if (parseInt(ctalot) == parseInt(qtde) - parseInt(canc)) {
+//               lotok = true;
+//               jQuery("#rpa_cancelada_" + idBase).prop("disabled", true);
+//               jQuery("#rpa_cancelada_" + idBase).prop("readonly", true);
+//             } else {
+//               lotok = false;
+//             }
+//             saldo = qtde - canc - ctalot;
+//             jQuery("#sl_" + idBase).text(saldo);
+//           }
+//         }
+//         linha.dataset.alter = "true";
+//         return false;
+//       });
+//     } else {
+//       obj.value = "";
+//       boxAlert(10, true);
+//       obj.focus();
+//     }
+//     acertaSaldoReq(jQuery("#rpa_atendida_" + idBase));
+//     obj.value = "";
+//     obj.focus();
+//   }
+//   // }
+// }
 
 function acertaCorStt(idBase, tipo = "ate") {
   var lf = jQuery("#fab_" + idBase).text();
@@ -473,11 +706,11 @@ function acertaCorStt(idBase, tipo = "ate") {
   var qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
   var qtde = parseInt(jQuery("#qt_" + idBase).text());
   var aten = parseInt(jQuery("#rpa_atendida_" + idBase).val());
-  var conf = parseInt(jQuery("#rpa_conferida_" + idBase).val());
   var canc = parseInt(jQuery("#rpa_cancelada_" + idBase).val());
+  var conf = parseInt(jQuery("#rpa_conferida_" + idBase).val());
   var saldo = parseInt(jQuery("#sl_" + idBase).text());
   fabok = false;
-  lotof = false;
+  lotok = false;
   misok = false;
   if (tipo == "ate") {
     misok = true;
@@ -579,7 +812,9 @@ function acertaCorStt(idBase, tipo = "ate") {
       misok = true;
     }
     fundo = "";
-    if (
+    if (tipo == "conf" && conf == 0 && !lotok && !fabok && !misok) {
+      fundo = "bg-white";
+    } else if (
       (ctafab > 0 || ctalot > 0 || ctamis > 0 || aten + conf > 0) &&
       (!lotok || !fabok || !misok)
     ) {
@@ -589,7 +824,9 @@ function acertaCorStt(idBase, tipo = "ate") {
     }
   } else {
     fundo = "";
-    if (
+    if (tipo == "conf" && conf == 0 && !lotok && !fabok && !misok) {
+      fundo = "bg-white";
+    } else if (
       (ctafab > 0 || ctalot > 0 || ctamis > 0 || aten + conf > 0) &&
       (!lotok || !fabok || !misok) &&
       canc == 0
@@ -607,11 +844,9 @@ function acertaCorStt(idBase, tipo = "ate") {
   jQuery("#stt_" + idBase).removeClass("bg-danger");
   jQuery("#stt_" + idBase).addClass(fundo);
   jQuery("#stt_" + idBase).off("dblclick");
-  if (fundo == "bg-warning") {
-    jQuery("#stt_" + idBase).on("dblclick", () =>
-      zerarConferencia(idBase, tipo),
-    );
-  }
+  // if (fundo == "bg-warning") {
+  jQuery("#stt_" + idBase).on("dblclick", () => zerarConferencia(idBase, tipo));
+  // }
 }
 
 function zerarConferencia(idBase, tipo) {
@@ -619,17 +854,17 @@ function zerarConferencia(idBase, tipo) {
   jQuery("#ctalt_" + idBase).val(0);
   jQuery("#ctami_" + idBase).val(0);
   jQuery("#rpa_conferida_" + idBase).val(0);
-  jQuery("#rpa_atendida_" + idBase).val(0);
   if (tipo == "ate") {
-    jQuery("#sl_" + idBase).text(
-      parseInt(jQuery("#qt_" + idBase).text()) -
-        parseInt(jQuery("#rpa_cancelada_" + idBase).val()),
-    );
+    jQuery("#sl_" + idBase).text(parseInt(jQuery("#qt_" + idBase).text()));
+    (jQuery("#rpa_cancelada_" + idBase).val(0),
+      jQuery("#rpa_atendida_" + idBase).val(0));
   } else {
-    jQuery("#sl_" + idBase).text(
-      parseInt(jQuery("#rpa_atendida_" + idBase).val()),
-    );
+    atendida = parseInt(jQuery("#rpa_atendida_" + idBase).val()) || 0;
+    cancelada = parseInt(jQuery("#rpa_cancelada_" + idBase).text()) || 0;
+    jQuery("#sl_" + idBase).text(atendida - cancelada);
   }
+  var linha = document.getElementById(idBase);
+  linha.removeAttribute("data-alter");
   acertaCorStt(idBase, tipo);
 }
 
@@ -641,158 +876,216 @@ function extrairCodBarFab(str) {
   return str.substring(pos, pos + 13);
 }
 
-function validaCodBarConf(obj) {
-  codbar = obj.value;
-  if (codbar.length > 0) {
-    let origem = "conf";
-    let msgqterrada = 34;
-    const controller = jQuery("#controler").val();
-    if (controller.toLowerCase() === "aterequisicao") {
-      origem = "aten";
-      msgqterrada = 32;
-      validaCodBar(obj);
+/**
+ * Valida o código de barras escanseado, processando o atendimento ou conferência
+ * de uma requisição conforme a origem detectada automaticamente pelo controller.
+ *
+ * @param {HTMLElement} obj - Input que recebeu o código escaneado
+ */
+function validaCodBar(obj) {
+  const codbarRaw = obj.value;
+  if (!codbarRaw.length) return;
+
+  // --- Detecta a origem pelo controller da página ---
+  const controller = jQuery("#controler").val().toLowerCase();
+  const isConf = controller === "confrequisicao";
+  const isAten = controller === "aterequisicao";
+
+  const msgqterrada = isConf ? 34 : 32;
+
+  // --- Helpers de leitura de campos conforme origem ---
+  // O campo "cancelada" tem seletor diferente em cada tela
+  const getCancelado = (id) =>
+    isConf
+      ? parseInt(jQuery("#ca_" + id).text())
+      : parseInt(jQuery("#rpa_cancelada_" + id).val());
+
+  // Campo onde a quantidade atendida/conferida é gravada
+  const setCampoQtd = (id, valor) =>
+    isConf
+      ? jQuery("#rpa_conferida_" + id).val(valor)
+      : jQuery("#rpa_atendida_" + id).val(valor);
+
+  const getCampoQtd = (id) =>
+    isConf
+      ? parseInt(jQuery("#rpa_conferida_" + id).val())
+      : parseInt(jQuery("#rpa_atendida_" + id).val());
+
+  // Função de recálculo de saldo chamada ao final
+  const acertaSaldo = (id) =>
+    isConf
+      ? acertaSaldoConf(jQuery("#rpa_conferida_" + id))
+      : acertaSaldoReq(jQuery("#rpa_atendida_" + id));
+
+  // --- Normaliza o código escaneado e gera variações possíveis ---
+  // Códigos curtos são testados com pad 8 e 13; longos passam pelo extrator do fabricante
+  const codbarOriginal = String(codbarRaw).trim();
+  let codbarPossiveis =
+    codbarOriginal.length < 13
+      ? [codbarOriginal.padStart(8, "0"), codbarOriginal.padStart(13, "0")]
+      : [extrairCodBarFab(codbarOriginal)];
+
+  codbarPossiveis = [...new Set(codbarPossiveis)];
+
+  // --- Localiza o(s) TD(s) com o código na tabela ---
+  let codbarEncontrado = null;
+  let tdsCodbar = jQuery();
+
+  codbarPossiveis.some((cod) => {
+    const tds = jQuery('td[data-codbar="' + cod + '"]');
+    if (tds.length) {
+      codbarEncontrado = cod;
+      tdsCodbar = tds;
+      return true;
     }
-    var tdCodbar = "";
-    if (codbar.length <= 8) {
-      // se o código lido é menor ou igual a 8
-      codbar = String(codbar).padStart(8, "0");
-      tdCodbar = jQuery("#" + codbar);
-    }
-    if (tdCodbar.length === 0) {
-      if (codbar.length < 13) {
-        codbar = String(codbar).padStart(13, "0");
-        tdCodbar = jQuery("#" + codbar);
-      } else {
-        codbar = extrairCodBarFab(codbar);
-        tdCodbar = jQuery("#" + codbar);
-      }
-    }
-    if (tdCodbar.length) {
-      // Encontra a <tr> pai
-      var linha = tdCodbar.closest("tr")[0]; // pega a linha
+    return false;
+  });
 
-      // Extrai o ID base (assumindo que o codbar está na mesma linha do stt_169)
-      var idBase = linha.id;
+  if (!tdsCodbar.length) {
+    // Código não encontrado na tabela
+    obj.value = "";
+    boxAlert(10, true);
+    obj.focus();
+    return;
+  }
 
-      let saldoatual = parseInt(jQuery("#sl_" + idBase).text());
-      var tipo = tdCodbar[0].dataset.id;
-      var qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
-      var qtde = jQuery("#qt_" + idBase).text();
-      var canc = jQuery("#ca_" + idBase).text();
+  // --- Processa cada linha que contém o código ---
+  const total = tdsCodbar.length;
+  let idBase = 0;
 
-      if (tipo == "cbFab") {
-        // SCANEOU CODIGO DO FABRICANTE
-        var ctafab = jQuery("#ctafb_" + idBase).val();
-        ctafab++;
-        jQuery("#ctafb_" + idBase).val(ctafab);
+  tdsCodbar.each(function (index) {
+    const ultimo = index === total - 1;
+    const tdCodbar = jQuery(this)[0];
+    const linha = tdCodbar.closest("tr");
+    idBase = linha.id;
 
-        var lf = jQuery("#fab_" + idBase).text();
-        var ctafab = jQuery("#ctafb_" + idBase).val();
-        // var fabok = false;
-        if (lf == "SN") {
-          if (parseInt(ctafab) == parseInt(qtcaixa)) {
-            fabok = true;
-          } else if (parseInt(ctafab) > parseInt(qtcaixa)) {
-            ctafab--;
-            jQuery("#ctafb_" + idBase).val(ctafab);
-            boxAlert(msgqterrada, false, "", true, 1, false);
-            obj.value = "";
-            obj.focus();
-            return;
-          } else {
-            fabok = false;
+    const tipo = tdCodbar.dataset.id;
+    const saldoatual = parseInt(jQuery("#sl_" + idBase).text());
+    const qtcaixa = parseInt(jQuery("#cx_" + idBase).text());
+    const qtde = parseInt(jQuery("#qt_" + idBase).text());
+    const canc = getCancelado(idBase);
+
+    // ── Código do FABRICANTE ──────────────────────────────────────────────────
+    if (tipo === "cbFab") {
+      let ctafab = parseInt(jQuery("#ctafb_" + idBase).val()) + 1;
+      jQuery("#ctafb_" + idBase).val(ctafab);
+
+      const lf = jQuery("#fab_" + idBase).text();
+      const limite = lf === "SN" ? qtcaixa : qtde - canc; // SN=por caixa, SS=por qtde total
+
+      if (lf === "SN" || lf === "SS") {
+        if (ctafab === limite) {
+          fabok = true;
+
+          // Atendimento: no modo SN sem lote, calcula qtd atendida pela caixa
+          if (isAten && lf === "SN") {
+            const lp = jQuery("#lot_" + idBase).text();
+            if (lp === "NN") {
+              const qtnacaixa = parseInt(jQuery("#qtdemb_" + idBase).val());
+              const qtdpen = qtde - canc;
+              setCampoQtd(idBase, Math.min(ctafab * qtnacaixa, qtdpen));
+            }
           }
-        } else if (lf == "SS") {
-          if (parseInt(ctafab) == parseInt(qtde) - parseInt(canc)) {
-            fabok = true;
-          } else if (parseInt(ctafab) > parseInt(qtde) - parseInt(canc)) {
-            ctafab--;
-            jQuery("#ctafb_" + idBase).val(ctafab);
-            boxAlert(msgqterrada, false, "", true, 1, false);
-            obj.value = "";
-            obj.focus();
-            return;
-          } else {
-            fabok = false;
-          }
-        }
-      } else if (tipo == "cbLot") {
-        // SCANEOU CÓDIGO DO LOTE
-        if (parseInt(saldoatual) == 0) {
+        } else if (ctafab > limite) {
+          // Ultrapassou o limite: desfaz incremento e alerta apenas na última linha
+          jQuery("#ctafb_" + idBase).val(--ctafab);
+          if (!ultimo) return true; // continua o each sem alertar
           boxAlert(msgqterrada, false, "", true, 1, false);
           obj.value = "";
           obj.focus();
-          return;
+          return false;
         } else {
-          var ctalot = jQuery("#ctalt_" + idBase).val();
-          ctalot++;
-          jQuery("#ctalt_" + idBase).val(ctalot);
-          jQuery("#rpa_conferida_" + idBase).val(ctalot);
-        }
-        var lp = jQuery("#lot_" + idBase).text();
-        var ctalot = jQuery("#ctalt_" + idBase).val();
-        // lotok = false;
-        if (lp == "SN") {
-          var qtnacaixa = parseInt(jQuery("#qtdemb_" + idBase).val());
-          qtconferida = ctalot * qtnacaixa;
-          qtdpen = qtde - canc;
-          qtconferida = Math.min(qtconferida, qtdpen);
-          jQuery("#rpa_conferida_" + idBase).val(qtconferida);
-          if (parseInt(ctalot) >= parseInt(qtcaixa)) {
-            // qtconferida = ctalot;
-            // jQuery("#rpa_conferida_" + idBase).val(qtconferida);
-            // qtde = qtconferida;
-            saldo = 0;
-            jQuery("#sl_" + idBase).text(saldo);
-            lotok = true;
-          } else {
-            lotok = false;
-          }
-        } else if (lp == "SS") {
-          if (parseInt(ctalot) == parseInt(qtde) - parseInt(canc)) {
-            lotok = true;
-          } else {
-            lotok = false;
-          }
-          saldo = qtde - ctalot;
-          jQuery("#sl_" + idBase).text(saldo);
-        }
-      } else if (tipo == "cbMis") {
-        // SCANEOU CÓDIGO DO MISTURADOR
-        var lm = jQuery("#mis_" + idBase).text();
-        var ctamis = jQuery("#ctami_" + idBase).val();
-        ctamis++;
-        jQuery("#ctami_" + idBase).val(ctamis);
-        // lotok = false;
-        if (lm == "SN") {
-          if (parseInt(ctamis) == parseInt(qtcaixa)) {
-            misok = true;
-          } else if (parseInt(ctamis) > parseInt(qtcaixa)) {
-            ctamis--;
-            jQuery("#ctami_" + idBase).val(ctamis);
-            boxAlert(msgqterrada, false, "", true, 1, false);
-            obj.value = "";
-            obj.focus();
-            return;
-          } else {
-            misok = false;
-          }
-        } else if (lm == "SS") {
-          if (parseInt(ctamis) == parseInt(qtde) - parseInt(canc)) {
-            misok = true;
-          } else {
-            misok = false;
-          }
+          fabok = false;
         }
       }
-    } else {
-      boxAlert(10, true);
+
+      // ── Código de LOTE ────────────────────────────────────────────────────────
+    } else if (tipo === "cbLot") {
+      if (saldoatual === 0) {
+        boxAlert(msgqterrada, false, "", true, 1, false);
+        obj.value = "";
+        obj.focus();
+        return false;
+      }
+
+      let ctalot = parseInt(jQuery("#ctalt_" + idBase).val()) + 1;
+      jQuery("#ctalt_" + idBase).val(ctalot);
+      setCampoQtd(idBase, ctalot); // atualização inicial; pode ser sobrescrita abaixo
+
+      const lp = jQuery("#lot_" + idBase).text();
+
+      if (lp === "SN") {
+        // Lote por caixa: multiplica contador de lotes pela qtd por embalagem
+        const qtnacaixa = parseInt(jQuery("#qtdemb_" + idBase).val());
+        const qtdpen = qtde - canc;
+        setCampoQtd(idBase, Math.min(ctalot * qtnacaixa, qtdpen));
+
+        const limiteAtingido = isConf
+          ? ctalot >= qtcaixa // conferência: >= (mais permissivo)
+          : ctalot === qtcaixa; // atendimento: === (exato)
+
+        if (limiteAtingido) {
+          if (isAten) {
+            // Atendimento: bloqueia campo de cancelamento ao completar
+            jQuery("#rpa_cancelada_" + idBase).prop("disabled", true);
+            jQuery("#rpa_cancelada_" + idBase).prop("readonly", true);
+          }
+          saldo = 0;
+          jQuery("#sl_" + idBase).text(0);
+          lotok = true;
+        } else {
+          lotok = false;
+        }
+      } else if (lp === "SS") {
+        // Lote por quantidade total
+        const meta = qtde - canc;
+
+        if (ctalot === meta) {
+          lotok = true;
+          if (isAten) {
+            jQuery("#rpa_cancelada_" + idBase).prop("disabled", true);
+            jQuery("#rpa_cancelada_" + idBase).prop("readonly", true);
+          }
+        } else {
+          lotok = false;
+        }
+
+        // Cálculo do saldo restante difere entre as origens
+        const saldoNovo = isConf ? qtde - ctalot : qtde - canc - ctalot;
+        jQuery("#sl_" + idBase).text(saldoNovo);
+      }
+
+      // ── Código do MISTURADOR (exclusivo da conferência) ───────────────────────
+    } else if (tipo === "cbMis" && isConf) {
+      const lm = jQuery("#mis_" + idBase).text();
+      let ctamis = parseInt(jQuery("#ctami_" + idBase).val()) + 1;
+      jQuery("#ctami_" + idBase).val(ctamis);
+
+      const limite = lm === "SN" ? qtcaixa : qtde - canc;
+
+      if (lm === "SN" || lm === "SS") {
+        if (ctamis === limite) {
+          misok = true;
+        } else if (ctamis > limite) {
+          jQuery("#ctami_" + idBase).val(--ctamis);
+          boxAlert(msgqterrada, false, "", true, 1, false);
+          obj.value = "";
+          obj.focus();
+          return false;
+        } else {
+          misok = false;
+        }
+      }
     }
-    acertaSaldoConf(jQuery("#rpa_conferida_" + idBase));
-    obj.value = "";
-    obj.focus();
-  }
-  // }
+
+    linha.dataset.alter = "true";
+    return false; // interrompe o each após a primeira linha válida
+  });
+
+  // --- Recalcula saldo e reseta o input ---
+  acertaSaldo(idBase);
+  obj.value = "";
+  obj.focus();
 }
 
 function acertaSaldoReq(obj) {
@@ -806,7 +1099,9 @@ function acertaSaldoReq(obj) {
   var esto = parseInt(jQuery("#estorig_" + idBase).val());
   var aten = parseInt(jQuery("#rpa_atendida_" + idBase).val());
   var canc = parseInt(jQuery("#rpa_cancelada_" + idBase).val());
-
+  if (aten > 0 || canc > 0) {
+    linha.dataset.alter = "true";
+  }
   if (aten > esto) {
     // se a quantidade atendida for maior que o Estoque na Origem
     jQuery("#rpa_atendida_" + idBase).val(0);
@@ -840,6 +1135,7 @@ function acertaSaldoConf(obj) {
   var aten = parseInt(jQuery("#rpa_atendida_" + idBase).val());
   var conf = parseInt(jQuery("#rpa_conferida_" + idBase).val());
 
+  linha.dataset.alter = "true";
   saldo = aten - conf;
   jQuery("#sl_" + idBase).text(saldo);
   acertaCorStt(idBase, "conf");
@@ -989,6 +1285,9 @@ async function verificaInspecao(indice, req, prod, lote) {
       jQuery("#badgeinsp_" + indice).text("");
     }
     var conf = parseInt(jQuery("#cfe_" + indice).text());
+    if (isNaN(conf)) {
+      conf = parseInt(jQuery("#rpa_conferida_" + indice).val());
+    }
     var apro = conf - insp;
     jQuery("#apr_" + indice).text(apro);
     if (insp > 0) {
@@ -997,4 +1296,13 @@ async function verificaInspecao(indice, req, prod, lote) {
       jQuery("#btok_" + indice).removeClass("d-none");
     }
   }
+}
+
+async function verificaOcorrencia(indice, qtd) {
+  // cancelada = jQuery("#rpa_cancelada_" + indice).val() ?? false;
+  // if (cancelada) {
+  //   totcancelada = parseInt(cancelada) + parseInt(qtd);
+  //   jQuery("#rpa_cancelada_" + indice).val(totcancelada);
+  //   jQuery("#rpa_cancelada_" + indice).trigger("change");
+  // }
 }

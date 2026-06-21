@@ -110,6 +110,24 @@ class ConfigDicDadosModel extends Model
     }
 
     /**
+     * Retorna as Tabelas de um banco específico (dbGroup)
+     * @param string $dbGroup  Ex: 'default', 'dbEstoque', 'dbProduto', 'dbOcorrencia'
+     * @return array
+     */
+    public function getTabelasPorDbGroup(string $dbGroup): array
+    {
+        $db = db_connect($dbGroup);
+        $schema = $db->getDatabase();
+
+        $builder = $db->table('information_schema.tables');
+        $builder->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
+        $builder->where('table_schema', $schema);
+        $builder->orderBy('table_name', 'ASC');
+
+        return $builder->get()->getResultArray();
+    }
+
+    /**
      * Summary of getTabelaSearch
      * Retorna os detalhes da Tabela informada
      * @param mixed $nome_tabela

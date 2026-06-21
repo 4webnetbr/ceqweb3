@@ -50,9 +50,11 @@ function gerarCampoNumeroPadrao(
   step = 1,
   index = "",
   classeDiv,
+  digitos = 2,
 ) {
+  dmw = digitos * 6; //max-width da div
   return `
-        <div class="input-group input-group-sm d-inline-flex align-items-center ${classeDiv}" style="max-width: 20ch;min-width: 15ch;font-size:10px">
+        <div class="input-group input-group-sm d-inline-flex ${classeDiv}" style="max-width: ${dmw}ch;min-width: 15ch;font-size:10px">
             <div class="input-group-text input-group-addon down-num pe-auto" data-refer="${id}">
                 <i class="fas fa-minus"></i>
             </div>
@@ -65,7 +67,8 @@ function gerarCampoNumeroPadrao(
                 step="${step}" 
                 value="${valor}" 
                 dir="rtl" 
-                autocomplete="off">
+                autocomplete="off"
+                style="font-size:10px">
             <div class="input-group-text input-group-append up-num pe-auto" data-refer="${id}">
                 <i class="fas fa-plus"></i>
             </div>
@@ -86,9 +89,13 @@ function criarLinhaProduto(
   const estoqueOri = prod.loteori?.pro_estorigem ?? 0;
   const estoqueDisp = estoquePad + estoqueOri;
   const estoqueDes = prod.lotedes?.pro_estdestino ?? 0;
+  cor = "";
+  if (estoqueDisp > 0 && estoqueDes > 0) {
+    cor = "text-danger fw-bold fs-6";
+  }
   const padraoCol =
     dadosDep.deppadrao !== ""
-      ? `<td class="text-end">${prod.lotepad?.pro_estpadrao ?? 0}</td>`
+      ? `<td class="text-end ${cor}">${prod.lotepad?.pro_estpadrao ?? 0}</td>`
       : "";
 
   const codpro = prod.pro_codpro;
@@ -116,7 +123,7 @@ function criarLinhaProduto(
   // <td class="text-end"><span class="float-start">${iconeToggle}${iconeDuplic}</span>${codpro}</td>
   // <td class="text-start p-0"><div class="float-end">${codpro}</div><div class="float-start">${iconeToggle}${iconeDuplic}</div></td>
   classoculta = isDuplicado ? "d-none" : "";
-
+  // <td>${prod.lot_validade}</td>
   return `
         <tr class="linha-produto ${classoculta}" 
             data-classe="${dadosDep.classe}" 
@@ -127,21 +134,24 @@ function criarLinhaProduto(
             data-max="${prod.pro_maximo}"
             data-saldo-destino="${estoqueDes}"
             data-saldo-disponivel="${estoqueDisp}"
+            data-loteemuso="${cor !== "" ? true : false}"
             data-sugestao-base="${prod.pro_sugestao}">
 
-            <td class="text-end p-0"><div class="float-start">${iconeToggle}${iconeDuplic}</div>${codpro}</td>
+            <td class="text-end p-0 pe-2">
+              <div class="float-start">${iconeToggle}${iconeDuplic}</div>
+              ${codpro}
+            </td>
             <td title="${
               prod.pro_inform ?? ""
             }" data-bs-toggle="tooltip" style="font-size: 10px;">${
               prod.pro_despro
             }</td>
             <td style="font-size: 10px;">${prod.fab_apeFab}</td>
-            <td>${prod.lot_lote}</td>
-            <td>${prod.lot_validade}</td>
+            <td>${prod.lot_lote}<br>${prod.lot_validade}</td>
             <td class="text-end">${prod.pro_qtdemb}</td>
-            <td class="text-end">${estoqueOri}</td>
+            <td class="text-end ${cor}">${estoqueOri}</td>
             ${padraoCol}
-            <td class="text-end">${estoqueDes}</td>
+            <td class="text-end ${cor}">${estoqueDes}</td>
             <td class="text-end">${
               prod.pro_mindiaanterior === "N"
                 ? '<span class="float-start">S</span>'
@@ -155,6 +165,7 @@ function criarLinhaProduto(
               1,
               index,
               classoculta,
+              3,
             )}</td>
             <td class="text-end">
                 ${gerarCampoNumeroPadrao(
@@ -165,6 +176,7 @@ function criarLinhaProduto(
                   1,
                   index,
                   classoculta,
+                  3,
                 )}
                 <span class="text-end d-none" id="seg_${index}">${
                   prod.pro_seguranca
@@ -180,6 +192,8 @@ function criarLinhaProduto(
               0,
               1,
               index,
+              "",
+              4,
             )}</td>
         </tr>
     `;
@@ -230,8 +244,8 @@ function montarTabelaProdutos(classe, rt, dadosDep) {
   text.push(`<th>Cód ERP</th>`);
   text.push(`<th>Descrição</th>`);
   text.push(`<th>Fabricante</th>`);
-  text.push(`<th>Lote</th>`);
-  text.push(`<th>Validade</th>`);
+  text.push(`<th>Lote<br>Validade</th>`);
+  // text.push(`<th>Validade</th>`);
   text.push(`<th class="vertical-th">Qtd Caixa</th>`);
   text.push(
     `<th class="vertical-th">Saldo Origem<br>${dadosDep.deporigem}</th>`,
@@ -252,7 +266,7 @@ function montarTabelaProdutos(classe, rt, dadosDep) {
     }</th>`,
   );
   text.push(`<th>Multiplica</th>`);
-  text.push(`<th class="vertical-th">% Segurança</th>`);
+  text.push(`<th class="">% Segurança</th>`);
   text.push(`<th class="vertical-th">Sugestão</th>`);
   text.push(`<th>Requisição</th>`);
   text.push(`</tr></thead><tbody>`);
@@ -601,24 +615,112 @@ async function carregarProdutos(url, aba, obj) {
 
       let inicio = match[1]; // "cl7_pr"
       let ind = parseInt(match[2]); // "14"
-      // verificar se o produto da linha atual é o mesmo da linha anterior ou da próxima linha
-      let trAnte = jQuery(`tr[data-index="${inicio + (ind - 1)}"]`);
+      let indAnte = ind - 1;
+      let indProx = ind + 1;
+      // verificar se o produto da linha atual é o mesmo da anterior ou da próxima
+      let trAnte = jQuery(`tr[data-index="${inicio + indAnte}"]`);
+      let trProx = jQuery(`tr[data-index="${inicio + indProx}"]`);
       const codproAnte = trAnte.attr("data-codpro");
+      const codproProx = trProx.attr("data-codpro");
       const trAtual = jQuery(`tr[data-index="${index}"]`);
       const codproAtual = trAtual.attr("data-codpro");
+      const loteemusoAtual = trAtual.attr("data-loteemuso");
+      const loteemusoAnter = trAnte.attr("data-loteemuso");
+      const loteemusoProxi = trProx.attr("data-loteemuso");
       let jaSolicitado = 0;
-      if (codproAnte == codproAtual) {
-        saldoAnte = trAnte.attr("data-saldo-disponivel");
-        solicAnte = jQuery("#requisicao_" + index).val();
-        jaSolicitado = jQuery(`#requisicao_${inicio + (ind - 1)}`).val();
-        if (saldoAnte > jaSolicitado) {
+
+      const mesmoProdAnte = codproAtual == codproAnte;
+      const mesmoProdProx = codproAtual == codproProx;
+      const atualNaoEmUso = loteemusoAtual == "false";
+
+      if (mesmoProdAnte || mesmoProdProx) {
+        // mostra a mensagem 39 quando a linha atual não é o lote em uso,
+        // mas a linha de mesmo produto (anterior OU próxima) é o lote em uso
+        const mostrarMsg39 =
+          atualNaoEmUso &&
+          ((mesmoProdProx && loteemusoProxi == "true") ||
+            (mesmoProdAnte && loteemusoAnter == "true"));
+
+        if (mostrarMsg39) {
           conf = await boxAlert(39, false, "", false, 1, true);
           if (!conf) {
             jQuery(this).val(0);
             return;
           }
         }
-        indexMultip = inicio + (ind - 1);
+
+        novoInd = ind;
+        if (mesmoProdAnte && loteemusoAnter === "true") {
+          novoInd = indAnte;
+        } else if (mesmoProdProx && loteemusoProxi === "true") {
+          novoInd = indProx;
+        }
+
+        indexMultip = inicio + novoInd;
+      } else {
+        // produtos da linha anterior e da próxima são diferentes do atual
+        trAnte = trAtual;
+        trProx = trAtual;
+      }
+
+      let ind = parseInt(match[2]); // "14"
+      let indAnte = ind - 1;
+      let indProx = ind + 1;
+      // verificar se o produto da linha atual é o mesmo da linha anterior ou da próxima linha
+      let trAnte = jQuery(`tr[data-index="${inicio + indAnte}"]`);
+      let trProx = jQuery(`tr[data-index="${inicio + indProx}"]`);
+      const codproAnte = trAnte.attr("data-codpro");
+      const codproProx = trProx.attr("data-codpro");
+      const trAtual = jQuery(`tr[data-index="${index}"]`);
+      const codproAtual = trAtual.attr("data-codpro");
+      const loteemusoAtual = trAtual.attr("data-loteemuso");
+      const loteemusoAnter = trAnte.attr("data-loteemuso");
+      const loteemusoProxi = trProx.attr("data-loteemuso");
+      let jaSolicitado = 0;
+      if (codproAtual == codproAnte) {
+        // saldoAnte = trAnte.attr("data-saldo-disponivel");
+        // saldoProx = trProx.attr("data-saldo-disponivel");
+        // solicAnte = jQuery("#requisicao_" + indAnte).val();
+        // solicProx = jQuery("#requisicao_" + indProx).val();
+        // solicAtual = jQuery("#requisicao_" + ind).val();
+        // jaSolicitado = jQuery(`#requisicao_${inicio + (ind - 1)}`).val();
+        if (loteemusoAtual == "false" && loteemusoAnter == "true") {
+          conf = await boxAlert(39, false, "", false, 1, true);
+          if (!conf) {
+            jQuery(this).val(0);
+            return;
+          }
+        }
+        novoInd = ind;
+        if (loteemusoAnter === "true") {
+          novoInd = indAnte;
+        } else if (loteemusoProxi === "true") {
+          novoInd = indProx;
+        }
+
+        indexMultip = inicio + novoInd;
+      } else if (codproAtual == codproProx) {
+        // saldoAnte = trAnte.attr("data-saldo-disponivel");
+        // saldoProx = trProx.attr("data-saldo-disponivel");
+        // solicAnte = jQuery("#requisicao_" + indAnte).val();
+        // solicProx = jQuery("#requisicao_" + indProx).val();
+        // solicAtual = jQuery("#requisicao_" + ind).val();
+        // jaSolicitado = jQuery(`#requisicao_${inicio + (ind - 1)}`).val();
+        if (loteemusoAtual == "false" && loteemusoProxi == "true") {
+          conf = await boxAlert(39, false, "", false, 1, true);
+          if (!conf) {
+            jQuery(this).val(0);
+            return;
+          }
+        }
+        novoInd = ind;
+        if (loteemusoAnter === "true") {
+          novoInd = indAnte;
+        } else if (loteemusoProxi === "true") {
+          novoInd = indProx;
+        }
+
+        indexMultip = inicio + novoInd;
       } else {
         trAnte = trAtual;
       }
@@ -810,16 +912,22 @@ function normalizarNomeColuna(texto) {
     .replace(/\s+/g, "_");
 }
 
-async function enviarRequisicoes(tipo = 0, event) {
-  // var linhasProduto = jQuery("tr.linha-produto");
-  var linhasProduto = jQuery("input.requisicao")
-    .filter(function () {
-      var val = this.value.trim();
-      return val !== "" && val !== "0";
-    })
-    .closest("tr.linha-produto");
+async function enviarRequisicoes(event, tipo = 0) {
+  await bloqueiaTela();
 
-  if (linhasProduto.length > 0) {
+  try {
+    const linhasProduto = jQuery("input.requisicao")
+      .filter(function () {
+        var val = this.value.trim();
+        return val !== "" && val !== "0";
+      })
+      .closest("tr.linha-produto");
+
+    if (linhasProduto.length === 0) {
+      desBloqueiaTela();
+      return false;
+    }
+
     const requisicoes = [];
     const form = document.getElementById("form1");
     const jqForm = jQuery(form);
@@ -830,34 +938,49 @@ async function enviarRequisicoes(tipo = 0, event) {
       jqForm.append(`<input type="hidden" name="req_status" value="${tipo}">`);
     }
 
-    linhasProduto.each(async function () {
-      // for (let i = 0; i < linhasProduto.length; i++) {
-      // const linhaatual = jQuery(linhasProduto[i]);
-      const linhaatual = jQuery(this);
+    // ── for...of no lugar do .each(async) ──────────────────────────────
+    for (const linha of linhasProduto.toArray()) {
+      const linhaatual = jQuery(linha);
       const index = linhaatual.data("index");
       const inputRequisicao = jQuery(`.requisicao[data-index="${index}"]`);
       const valorRequisicao = parseInt(inputRequisicao.val()) || 0;
       const saldoDisponivel =
         parseInt(linhaatual.data("saldo-disponivel")) || 0;
 
-      if (valorRequisicao !== 0) {
-        if (repeteDias > 0) {
-          const saldoNecessario = valorRequisicao * (repeteDias + 1);
-          if (saldoNecessario > saldoDisponivel) {
-            // event.preventDefault();
-            // event.stopPropagation();
-            await boxAlert(35, true, "", true, 1, false);
-            if (tipo === 1) return;
+      if (valorRequisicao === 0) continue;
+
+      if (repeteDias > 0) {
+        const saldoNecessario = valorRequisicao * (repeteDias + 1);
+        if (saldoNecessario > saldoDisponivel) {
+          await boxAlert(35, true, "", true, 1, false);
+          if (tipo === 1) {
+            desBloqueiaTela();
             return false;
           }
+          continue;
         }
+      }
 
-        const dados = {};
+      const dados = {};
 
-        linhaatual.find("td").each(function (i) {
-          const th = linhaatual.closest("table").find("thead th").eq(i);
-          const nomeColuna = normalizarNomeColuna(th.text());
+      linhaatual.find("td").each(function (i) {
+        const th = linhaatual.closest("table").find("thead th").eq(i);
+        const nomeColuna = normalizarNomeColuna(th.text());
 
+        if (nomeColuna === "lotevalidade") {
+          // ajuste conforme o resultado do normalizarNomeColuna
+          // Substitui <br> por um separador e divide as linhas
+          const html = jQuery(this).html();
+          const linhas = html
+            .replace(/<br\s*\/?>/gi, "\n") // converte <br> em quebra de linha
+            .replace(/<[^>]+>/g, "") // remove demais tags HTML
+            .split("\n")
+            .map((s) => s.trim())
+            .filter(Boolean); // remove linhas vazias
+
+          dados["lote"] = linhas[0] ?? "";
+          dados["validade"] = linhas[1] ?? "";
+        } else {
           const texto = jQuery(this)
             .clone()
             .children()
@@ -865,51 +988,168 @@ async function enviarRequisicoes(tipo = 0, event) {
             .end()
             .contents()
             .filter(function () {
-              return this.nodeType === 3; // Text node
+              return this.nodeType === 3;
             })
             .text()
             .trim();
+
           if (nomeColuna) {
             dados[nomeColuna] = texto;
           }
-        });
-
-        dados.multiplica = jQuery(`#pro_multiplica_${index}`).val();
-        dados.seguranca = jQuery(`#pro_pctseguranca_${index}`).val();
-        dados.requisicao = valorRequisicao;
-
-        const acc = linhaatual.closest(".accordion-item");
-        if (acc.length) {
-          dados.cla_id = acc.data("cla_id") || acc.data("claid") || null;
-          dados.classe = acc
-            .find(".accordion-header, .accordion-button")
-            .first()
-            .text()
-            .trim();
         }
+        // const nomeColuna = normalizarNomeColuna(th.text());
+        // const texto = jQuery(this)
+        //   .clone()
+        //   .children()
+        //   .remove()
+        //   .end()
+        //   .contents()
+        //   .filter(function () {
+        //     return this.nodeType === 3;
+        //   })
+        //   .text()
+        //   .trim();
+        // if (nomeColuna) {
+        //   dados[nomeColuna] = texto;
+        // }
+      });
 
-        requisicoes.push(dados);
+      dados.multiplica = jQuery(`#pro_multiplica_${index}`).val();
+      dados.seguranca = jQuery(`#pro_pctseguranca_${index}`).val();
+      dados.requisicao = valorRequisicao;
+
+      const acc = linhaatual.closest(".accordion-item");
+      if (acc.length) {
+        dados.cla_id = acc.data("cla_id") || acc.data("claid") || null;
+        dados.classe = acc
+          .find(".accordion-header, .accordion-button")
+          .first()
+          .text()
+          .trim();
       }
-    });
+
+      requisicoes.push(dados);
+    }
 
     jqForm.find('input[name="json_requisicoes"]').remove();
     jqForm.append(
-      `<input type="hidden" name="json_requisicoes" value='${JSON.stringify(
-        requisicoes,
-      )}'>`,
+      `<input type="hidden" name="json_requisicoes" value='${JSON.stringify(requisicoes)}'>`,
     );
 
     if (tipo > 0) {
-      /** tipo igual a 1, foi chamado pelo botão Enviar Requisição */
-      // jQuery(form).trigger("submit");
-      validaForm(event, "bt_enviar");
+      jqForm.attr("data-alter", true);
+      validaForm(event, "bt_enviar"); // desBloqueiaTela fica a cargo do submeteForm
     } else {
+      desBloqueiaTela();
       return true;
     }
-  } else {
-    return false;
+  } catch (e) {
+    console.error("Erro em enviarRequisicoes:", e);
+    desBloqueiaTela();
   }
 }
+
+// async function enviarRequisicoesAnt(tipo = 0, event) {
+//   // var linhasProduto = jQuery("tr.linha-produto");
+//   await bloqueiaTela();
+//   var linhasProduto = jQuery("input.requisicao")
+//     .filter(function () {
+//       var val = this.value.trim();
+//       return val !== "" && val !== "0";
+//     })
+//     .closest("tr.linha-produto");
+
+//   if (linhasProduto.length > 0) {
+//     const requisicoes = [];
+//     const form = document.getElementById("form1");
+//     const jqForm = jQuery(form);
+//     let repeteDias = parseInt(jQuery("#req_repetedias").val()) || 0;
+
+//     if (tipo === 1) {
+//       jqForm.find('input[name="req_status"]').remove();
+//       jqForm.append(`<input type="hidden" name="req_status" value="${tipo}">`);
+//     }
+
+//     linhasProduto.each(async function () {
+//       // for (let i = 0; i < linhasProduto.length; i++) {
+//       // const linhaatual = jQuery(linhasProduto[i]);
+//       const linhaatual = jQuery(this);
+//       const index = linhaatual.data("index");
+//       const inputRequisicao = jQuery(`.requisicao[data-index="${index}"]`);
+//       const valorRequisicao = parseInt(inputRequisicao.val()) || 0;
+//       const saldoDisponivel =
+//         parseInt(linhaatual.data("saldo-disponivel")) || 0;
+
+//       if (valorRequisicao !== 0) {
+//         if (repeteDias > 0) {
+//           const saldoNecessario = valorRequisicao * (repeteDias + 1);
+//           if (saldoNecessario > saldoDisponivel) {
+//             // event.preventDefault();
+//             // event.stopPropagation();
+//             await boxAlert(35, true, "", true, 1, false);
+//             if (tipo === 1) return;
+//             return false;
+//           }
+//         }
+
+//         const dados = {};
+
+//         linhaatual.find("td").each(function (i) {
+//           const th = linhaatual.closest("table").find("thead th").eq(i);
+//           const nomeColuna = normalizarNomeColuna(th.text());
+
+//           const texto = jQuery(this)
+//             .clone()
+//             .children()
+//             .remove()
+//             .end()
+//             .contents()
+//             .filter(function () {
+//               return this.nodeType === 3; // Text node
+//             })
+//             .text()
+//             .trim();
+//           if (nomeColuna) {
+//             dados[nomeColuna] = texto;
+//           }
+//         });
+
+//         dados.multiplica = jQuery(`#pro_multiplica_${index}`).val();
+//         dados.seguranca = jQuery(`#pro_pctseguranca_${index}`).val();
+//         dados.requisicao = valorRequisicao;
+
+//         const acc = linhaatual.closest(".accordion-item");
+//         if (acc.length) {
+//           dados.cla_id = acc.data("cla_id") || acc.data("claid") || null;
+//           dados.classe = acc
+//             .find(".accordion-header, .accordion-button")
+//             .first()
+//             .text()
+//             .trim();
+//         }
+
+//         requisicoes.push(dados);
+//       }
+//     });
+
+//     jqForm.find('input[name="json_requisicoes"]').remove();
+//     jqForm.append(
+//       `<input type="hidden" name="json_requisicoes" value='${JSON.stringify(
+//         requisicoes,
+//       )}'>`,
+//     );
+
+//     if (tipo > 0) {
+//       /** tipo igual a 1, foi chamado pelo botão Enviar Requisição */
+//       // jQuery(form).trigger("submit");
+//       validaForm(event, "bt_enviar");
+//     } else {
+//       return true;
+//     }
+//   } else {
+//     return false;
+//   }
+// }
 
 async function enviarAteRequisicoes(event) {
   // const trs = jQuery("tr.linha_produto").toArray();
@@ -920,8 +1160,6 @@ async function enviarAteRequisicoes(event) {
     .toArray();
 
   for (const tr of trs) {
-    // for (let tr of trs) {
-    // if (tr.id != "" && tr.id != undefined) {
     const idBase = parseInt(tr.id);
 
     var lf = jQuery("#fab_" + idBase).text();
@@ -971,7 +1209,7 @@ async function enviarAteRequisicoes(event) {
       }
     }
     msg = 0;
-    //NÃO SCANIEI NENHUM PRODUTO E SCANIEI OU FABRICANTE OU MISTURADOR
+    //NÃO SCANIEI NENHUM PRODUTO E SCANIEI FABRICANTE
     if (parseInt(aten) == 0 && parseInt(ctafab) > 0) {
       event.preventDefault();
       event.stopPropagation();
@@ -991,20 +1229,20 @@ async function enviarAteRequisicoes(event) {
         return resposta; // Interrompe o processamento
       }
     }
-    // }
   }
   return true;
 }
 
 async function enviarConfRequisicoes(event) {
-  const trs = jQuery("tr.linha_produto").toArray();
+  // const trs = jQuery("tr.linha_produto").toArray();
   const form = document.getElementById("form1");
   const jqForm = jQuery(form);
-  // const trs = jQuery("tr.linha_produto")
-  //   .filter(function () {
-  //     return this.dataset.alter === "true" && this.id?.trim();
-  //   })
-  //   .toArray();
+
+  const trs = jQuery("tr.linha_produto")
+    .filter(function () {
+      return this.dataset.alter === "true" && this.id?.trim();
+    })
+    .toArray();
 
   for (const tr of trs) {
     // for (let tr of trs) {
@@ -1152,11 +1390,9 @@ async function enviarConfRequisicoes(event) {
         resposta = await boxAlert(msg, true, "", false, 1, false);
         return false;
       }
-    } else {
-      return true;
     }
-    // }
   }
+  return true;
 }
 
 async function gerarOcorrencia(tela, indice) {
@@ -1228,9 +1464,65 @@ async function excluiInspecao(url) {
     const modal = bootstrap.Modal.getInstance(modalElement);
     modal.hide();
   }
+  desBloqueiaTela();
 }
 
 function enviarInspecao(event) {
+  const form = document.getElementById("form1");
+  const jqForm = jQuery(form);
+
+  const trs = jQuery("tr.linha_produto").toArray();
+
+  var teminsp = false;
+
+  // limpa marcações antigas antes de recalcular
+  jQuery("tr.linha_produto").removeAttr("data-alter");
+
+  for (let tr of trs) {
+    if (tr.id != "" && tr.id != undefined) {
+      const idBase = parseInt(tr.id);
+
+      var confer = jQuery("#cfe_" + idBase).text();
+      var isChecked = jQuery("#btok_" + idBase).is(":checked");
+      var atendi = jQuery("#ate_" + idBase).text();
+      var aprova = jQuery("#apr_" + idBase).text();
+
+      var diverg = parseInt(atendi) - parseInt(confer);
+
+      jqForm.find('input[name="diverg_' + idBase + '"]').remove();
+
+      jqForm.append(
+        `<input type="hidden" name="diverg_${idBase}" value="${diverg}">`,
+      );
+
+      if (parseInt(confer) != parseInt(aprova) || isChecked) {
+        teminsp = true;
+
+        // marca a linha como alterada
+        jQuery(tr).attr("data-alter", "true");
+
+        jqForm.find('input[name="aprova_' + idBase + '"]').remove();
+
+        jqForm.append(
+          `<input type="hidden" name="aprova_${idBase}" value="${aprova}">`,
+        );
+      } else {
+        // se não foi inspecionada, garante que não fique lixo anterior
+        jqForm.find('input[name="aprova_' + idBase + '"]').remove();
+      }
+    }
+  }
+
+  if (teminsp) {
+    jQuery("#form1").attr("data-alter", true);
+
+    // ativa o envio apenas das linhas alteradas
+    jQuery("#form1").attr("data-apenas-alterados", "true");
+  }
+  return true;
+}
+
+function enviarInspecaoAnte(event) {
   const form = document.getElementById("form1");
   const jqForm = jQuery(form);
 
@@ -1240,7 +1532,7 @@ function enviarInspecao(event) {
     if (tr.id != "" && tr.id != undefined) {
       const idBase = parseInt(tr.id);
       var confer = jQuery("#cfe_" + idBase).text();
-      var checkd = jQuery("#btok_" + idBase).is(":checked");
+      var isChecked = jQuery("#btok_" + idBase).is(":checked");
       var atendi = jQuery("#ate_" + idBase).text();
       var aprova = jQuery("#apr_" + idBase).text();
       var diverg = atendi - confer;
@@ -1252,7 +1544,7 @@ function enviarInspecao(event) {
           diverg +
           `">`,
       );
-      if (parseInt(confer) != parseInt(aprova) || checkd) {
+      if (parseInt(confer) != parseInt(aprova) || isChecked) {
         teminsp = true;
         jqForm.find('input[name="aprova_' + idBase + "]").remove();
         jqForm.append(

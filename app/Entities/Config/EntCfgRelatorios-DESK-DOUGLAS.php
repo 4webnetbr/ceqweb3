@@ -67,6 +67,7 @@ class EntCfgRelatorios extends Entity
 
         // Tela (dependente do Módulo)
         $configTela             = $config;
+        $configTela['Obrigatorio']      = false;
         $configTela['Pai']      = 'mod_id';
         $configTela['Urlbusca'] = base_url('buscas/busca_tela_modulo');
 
