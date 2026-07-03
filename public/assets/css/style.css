@@ -46,16 +46,16 @@ h3 strong {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(17, 3, 43, 0.6);
+  background: rgba(17, 3, 43, .6);
   z-index: 99;
   color: #eee;
-  transition: all 0.5s ease-in-out;
+  transition: all .5s ease-in-out;
   display: none;
 }
 
 .loader p {
   position: relative;
-  top: 0.4em;
+  top: .4em;
 }
 
 .icon-spin6 {
@@ -77,7 +77,7 @@ h3 strong {
 }
 
 .vcard .fn:after {
-  content: "";
+  content: '';
   display: block;
   width: 60px;
   height: 0;
@@ -105,6 +105,7 @@ h3 strong {
   text-align: center;
   border-radius: 10px;
 }
+
 
 /*-- LOGIN --*/
 .intl-btn {
@@ -136,20 +137,20 @@ h3 strong {
 
 .manage-btn {
   font-size: 1.3em;
-  padding-left: 0.2em;
+  padding-left: .2em;
 }
 
 .cancel-btn,
 .logout-btn {
-  font-size: 0.8em;
+  font-size: .8em;
   position: relative;
-  top: 0.8em;
+  top: .8em;
   margin-bottom: 1.2em;
   background: #dedede;
 }
 
 .logout-btn .font-icon {
-  margin-right: 0.3em;
+  margin-right: .3em;
 }
 
 .manage-btn .font-icon {
@@ -164,6 +165,7 @@ h3 strong {
 .icon-doc-remove {
   color: #bb2323;
 }
+
 
 /*----
 	FOOTER -----------------------*/
@@ -189,6 +191,8 @@ h3 strong {
   margin-right: -2em;
 }
 
+
+
 .borda-abas {
   max-height: 4.2em;
   margin-right: -4%;
@@ -199,6 +203,7 @@ h3 strong {
   -webkit-text-stroke-width: 0.75px;
   -webkit-text-stroke-color: #fff;
 }
+
 
 .obrigatorio {
   float: left;
@@ -218,31 +223,6 @@ h3 strong {
 .form-inline .form-group {
   margin-bottom: 1em;
   margin-right: 1em;
-}
-
-.bloqueiaTela {
-  clear: both;
-  position: fixed;
-  top: 0;
-  left: 0;
-  min-width: 100%;
-  min-height: 100%;
-  background-image: radial-gradient(
-    farthest-side at 50% 50%,
-    #ffffff,
-    rgba(20, 62, 201, 0.5)
-  );
-  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=70)";
-  filter: alpha(opacity=70);
-  -moz-opacity: 0.7;
-  -khtml-opacity: 0.7;
-  opacity: 0.7;
-  backdrop-filter: blur(3px) grayscale(0.7);
-  /* remove transições para exibição imediata */
-  transition: none;
-
-  z-index: 105000;
-  display: none;
 }
 
 .carregandoAjax {
@@ -265,28 +245,28 @@ h3 strong {
   float: left;
 }
 
-.breadcrumb > ul,
-.linksecoes > ul {
+.breadcrumb>ul,
+.linksecoes>ul {
   padding: 0;
 }
 
-.breadcrumb > ul > li,
-.linksecoes > ul > li {
+.breadcrumb>ul>li,
+.linksecoes>ul>li {
   float: left;
   list-style: none;
   line-height: 1.5em;
   width: 100%;
 }
 
-.linksecoes > ul > li > div > a:hover,
-.linksecoes > ul > li > div > a:active {
+.linksecoes>ul>li>div>a:hover,
+.linksecoes>ul>li>div>a:active {
   text-shadow: 1px 0 2px #71b4bf;
   font-style: italic;
   text-decoration: none;
 }
 
 .buttons-copy::after {
-  font-family: "Font Awesome 7 Free";
+  font-family: 'Font Awesome 7 Free';
   /* essential for enabling glyphicon */
   content: "\f24d";
   /* adjust as needed, taken from bootstrap.css */
@@ -295,7 +275,7 @@ h3 strong {
 }
 
 .buttons-excel::after {
-  font-family: "Font Awesome 7 Free";
+  font-family: 'Font Awesome 7 Free';
   /* essential for enabling glyphicon */
   content: "\f1c3";
   /* adjust as needed, taken from bootstrap.css */
@@ -304,7 +284,7 @@ h3 strong {
 }
 
 .buttons-pdf::after {
-  font-family: "Font Awesome 7 Free";
+  font-family: 'Font Awesome 7 Free';
   /* essential for enabling glyphicon */
   content: "\f1c1";
   /* adjust as needed, taken from bootstrap.css */
@@ -313,7 +293,7 @@ h3 strong {
 }
 
 .buttons-print::after {
-  font-family: "Font Awesome 7 Free";
+  font-family: 'Font Awesome 7 Free';
   /* essential for enabling glyphicon */
   content: "\f02f";
   /* adjust as needed, taken from bootstrap.css */
@@ -330,6 +310,7 @@ h3 strong {
   line-height: 1.5rem;
   border-radius: 4px;
 }
+
 
 .btn-repcampo {
   display: inline-block;
@@ -405,18 +386,12 @@ select[readonly] {
   border: 1px solid;
   -webkit-box-shadow: inset 0 1px 1px;
   box-shadow: inset 0 1px 1px;
-  -webkit-transition:
-    border-color ease-in-out 0.15s,
-    -webkit-box-shadow ease-in-out 0.15s;
-  -o-transition:
-    border-color ease-in-out 0.15s,
-    box-shadow ease-in-out 0.15s;
-  transition:
-    border-color ease-in-out 0.15s,
-    box-shadow ease-in-out 0.15s;
+  -webkit-transition: border-color ease-in-out .15s, -webkit-box-shadow ease-in-out .15s;
+  -o-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+  transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
 }
 
-.opcs_busca > li {
+.opcs_busca>li {
   padding: 0.2em 0.2em 0.3em 1em;
   cursor: pointer;
   text-decoration: none;
@@ -424,12 +399,12 @@ select[readonly] {
   border-radius: 0 0.7rem 0.7rem;
 }
 
-.opcs_busca > li:hover {
+.opcs_busca>li:hover {
   color: #fff;
   background-color: rgba(5, 18, 170, 1);
 }
 
-.dataTable > tbody > tr {
+.dataTable>tbody>tr {
   white-space: nowrap;
 }
 
@@ -520,9 +495,9 @@ select[readonly] {
 
 .fade {
   opacity: 0;
-  -webkit-transition: opacity 0.75s ease-out;
-  -o-transition: opacity 0.75s ease-out;
-  transition: opacity 0.75s ease-out;
+  -webkit-transition: opacity .75s ease-out;
+  -o-transition: opacity .75s ease-out;
+  transition: opacity .75s ease-out;
 }
 
 .transicao {
@@ -581,17 +556,11 @@ select[readonly] {
   border-radius: 0.8rem;
   border: 0.15rem inset;
   border-color: #aaa;
-  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
-  -webkit-transition:
-    border-color ease-in-out 0.15s,
-    -webkit-box-shadow ease-in-out 0.15s;
-  -o-transition:
-    border-color ease-in-out 0.15s,
-    box-shadow ease-in-out 0.15s;
-  transition:
-    border-color ease-in-out 0.15s,
-    box-shadow ease-in-out 0.15s;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+  -webkit-transition: border-color ease-in-out .15s, -webkit-box-shadow ease-in-out .15s;
+  -o-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+  transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
 }
 
 .well {
@@ -617,6 +586,7 @@ select[readonly] {
   opacity: 0.5 !important;
 }
 
+
 .modal-backdrop.fade {
   opacity: 0.5 !important;
 }
@@ -635,6 +605,8 @@ select[readonly] {
   background-color: var(--bs-green-light);
   border: 1px solid white;
 }
+
+
 
 /* Table Base */
 
@@ -671,6 +643,9 @@ table {
   font-size: 15px;
 }
 
+
+
+
 .vh-75 {
   height: 75vh !important;
 }
@@ -681,7 +656,7 @@ table {
 
 .dropdown-menu {
   background-color: #f3f9e7;
-  border: 2px solid rgba(0, 0, 0, 0.15);
+  border: 2px solid rgba(0, 0, 0, .15);
 }
 
 .toast {
@@ -712,6 +687,7 @@ table {
     top: 60px;
   }
 }
+
 
 .bg-login {
   background-color: #ebefff;

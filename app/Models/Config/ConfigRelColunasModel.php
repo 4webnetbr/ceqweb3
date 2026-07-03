@@ -23,9 +23,11 @@ class ConfigRelColunasModel extends Model
         'rco_alias',
         'rco_label',
         'rco_tamanho',
-        'rco_tamanho_efetivo',
-        'rco_quebra_linha',
         'rco_alinhamento',
+        'rco_totalizar',
+        'rco_tipo_dado',
+        'rco_largura',
+        'rco_comportamento',
         'rco_ordem',
     ];
 
@@ -94,16 +96,7 @@ class ConfigRelColunasModel extends Model
      * Calcula a soma de rco_tamanho_efetivo de todas as colunas
      * já gravadas de um relatório — usado para verificar estouro.
      */
-    public function getTotalLarguraUsada(int $rel_id): int
-    {
-        $db = db_connect('default');
-        $row = $db->table($this->table)
-            ->selectSum('rco_tamanho_efetivo', 'total')
-            ->where('rel_id', $rel_id)
-            ->get()->getFirstRow();
 
-        return (int) ($row->total ?? 0);
-    }
 
     // ─────────────────────────────────────────────────────────────────────────
     //  Gravação
@@ -113,17 +106,6 @@ class ConfigRelColunasModel extends Model
      * Calcula rco_tamanho_efetivo com base na quebra de linha e retorna
      * o array de dados pronto para persistência.
      */
-    public function prepararColuna(array $dados): array
-    {
-        $tamanho = (int) ($dados['rco_tamanho'] ?? 0);
-        $quebra  = !empty($dados['rco_quebra_linha']) && $tamanho > 60;
-
-        $dados['rco_quebra_linha']    = $quebra ? 1 : 0;
-        $dados['rco_tamanho_efetivo'] = $quebra ? (int) ceil($tamanho / 2) : $tamanho;
-
-        return $dados;
-    }
-
     /**
      * Substitui todas as colunas de um relatório de uma vez.
      * Remove as existentes e regrava a lista completa.
@@ -139,7 +121,7 @@ class ConfigRelColunasModel extends Model
         foreach ($colunas as $ordem => $col) {
             $col['rel_id']    = $rel_id;
             $col['rco_ordem'] = $ordem + 1;
-            $this->insert($this->prepararColuna($col));
+            $this->insert($col);
         }
     }
 

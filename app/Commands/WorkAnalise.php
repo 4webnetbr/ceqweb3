@@ -44,7 +44,7 @@ class WorkAnalise extends BaseCommand
 
                 $saldoestFiltrado = array_filter($saldoest, function ($item) {
                     return !(($item->codigoLote === 'N/A' && $item->estoqueDeposito == 0) ||
-                             ($item->codigoLote !== 'N/A' && $item->quantidadeEstoque == 0));
+                        ($item->codigoLote !== 'N/A' && $item->quantidadeEstoque == 0));
                 });
 
                 $saldoestArr = array_map(fn($obj) => (array)$obj, array_values($saldoestFiltrado));
@@ -125,12 +125,13 @@ class WorkAnalise extends BaseCommand
                         if ($movim) {
                             (new SoapSapiens())->transfProdutosSapiens(
                                 $prod['pro_codpro'],
-                                $movim['tmo_transacao_erp'],
+                                $movim['tmm_transacao'],
                                 $movim['dep_codorigem'],
                                 date('d/m/Y'),
                                 $quantidade,
                                 $loteInfo['lot_lote'],
-                                $movim['dep_coddestino']
+                                $movim['dep_coddestino'],
+                                $loteInfo['lot_validade'],
                             );
                         }
                         $lotesToUpdate[] = [
@@ -161,7 +162,6 @@ class WorkAnalise extends BaseCommand
                     }
                     $logger->info(count($lotesToUpdate) . ' lotes atualizados.');
                 }
-
             } catch (\Throwable $e) {
                 $logger->error('Erro no worker: ' . $e->getMessage());
                 CLI::error('Erro no worker: ' . $e->getMessage());

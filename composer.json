@@ -9,13 +9,18 @@
         "source": "https://github.com/codeigniter4/CodeIgniter4",
         "slack": "https://codeigniterchat.slack.com"
     },
-	"require": {
+    "require": {
         "php": "^7.4 || ^8.2",
         "cboden/ratchet": "v0.5.x-dev",
-        "codeigniter4/framework": "4.6.1",
-        "textalk/websocket": "^1.5"
+        "codeigniter4/framework": "4.7.3",
+        "mobiledetect/mobiledetectlib": "^4.10",
+        "mpdf/mpdf": "^8.3",
+        "phpoffice/phpspreadsheet": "^1.29",
+        "phpoffice/phpword": "^1.2",
+        "textalk/websocket": "^1.5",
+        "workerman/workerman": "^5.1"
     },
-	"require-dev": {
+    "require-dev": {
         "fakerphp/faker": "^1.9",
         "mikey179/vfsstream": "^1.6",
         "phpunit/phpunit": "^10.5.16"
@@ -41,5 +46,8 @@
     },
     "scripts": {
         "test": "phpunit"
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+
 }

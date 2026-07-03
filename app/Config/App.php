@@ -68,6 +68,17 @@ class App extends BaseConfig
 
     /**
      * --------------------------------------------------------------------------
+     * Permitted URI Chars
+     * --------------------------------------------------------------------------
+     *
+     * Introduzido pelo Router do framework a partir da atualização pra 4.7.3
+     * (antes lia essa propriedade só se existisse; agora é obrigatória).
+     * O valor padrão '' mantém o comportamento anterior (sem checagem).
+     */
+    public string $permittedURIChars = '';
+
+    /**
+     * --------------------------------------------------------------------------
      * Default Locale
      * --------------------------------------------------------------------------
      *

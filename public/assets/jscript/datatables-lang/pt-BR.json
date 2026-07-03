@@ -3,7 +3,7 @@
     "info": "_START_-_END_ de _TOTAL_",
     "infoFiltered": "(Filtrados de _MAX_)",
     "infoThousands": ".",
-    "loadingRecords": "Carregando...",
+    "loadingRecords": "<div class='spinner-border spinner-border-sm mx-2'></div> Processando...",
     "zeroRecords": "Nenhum registro encontrado",
     "search": "Pesquisar",
     "paginate": {
@@ -240,6 +240,6 @@
         "removeError": "Falha ao remover estado!"
     },
     "infoEmpty": "Mostrando 0 até 0 de 0 registro(s)",
-    "processing": "Carregando...",
+    "processing": "<div class='spinner-border spinner-border-sm mx-2'></div> Processando...",
     "searchPlaceholder": "Buscar registros"
 }

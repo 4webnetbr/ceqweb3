@@ -23,6 +23,7 @@ class EntOcoOcorrencia extends Entity
         'stt_id'        => null,
         'tmo_id'        => null,
         'oco_justi'     => null,
+        'oco_ativo'     => 'A',
     ];
 
     protected $casts = [
@@ -195,8 +196,8 @@ class EntOcoOcorrencia extends Entity
         $qtd->dispForm     = 'col-6';
         $qtd->minimo       = 1;
         $qtd->largura      = 10;
-        $qtd->size         = 3;
-        $qtd->maximo       = 999;
+        $qtd->size         = 4;
+        $qtd->maximo       = 9999;
         $qtd->obrigatorio  = true;
         $qtd->leitura      = $show;
         $ret['oco_qtd'] = $qtd->crInput();

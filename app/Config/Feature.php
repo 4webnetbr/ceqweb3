@@ -27,4 +27,12 @@ class Feature extends BaseConfig
      * Use improved new auto routing instead of the default legacy version.
      */
     public bool $autoRoutesImproved = false;
+
+    /**
+     * Introduzido pelo framework a partir da atualização pra 4.7.3 (mesma
+     * categoria do $permittedURIChars em Config\App e $jsonEncodeDepth em
+     * Config\Format). system/HTTP/Negotiate.php acessa essa propriedade
+     * diretamente (sem isset()) ao negociar idioma via Accept-Language.
+     */
+    public bool $strictLocaleNegotiation = false;
 }

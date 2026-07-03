@@ -193,6 +193,197 @@ class Buscas extends BaseController
         exit;
     }
 
+    public function busca_tabelas_modulo()
+    {
+        $ret   = [];
+        $modId = $_REQUEST['busca'] ?? null;
+
+        if ($modId) {
+            $mod = $this->modulo->find((int) $modId);
+            if ($mod && !empty($mod->mod_dbgroup)) {
+                $tabelas = $this->admDados->getTabelasPorDbGroup($mod->mod_dbgroup, true);
+                foreach ($tabelas as $i => $t) {
+                    $ret[$i]['id']   = $t['table_name'];
+                    $ret[$i]['text'] = $t['table_name'] . ' - ' . $t['table_comment'];
+                }
+            }
+            if (empty($ret)) {
+                $ret[0]['id']   = '-1';
+                $ret[0]['text'] = 'Nenhuma tabela encontrada';
+            }
+        }
+
+        echo json_encode($ret);
+        exit;
+    }
+
+    public function busca_campos_filtro_rel()
+    {
+        $ret    = [];
+        $tabela = $_REQUEST['busca'] ?? null;
+
+        if ($tabela) {
+            // Persiste a tabela base atual na sessão — usada por CfgRelatorio::addFiltro/addColuna
+            session()->set('rel_tabela_base_atual', $tabela);
+
+            $campos = $this->admDados->getCampos($tabela);
+
+            // Verifica se é VIEW — se for, todos os campos podem ser filtro
+            $dbGrSche = $this->admDados->getDbGroupAndSchema($tabela);
+            $dbInfo   = db_connect($dbGrSche['dbGroup']);
+            $chkView  = $dbInfo->table('information_schema.TABLES')
+                ->select('TABLE_TYPE')
+                ->where('TABLE_NAME', $tabela)
+                ->where('TABLE_SCHEMA', $dbGrSche['schema'])
+                ->get();
+            $rowView = $chkView ? $chkView->getFirstRow() : null;
+            $isView  = ($rowView && $rowView->TABLE_TYPE === 'VIEW');
+
+            $i = 0;
+            foreach ($campos as $col) {
+                if (str_ends_with($col['COLUMN_NAME'], '_excluido')) continue;
+
+                $isDate = in_array(strtolower($col['DATA_TYPE']), ['date', 'datetime', 'timestamp']);
+                $isFK   = $col['COLUMN_KEY'] !== '';
+
+                // View: todos os campos não-inteiros são filtro | Tabela: apenas FK e date
+                $isInt = in_array(strtolower($col['DATA_TYPE']), ['int', 'tinyint', 'smallint', 'mediumint', 'bigint']);
+                if (($isView && !$isInt) || $isFK || $isDate) {
+                    $tipo = $isDate ? 'DATE' : 'FK';
+                    $ret[$i]['id']   = $col['COLUMN_NAME'] . '|' . $tabela . '|' . $tipo;
+                    $ret[$i]['text'] = $col['NOME_COMPLETO'];
+                    $i++;
+                }
+            }
+
+            if (empty($ret)) {
+                $ret[0]['id']   = '-1';
+                $ret[0]['text'] = 'Nenhum campo encontrado';
+            }
+        }
+
+        echo json_encode($ret);
+        exit;
+    }
+
+    public function busca_campos_colunas_rel()
+    {
+        $ret    = [];
+        $tabela = $_REQUEST['busca'] ?? null;
+
+        if ($tabela) {
+            // Persiste a tabela base atual na sessão — usada por CfgRelatorio::addFiltro/addColuna
+            session()->set('rel_tabela_base_atual', $tabela);
+
+            $dbGrSche = $this->admDados->getDbGroupAndSchema($tabela);
+            $dbInfo   = db_connect($dbGrSche['dbGroup']);
+
+            // ── Pais: tabelas referenciadas pela base via FK ─────────────
+            $rels = $this->admDados->getRelacionamentos($tabela);
+            $pais = [];
+            foreach ($rels['relacionamentos'] as $r) {
+                if ($r['TABLE_NAME'] === $tabela && !empty($r['REFERENCED_TABLE_NAME'])) {
+                    $pais[$r['REFERENCED_TABLE_NAME']] = true;
+                }
+            }
+            $pais = array_keys($pais);
+
+            // ── Filhas: tabelas que têm a PK da base ─────────────────────
+            $pkBase = '';
+            foreach ($this->admDados->getCampos($tabela) as $c) {
+                if ($c['COLUMN_KEY'] === 'PRI') {
+                    $pkBase = $c['COLUMN_NAME'];
+                    break;
+                }
+            }
+
+            $filhas = [];
+            if ($pkBase) {
+                $result = $dbInfo->table('information_schema.COLUMNS c')
+                    ->distinct()->select('c.TABLE_NAME')
+                    ->join('information_schema.TABLES t', 't.TABLE_NAME = c.TABLE_NAME AND t.TABLE_SCHEMA = c.TABLE_SCHEMA', 'inner')
+                    ->where('c.COLUMN_NAME', $pkBase)
+                    ->where('c.TABLE_SCHEMA', $dbGrSche['schema'])
+                    ->where('c.TABLE_NAME !=', $tabela)
+                    ->where('t.TABLE_TYPE', 'BASE TABLE')
+                    ->get();
+                $filhas = array_column($result ? $result->getResultArray() : [], 'TABLE_NAME');
+            }
+
+            // ── Netas: tabelas que têm a PK de alguma filha ──────────────
+            $netas = [];
+            foreach ($filhas as $filha) {
+                $pkFilha = '';
+                foreach ($this->admDados->getCampos($filha) as $c) {
+                    if ($c['COLUMN_KEY'] === 'PRI') {
+                        $pkFilha = $c['COLUMN_NAME'];
+                        break;
+                    }
+                }
+                if (!$pkFilha) continue;
+
+                $result = $dbInfo->table('information_schema.COLUMNS c')
+                    ->distinct()->select('c.TABLE_NAME')
+                    ->join('information_schema.TABLES t', 't.TABLE_NAME = c.TABLE_NAME AND t.TABLE_SCHEMA = c.TABLE_SCHEMA', 'inner')
+                    ->where('c.COLUMN_NAME', $pkFilha)
+                    ->where('c.TABLE_SCHEMA', $dbGrSche['schema'])
+                    ->where('c.TABLE_NAME !=', $filha)
+                    ->where('c.TABLE_NAME !=', $tabela)
+                    ->where('t.TABLE_TYPE', 'BASE TABLE')
+                    ->get();
+                $netasFilha = array_column($result ? $result->getResultArray() : [], 'TABLE_NAME');
+                $netas = array_merge($netas, $netasFilha);
+            }
+            $netas = array_unique($netas);
+
+            // Monta lista: base + filhas + netas + pais (sem duplicatas)
+            $filhasENetas = array_unique(array_merge($filhas, $netas));
+            $tabelas = array_unique(array_merge([$tabela], $filhasENetas, $pais));
+
+            // Exceções para campos específicos
+            $camposEspecificos = [
+                'cfg_cor' => ['cor_nome_rgb'],
+            ];
+
+            $i = 0;
+            foreach ($tabelas as $tab) {
+                $campos      = $this->admDados->getCampos($tab);
+                $ehBase      = ($tab === $tabela);
+                $ehFilha     = in_array($tab, $filhasENetas);
+                $todosCampos = ($ehBase || $ehFilha);
+                $especifico  = $camposEspecificos[$tab] ?? null;
+
+                foreach ($campos as $col) {
+                    $nome = $col['COLUMN_NAME'];
+                    if (str_ends_with($nome, '_excluido')) continue;
+
+                    if ($especifico !== null) {
+                        if (!in_array($nome, $especifico)) continue;
+                    } elseif ($todosCampos) {
+                        if (str_ends_with($nome, '_id')) continue;
+                    } else {
+                        if (!str_ends_with($nome, '_nome')) continue;
+                    }
+
+                    $tamanho = $col['COLUMN_SIZE'] ?? 0;
+                    $tipo    = $col['DATA_TYPE'] ?? '';
+
+                    $ret[$i]['id']   = $tab . '|' . $nome . '|' . $tamanho . '|' . $tipo;
+                    $ret[$i]['text'] = '[' . $tab . '] ' . $col['NOME_COMPLETO'];
+                    $i++;
+                }
+            }
+
+            if (empty($ret)) {
+                $ret[0]['id']   = '-1';
+                $ret[0]['text'] = 'Nenhum campo encontrado';
+            }
+        }
+
+        echo json_encode($ret);
+        exit;
+    }
+
     public function busca_tela()
     {
         $ret = [];
@@ -939,78 +1130,96 @@ class Buscas extends BaseController
     }
 
 
-    public function buscaProdutosMergeEstoques($id, $deposito, $tipo)
+    public function buscaProdutosMergeEstoques(int $id, int|string $deposito, string $tipo): array
     {
         $modrequisicao = new EstoquRequisicaoModel();
         $modprodutos   = new ProdutProdutoModel();
+
         $produtos = $modrequisicao->getRequisicaoProdutos($id, $tipo);
-        if (count($produtos) == 0) {
+
+        if ($produtos === []) {
             return [];
         }
-        // debug($produtos, true);
-        // array_column mudando para o OBJ
+
         $pro_ids = array_unique(array_map(
-            fn($p) => $p->pro_id,
+            static fn(object $p): int|string => $p->pro_id,
             $produtos
         ));
-        // Transformar $produtos em um array indexado por pro_id
-        $produtosIndexado = [];
-        foreach ($produtos as $param) {
-            $produtosIndexado[$param->pro_id] = $param;
-        }
-
-        // debug($pro_ids);
-
-        $dados_ceq_produto = $modprodutos
-            ->getProdutoEstoqueCeqweb($pro_ids, $deposito);
-
-        $prefixos = ['rep_id', 'pro_', 'prc_'];
-        $dados_ceq_produto = $this->filtrarPorPrefixos($dados_ceq_produto, $prefixos);
-        // debug($dados_ceq_produto);
-
-
-        $dados_est_produto = $modprodutos
-            ->getProdutoEstoque($pro_ids, $deposito);
-        // debug($dados_est_produto, true);
 
         $resultadoIndexado = [];
 
-        // 1. Base: produtosIndexado
-        foreach ($produtosIndexado as $pro_id => $produto) {
-            $resultadoIndexado[$pro_id] = (array) $produto;
+        /*
+     * IMPORTANTE:
+     * Troque "lot_id" pelo nome real do campo do lote.
+     * Exemplos possíveis: lot_id, lote_id, prl_id, rep_lote, lote.
+     */
+        foreach ($produtos as $produto) {
+            $chave = $this->gerarChaveProdutoLote($produto);
+
+            $resultadoIndexado[$chave] = (array) $produto;
         }
 
-        // 2. Merge com estoque
+        $dados_ceq_produto = $modprodutos->getProdutoEstoqueCeqweb($pro_ids, $deposito);
+
+        $prefixos = ['rep_id', 'pro_', 'prc_'];
+        $dados_ceq_produto = $this->filtrarPorPrefixos($dados_ceq_produto, $prefixos);
+
+        $dados_est_produto = $modprodutos->getProdutoEstoque($pro_ids, $deposito);
+
+        /*
+     * Estoque local.
+     *
+     * Se o estoque vier separado por lote, use também a chave composta.
+     * Se vier apenas por produto, o mesmo estoque será aplicado em todos os lotes
+     * daquele produto.
+     */
         foreach ($dados_est_produto as $itemEstoque) {
-            $pro_id = $itemEstoque->pro_id;
+            foreach ($resultadoIndexado as $chave => $produto) {
+                if (($produto['pro_id'] ?? null) !== $itemEstoque->pro_id) {
+                    continue;
+                }
 
-            $resultadoIndexado[$pro_id] = array_merge(
-                $resultadoIndexado[$pro_id] ?? [],
-                (array) $itemEstoque
-            );
+                $resultadoIndexado[$chave] = array_merge(
+                    $produto,
+                    (array) $itemEstoque
+                );
+            }
         }
-        // debug($resultadoIndexado, false);
-        // debug($dados_ceq_produto, true);
 
-        // 3. Merge com ceqweb
+        /*
+     * Estoque CEQWeb.
+     */
         foreach ($dados_ceq_produto as $itemCeq) {
-            $pro_id = $itemCeq->pro_id;
+            foreach ($resultadoIndexado as $chave => $produto) {
+                if (($produto['pro_id'] ?? null) !== $itemCeq->pro_id) {
+                    continue;
+                }
 
-            $resultadoIndexado[$pro_id] = array_merge(
-                $resultadoIndexado[$pro_id] ?? [],
-                (array) $itemCeq
-            );
+                $resultadoIndexado[$chave] = array_merge(
+                    $produto,
+                    (array) $itemCeq
+                );
+            }
         }
 
-        // 4. Converter para array final de objetos
-        $resultado = array_map(
-            fn(array $item): object => (object) $item,
+        return array_values(array_map(
+            static fn(array $item): object => (object) $item,
             $resultadoIndexado
-        );
+        ));
+    }
 
-        $resultado = array_values($resultado);
+    private function gerarChaveProdutoLote(object $produto): string
+    {
+        /*
+     * Ajuste aqui para o campo correto do lote.
+     */
+        $lote = $produto->lot_id
+            ?? $produto->lote_id
+            ?? $produto->prl_id
+            ?? $produto->lote
+            ?? 'sem_lote';
 
-        return $resultado;
+        return "{$produto->pro_id}_{$lote}";
     }
 
     public function filtrarPorPrefixos(array $itens, array $prefixos): array

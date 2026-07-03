@@ -66,8 +66,8 @@ class NotificaMonModel
 			];
 			$options = [
 				// 'projection' => ['_id' => 0],
-				'sort' => ['not_data' => -1],
-				'distinct' => ["not_id_registro"],
+				'sort'  => ['not_data' => -1],
+				'limit' => 50,
 			];
 			$query = new \MongoDB\Driver\Query($filter, $options);
 			$result = $this->conn->executeQuery($this->database . '.' . $this->collection, $query);
@@ -77,16 +77,18 @@ class NotificaMonModel
 		}
 	}
 
-	function getNotificaAberta()
+
+	function getNotificaAberta($usuario)
 	{
 		try {
+
 			$filter = [
 				'not_visto' => 'A',
+				'not_id_usuario' => $usuario,
 			];
 			$options = [
-				// 'projection' => ['_id' => 0],
-				'sort' => ['not_data' => -1],
-				// 'distinct' => ["not_id_registro"],
+				'sort'  => ['not_data' => -1],
+				'limit' => 50,
 			];
 			$query = new \MongoDB\Driver\Query($filter, $options);
 

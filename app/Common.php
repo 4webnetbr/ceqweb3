@@ -6,6 +6,7 @@ use App\Libraries\MyCampo;
 use App\Models\Config\ConfigDicDadosModel;
 use App\Models\Config\ConfigMenuModel;
 use App\Models\Config\ConfigPerfilItemModel;
+use App\Models\Config\ConfigRelatoriosModel;
 use App\Models\Config\ConfigTelaListaModel;
 use App\Models\Config\ConfigTelaModel;
 use WebSocket\Client;
@@ -98,6 +99,45 @@ function montaMenu($perfil_usu, $tipo_usu, $ordenacao = false)
             }
         }
     }
+
+    // Injeta opção sintética "Relatórios" nos menus hierarquia 2 que tiverem
+    // relatório cadastrado para o módulo, liberado ao perfil, sem tela vinculada.
+    // Precisa rodar ANTES da limpeza de ramos vazios logo abaixo, para que um
+    // cabeçalho que ganhe a opção "Relatórios" como único item não seja removido.
+    $relatoriosModel = new ConfigRelatoriosModel();
+    foreach ($ret_menu as $idxOpc => $itemMenu) {
+        if (($itemMenu['men_hierarquia'] ?? null) != '2') {
+            continue;
+        }
+        $modId = $itemMenu['mod_id'] ?? null;
+        if (!$modId) {
+            continue;
+        }
+        // debug($modId);
+        // debug($perfil_usu);
+        $relatoriosMod = $relatoriosModel->getRelatoriosPorModuloPerfil((int) $modId, (int) $perfil_usu);
+        // debug($relatoriosMod);
+        if (count($relatoriosMod) === 0) {
+            continue;
+        }
+        $proxIdx = isset($ret_menu[$idxOpc]['niv1']) ? count($ret_menu[$idxOpc]['niv1']) : 0;
+        $ret_menu[$idxOpc]['niv1'][$proxIdx] = [
+            'men_id'         => 'rel_mod_' . $modId,
+            'men_hierarquia' => '4',
+            'men_menupai_id' => $itemMenu['men_id'] ?? null,
+            'men_submenu_id' => null,
+            'mod_id'         => $modId,
+            'tel_id'         => null,
+            'men_etiqueta'   => 'Relatórios',
+            'men_icone'      => 'fas fa-chart-bar',
+            'men_order'      => 9999,
+            'men_metodo'     => 'index',
+            // ANTES (BKP 30/06/2026): 'tel_controler' => 'Utils/Relatorio/index/' . $modId,
+            'tel_controler'  => 'Relatorio/' . $modId,
+            'pit_permissao'  => 'C',
+        ];
+    }
+
     // debug($ret_menu, true);
     $opc_menu = '';
     for ($m = count($ret_menu) - 1; $m >= 0; $m--) {
@@ -570,7 +610,7 @@ function montaListaColunasEnt($data_lis, $chave, $dados, $nome)
             if ($field === 'stt_nome' && isset($ent->stt_cor)) {
                 $linha[] = fmtEtiquetaCor($ent->stt_cor, $valor);
             } elseif (is_string($valor) && preg_match('/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/', $valor)) {
-                $linha[] = "<div class='text-center'>" . data_br($valor) . "</div>";
+                $linha[] = "<div class='text-center text-wrap' style='white-space: normal; max-width: 6em;'>" . data_br($valor) . "</div>";
             } elseif (is_numeric($valor) && $field != $chave && is_float($valor)) {
                 $linha[] = "<div class='text-end'>" . (
                     strlen(strrchr($valor, '.')) > 3
@@ -735,12 +775,12 @@ function montaListaEditColunas($colunas, $data_lis, $chave, $dados, $nome, $deta
             if (strlen($retor[$fields[$f]]) < 20) {
                 $data = DateTime::createFromFormat('Y-m-d H:i:s', $retor[$fields[$f]]);
                 if ($data && $data->format('Y-m-d H:i:s') === $retor[$fields[$f]]) {
-                    $retor[$fields[$f]] = "<div class='text-center'>" .
+                    $retor[$fields[$f]] = "<div class='text-center text-wrap' style='white-space: normal; max-width: 10em;'>" .
                         data_br($retor[$fields[$f]]) . "</div>";
                 } else {
                     $data = DateTime::createFromFormat('Y-m-d', $retor[$fields[$f]]);
                     if ($data && $data->format('Y-m-d') === $retor[$fields[$f]]) {
-                        $retor[$fields[$f]] = "<div class='text-center'>" . data_br($retor[$fields[$f]]) .
+                        $retor[$fields[$f]] = "<div class='text-center text-wrap' style='white-space: normal; max-width: 10em;'>" . data_br($retor[$fields[$f]]) .
                             "</div>";
                     } else {
                         // testa se o campo é numérico, se for alinha a direita

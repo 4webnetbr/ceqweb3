@@ -1,12 +1,11 @@
 <?php
-
 namespace App\Models\Config;
 
 use CodeIgniter\Model;
 
 class ConfigPerfilItemModel extends Model
 {
-    protected $DBGroup          = 'default';
+    protected $DBGroup = 'default';
 
     protected $table      = 'cfg_perfil_item';
     protected $primaryKey = 'pit_id';
@@ -14,12 +13,13 @@ class ConfigPerfilItemModel extends Model
     protected $returnType     = 'array';
     protected $useSoftDeletes = true;
 
-    protected $allowedFields = ['pit_id',
-                                'prf_id',
-                                'mod_id',
-                                'tel_id',
-                                'pit_permissao'
-                                ];
+    protected $allowedFields = [
+        'pit_id',
+        'prf_id',
+        'mod_id',
+        'tel_id',
+        'pit_permissao',
+    ];
 
     public function excluiItemPerfil($chave, $valor)
     {
@@ -29,7 +29,7 @@ class ConfigPerfilItemModel extends Model
 
     public function getItemPerfil($perfil)
     {
-        $db = db_connect('default');
+        $db      = db_connect('default');
         $builder = $db->table('vw_cfg_perfil_item_relac');
         $builder->select('*');
         if ($perfil) {
@@ -42,10 +42,10 @@ class ConfigPerfilItemModel extends Model
 
     public function getItemPerfilClasse($perfil, $classe)
     {
-        $db = db_connect('default');
+        $db      = db_connect('default');
         $builder = $db->table('vw_cfg_perfil_item_relac');
         $builder->select('*');
-        if($perfil != 0){
+        if ($perfil != 0) {
             $builder->where('prf_id', $perfil);
         }
         $builder->groupStart();
@@ -53,31 +53,38 @@ class ConfigPerfilItemModel extends Model
         $builder->orWhere('tel_id', $classe);
         $builder->groupEnd();
         $ret = $builder->get()->getResultArray();
-        // debug($this->db->getLastQuery());
+        // debug($db->getLastQuery());
         return $ret;
     }
 
-    public function getPermissaoTelaUsuario($tela = false, $perfil = false, $usuario = false, $controler = false){
-        if(!$tela && !$usuario && !$perfil && !$controler){
+    public function getPermissaoTelaUsuario($tela = false, $perfil = false, $usuario = false, $controler = false)
+    {
+        if (! $tela && ! $usuario && ! $perfil && ! $controler) {
             return false;
         }
-        $db = db_connect();
+        $db      = db_connect();
         $builder = $db->table('vw_permissao_tela_usuarios');
-        $builder->select('*'); 
-        if($tela)
+        $builder->select('*');
+        if ($tela) {
             $builder->where('tel_nome', $tela);
-        if($perfil)
+        }
+
+        if ($perfil) {
             $builder->where('pit_perfil_id', $perfil);
-        if($usuario)
+        }
+
+        if ($usuario) {
             $builder->where('usu_id', $usuario);
-        if($controler)
+        }
+
+        if ($controler) {
             $builder->where('tel_controler', $controler);
-        
+        }
+
         $ret = $builder->get()->getResultArray();
-        // debug($this->db->getLastQuery());        
-        // log_message('info','SQL '.$this->db->getLastQuery());
+        // debug($this->db->getLastQuery());
+        log_message('info', 'SQL vw_permissao_tela_usuarios ' . $db->getLastQuery());
 
         return $ret;
     }
-
 }

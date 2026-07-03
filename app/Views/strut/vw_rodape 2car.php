@@ -3,14 +3,14 @@
 <div id='rodape' class='rodape col-12 footer bg-light text-center position-fixed bottom-0 border-top' style="height:1.5rem">
   <!-- inicio da div de mensagem -->
   <div id='msgrodape' class="col-10 float-start text-center d-grid ">
-  <?
-    if (isset($log['operacao']) && $log['operacao'] != '') {?>
+    <?
+    if (isset($log['operacao']) && $log['operacao'] != '') { ?>
       <?= $log['operacao']; ?>: <?= $log['data_alterou']; ?> por: <?= $log['usua_alterou']; ?>
       <a href='<?= base_url('Logger/show/' . $log['tabela'] . '/' . $log['registro']); ?>'>Ver Log</a>
     <?
     }
-  ?>
-  &nbsp;
+    ?>
+    &nbsp;
   </div>
   <!-- fim da div de mensagem -->
   <!-- div do status do servidor -->
@@ -32,59 +32,77 @@
     left: 0;
     animation: moverCaminhaoIda 2s infinite ease-in-out;
   }
+
   .truck-icon .amarelo {
     font-size: 1em;
     position: absolute;
     left: 100%;
-    transform: scaleX(-1); /* começa espelhado */
+    transform: scaleX(-1);
+    /* começa espelhado */
     animation: moverCaminhaoVolta 2s infinite ease-in-out;
   }
 
   @keyframes moverCaminhaoIda {
     0% {
       left: 5px;
-      transform: scaleX(1);/* normal */
+      transform: scaleX(1);
+      /* normal */
     }
+
     50% {
       left: calc(100% - 20px);
-      transform: scaleX(1); /* indo para direita */
+      transform: scaleX(1);
+      /* indo para direita */
     }
+
     51% {
       left: calc(100% - 20px);
-      transform: scaleX(-1); /* começa a voltar */
+      transform: scaleX(-1);
+      /* começa a voltar */
     }
+
     100% {
       left: 5px;
-      transform: scaleX(-1); /* voltando para a esquerda */
+      transform: scaleX(-1);
+      /* voltando para a esquerda */
     }
   }
-@keyframes moverCaminhaoVolta {
+
+  @keyframes moverCaminhaoVolta {
     0% {
       left: calc(100% - 20px);
-      transform: scaleX(-1); /* indo para direita */
+      transform: scaleX(-1);
+      /* indo para direita */
     }
+
     50% {
       left: 5px;
-      transform: scaleX(-1);/* normal */
+      transform: scaleX(-1);
+      /* normal */
     }
+
     51% {
       left: 5px;
-      transform: scaleX(1);/* normal */
+      transform: scaleX(1);
+      /* normal */
     }
+
     100% {
       left: calc(100% - 20px);
-      transform: scaleX(1); /* começa a voltar */
+      transform: scaleX(1);
+      /* começa a voltar */
     }
   }
+
   .truck-icon {
     position: relative;
     overflow: hidden;
     height: 30px;
   }
-  </style>
+</style>
 <script>
   function executa_php() {
-    redirec_blank('/Utils/executa_php');
+    redirec_blank('/Utilidade/executa_php');
     setInterval(function() {
       conectaWs();
     }, 2000);

@@ -17,6 +17,7 @@ class CfgDicionario extends BaseController
         $this->data      = session()->getFlashdata('dados_tela');
         $this->dicionario  = new ConfigDicDadosModel();
         $this->permissao = $this->data['permissao'];
+
         if ($this->data['erromsg'] != '') {
             $this->__erro();
         }
@@ -25,27 +26,6 @@ class CfgDicionario extends BaseController
     public function __erro()
     {
         echo view('vw_semacesso', $this->data);
-    }
-    public function add()
-    {
-        $gerador = new \App\Services\SqlGeneratorService();
-
-        // 1. Contexto (Passo 1) — ajuste pros nomes reais das suas tabelas
-        $contexto = $this->dicionario->getSchemaContext(['est_requisicao', 'est_requisicao_produto', 'est_requisicao_produto_atendimento', 'pro_sap_produto', 'pro_sap_lote', 'oco_ocorrencia']);
-
-        // 2. Pergunta do usuário
-        $pergunta = 'Quero o total requerido, atendido, cancelado, conferido e aprovado por produto, nos últimos 15 dias, se conferido for -1, conferido é igual a atendido, se aprovado -1 aprovado é igual a conferido';
-
-        // 3. Gera o SQL (Passo 2)
-        $sql = $gerador->gerarSql($pergunta, $contexto);
-
-
-        return $this->response->setContentType('text/plain')->setBody($sql);
-        // Use os nomes reais das suas tabelas de requisição de estoque:
-        // $contexto = $this->dicionario->getSchemaContext(['est_requisicao', 'est_requisicao_produto', 'est_requisicao_produto_atendimento', 'pro_sap_produto', 'pro_sap_lote']);
-
-        // return $this->response->setContentType('text/plain')
-        //     ->setBody($contexto);
     }
 
     public function index()
@@ -93,6 +73,15 @@ class CfgDicionario extends BaseController
         ];
 
         echo json_encode($classs);
+    }
+
+    public function add()
+    {
+        // Use os nomes reais das suas tabelas de requisição de estoque:
+        $contexto = $this->dicionario->getSchemaContext(['est_requisicao', 'est_requisicao_produto', 'pro_sap_produto', 'pro_sap_lote']);
+
+        return $this->response->setContentType('text/plain')
+            ->setBody($contexto);
     }
 
 

@@ -100,7 +100,7 @@ class ProdutProdutoModel extends Model
 
         $builder->select('*');
         if ($pro_cod) {
-            $builder->where('TRIM(pro_codpro)', trim($pro_cod));
+            $builder->where('pro_codpro', $pro_cod);
         }
         if ($dispon) {
             $builder->where('stt_disponivel', $dispon);

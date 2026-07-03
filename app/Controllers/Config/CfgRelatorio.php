@@ -7,11 +7,13 @@ use App\Entities\Config\EntCfgRelatorios;
 use App\Entities\Config\EntCfgRelFiltros;
 use App\Entities\Config\EntCfgRelColunas;
 use App\Models\CommonModel;
+use App\Models\Config\ConfigDicDadosModel;
 use App\Models\Config\ConfigRelatoriosModel;
 use App\Models\Config\ConfigRelFiltrosModel;
 use App\Models\Config\ConfigRelColunasModel;
 use App\Models\Config\ConfigRelJoinsModel;
 use App\Traits\ForeignKeyUsageChecker;
+
 
 class CfgRelatorio extends BaseController
 {
@@ -21,6 +23,7 @@ class CfgRelatorio extends BaseController
     protected ConfigRelFiltrosModel $filtros;
     protected ConfigRelColunasModel $colunas;
     protected ConfigRelJoinsModel   $joins;
+    protected ConfigDicDadosModel   $dicionario;
     protected CommonModel           $common;
     protected array                 $data;
 
@@ -33,6 +36,7 @@ class CfgRelatorio extends BaseController
         $this->filtros    = new ConfigRelFiltrosModel();
         $this->colunas    = new ConfigRelColunasModel();
         $this->joins      = new ConfigRelJoinsModel();
+        $this->dicionario      = new ConfigDicDadosModel();
         $this->common     = new CommonModel();
 
         if ($this->data['erromsg'] != '') {
@@ -76,6 +80,9 @@ class CfgRelatorio extends BaseController
 
     public function add()
     {
+        // Limpa a tabela base da sessão (será atualizada via AJAX quando o usuário selecionar)
+        session()->set('rel_tabela_base_atual', '');
+
         $erel = new EntCfgRelatorios();
 
         // Aba Filtros — começa com uma linha vazia
@@ -86,30 +93,37 @@ class CfgRelatorio extends BaseController
         $fieldsColunas = $erel->defCamposColunas();
         $campos_colunas[0] = $this->_linhaColunas($fieldsColunas);
 
-        $this->data['secoes'] = ['Dados Gerais', 'Filtros', 'Colunas'];
-        $this->data['displ']  = [null, 'tabela', 'tabela'];
+        $this->data['secoes'] = ['Dados Gerais', 'Filtros', 'Colunas', 'Permissões'];
+        $this->data['displ']  = [null, 'tabela', 'tabela', null];
 
         $this->data['campos'] = [
             // Aba 0 — Dados Gerais
             [
                 $erel->campos['rel_id'],
+                $erel->campos['rel_nome'],
                 $erel->campos['mod_id'],
                 $erel->campos['tel_id'],
-                $erel->campos['rel_titulo'],
                 $erel->campos['rel_tabela_base'],
+                $erel->campos['rel_totalizar_registros'],
                 $erel->campos['rel_formato'],
                 $erel->campos['rel_tamanho_fonte'],
+                $erel->campos['rel_titulo'],
+                $erel->campos['rel_chars_display'],
             ],
             // Aba 1 — Filtros
             $campos_filtros,
             // Aba 2 — Colunas
             $campos_colunas,
+            // Aba 3 — Permissões
+            [
+                $erel->campos['prf_id'],
+            ],
         ];
 
         $this->data['destino'] = 'store';
         $this->data['script']  = $this->_scriptTela();
 
-        echo view('vw_edicao', $this->data);
+        echo view('vw_edicao_relatorio', $this->data);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -124,27 +138,38 @@ class CfgRelatorio extends BaseController
             return redirectWithError($this->data['controler'], 41);
         }
 
-        $erel = new EntCfgRelatorios((array) $dados, $show);
+        $dadosArray = is_object($dados) && method_exists($dados, 'toRawArray') ? $dados->toRawArray() : (array) $dados;
+
+        // Guarda a tabela base na sessão para uso em addFiltro/addColuna (AJAX não envia o form completo)
+        session()->set('rel_tabela_base_atual', $dadosArray['rel_tabela_base'] ?? '');
+
+        $erel = new EntCfgRelatorios($dadosArray, $show);
 
         // ── Aba Filtros ──────────────────────────────────────────────────────
         $lst_filtros = $this->filtros->getFiltros($id);
-
+        $tabelaBase  = $dadosArray['rel_tabela_base'] ?? '';
+        $opcoesFil   = $this->_opcoesFiltroPorTabela($tabelaBase);
+        // debug($opcoesFil);
+        $campos_filtros = [];
         if (count($lst_filtros) > 0) {
             foreach ($lst_filtros as $pos => $f) {
-                $fields          = $erel->defCamposFiltro((array) $f, $show, $pos);
+                $fArray = is_object($f) && method_exists($f, 'toRawArray') ? $f->toRawArray() : (array) $f;
+                $fields              = $erel->defCamposFiltro($fArray, $show, $pos, $opcoesFil);
                 $campos_filtros[$pos] = $this->_linhaFiltro($fields);
             }
         } else {
-            $fields          = $erel->defCamposFiltro();
-            $campos_filtros[0] = $this->_linhaFiltro($fields);
+            $fields              = $erel->defCamposFiltro(false, false, 0, $opcoesFil);
+            $campos_filtros[0]   = $this->_linhaFiltro($fields);
         }
 
         // ── Aba Colunas ──────────────────────────────────────────────────────
         $lst_colunas = $this->colunas->getColunas($id);
 
+        $campos_colunas = [];
         if (count($lst_colunas) > 0) {
             foreach ($lst_colunas as $pos => $c) {
-                $fields           = $erel->defCamposColunas((array) $c, $show, $pos);
+                $cArray = is_object($c) && method_exists($c, 'toRawArray') ? $c->toRawArray() : (array) $c;
+                $fields           = $erel->defCamposColunas($cArray, $show, $pos);
                 $campos_colunas[$pos] = $this->_linhaColunas($fields);
             }
         } else {
@@ -152,29 +177,36 @@ class CfgRelatorio extends BaseController
             $campos_colunas[0] = $this->_linhaColunas($fields);
         }
 
-        $this->data['secoes'] = ['Dados Gerais', 'Filtros', 'Colunas'];
-        $this->data['displ']  = [null, 'tabela', 'tabela'];
+        $this->data['secoes'] = ['Dados Gerais', 'Filtros', 'Colunas', 'Permissões'];
+        $this->data['displ']  = [null, 'tabela', 'tabela', null];
 
         $this->data['campos'] = [
             [
                 $erel->campos['rel_id'],
+                $erel->campos['rel_nome'],
                 $erel->campos['mod_id'],
                 $erel->campos['tel_id'],
-                $erel->campos['rel_titulo'],
                 $erel->campos['rel_tabela_base'],
+                $erel->campos['rel_totalizar_registros'],
                 $erel->campos['rel_formato'],
                 $erel->campos['rel_tamanho_fonte'],
+                $erel->campos['rel_titulo'],
+                $erel->campos['rel_chars_display'],
             ],
             $campos_filtros,
             $campos_colunas,
+            [
+                $erel->campos['prf_id'],
+            ],
         ];
 
         $this->data['destino']         = 'store';
-        $this->data['rel_chars_linha'] = $dados->rel_chars_por_linha;
+        $charsLinha = $dadosArray['rel_chars_por_linha'] ?? 0;
+        $this->data['rel_chars_linha'] = $charsLinha;
         $this->data['log']             = buscaLog('cfg_relatorios', $id);
-        $this->data['script']          = $this->_scriptTela($dados->rel_chars_por_linha);
+        $this->data['script']          = $this->_scriptTela((int) $charsLinha);
 
-        echo view('vw_edicao', $this->data);
+        echo view('vw_edicao_relatorio', $this->data);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -185,8 +217,11 @@ class CfgRelatorio extends BaseController
 
     public function addFiltro(int $pos)
     {
-        $erel   = new EntCfgRelatorios();
-        $fields = $erel->defCamposFiltro(false, false, $pos);
+        // O AJAX do addCampo() não envia o form inteiro, por isso a tabela base
+        // vem da sessão (atualizada em add/edit e nos endpoints busca_campos_*_rel)
+        $tabelaBase = session()->get('rel_tabela_base_atual') ?? '';
+        $opcoesFil  = $this->_opcoesFiltroPorTabela($tabelaBase);
+        $fields     = (new EntCfgRelatorios())->defCamposFiltro(false, false, $pos, $opcoesFil);
         echo json_encode($this->_linhaFiltro($fields));
         exit;
     }
@@ -206,6 +241,73 @@ class CfgRelatorio extends BaseController
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    //  AJAX — previewRelatorio
+    //  Retorna HTML do preview do relatório com dados fictícios (10 registros)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public function previewRelatorio()
+    {
+        $postado = $this->request->getPost();
+
+        $colunas       = [];
+        $campos        = $postado['rco_campo']         ?? [];
+        $labels        = $postado['rco_label']         ?? [];
+        $alinhams      = $postado['rco_alinhamento']   ?? [];
+        $totalizar     = $postado['rco_totalizar']     ?? [];
+        $tiposDado     = $postado['rco_tipo_dado']     ?? [];
+        $larguras      = $postado['rco_largura']       ?? [];
+        $comportaments = $postado['rco_comportamento'] ?? [];
+
+        foreach ($campos as $i => $campo) {
+            if (empty($campo)) continue;
+            $partes = explode('|', $campo);
+            $colunas[] = [
+                'tabela'        => $partes[0] ?? '',
+                'campo'         => $partes[1] ?? $campo,
+                'tamanho'       => (int) ($partes[2] ?? 0),
+                'tipo_dado'     => $partes[3] ?? ($tiposDado[$i] ?? ''),
+                'label'         => $labels[$i] ?? '',
+                'alinhamento'   => $alinhams[$i] ?? 'E',
+                'totalizar'     => !empty($totalizar[$i]) ? 1 : 0,
+                'largura'       => (int) ($larguras[$i] ?? 0),
+                'comportamento' => $comportaments[$i] ?? 'cortar',
+            ];
+        }
+
+        $filtros = [];
+        $fCampos = $postado['rfi_campo'] ?? [];
+        $fLabels = $postado['rfi_label'] ?? [];
+        $fTabelas = $postado['rfi_tabela'] ?? [];
+        $fTipos  = $postado['rfi_tipo_filtro'] ?? [];
+
+        foreach ($fCampos as $i => $fc) {
+            if (empty($fc)) continue;
+            $partes = explode('|', $fc);
+            $filtros[] = [
+                'campo'       => $partes[0] ?? $fc,
+                'tabela'      => !empty($fTabelas[$i]) ? $fTabelas[$i] : ($partes[1] ?? ''),
+                'tipo_filtro' => !empty($fTipos[$i]) ? $fTipos[$i] : ($partes[2] ?? 'FK'),
+                'label'       => $fLabels[$i] ?? '',
+            ];
+        }
+
+        $config = [
+            'titulo'                => $postado['rel_titulo'] ?? '',
+            'nome'                  => $postado['rel_nome'] ?? '',
+            'formato'               => $postado['rel_formato'] ?? 'P',
+            'tamanho_fonte'         => (int) ($postado['rel_tamanho_fonte'] ?? 10),
+            'tabela_base'           => $postado['rel_tabela_base'] ?? '',
+            'totalizar_registros'   => !empty($postado['rel_totalizar_registros']) ? 1 : 0,
+            'colunas'               => $colunas,
+            'filtros'               => $filtros,
+        ];
+
+        $html = (new \App\Controllers\CriamPdf2026())->htmlRelatorioGenerico($config, true);
+        echo json_encode(['html' => $html]);
+        exit;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     //  AJAX — camposFiltro
     //  Retorna campos _id e DATE da tabela base para popular o select de campo
     //  URL: CfgRelatorio/camposFiltro?tabela=xxx
@@ -219,19 +321,20 @@ class CfgRelatorio extends BaseController
             echo json_encode(['erro' => true, 'msg' => 'Tabela não informada.']);
             return;
         }
+        // $dbGrSche = $this->dicionario->getDbGroupAndSchema($tabela);
 
-        $db     = db_connect('default');
-        $campos = $db->getFieldData($tabela);
+        // $db     = db_connect($dbGrSche['dbGroup']);
+        $campos = $this->dicionario->getCampos($tabela);
+        // debug($campos, true);
         $ret    = [];
 
         foreach ($campos as $col) {
-            $isFk   = str_ends_with($col->name, '_id');
-            $isDate = in_array(strtoupper($col->type), ['DATE', 'DATETIME', 'TIMESTAMP']);
-
-            if ($isFk || $isDate) {
+            $isDate = in_array(strtolower($col['DATA_TYPE']), ['date', 'datetime', 'timestamp']);
+            if (str_ends_with($col['COLUMN_NAME'], '_excluido')) continue;
+            if ($col['COLUMN_KEY'] !== '' || $isDate) {
                 $ret[] = [
-                    'id'   => $col->name . '|' . $tabela . '|' . ($isDate ? 'DATE' : 'FK'),
-                    'text' => ucwords(str_replace('_', ' ', $col->name)),
+                    'id'   => $col['COLUMN_NAME'],
+                    'text' => $col['NOME_COMPLETO'],
                 ];
             }
         }
@@ -255,20 +358,30 @@ class CfgRelatorio extends BaseController
             return;
         }
 
-        $relacionamentos = getRelacionamentos($tabela);
-        $db  = db_connect('default');
+        $relacionamentos = $this->dicionario->getRelacionamentos($tabela);
+        // debug($relacionamentos);
         $ret = [];
 
-        // Inclui a própria tabela base
-        array_unshift($relacionamentos, ['tabela' => $tabela]);
+        $tabelas = [];
+        $tabelas[] = $tabela;
+        foreach ($relacionamentos['relacionamentos'] as $rel) {
+            // debug($rel);
+            if (!empty($rel['REFERENCED_TABLE_NAME'])) {
+                $tabelas[] = $rel['REFERENCED_TABLE_NAME'];
+            }
+        }
+        // debug($tabelas, true);
+        $tabelas = array_unique($tabelas);
+        foreach ($tabelas as $tab) {
+            $campos = $this->dicionario->getCampos($tab);
 
-        foreach ($relacionamentos as $rel) {
-            $campos = $db->getFieldData($rel['tabela']);
             foreach ($campos as $col) {
+                if (str_ends_with($col['COLUMN_NAME'], '_excluido')) continue;
+                if ($col['COLUMN_KEY'] !== '') continue;
+
                 $ret[] = [
-                    // id carrega tabela|campo|tamanho — decodificado no JS ao selecionar
-                    'id'   => $rel['tabela'] . '|' . $col->name . '|' . ($col->max_length ?? 0),
-                    'text' => '[' . $rel['tabela'] . '] ' . ucwords(str_replace('_', ' ', $col->name)),
+                    'id'   => $tab . '|' . $col['COLUMN_NAME'] . '|' . ($col['CHARACTER_MAXIMUM_LENGTH'] ?? 0),
+                    'text' => '[' . $tab . '] ' . $col['NOME_COMPLETO'],
                 ];
             }
         }
@@ -340,24 +453,39 @@ class CfgRelatorio extends BaseController
     {
         $ret     = ['erro' => false];
         $postado = $this->request->getPost();
+        // debug($postado);
 
         $this->relatorios->transBegin();
 
         try {
             // ── 1. Grava cabeçalho (calcula chars_por_linha internamente) ────
-            $erel   = new EntCfgRelatorios($postado);
-            $rel_id = $this->relatorios->salvarRelatorio($erel->toRawArray(true));
-
+            $camposHeader = [
+                'rel_id',
+                'rel_nome',
+                'mod_id',
+                'tel_id',
+                'rel_titulo',
+                'rel_tabela_base',
+                'rel_formato',
+                'rel_tamanho_fonte',
+                'rel_totalizar_registros',
+            ];
+            $dados = array_intersect_key($postado, array_flip($camposHeader));
+            // debug($dados);
+            $rel_id = $this->relatorios->salvarRelatorio($dados);
+            // debug($rel_id);
             if (!$rel_id) {
                 throw new \RuntimeException(implode('<br>', $this->relatorios->errors()));
             }
 
             // ── 2. Sincroniza filtros ────────────────────────────────────────
             $filtros = $this->_extrairFiltrosPost($postado);
+            // debug($filtros);
             $this->filtros->sincronizarFiltros($rel_id, $filtros);
 
             // ── 3. Sincroniza colunas ────────────────────────────────────────
             $colunas = $this->_extrairColunasPost($postado);
+            // debug($colunas);
             $this->colunas->sincronizarColunas($rel_id, $colunas);
 
             // ── 4. Reconstrói JOINs a partir das colunas gravadas ────────────
@@ -365,6 +493,23 @@ class CfgRelatorio extends BaseController
 
             // ── 5. Gera e salva o SQL ────────────────────────────────────────
             $this->relatorios->gerarSQL($rel_id);
+
+            // ── 6. Sincroniza permissões por perfil ─────────────────────────
+            $this->common->deleteReg('default', 'cfg_rel_permissao', 'rel_id = ' . $rel_id);
+
+            if (!empty($postado['prf_id'])) {
+                $prfIds = is_array($postado['prf_id'][0] ?? null)
+                    ? array_merge(...$postado['prf_id'])
+                    : $postado['prf_id'];
+
+                foreach ($prfIds as $prf) {
+                    $this->common->insertReg('default', 'cfg_rel_permissao', [
+                        'rel_id'         => $rel_id,
+                        'prf_id'         => $prf,
+                        'rlp_atualizado' => date('Y-m-d H:i:s'),
+                    ]);
+                }
+            }
 
             $this->relatorios->transCommit();
 
@@ -386,6 +531,45 @@ class CfgRelatorio extends BaseController
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
+     * Retorna as opções do select de campo de filtro para a tabela informada.
+     */
+    private function _opcoesFiltroPorTabela(string $tabela): array
+    {
+        if (empty($tabela)) return [];
+
+        $campos = $this->dicionario->getCampos($tabela);
+
+        // Verifica se é VIEW — se for, todos os campos não-inteiros são filtro
+        $dbGrSche = $this->dicionario->getDbGroupAndSchema($tabela);
+        $dbInfo   = db_connect($dbGrSche['dbGroup']);
+        $chkView  = $dbInfo->table('information_schema.TABLES')
+            ->select('TABLE_TYPE')
+            ->where('TABLE_NAME', $tabela)
+            ->where('TABLE_SCHEMA', $dbGrSche['schema'])
+            ->get();
+        $rowView = $chkView ? $chkView->getFirstRow() : null;
+        $isView  = ($rowView && $rowView->TABLE_TYPE === 'VIEW');
+
+        $ret = [];
+        foreach ($campos as $col) {
+            if (str_ends_with($col['COLUMN_NAME'], '_excluido')) continue;
+
+            $isDate = in_array(strtolower($col['DATA_TYPE']), ['date', 'datetime', 'timestamp']);
+            $isFK   = $col['COLUMN_KEY'] !== '';
+            $isInt  = in_array(strtolower($col['DATA_TYPE']), ['int', 'tinyint', 'smallint', 'mediumint', 'bigint']);
+
+            // View: todos os campos não-inteiros | Tabela: apenas FK e date
+            if (($isView && !$isInt) || $isFK || $isDate) {
+                $tipo = $isDate ? 'DATE' : 'FK';
+                $chave = $col['COLUMN_NAME'] . '|' . $tabela . '|' . $tipo;
+                $ret[$chave] = $col['NOME_COMPLETO'];
+            }
+        }
+
+        return $ret;
+    }
+
+    /**
      * Monta o array de campos de UMA linha da aba Filtros.
      * Espelho do padrão _linhaEtiqueta() da CfgEtiqueta.
      */
@@ -393,7 +577,6 @@ class CfgRelatorio extends BaseController
     {
         return [
             $fields['rfi_id'],
-            $fields['rel_id'],
             $fields['rfi_campo'],       // select dependente da tabela base
             $fields['rfi_tipo_filtro'], // oculto — preenchido ao selecionar campo
             $fields['rfi_tabela'],      // oculto — preenchido ao selecionar campo
@@ -412,15 +595,16 @@ class CfgRelatorio extends BaseController
     {
         return [
             $fields['rco_id'],
-            $fields['rel_id'],
             $fields['rco_campo'],           // select dependente da tabela base
             $fields['rco_tabela'],          // oculto — preenchido ao selecionar campo
             $fields['rco_tamanho'],         // oculto — preenchido ao selecionar campo
-            $fields['rco_tamanho_efetivo'], // oculto — calculado ao marcar quebra
             $fields['rco_label'],
             $fields['rco_alias'],
+            $fields['rco_largura'],         // largura editável
+            $fields['rco_comportamento'],   // cortar / quebrar / linha inteira
             $fields['rco_alinhamento'],
-            $fields['rco_quebra_linha'],    // habilitado via JS quando tamanho > 60
+            $fields['rco_tipo_dado'],       // oculto — preenchido ao selecionar campo
+            $fields['rco_totalizar'],       // habilitado via JS quando tipo numérico
             $fields['rco_ordem'],           // oculto
             $fields['bt_add'],
             $fields['bt_del'],
@@ -445,12 +629,15 @@ class CfgRelatorio extends BaseController
             if (empty($campo)) {
                 continue;
             }
+
+            $partes = explode('|', $campo);
+
             $filtros[] = [
-                'rfi_campo'       => $campo,
-                'rfi_tabela'      => $tabelas[$i]      ?? '',
-                'rfi_tipo_filtro' => $tipos[$i]        ?? 'FK',
-                'rfi_label'       => $labels[$i]       ?? '',
-                'rfi_obrigatorio' => $obrigatorios[$i] ?? 0,
+                'rfi_campo'       => $partes[0] ?? $campo,
+                'rfi_tabela'      => !empty($tabelas[$i]) ? $tabelas[$i] : ($partes[1] ?? ''),
+                'rfi_tipo_filtro' => !empty($tipos[$i])   ? $tipos[$i]   : ($partes[2] ?? 'FK'),
+                'rfi_label'       => $labels[$i]        ?? '',
+                'rfi_obrigatorio' => $obrigatorios[$i]  ?? 0,
             ];
         }
 
@@ -464,26 +651,35 @@ class CfgRelatorio extends BaseController
     {
         $colunas = [];
 
-        $campos   = $postado['rco_campo']       ?? [];
-        $tabelas  = $postado['rco_tabela']       ?? [];
-        $labels   = $postado['rco_label']        ?? [];
-        $aliases  = $postado['rco_alias']        ?? [];
-        $tamanhos = $postado['rco_tamanho']      ?? [];
-        $quebras  = $postado['rco_quebra_linha'] ?? [];
-        $alinhams = $postado['rco_alinhamento']  ?? [];
+        $campos        = $postado['rco_campo']         ?? [];
+        $tabelas       = $postado['rco_tabela']        ?? [];
+        $labels        = $postado['rco_label']         ?? [];
+        $aliases       = $postado['rco_alias']         ?? [];
+        $tamanhos      = $postado['rco_tamanho']       ?? [];
+        $alinhams      = $postado['rco_alinhamento']   ?? [];
+        $totalizar     = $postado['rco_totalizar']     ?? [];
+        $tiposDado     = $postado['rco_tipo_dado']     ?? [];
+        $larguras      = $postado['rco_largura']       ?? [];
+        $comportaments = $postado['rco_comportamento'] ?? [];
 
         foreach ($campos as $i => $campo) {
             if (empty($campo)) {
                 continue;
             }
+
+            $partes = explode('|', $campo);
+
             $colunas[] = [
-                'rco_campo'       => $campo,
-                'rco_tabela'      => $tabelas[$i]  ?? '',
-                'rco_alias'       => $aliases[$i]  ?? null,
-                'rco_label'       => $labels[$i]   ?? '',
-                'rco_tamanho'     => (int) ($tamanhos[$i] ?? 0),
-                'rco_quebra_linha' => !empty($quebras[$i]) ? 1 : 0,
-                'rco_alinhamento' => $alinhams[$i] ?? 'E',
+                'rco_campo'         => $partes[1] ?? $campo,
+                'rco_tabela'        => !empty($tabelas[$i])   ? $tabelas[$i]   : ($partes[0] ?? ''),
+                'rco_alias'         => $aliases[$i]   ?? null,
+                'rco_label'         => $labels[$i]    ?? '',
+                'rco_tamanho'       => !empty($tamanhos[$i])  ? (int) $tamanhos[$i]  : (int) ($partes[2] ?? 0),
+                'rco_alinhamento'   => $alinhams[$i]  ?? 'E',
+                'rco_totalizar'     => !empty($totalizar[$i]) ? 1 : 0,
+                'rco_tipo_dado'     => !empty($tiposDado[$i]) ? $tiposDado[$i] : ($partes[3] ?? ''),
+                'rco_largura'       => (int) ($larguras[$i] ?? 0),
+                'rco_comportamento' => $comportaments[$i] ?? 'cortar',
             ];
         }
 
@@ -496,25 +692,35 @@ class CfgRelatorio extends BaseController
      */
     private function _sincronizarJoins(int $rel_id, string $tabelaBase): void
     {
-        $db = db_connect('default');
+        $colunasSalvas = $this->colunas->getColunas($rel_id);
 
-        $tabelas = $db->table('cfg_rel_colunas')
-            ->select('DISTINCT rco_tabela')
-            ->where('rel_id', $rel_id)
-            ->where('rco_tabela !=', $tabelaBase)
-            ->get()->getResultArray();
+        $tabelasDistintas = [];
+        foreach ($colunasSalvas as $col) {
+            if (!empty($col->rco_tabela) && $col->rco_tabela !== $tabelaBase) {
+                $tabelasDistintas[$col->rco_tabela] = true;
+            }
+        }
 
-        if (empty($tabelas)) {
+        if (empty($tabelasDistintas)) {
             $this->joins->sincronizarJoins($rel_id, []);
             return;
         }
 
-        $relacionamentos = getRelacionamentos($tabelaBase);
-        $relMap  = array_column($relacionamentos, null, 'tabela');
-        $joins   = [];
+        $rels  = $this->dicionario->getRelacionamentos($tabelaBase);
+        // debug($rels);
+        $relMap = [];
+        foreach ($rels['relacionamentos'] as $r) {
+            if (!empty($r['REFERENCED_TABLE_NAME'])) {
+                $tabRef = $r['REFERENCED_TABLE_NAME'];
+                if (!isset($relMap[$tabRef])) {
+                    $relMap[$tabRef] = $r['TABLE_NAME'] . '.' . $r['COLUMN_NAME']
+                        . ' = ' . $r['REFERENCED_TABLE_NAME'] . '.' . $r['REFERENCED_COLUMN_NAME'];
+                }
+            }
+        }
 
-        foreach ($tabelas as $row) {
-            $tab = $row['rco_tabela'];
+        $joins = [];
+        foreach (array_keys($tabelasDistintas) as $tab) {
             if (!isset($relMap[$tab])) {
                 continue;
             }
@@ -522,7 +728,7 @@ class CfgRelatorio extends BaseController
                 'rjo_tipo_join'   => 'LEFT',
                 'rjo_tabela_join' => $tab,
                 'rjo_alias_join'  => null,
-                'rjo_condicao_on' => $relMap[$tab]['condicao_on'],
+                'rjo_condicao_on' => $relMap[$tab],
             ];
         }
 
@@ -535,119 +741,15 @@ class CfgRelatorio extends BaseController
      */
     private function _scriptTela(int $charsLinha = 0): string
     {
-        $urlAddFiltro  = base_url('CfgRelatorio/addFiltro/');
-        $urlAddColuna  = base_url('CfgRelatorio/addColuna/');
-        $urlCamposFil  = base_url('CfgRelatorio/camposFiltro');
-        $urlCamposCol  = base_url('CfgRelatorio/camposColunas');
         $urlCharsLinha = base_url('CfgRelatorio/charsLinha');
+        $urlCamposFil  = base_url('buscas/busca_campos_filtro_rel');
+        $urlPreview    = base_url('CfgRelatorio/previewRelatorio');
 
-        return <<<JS
-        <script>
-            // Ativa botões + e lixeira nas duas abas repetíveis
-            acerta_botoes_rep('filtros');
-            acerta_botoes_rep('colunas');
-
-            // Contador de largura disponível (recalculado via AJAX quando
-            // o usuário altera formato ou tamanho de fonte)
-            var charsLinha = {$charsLinha};
-
-            // ── Recalcula chars ao mudar formato ou fonte ─────────────────
-            $(document).on('change', '[name="rel_formato"], [name="rel_tamanho_fonte"]', function () {
-                $.get('{$urlCharsLinha}', {
-                    formato: $('[name="rel_formato"]').val(),
-                    fonte:   $('[name="rel_tamanho_fonte"]').val()
-                }, function (res) {
-                    if (!res.erro) {
-                        charsLinha = res.chars_por_linha;
-                        verificaLargura();
-                    }
-                });
-            });
-
-            // ── Popula select de campo ao mudar a tabela base ─────────────
-            $(document).on('change', '[name="rel_tabela_base"]', function () {
-                var tabela = $(this).val();
-                if (!tabela) return;
-
-                // Filtros: busca campos _id e DATE
-                $.get('{$urlCamposFil}', { tabela: tabela }, function (res) {
-                    if (res.erro) return;
-                    popularSelectCampo('rfi_campo', res.campos);
-                });
-
-                // Colunas: busca todos os campos via getRelacionamentos
-                $.get('{$urlCamposCol}', { tabela: tabela }, function (res) {
-                    if (res.erro) return;
-                    popularSelectCampo('rco_campo', res.campos);
-                });
-            });
-
-            // ── Ao selecionar um campo de coluna: preenche ocultos e
-            //    verifica se habilita quebra de linha e alerta de estouro ──
-            $(document).on('change', '[name^="rco_campo"]', function () {
-                var partes  = $(this).val().split('|'); // tabela|campo|tamanho
-                var tabela  = partes[0] ?? '';
-                var tamanho = parseInt(partes[2] ?? 0);
-                var linha   = $(this).closest('tr');
-
-                linha.find('[name^="rco_tabela"]').val(tabela);
-                linha.find('[name^="rco_tamanho"]').val(tamanho);
-
-                // Habilita/desabilita quebra de linha
-                var btnQuebra = linha.find('[name^="rco_quebra_linha"]');
-                if (tamanho > 60) {
-                    btnQuebra.prop('disabled', false);
-                } else {
-                    btnQuebra.prop('checked', false).prop('disabled', true);
-                    linha.find('[name^="rco_tamanho_efetivo"]').val(tamanho);
-                }
-
-                verificaLargura();
-            });
-
-            // ── Ao marcar/desmarcar quebra: recalcula tamanho efetivo ─────
-            $(document).on('change', '[name^="rco_quebra_linha"]', function () {
-                var linha   = $(this).closest('tr');
-                var tamanho = parseInt(linha.find('[name^="rco_tamanho"]').val() ?? 0);
-                var efetivo = $(this).is(':checked') ? Math.ceil(tamanho / 2) : tamanho;
-                linha.find('[name^="rco_tamanho_efetivo"]').val(efetivo);
-                verificaLargura();
-            });
-
-            // ── Ao selecionar campo de filtro: preenche ocultos tipo e tabela
-            $(document).on('change', '[name^="rfi_campo"]', function () {
-                var partes = $(this).val().split('|'); // campo|tabela|tipo
-                var linha  = $(this).closest('tr');
-                linha.find('[name^="rfi_tabela"]').val(partes[1] ?? '');
-                linha.find('[name^="rfi_tipo_filtro"]').val(partes[2] ?? 'FK');
-            });
-
-            // ── Verifica se a soma dos tamanhos efetivos ultrapassa o limite
-            function verificaLargura() {
-                if (charsLinha <= 0) return;
-                var total = 0;
-                $('[name^="rco_tamanho_efetivo"]').each(function () {
-                    total += parseInt($(this).val() ?? 0);
-                });
-                if (total > charsLinha) {
-                    alerta('Atenção: largura total das colunas (' + total
-                        + ') ultrapassa o limite da linha (' + charsLinha + ' caracteres).');
-                }
-            }
-
-            // ── Popula todos os selects de campo com o mesmo nome ─────────
-            function popularSelectCampo(nome, opcoes) {
-                $('[name^="' + nome + '"]').each(function () {
-                    var sel = $(this);
-                    var val = sel.val();
-                    sel.empty().append('<option value="">Selecione...</option>');
-                    $.each(opcoes, function (i, op) {
-                        sel.append('<option value="' + op.id + '">' + op.text + '</option>');
-                    });
-                    sel.val(val); // preserva seleção existente (no edit)
-                });
-            }
-        </script>
-        JS;
+        return "<script>
+            var charsLinha    = {$charsLinha};
+            var urlCharsLinha = '{$urlCharsLinha}';
+            var urlCamposFil  = '{$urlCamposFil}';
+            var urlPreview    = '{$urlPreview}';
+        </script>";
     }
 }

@@ -98,18 +98,6 @@ class Analise extends BaseController
 
         foreach ($dados_analise as &$ana) {
             $ana['usu_nome'] = buscaUsuarioLog($log[$ana['ana_id']]);
-            // // Verificar se o log já está disponível para esse ana_id
-            //     $usuId = $log[$ana['ana_id']]['usu_id'];
-
-            //     $imgUrl = $imgService->getUserImage($usuId);
-            //     $usu_img = '';
-
-            //     if ($imgUrl) {
-            //         $usu_img = "<img src='{$imgUrl}' class='rounded-circle me-1 float-start' style='width:20px;height:20px' />";
-            //     }
-
-            // $ana['usu_nome'] = $usu_img . ($log[$ana['ana_id']]['usua_alterou'] ?? '');
-            // $ana['usu_nome'] = $log[$ana['ana_id']]['usua_alterou'] ?? '';
 
             if ($ana['stt_id'] == 11) { // se estiver pendente
                 // Concatenar o URL de forma mais eficiente
@@ -147,10 +135,6 @@ class Analise extends BaseController
                     onclick='gerarEtiquetaZPL(\"" . $link . "\",false,\"" . $chave . "\");'>
                     <i class='fas fa-tag'></i></button>",
 
-                    //         "<button class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end'
-                    // data-mdb-toggle='tooltip' data-mdb-placement='top'
-                    // title='Imprimir Requisição' onclick='openPDFModal(\"$url_ati\",\"Imprimir Requisição\")'>
-                    // <i class='fas fa-print'></i></button>"
                 ];
             }
         }
@@ -186,277 +170,6 @@ class Analise extends BaseController
         echo json_encode($ret);
     }
 
-    // public function lista()
-    // {
-    //     $msg = 'Buscando Produtos no Depósito Quarentena';
-    //     envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
-
-    //     $campos = montaColunasCampos($this->data, 'ana_id');
-
-    //     // BUSCA OS LOTES DE PRODUTOS NO DEPÓSITO QUARENTENA
-    //     $busca = new BuscasSapiens();
-    //     $saldoest = (array) $busca->buscaEstoqueDeposito('QUA', '');
-
-    //     if (empty($saldoest)) {
-    //         echo json_encode(['data' => []]);
-    //         return;
-    //     }
-
-    //     $codigoProdutoArray = array_column($saldoest, 'codigoProduto');
-    //     $codigoLoteArray = array_column($saldoest, 'codigoLote');
-
-    //     $prods = $this->produto->getProdutoCodLista($codigoProdutoArray, 'S');
-    //     $lotes = $this->lote->getLoteProdutoIn($codigoLoteArray);
-    //     $analises = $this->analise->getAnaliseCod();
-
-    //     // Reestrutura os arrays para facilitar busca rápida por chave
-    //     $prods = array_column($prods, null, 'pro_codpro');
-    //     $lotes = array_column($lotes, null, 'lot_lote');
-    //     $analisesAssoc = [];
-    //     foreach ($analises as $analise) {
-    //         $chave = $analise['pro_codpro'] . '-' . $analise['lot_id'];
-    //         $analisesAssoc[$chave] = $analise;
-    //     }
-
-    //     $msg = count($saldoest) . ' Produtos no Depósito Quarentena';
-    //     envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
-
-    //     foreach ($saldoest as $saldoobj) {
-    //         $saldo = (array)$saldoobj;
-    //         $prodproc = $saldo['codigoProduto'];
-    //         $loteproc = $saldo['codigoLote'];
-    //         $quantidade = str_replace(['.', ','], '', $saldo['quantidadeEstoque']);
-
-    //         if (!isset($prods[$prodproc]) || $prods[$prodproc]['cla_micro'] !== 'S') {
-    //             continue;
-    //         }
-
-    //         $prod = $prods[$prodproc];
-    //         $lote = $lotes[$loteproc] ?? [
-    //             'lot_lote' => $saldo['codigoLote'],
-    //             'lot_entrada' => '',
-    //             'lot_validade' => $saldo['validade'],
-    //             'stt_id' => null,
-    //         ];
-
-    //         $analiseKey = $prodproc . '-' . $loteproc;
-    //         $analis = $analisesAssoc[$analiseKey] ?? null;
-
-    //         if ($lote['stt_id'] == 8 && (is_null($analis) || $analis['stt_id'] == 16)) {
-    //             $this->analise->save([
-    //                 'pro_id' => $prod['pro_id'],
-    //                 'lot_id' => $lote['lot_id'],
-    //                 'ana_qtde' => $quantidade,
-    //                 'ana_data' => date('Y-m-d'),
-    //                 'stt_id' => 10 // ANÁLISE BLOQUEADA
-    //             ]);
-    //         } elseif ($lote['stt_id'] == 9) {
-    //             if (is_null($analis) || in_array($analis['stt_id'], [13, 16])) {
-    //                 $this->analise->save([
-    //                     'pro_id' => $prod['pro_id'],
-    //                     'lot_id' => $lote['lot_id'],
-    //                     'ana_qtde' => $quantidade,
-    //                     'ana_data' => date('Y-m-d'),
-    //                     'stt_id' => 10 // ANÁLISE BLOQUEADA
-    //                 ]);
-
-    //                 $this->lote->save([
-    //                     'lot_id' => $lote['lot_id'],
-    //                     'stt_id' => 8 // LOTE BLOQUEADO
-    //                 ]);
-    //             } elseif ($analis['stt_id'] == 15) {
-    //                 envia_msg_ws($this->data['controler'], "Lote {$saldo['codigoLote']} Análise Aprovada, Movimenta Estoque", 'MsgServer', session()->get('usu_id'), 1);
-
-    //                 $movim = $this->tipomovimento->getTipoMovimentacao(5)[0] ?? null;
-    //                 if ($movim) {
-    //                     (new SoapSapiens())->transfProdutosSapiens(
-    //                         $prod['pro_codpro'],
-    //                         $movim['tmo_transacao_erp'],
-    //                         $movim['dep_codorigem'],
-    //                         date('d/m/Y'),
-    //                         $quantidade,
-    //                         $lote['lot_lote'],
-    //                         $movim['dep_coddestino']
-    //                     );
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     // BUSCA TODAS AS ANÁLISES
-    //     $dados_analise = $this->analise->getAnalise();
-    //     foreach ($dados_analise as &$ana) {
-    //         $log = buscaLog('pro_mic_analise', $ana['ana_id']);
-    //         $ana['usu_nome'] = $log['usua_alterou'] ?? '';
-
-    //         if ($ana['req_id']) {
-    //             $url_ati = base_url('/CriaPdf2025/PrintAnaRequisicao/' . $ana['req_id']);
-    //             $ana['acao_person'] = [
-    //                 "<button class='btn btn-outline-danger btn-sm border-0 mx-0 fs-0 float-end'
-    //                 data-mdb-toggle='tooltip' data-mdb-placement='top'
-    //                 title='Imprimir Requisição' onclick='openPDFModal(\"$url_ati\",\"Imprimir Requisição\")'>
-    //                 <i class='fas fa-print'></i></button>"
-    //             ];
-    //         }
-    //     }
-
-    //     $this->data['exclusao'] = false;
-    //     $analise = ['data' => montaListaColunas($this->data, 'ana_id', $dados_analise, $campos[1])];
-
-    //     cache()->save('analise', $analise, 1200);
-    //     echo json_encode($analise);
-    // }
-
-    public function listaAnt()
-    {
-        $msg = 'Buscando Produtos no Depósito Quarentena';
-        envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
-        $campos = montaColunasCampos($this->data, 'ana_id');
-        // BUSCA OS LOTES DE PRODUTOS NO DEPÓSITO QUARENTENA
-        $busca    = new BuscasSapiens();
-        $saldoest = (array) $busca->buscaEstoqueDeposito('QUA', '');
-
-        $dados_analise = [];
-        $ct            = 0;
-        if (count($saldoest) > 0) {
-            // MONTA O ARRAY COM OS CÕDIGOS DOS PRODUTOS PARA O SQL
-            $codigoProdutoArray = array_map(function ($item) {
-                return $item->codigoProduto;
-            }, $saldoest);
-            $prods = $this->produto->getProdutoCodLista($codigoProdutoArray, 'S');
-
-            $codigoLoteArray = array_map(function ($item) {
-                return $item->codigoLote;
-            }, $saldoest);
-            $lotes = $this->lote->getLoteProdutoIn($codigoLoteArray);
-
-            $analises = $this->analise->getAnaliseCod();
-
-            $msg = count($saldoest) . ' Produtos no Depósito Quarentena';
-            envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
-            for ($s = 0; $s < count($saldoest); $s++) {
-                $saldo = (array) $saldoest[$s];
-                // debug($saldo);x
-                $prodproc = $saldo['codigoProduto'];
-                // Buscar o CODIGO DO PRODUTO NO ARRAY DE PRODUTOS item no array
-                $resultado = array_filter($prods, function ($item) use ($prodproc) {
-                    return $item['pro_codpro'] === $prodproc;
-                });
-                // Converter o resultado para o primeiro item encontrado
-                $prod = reset($resultado);
-
-                $msg = 'Processando Produto ' . $saldo['codigoProduto'] . ' Lote ' . $saldo['codigoLote'] . ' no Depõsito Quarentena';
-                envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
-                // Verifica se o produto necessita de anãlise de Micro
-                if (isset($prod[0]['cla_micro']) && $prod[0]['cla_micro'] == 'S') {
-                    // $lote = $this->lote->getLoteSearch($saldo['codigoLote']);
-                    $loteproc = $saldo['codigoLote'];
-                    // Buscar o CODIGO DO PRODUTO NO ARRAY DE PRODUTOS item no array
-                    $resultado = array_filter($lotes, function ($item) use ($loteproc) {
-                        return $item['lot_lote'] === $loteproc;
-                    });
-                    $lote = reset($resultado);
-                    if (count($lote) == 0) {
-                        $lote[0]['lot_lote']     = $saldo['codigoLote'];
-                        $lote[0]['lot_entrada']  = $saldo['entrada'];
-                        $lote[0]['lot_validade'] = $saldo['validade'];
-                    }
-                    $resultado = array_filter($analises, function ($item) use ($prodproc, $loteproc) {
-                        if ($item['pro_codpro'] === $prodproc && $item['lot_id'] === $loteproc) {
-                            return $item;
-                        }
-                    });
-                    $analis = reset($resultado);
-                    if ($lote[0]['stt_id'] == 8) {
-                        // SE O LOTE ESTIVER BLOQUEADO (ID=8)
-                        // VERIFICA SE O PRODUTO E O LOTE JÃ TEM ANÃLISE
-                        if (count($analis) == 0 || $analis[0]['stt_id'] == 16) {
-                            // SE NÃO TEM, OU TEM COM STATUS REPROVADA (ID 16), INCLUI A ANÁLISE
-                            $sql_ana = [
-                                'pro_id'   => $prod[0]['pro_id'],
-                                'lot_id'   => $lote[0]['lot_id'],
-                                'ana_qtde' => $saldo['quantidadeEstoque'],
-                                'ana_data' => date('Y-m-d'),
-                                'stt_id'   => 10, // ANÁLISE BLOQUEADA
-                            ];
-                            // debug($sql_ana);
-                            $this->analise->save($sql_ana);
-                        }
-                    } else if ($lote[0]['stt_id'] == 9) {
-                        // SE O LOTE ESTIVER LIBERADO (ID=9)
-                        // VERIFICA SE O PRODUTO E O LOTE JÃ TEM ANÃLISE
-                        if (count($analis) == 0 || $analis[0]['stt_id'] == 13 || $analis[0]['stt_id'] == 16) {
-                            // SE NÃO TEM, OU TEM COM STATUS NAO REALIZADA (ID 13),
-                            // OU TEM COM STATUS REPROVADA (ID 16) INCLUI A ANÁLISE
-                            $sql_ana = [
-                                'pro_id'   => $prod[0]['pro_id'],
-                                'lot_id'   => $lote[0]['lot_id'],
-                                'ana_qtde' => $saldo['quantidadeEstoque'],
-                                'ana_data' => date('Y-m-d'),
-                                'stt_id'   => 10, // ANÁLISE BLOQUEADA
-                            ];
-                            $this->analise->save($sql_ana);
-
-                            // ATUALIZA O LOTE PARA BLOQUEADO
-                            $sql_lot = [
-                                'lot_id' => $lote[0]['lot_id'],
-                                'stt_id' => 8, // LOTE BLOQUEADA
-                            ];
-                            $this->lote->save($sql_lot);
-                        } else if ($analis[0]['stt_id'] == 15) {
-                            $msg = 'Lote ' . $saldo['codigoLote'] . ' Análise Aprovada, Movimenta Estoque';
-                            envia_msg_ws($this->data['controler'], $msg, 'MsgServer', session()->get('usu_id'), 1);
-                            // CASO A ANALISE ESTEJA APROVADA, GERA MOVIMENTAÇÃO DE ESTOQUE
-                            $codpro = $prod[0]['pro_codpro'];
-                            $datmov = date('d/m/Y');
-                            $codlot = $lote[0]['lot_lote'];
-                            $qtdmov = $saldo['quantidadeEstoque'];
-                            $qtdmov = str_replace(['.', ','], '', $qtdmov);
-                            // BUSCA TIPO MOVIMENTO
-                            $movim  = $this->tipomovimento->getTipoMovimentacao(5);
-                            $codtns = $movim[0]['tmo_transacao_erp'];
-                            $depori = $movim[0]['dep_codorigem'];
-                            $depdes = $movim[0]['dep_coddestino'];
-
-                            // debug($movim);
-                            $soaptrf = new SoapSapiens();
-                            $soaptrf->transfProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes);
-                        }
-                    }
-                }
-            }
-        }
-        // BUSCA TODAS AS ANÁLISES
-        $dados_analise = $this->analise->getAnalise();
-        for ($da = 0; $da < count($dados_analise); $da++) {
-            // $dados_analise[$da]['d'] = '';
-            $ana                            = $dados_analise[$da];
-            $log                            = buscaLog('pro_mic_analise', $ana['ana_id']);
-            $dados_analise[$da]['usu_nome'] = isset($log['usua_alterou']) ? $log['usua_alterou'] : '';
-            $this->data['botao']            = [];
-            if ($ana['req_id'] != null) {
-                // debug('Req ' . $ana['req_id']);
-                $url_ati  = base_url('/CriaPdf2025/PrintAnaRequisicao/' . $ana['req_id']);
-                $imprimir =
-                    "<button type='button' class='btn btn-outline-dark btn-sm border-0 mx-0 fs-0 float-end' data-mdb-toggle='tooltip'
-                    data-mdb-placement='top' title='Imprimir Requisição' onclick='openPDFModal(\"" .
-                    $url_ati .
-                    "\",\"Imprimir Requisição\")'><i class='fas fa-print'></i></button>";
-
-                $dados_analise[$da]['acao_person'] = [$imprimir];
-            }
-            // debug($this->data['botao']);
-            // }
-            // debug($dados_analise, true);
-            $this->data['exclusao'] = false;
-            $analise                = [
-                'data' => montaListaColunas($this->data, 'ana_id', $dados_analise, $campos[1]),
-            ];
-            cache()->save('analise', $analise, 1200);
-        }
-
-        echo json_encode($analise);
-    }
 
     /**
      * Consulta
@@ -675,6 +388,319 @@ class Analise extends BaseController
         echo json_encode($ret);
     }
 
+    // public function store()
+    // {
+    //     $ret  = ['erro' => false];
+    //     $post = $this->request->getPost();
+    //     // debug($post, true);
+    //     $movs   = [];
+    //     $sqlAna = [];
+    //     $sqlLot = null;
+
+    //     try {
+    //         // Define a ação conforme o status inicial recebido
+    //         switch ($post['stt_id']) {
+    //             case 10: // ESTAVA BLOQUEADO
+    //                 $movs[] = [
+    //                     'id'  => 4,
+    //                     'qt'  => intval($post['ana_qtde_micro']),
+    //                     'msg' => 'enviado para Análise',
+    //                 ];
+    //                 $sqlAna = [
+    //                     'ana_id'         => intval($post['ana_id']),
+    //                     'ana_qtde_micro' => intval($post['ana_qtde_micro']),
+    //                     'stt_id'         => 11, // Status PENDENTE
+    //                 ];
+    //                 break;
+    //             case 11: // ESTAVA PENDENTE
+    //                 if ($post['ana_liberarsemmicro'] == 'N') {
+    //                     $status = 14; // REALIZADA
+    //                     $sqlAna = [
+    //                         'ana_id'              => intval($post['ana_id']),
+    //                         'ana_lotemb'          => $post['ana_lotemb'],
+    //                         'ana_liberarsemmicro' => $post['ana_liberarsemmicro'],
+    //                         'ana_datalotemb'      => $post['ana_datalotemb'],
+    //                         'ana_descmetodo'      => $post['ana_descmetodo'],
+    //                         'stt_id'              => $status,
+    //                     ];
+    //                 } else {
+    //                     $status = 13; // NÃO REALIZADA
+    //                     $sqlAna = [
+    //                         'ana_id'              => intval($post['ana_id']),
+    //                         'ana_liberarsemmicro' => $post['ana_liberarsemmicro'],
+    //                         'stt_id'              => $status,
+    //                     ];
+    //                     // gera movimentação do tipo MOV5 (5) da quantidade total do lote
+    //                     $movs[] = [
+    //                         'id'  => 5,
+    //                         'qt'  => intval($post['ana_qtde']) - intval($post['ana_qtde_micro']),
+    //                         'msg' => 'liberado sem Micro',
+    //                     ];
+    //                     // gera movimentação MOV6 da quantidade micro
+    //                     $movs[] = [
+    //                         'id'  => 6,
+    //                         'qt'  => intval($post['ana_qtde_micro']),
+    //                         'msg' => 'liberado sem Micro',
+    //                     ];
+    //                     // Atualização do lote para liberado
+    //                     $sqlLot = [
+    //                         'lot_id'       => $post['lot_id'],
+    //                         'lot_validade' => $post['lot_validade'],
+    //                         'stt_id'       => 9, // LOTE LIBERADO
+    //                     ];
+    //                 }
+    //                 break;
+    //             case 14: // ESTAVA REALIZADA
+    //                 if ($post['ana_reprovar'] == 'S') {
+    //                     $status = 16; // REPROVADA
+    //                     $sqlAna = [
+    //                         'ana_id'       => intval($post['ana_id']),
+    //                         'ana_lotemb'   => $post['ana_lotemb'],
+    //                         'ana_liberar'  => $post['ana_liberar'],
+    //                         'ana_reprovar' => $post['ana_reprovar'],
+    //                         'tmo_id'       => intval($post['tmo_id']),
+    //                         'tmo_id_rep'   => intval($post['tmo_id_rep']),
+    //                         'stt_id'       => $status,
+    //                     ];
+    //                     // BUSCAR DEPÓSITO DE ORIGEM
+    //                     $mov     = $this->tipomovimento->getTipoMovimentacao($post['tmo_id_rep']);
+    //                     $deporig = $mov[0]['dep_codorigem'];
+    //                     // BUSCAR PRODUTO
+    //                     $produto = $this->produto->getProduto($post['pro_id'], false)[0];
+    //                     $codpro  = $produto['pro_codpro'];
+
+    //                     // BUSCAR SALDO DO DEPÓSITO DE ORIGEM
+    //                     $qtia     = 0;
+    //                     $busca    = new BuscasSapiens();
+    //                     $saldoest = $busca->buscaEstoqueDeposito($deporig, $codpro);
+    //                     if (count($saldoest) > 0) {
+    //                         for ($s = 0; $s < count($saldoest); $s++) {
+    //                             if ($saldoest[$s]->codigoLote == $post['lot_lote']) {
+    //                                 $qtia = $saldoest[$s]->quantidadeEstoque;
+    //                                 break;
+    //                             }
+    //                         }
+    //                     }
+    //                     $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
+    //                         'id'  => intval($post['tmo_id_rep']),
+    //                         'qt'  => $qtia,
+    //                         'msg' => 'Análise reprovada',
+    //                     ];
+    //                     $movs[] = [ // GERA MOVIMENTACAO MOV7 (7) DA QUANTIDADE MICRO
+    //                         'id'  => 7,
+    //                         'qt'  => intval($post['ana_qtde_micro']),
+    //                         'msg' => 'Análise reprovada',
+    //                     ];
+    //                     // Atualização do lote para bloqueado
+    //                     $sqlLot = [
+    //                         'lot_id'       => $post['lot_id'],
+    //                         'lot_validade' => $post['lot_validade'],
+    //                         'stt_id'       => 8, // LOTE BLOQUEADO
+    //                     ];
+    //                 } else if ($post['ana_liberar'] == 'S') {
+    //                     $status = 12; // EM ANDAMENTO
+    //                     $sqlAna = [
+    //                         'ana_id'       => intval($post['ana_id']),
+    //                         'ana_lotemb'   => $post['ana_lotemb'],
+    //                         'ana_liberar'  => $post['ana_liberar'],
+    //                         'ana_reprovar' => $post['ana_reprovar'],
+    //                         'tmo_id'       => intval($post['tmo_id']),
+    //                         'tmo_id_rep'   => intval($post['tmo_id_rep']),
+    //                         'stt_id'       => $status,
+    //                     ];
+    //                     // gera movimentação do tipo MOV5 (5) da quantidade total do lote
+    //                     $movs[] = [
+    //                         'id'  => 5,
+    //                         'qt'  => intval($post['ana_qtde']) - intval($post['ana_qtde_micro']),
+    //                         'msg' => 'Análise liberada',
+    //                     ];
+    //                     // gera movimentação cadastrada da quantidade micro
+    //                     $movs[] = [
+    //                         'id'  => intval($post['tmo_id']),
+    //                         'qt'  => intval($post['ana_qtde_micro']),
+    //                         'msg' => 'Análise liberada',
+    //                     ];
+    //                     // debug($movs, true);
+    //                     // Atualização do lote para liberado
+    //                     $sqlLot = [
+    //                         'lot_id'       => $post['lot_id'],
+    //                         'lot_validade' => $post['lot_validade'],
+    //                         'stt_id'       => 9, // LOTE LIBERADO
+    //                     ];
+    //                 } else {
+    //                     $sqlAna = [
+    //                         'ana_id'         => intval($post['ana_id']),
+    //                         'ana_descmetodo' => $post['ana_descmetodo'],
+    //                         'ana_lotemb'     => $post['ana_lotemb'],
+    //                     ];
+    //                 }
+    //                 break;
+
+    //             case 12: // ESTAVA EM ANDAMENTO
+    //                 // $status = 12; // Continua EM ANDAMENTO
+    //                 $sqlAna = [
+    //                     'ana_id'     => intval($post['ana_id']),
+    //                     'tmo_id'     => intval($post['tmo_id']),
+    //                     'tmo_id_rep' => intval($post['tmo_id_rep']),
+    //                     'ana_lotemb' => $post['ana_lotemb'],
+    //                     // 'stt_id' => $status,
+    //                 ];
+    //                 if ($post['ana_reprovar'] == 'S') {
+    //                     $status = 16; // Reprovado
+    //                     $sqlAna = [
+    //                         'ana_id'       => intval($post['ana_id']),
+    //                         'ana_liberar'  => $post['ana_liberar'],
+    //                         'ana_reprovar' => $post['ana_reprovar'],
+    //                         'tmo_id'       => intval($post['tmo_id']),
+    //                         'tmo_id_rep'   => intval($post['tmo_id_rep']),
+    //                         'stt_id'       => $status,
+    //                     ];
+    //                     // BUSCAR DEPÓSITO DE ORIGEM
+    //                     $mov     = $this->tipomovimento->getTipoMovimentacao($post['tmo_id_rep']);
+    //                     $deporig = $mov[0]['dep_codorigem'];
+    //                     // BUSCAR PRODUTO
+    //                     $produto = $this->produto->getProduto($post['pro_id'], false)[0];
+    //                     $codpro  = $produto['pro_codpro'];
+
+    //                     // BUSCAR SALDO DO DEPÓSITO DE ORIGEM
+    //                     $qtia     = 0;
+    //                     $busca    = new BuscasSapiens();
+    //                     $saldoest = $busca->buscaEstoqueDeposito($deporig, $codpro);
+    //                     if (count($saldoest) > 0) {
+    //                         for ($s = 0; $s < count($saldoest); $s++) {
+    //                             if ($saldoest[$s]->codigoLote == $post['lot_lote']) {
+    //                                 $qtia = $saldoest[$s]->quantidadeEstoque;
+    //                                 break;
+    //                             }
+    //                         }
+    //                     }
+    //                     $movs[] = [ // A QUANTIDADE É O SALDO DO DEPÓSITO DE ORIGEM INFORMADO NA MOVIMENTAÇÃO
+    //                         'id'  => intval($post['tmo_id_rep']),
+    //                         'qt'  => $qtia,
+    //                         'msg' => 'Análise reprovada',
+    //                     ];
+    //                     $movs[] = [ // GERA MOVIMENTACAO MOV7 (7) DA QUANTIDADE MICRO
+    //                         'id'  => 7,
+    //                         'qt'  => intval($post['ana_qtde_micro']),
+    //                         'msg' => 'Análise reprovada',
+    //                     ];
+    //                     $sqlLot = [
+    //                         'lot_id'       => $post['lot_id'],
+    //                         'lot_validade' => $post['lot_validade'],
+    //                         'stt_id'       => 8, // LOTE BLOQUEADO
+    //                     ];
+    //                 }
+    //                 break;
+
+    //             default:
+    //                 throw new \Exception("Status inválido recebido.");
+    //         }
+
+    //         // Inicia a transação
+
+    //         // Gera movimentos se existirem
+    //         if (! empty($movs)) {
+    //             cache()->clean();
+    //             $movim = $this->geraMovimento($movs, $post);
+    //             // debug($movim, true);
+    //             if ($movim['status'] == 'Erro') {
+    //                 $ret['erro'] = true;
+    //                 $ret['msg']  = $movim['mensagem'];
+    //             }
+    //         }
+
+    //         if (! $ret['erro']) {
+    //             $this->analise->transBegin();
+    //             // Salva dados da análise
+    //             if (! $this->analise->save($sqlAna)) {
+    //                 $this->analise->transRollback();
+    //                 $ret['erro'] = true;
+    //                 $ret['msg']  = $this->analise->errors();
+    //                 throw new \Exception(implode(' ', $this->analise->errors()));
+    //             } else {
+    //                 // Trata upload e processamento de arquivo quando estiver EM ANDAMENTO e não for reprovação
+    //                 if ($post['stt_id'] == 12 && $post['ana_reprovar'] != 'S') {
+    //                     $files = $this->request->getFiles();
+    //                     if (isset($files['ana_arqlaudo']) && $files['ana_arqlaudo']->getSize() > 0) {
+    //                         $uploadRet = $this->processaArquivoLaudo($files['ana_arqlaudo'], $post['ana_id']);
+    //                         if ($uploadRet !== true) {
+    //                             $ret['erro'] = true;
+    //                             $ret['msg']  = $this->analise->errors();
+    //                             $this->analise->transRollback();
+    //                             throw new \Exception($uploadRet);
+    //                         }
+    //                     }
+    //                 }
+    //                 if (! $ret['erro']) {
+    //                     // Atualiza o lote, se necessário
+    //                     if ($sqlLot) {
+    //                         // Inicia transação para lote
+    //                         $this->lote->transBegin();
+    //                         if (! $this->lote->save($sqlLot)) {
+    //                             $this->analise->transRollback();
+    //                             $this->lote->transRollback();
+    //                             $ret['erro'] = true;
+    //                             $ret['msg']  = $this->lote->errors();
+    //                             throw new \Exception(implode(' ', $this->lote->errors()));
+    //                         } else {
+    //                             $this->lote->transCommit();
+    //                         }
+    //                     }
+
+    //                     if (! $ret['erro']) {
+    //                         // Commit final
+    //                         $this->analise->transCommit();
+    //                         cache()->clean();
+    //                         $ret['msg'] = 'Dados da Analise gravados com Sucesso!!!';
+    //                         session()->setFlashdata('msg', $ret['msg']);
+
+    //                         if ($post['stt_id'] == 10) { // ESTAVA BLOQUEADO
+    //                             $dados = $this->analise->getListaAnalise($post['ana_id'])[0] ?? null;
+
+    //                             $numetiquetas = (int) $dados['ana_qtde_micro'];
+    //                             $dados        = array_fill(0, $numetiquetas, $dados);
+    //                             // $chave        = uniqid('etq_');
+    //                             // cache()->save($chave, $dados, 300); // 1 minuto 
+
+    //                             $redis     = \Config\Services::redis();
+    //                             $sessionId = session_id();
+
+    //                             // 🔑 chave única por sessão + produto + quantidade
+    //                             $chave = "etq:{$sessionId}:" . md5($post['ana_id']);
+
+    //                             // 🔍 tenta recuperar do Redis
+    //                             $cached = $redis->get($chave);
+
+    //                             if (! $cached) {
+    //                                 // 🔄 busca dados apenas se não existir
+    //                                 // 💾 salva no Redis com TTL de 15 minutos (900 segundos)
+    //                                 $redis->setex($chave, 900, json_encode($dados));
+
+    //                                 // 🧠 opcional: rastrear chaves da sessão
+    //                                 $redis->sAdd("etq_session:{$sessionId}", $chave);
+    //                             }
+
+    //                             $link   = base_url('/CriaEtiquetaZPL/emiteEtiqueta/');
+    //                             $script = "gerarEtiquetaZPL(\"" . $link . "\",false,\"" . $chave . "\");";
+    //                             session()->setFlashdata('modal', $link);
+    //                             session()->setFlashdata('chave', $chave);
+    //                             session()->setFlashdata('script', $script);
+    //                             session()->setFlashdata('modal-title', 'Imprimir Etiqueta');
+    //                         }
+
+    //                         $ret['url'] = site_url($this->data['controler']);
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     } catch (\Exception $e) {
+    //         $ret['erro'] = true;
+    //         $ret['msg']  = $e->getMessage();
+    //     }
+
+    //     echo json_encode($ret);
+    // }
+
     public function store()
     {
         $ret  = ['erro' => false];
@@ -888,8 +914,21 @@ class Analise extends BaseController
             // Gera movimentos se existirem
             if (! empty($movs)) {
                 cache()->clean();
-                $movim = $this->geraMovimento($movs, $post);
-                // debug($movim, true);
+
+                // Enriquece os movimentos com dados do produto/lote
+                $movsEnriquecidos = array_map(function ($mov) use ($post) {
+                    return array_merge($mov, [
+                        'pro_id'        => $post['pro_id'] ?? null,
+                        'lot_lote'      => $post['lot_lote'] ?? '',
+                        'lot_validade'  => $post['lot_validade'] ?? '',
+                        'rep_id'        => null,
+                        'reserva'       => '',
+                    ]);
+                }, $movs);
+
+                // Chama a função unificada
+                $movim = geraMovimentoRequisicoes($movsEnriquecidos, $this->data['controler']);
+
                 if ($movim['status'] == 'Erro') {
                     $ret['erro'] = true;
                     $ret['msg']  = $movim['mensagem'];
@@ -946,8 +985,26 @@ class Analise extends BaseController
 
                                 $numetiquetas = (int) $dados['ana_qtde_micro'];
                                 $dados        = array_fill(0, $numetiquetas, $dados);
-                                $chave        = uniqid('etq_');
-                                cache()->save($chave, $dados, 300); // 1 minuto
+                                // $chave        = uniqid('etq_');
+                                // cache()->save($chave, $dados, 300); // 1 minuto 
+
+                                $redis     = \Config\Services::redis();
+                                $sessionId = session_id();
+
+                                // 🔑 chave única por sessão + produto + quantidade
+                                $chave = "etq:{$sessionId}:" . md5($post['ana_id']);
+
+                                // 🔍 tenta recuperar do Redis
+                                $cached = $redis->get($chave);
+
+                                if (! $cached) {
+                                    // 🔄 busca dados apenas se não existir
+                                    // 💾 salva no Redis com TTL de 15 minutos (900 segundos)
+                                    $redis->setex($chave, 900, json_encode($dados));
+
+                                    // 🧠 opcional: rastrear chaves da sessão
+                                    $redis->sAdd("etq_session:{$sessionId}", $chave);
+                                }
 
                                 $link   = base_url('/CriaEtiquetaZPL/emiteEtiqueta/');
                                 $script = "gerarEtiquetaZPL(\"" . $link . "\",false,\"" . $chave . "\");";
@@ -969,7 +1026,6 @@ class Analise extends BaseController
 
         echo json_encode($ret);
     }
-
     /**
      * Processa o upload do arquivo de laudo.
      * Retorna true em caso de sucesso ou mensagem de erro.
@@ -1020,7 +1076,7 @@ class Analise extends BaseController
             // BUSCA TIPO MOVIMENTO
             $movim = (array) $this->tipomovimento->getTipoMovimentacao($mov['id'])[0];
             // debug($movim, tre);
-            $codtns = $movim['tmo_transacao_erp'];
+            $codtns = $movim['tmm_transacao'];
             $depori = $movim['dep_codorigem'];
             $depdes = $movim['dep_coddestino'];
             $valida = data_br($postado['lot_validade']);
@@ -1053,7 +1109,7 @@ class Analise extends BaseController
                         $qtdmov = str_replace(['.', ','], '', $qtdmov);
                         // BUSCA TIPO MOVIMENTO
                         $movim  = $this->tipomovimento->getTipoMovimentacao($rev['id']);
-                        $codtns = $movim['tmo_transacao_erp'];
+                        $codtns = $movim['tmm_transacao'];
                         // deposito de destino é a origem, para reverter
                         $depdes = $movim['dep_codorigem'];
                         // depósito de origem é o destino, para reverter

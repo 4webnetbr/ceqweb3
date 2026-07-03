@@ -269,7 +269,7 @@
 </style>
 <script>
   function executa_php() {
-    redirec_blank('/Utils/executa_php');
+    redirec_blank('/Utilidade/executa_php');
     setInterval(function() {
       conectaWs();
     }, 2000);

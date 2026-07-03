@@ -4,7 +4,7 @@ namespace Config;
 
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Filters\CSRF;
-use CodeIgniter\Filters\DebugToolbar;
+// use CodeIgniter\Filters\DebugToolbar;
 use CodeIgniter\Filters\Honeypot;
 use CodeIgniter\Filters\InvalidChars;
 use CodeIgniter\Filters\SecureHeaders;
@@ -17,7 +17,7 @@ class Filters extends BaseConfig
      */
     public array $aliases = [
         'csrf'          => CSRF::class,
-        'toolbar'       => DebugToolbar::class,
+        // 'toolbar'       => DebugToolbar::class,
         'honeypot'      => Honeypot::class,
         'invalidchars'  => InvalidChars::class,
         'secureheaders' => SecureHeaders::class,
@@ -40,7 +40,13 @@ class Filters extends BaseConfig
                     'login/*',
                     'buscas/*',
                     'common/*',
-                    'utils/*',
+                    // ANTES (BKP 30/06/2026): 'utils/*', — excluía a pasta Utils inteira; hoje ela também
+                    // contém Utils\Relatorio (controller com sub-namespace) que PRECISA passar pelo loginFilter.
+                    // Só o controller plano app/Controllers/Utils.php (upload/executa_php) deve ficar de fora.
+                    'utilidade/upload',
+                    'utilidade/upload/*',
+                    'utilidade/executa_php',
+                    'utilidade/executa_php/*',
                     'criapdf2025',
                     'criapdf2025/*',
                     'criampdf2026',
@@ -71,7 +77,7 @@ class Filters extends BaseConfig
             // 'csrf',
         ],
         'after' => [
-            'toolbar',
+            // 'toolbar',
             'accessLog' => [
                 'except' => [
                     'server',

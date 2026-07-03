@@ -142,11 +142,3 @@ class LoginFilter implements FilterInterface
         // Não utilizado
     }
 }
- '';
-    }
-
-    public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
-    {
-        // Não utilizado
-    }
-}

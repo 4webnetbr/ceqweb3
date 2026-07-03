@@ -165,8 +165,8 @@ class EntCfgEtiqueta extends Entity
         $etc_codbar->opcoes     = $simnao;
         $etc_codbar->leitura    = $show;
         $etc_codbar->ordem       = $pos;
-        $etc_codbar->dispForm   = "col-5";
-        $etc_codbar->funcChan    = "prevEtiqueta('" . $base_url . "')";
+        $etc_codbar->dispForm   = "col-4 mb-4";
+        $etc_codbar->funcChan    = "mostraOcultaCampo(this, 'N','etc_rotulo[$pos],etc_caracteres[$pos],etc_linhas[$pos],etc_colunas[$pos],etc_fonte[$pos],etc_tamanho[$pos],etc_alinhamento[$pos],etc_negrito[$pos],etc_italico[$pos],etc_sublinhado[$pos]');prevEtiqueta('" . $base_url . "')";
         $ret['etc_codbar']      = $etc_codbar->cr2opcoes();
 
         $etc_rotulo             =  new MyCampo('cfg_etiqueta_campo', 'etc_rotulo');
@@ -184,10 +184,10 @@ class EntCfgEtiqueta extends Entity
         $etc_caract->obrigatorio = true;
         $etc_caract->leitura     = $show;
         $etc_caract->ordem       = $pos;
-        $etc_caract->largura     = 14;
+        $etc_caract->largura     = 10;
         $etc_caract->size        = 3;
         $etc_caract->maximo      = 999;
-        $etc_caract->dispForm    = "col-3";
+        $etc_caract->dispForm    = "col-4";
         $etc_caract->funcChan    = "prevEtiqueta('" . $base_url . "')";
         $ret['etc_caracteres']  = $etc_caract->crInput();
 
@@ -198,11 +198,11 @@ class EntCfgEtiqueta extends Entity
         $etc_linhas->size        = 3;
         $etc_linhas->maximo      = 999;
         // $etc_linhas->maxLength   = 1;
-        $etc_linhas->largura        = 14;
+        $etc_linhas->largura        = 10;
         $etc_linhas->obrigatorio = true;
         $etc_linhas->leitura    = $show;
         $etc_linhas->ordem       = $pos;
-        $etc_linhas->dispForm    = "col-3";
+        $etc_linhas->dispForm    = "col-4";
         $etc_linhas->funcChan    = "prevEtiqueta('" . $base_url . "')";
         $ret['etc_linhas']      = $etc_linhas->crInput();
 
@@ -213,11 +213,11 @@ class EntCfgEtiqueta extends Entity
         $etc_colunas->maximo        = 100;
         $etc_colunas->step        = 5;
         $etc_colunas->size        = 3;
-        $etc_colunas->largura        = 15;
+        $etc_colunas->largura        = 8;
         $etc_colunas->obrigatorio = true;
         $etc_colunas->leitura     = $show;
         $etc_colunas->ordem       = $pos;
-        $etc_colunas->dispForm    = "col-2";
+        $etc_colunas->dispForm    = "col-3";
         $etc_colunas->funcChan    = "prevEtiqueta('" . $base_url . "')";
         $ret['etc_colunas']     = $etc_colunas->crInput();
 
@@ -233,7 +233,7 @@ class EntCfgEtiqueta extends Entity
         $etc_fonte->selecionado = $etc_fonte->valor;
         $etc_fonte->opcoes      = $opc_fonte;
         $etc_fonte->leitura     = $show;
-        $etc_fonte->largura     = 25;
+        $etc_fonte->largura     = 20;
         $etc_fonte->ordem       = $pos;
         $etc_fonte->dispForm    = "col-4";
         $etc_fonte->funcChan    = "prevEtiqueta('" . $base_url . "')";
@@ -248,7 +248,7 @@ class EntCfgEtiqueta extends Entity
         $etc_taman->size        = 2;
         $etc_taman->obrigatorio = true;
         $etc_taman->leitura     = $show;
-        $etc_taman->largura        = 14;
+        $etc_taman->largura        = 10;
         $etc_taman->ordem       = $pos;
         $etc_taman->dispForm    = "col-4";
         $etc_taman->funcChan    = "prevEtiqueta('" . $base_url . "')";

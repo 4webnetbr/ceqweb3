@@ -60,6 +60,7 @@ class EntCfgStatus extends Entity
 
         $config['Leitura'] = $show;
         $config['Largura'] = 50;
+        $config['Largura'] = 50;
         $ret['cor_id'] = criaSelectRelativo(
             'cfg_cor',
             'cor_id',

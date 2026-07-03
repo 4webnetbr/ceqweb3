@@ -77,6 +77,14 @@ function carregamentos_iniciais() {
     jQuery(".daterange")
       .not("#aberto")
       .each(function () {
+        // Filtros de relatório (Utils/Relatorio) marcados como não obrigatórios
+        // nascem com a classe "daterange-opcional" — ficam em "Não Considerar"
+        // em vez de receber o período padrão (últimos 30 dias) abaixo.
+        if (jQuery(this).hasClass("daterange-opcional")) {
+          jQuery(this).val("Não Considerar");
+          jQuery(this).trigger("change");
+          return;
+        }
         if (this.id == "resolvido") {
           start = moment().subtract(10, "years");
           end = moment();
@@ -198,7 +206,7 @@ function carregamentos_iniciais() {
   function sendFile(file, el) {
     data = new FormData();
     data.append("file", file);
-    url = "/Utils/upload";
+    url = "/Utilidade/upload";
     retornoAjax = false;
     executaAjax(url, "html", data);
     if (retornoAjax) {
@@ -207,7 +215,7 @@ function carregamentos_iniciais() {
     // jQuery.ajax({
     //     data: data,
     //     type: "POST",
-    //     url: '/Utils/upload',
+    //     url: '/Utilidade/upload',
     //     cache: false,
     //     contentType: false,
     //     processData: false,
@@ -235,30 +243,6 @@ function carregamentos_iniciais() {
    */
   jQuery(".dropdown-menu").on("click", (e) => {
     jQuery(e.currentTarget).toggleClass("show");
-  });
-
-  /**
-   * Show Password
-   * Mostra ou oculta a Senha
-   * Document Ready my_fields
-   */
-  jQuery(function () {
-    jQuery(document).on(
-      "mouseenter mouseleave",
-
-      ".show_password",
-      function (e) {
-        e.preventDefault();
-
-        const fieldId = jQuery(this).data("field");
-        const $input = jQuery("#" + fieldId);
-
-        if (!$input.length) return;
-
-        const isMouseEnter = e.type === "mouseenter";
-        $input.attr("type", isMouseEnter ? "text" : "password");
-      },
-    );
   });
 
   /**
@@ -662,8 +646,10 @@ function carregamentos_iniciais() {
       nid = jQuery(this)[0].id;
       jQuery("[id='" + nid + "-fival']").removeClass("d-block");
       jQuery("[id='" + nid + "-fival']").addClass("d-none");
-      tab = jQuery(this)[0].closest(".tab-pane").id;
-      jQuery("[id='" + tab + "-valid']").removeClass("d-block");
+      if (jQuery(this)[0].closest(".tab-pane")) {
+        tab = jQuery(this)[0].closest(".tab-pane").id;
+        jQuery("[id='" + tab + "-valid']").removeClass("d-block");
+      }
     }
   });
 
@@ -801,6 +787,8 @@ function mostraOcultaCampo(obj, regra, fields) {
           jQuery(camp).removeClass("d-none");
         }
       } else {
+        jQuery(div).removeClass("d-none");
+        jQuery(div).addClass("d-inline-flex");
         jQuery(div).removeClass("opacity-0");
         jQuery(div).addClass("opacity-1");
         jQuery(div).css("height", "");
@@ -850,6 +838,8 @@ function mostraOcultaCampo(obj, regra, fields) {
         }
         jQuery(camp).addClass("d-none");
         jQuery(camp).removeAttr("required");
+        jQuery(div).addClass("d-none");
+        jQuery(div).removeClass("d-inline-flex");
         jQuery(div).removeClass("opacity-1");
         jQuery(div).addClass("opacity-0");
         jQuery(div).css("height", "0px");
@@ -1164,10 +1154,10 @@ function seleciona_item(id, texto, obj) {
  * @param {object} obj - Campo que deverá ser excluído
  */
 
-function exclui_campo(objdest, obj, pos = 0, vazio = false) {
+function exclui_campo(objdest, obj) {
   jQuery(obj).closest(".row").remove();
   jQuery("#form1").attr("data-alter", true);
-  acerta_botoes_rep(objdest, pos, vazio);
+  acerta_botoes_rep(objdest);
 }
 
 /**
@@ -1176,9 +1166,8 @@ function exclui_campo(objdest, obj, pos = 0, vazio = false) {
  * @param {string} url - url de criação dos campos
  * @param {string} objdest - nome da div de destino
  * @param {object} obj - Campo que deverá ser repetido
- * @param {bool} vazio - Informa se o array pode ser vazio para ser usado na função acerta_botoes_rep
  */
-function addCampo(url, objdest, obj, vazio = false) {
+function addCampo(url, objdest, obj) {
   atual = parseInt(obj.getAttribute("data-index"));
   secao = jQuery(obj).parents().eq(5)[0].id;
   proximo = atual + 1;
@@ -1257,39 +1246,49 @@ function addCampo(url, objdest, obj, vazio = false) {
      * Se existir um campo dependente, adiciona o onchange no elemento pai
      * Document Ready my_fields
      */
-    jQuery(".dependente").each(function () {
-      elemen = jQuery(this)[0];
-      if (elemen.tagName == "SELECT") {
-        busca = elemen.getAttribute("data-busca");
-        valor = elemen.getAttribute("data-valor");
-        funcao_busca =
-          "busca_dependente(this,'" +
-          elemen.name +
-          "','" +
-          busca +
-          "','" +
-          valor +
-          "')";
-        pai = elemen.getAttribute("data-pai");
-        _chan_ant = jQuery('[name="' + pai + '"]').attr("onchange");
-        if (
-          _chan_ant != "" &&
-          _chan_ant != undefined &&
-          _chan_ant.substr(0, 16) != "busca_dependente"
-        ) {
-          jQuery('[name="' + pai + '"]').attr(
-            "onchange",
-            _chan_ant + ";" + funcao_busca,
-          );
-        } else {
-          jQuery('[name="' + pai + '"]').attr("onchange", funcao_busca);
+    jQuery(divSelector)
+      .find(".table-" + objdest + '[data-index="' + proximo + '"] .dependente')
+      .each(function () {
+        elemen = jQuery(this)[0];
+        if (elemen.tagName == "SELECT") {
+          busca = elemen.getAttribute("data-busca");
+          valor = elemen.getAttribute("data-valor");
+          pai = elemen.getAttribute("data-pai") ?? "";
+          // funcao_busca =
+          //   "busca_dependente(this,'" +
+          //   elemen.name +
+          //   "','" +
+          //   busca +
+          //   "','" +
+          //   valor +
+          //   "')";
+          // pai = elemen.getAttribute("data-pai");
+          // _chan_ant = jQuery('[name="' + pai + '"]').attr("onchange");
+          // if (
+          //   _chan_ant != "" &&
+          //   _chan_ant != undefined &&
+          //   _chan_ant.substr(0, 16) != "busca_dependente"
+          // ) {
+          //   jQuery('[name="' + pai + '"]').attr(
+          //     "onchange",
+          //     _chan_ant + ";" + funcao_busca,
+          //   );
+          // } else {
+          //   jQuery('[name="' + pai + '"]').attr("onchange", funcao_busca);
+          // }
+          if (pai != "") {
+            busca_dependente(
+              jQuery('[name="' + pai + '"]')[0],
+              elemen.name,
+              busca,
+              valor,
+            );
+          }
         }
-        jQuery('[name="' + pai + '"]').trigger("change");
-      }
-    });
+      });
 
     // carregamentos_iniciais();
-    acerta_botoes_rep(objdest, proximo, vazio);
+    acerta_botoes_rep(objdest);
     if (typeof acertaOcultos === "function") {
       acertaOcultos();
     }
@@ -1669,7 +1668,7 @@ function altera_index(obj, ind_a, ind_n) {
  * Acerta Botões de Adicionar e Excluir campos
  *
  */
-function acerta_botoes_rep(repete, pos = -1, vazio = false) {
+function acerta_botoes_rep(repete, pos = -1) {
   // if (repete.startsWith("acoes")) {
   //   return;
   // }
@@ -1688,7 +1687,7 @@ function acerta_botoes_rep(repete, pos = -1, vazio = false) {
   jQuery("#rep_" + repetepos + " .bt-down").removeClass("d-none");
   jQuery("#rep_" + repetepos + " .bt-repete").addClass("d-none");
 
-  if (visiveis == 1 && !vazio) {
+  if (visiveis == 1) {
     jQuery("#rep_" + repetepos + " .bt-exclui").addClass("d-none");
     jQuery("#rep_" + repetepos + " .bt-up").addClass("d-none");
     jQuery("#rep_" + repetepos + " .bt-down").addClass("d-none");
@@ -1726,9 +1725,9 @@ function testa_dep(id_dep) {
  * @param {integer} selec - Dependente pré-selecionado
  */
 function busca_dependente(obj, id_dep, url_busca, selec) {
-  const IdDep = escIdColchetes(id_dep);
-  const $select = jQuery("#" + IdDep);
-  const $selectRaw = jQuery("#" + IdDep)[0];
+  const escapedIdDep = id_dep.replace(/[\[\]]/g, "\\$&");
+  const $select = jQuery("#" + escapedIdDep);
+  const $selectRaw = jQuery("#" + escapedIdDep)[0];
 
   // Detecta valor de seleção padrão
   if (!selec) {
@@ -1791,7 +1790,7 @@ function busca_dependente(obj, id_dep, url_busca, selec) {
     aSelec = $select
       .find("option")
       .map(function () {
-        return $(this).val();
+        return jQuery(this).val();
       })
       .get();
   }
@@ -2460,7 +2459,7 @@ function mudaObrigatorioElemDiv(div, obriga) {
   // Garantir valor booleano
   obriga = obriga === true;
 
-  var $div = $(div);
+  var $div = jQuery(div);
 
   if (!$div.length) {
     return; // simplesmente sai sem erro

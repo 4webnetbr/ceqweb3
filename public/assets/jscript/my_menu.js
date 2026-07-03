@@ -114,12 +114,14 @@ function atualizaMenu() {
   //     }
   //   });
 
-  function closeAllOverlays() {
-    jQuery("#show_user").removeClass("active");
-    jQuery("#show_ajuda, #show_notifica").removeClass("show");
+  if (!isMobile()) {
+    function closeAllOverlays() {
+      jQuery("#show_user").removeClass("active");
+      jQuery("#show_ajuda, #show_notifica").removeClass("show");
 
-    if (!menuaberto) {
-      jQuery(".sidebar").removeClass("active");
+      if (!menuaberto) {
+        jQuery(".sidebar").removeClass("active");
+      }
     }
   }
 
@@ -136,20 +138,51 @@ function atualizaMenu() {
     closeAllOverlays();
   });
 
-  jQuery(".sidebar")
-    .off("mouseenter mouseleave")
-    .hover(
+  function isMobile() {
+    return window.matchMedia("(hover: none)").matches;
+  }
+
+  // jQuery(".sidebar").off();
+
+  if (isMobile()) {
+    // alert("sou mobile");
+    // MOBILE = CLICK
+    jQuery(".sidebar").on("click", function () {
+      // if (!menuaberto && !jQuery(this).hasClass("active")) {
+      jQuery(this).toggleClass("active");
+      // alert("clicou");
+      // }
+    });
+  } else {
+    // DESKTOP = HOVER
+    jQuery(".sidebar").hover(
       function () {
-        if (!menuaberto && !jQuery(".sidebar").hasClass("active")) {
-          jQuery(".sidebar").toggleClass("active");
+        if (!menuaberto && !jQuery(this).hasClass("active")) {
+          jQuery(this).toggleClass("active");
         }
       },
       function () {
         if (!menuaberto && !jQuery("#show_user").hasClass("active")) {
-          jQuery(".sidebar").toggleClass("active");
+          jQuery(this).toggleClass("active");
         }
       },
     );
+  }
+
+  // jQuery(".sidebar")
+  //   .off("mouseenter mouseleave")
+  //   .hover(
+  //     function () {
+  //       if (!menuaberto && !jQuery(".sidebar").hasClass("active")) {
+  //         jQuery(".sidebar").toggleClass("active");
+  //       }
+  //     },
+  //     function () {
+  //       if (!menuaberto && !jQuery("#show_user").hasClass("active")) {
+  //         jQuery(".sidebar").toggleClass("active");
+  //       }
+  //     },
+  //   );
 
   jQuery(".bt-manut.add")
     .off("mouseenter mouseleave")

@@ -15,99 +15,145 @@ class EntCfgRelColunas extends Entity
         'rco_alias'           => null,
         'rco_label'           => null,
         'rco_tamanho'         => 0,
-        'rco_tamanho_efetivo' => 0,
-        'rco_quebra_linha'    => 0,
         'rco_alinhamento'     => 'E',
+        'rco_totalizar'       => 0,
+        'rco_tipo_dado'       => '',
+        'rco_largura'         => 0,
+        'rco_comportamento'   => 'cortar',
         'rco_ordem'           => 0,
     ];
 
-    public array $campos = [];
-
-    public function __construct(?array $data = null, bool $show = false)
+    public static function defCampos($dados = false, bool $show = false, int $pos = 0): array
     {
-        parent::__construct($data);
-        $this->campos = $this->defCampos($show);
-    }
+        $ret = [];
 
-    public function defCampos(bool $show = false): array
-    {
-        $dados = $this->toArray();
-        $ret   = [];
-
-        // ── Ocultos ──────────────────────────────────────────────────────────
+        // Ocultos
         $ret['rco_id'] = (new MyCampo('cfg_rel_colunas', 'rco_id'))
             ->setValor($dados['rco_id'] ?? '')
-            ->crOculto();
-
-        $ret['rel_id'] = (new MyCampo('cfg_rel_colunas', 'rel_id'))
-            ->setValor($dados['rel_id'] ?? '')
+            ->setOrdem($pos)
             ->crOculto();
 
         $ret['rco_tabela'] = (new MyCampo('cfg_rel_colunas', 'rco_tabela'))
             ->setValor($dados['rco_tabela'] ?? '')
-            ->crOculto();
-
-        $ret['rco_campo'] = (new MyCampo('cfg_rel_colunas', 'rco_campo'))
-            ->setValor($dados['rco_campo'] ?? '')
+            ->setOrdem($pos)
             ->crOculto();
 
         $ret['rco_tamanho'] = (new MyCampo('cfg_rel_colunas', 'rco_tamanho'))
             ->setValor($dados['rco_tamanho'] ?? 0)
-            ->crOculto();
-
-        $ret['rco_tamanho_efetivo'] = (new MyCampo('cfg_rel_colunas', 'rco_tamanho_efetivo'))
-            ->setValor($dados['rco_tamanho_efetivo'] ?? 0)
+            ->setOrdem($pos)
             ->crOculto();
 
         $ret['rco_ordem'] = (new MyCampo('cfg_rel_colunas', 'rco_ordem'))
-            ->setValor($dados['rco_ordem'] ?? 0)
+            ->setValor($dados['rco_ordem'] ?? $pos)
+            ->setOrdem($pos)
             ->crOculto();
 
-        // ── Label da coluna ───────────────────────────────────────────────────
+        $ret['rco_tipo_dado'] = (new MyCampo('cfg_rel_colunas', 'rco_tipo_dado'))
+            ->setValor($dados['rco_tipo_dado'] ?? '')
+            ->setOrdem($pos)
+            ->crOculto();
+
+        $ret['rco_alias'] = (new MyCampo('cfg_rel_colunas', 'rco_alias'))
+            ->setValor($dados['rco_alias'] ?? '')
+            ->setOrdem($pos)
+            ->crOculto();
+
+        // Select de campo — dependente da tabela base
+        $opcaoCampo = [];
+        if (!empty($dados['rco_campo'])) {
+            $selecionado = ($dados['rco_tabela'] ?? '') . '|' . $dados['rco_campo'] . '|' . ($dados['rco_tamanho'] ?? 0) . '|' . ($dados['rco_tipo_dado'] ?? '');
+            $opcaoCampo[$selecionado] = '[' . ($dados['rco_tabela'] ?? '') . '] ' . ucwords(str_replace('_', ' ', $dados['rco_campo']));
+        }
+
+        $ret['rco_campo'] = (new MyCampo('cfg_rel_colunas', 'rco_campo'))
+            ->setValor($opcaoCampo ? array_key_first($opcaoCampo) : '')
+            ->setSelecionado($opcaoCampo ? array_key_first($opcaoCampo) : '')
+            ->setOpcoes($opcaoCampo)
+            ->setObrigatorio()
+            ->setOrdem($pos)
+            ->setDispForm('col-9 float-start')
+            ->setLargura(80)
+            ->setLeitura($show)
+            ->setPai('rel_tabela_base')
+            ->setUrlbusca(base_url('buscas/busca_campos_colunas_rel'))
+            ->crDepende();
+
         $ret['rco_label'] = (new MyCampo('cfg_rel_colunas', 'rco_label'))
             ->setValor($dados['rco_label'] ?? '')
             ->setObrigatorio()
-            ->setDispForm('col-5')
+            ->setMinLength(3)
+            ->setOrdem($pos)
+            ->setDispForm('col-3 float-start')
+            ->setLargura(30)
             ->setLeitura($show)
             ->crInput();
 
-        // ── Alias (opcional) ──────────────────────────────────────────────────
-        $ret['rco_alias'] = (new MyCampo('cfg_rel_colunas', 'rco_alias'))
-            ->setValor($dados['rco_alias'] ?? '')
-            ->setDispForm('col-3')
-            ->setLeitura($show)
-            ->crInput();
-
-        // ── Alinhamento ───────────────────────────────────────────────────────
         $ret['rco_alinhamento'] = (new MyCampo('cfg_rel_colunas', 'rco_alinhamento'))
             ->setValor($dados['rco_alinhamento'] ?? 'E')
             ->setSelecionado($dados['rco_alinhamento'] ?? 'E')
-            ->setOpcoes(['E' => 'Esquerda', 'C' => 'Centro', 'D' => 'Direita'])
-            ->setDispForm('col-2')
+            ->setOpcoes(['E' => ' Esquerda', 'C' => ' Centro', 'D' => ' Direita'])
+            ->setOrdem($pos)
+            ->setDispForm('col-3 float-start')
+            ->setLargura(25)
             ->setLeitura($show)
             ->crSelect();
 
-        // ── Quebra de linha (habilitado apenas quando tamanho > 60) ──────────
-        // Renderizado como checkbox; a lógica de habilitar/desabilitar
-        // fica no JavaScript da tela, verificando rco_tamanho.
-        $ret['rco_quebra_linha'] = (new MyCampo('cfg_rel_colunas', 'rco_quebra_linha'))
-            ->setValor($dados['rco_quebra_linha'] ?? 0)
-            ->setSelecionado($dados['rco_quebra_linha'] ?? 0)
+        $ret['rco_totalizar'] = (new MyCampo('cfg_rel_colunas', 'rco_totalizar'))
+            ->setValor($dados['rco_totalizar'] ?? 0)
+            ->setSelecionado($dados['rco_totalizar'] ?? 0)
             ->setOpcoes([0 => 'Não', 1 => 'Sim'])
-            ->setDispForm('col-2')
+            ->setOrdem($pos)
+            ->setDispForm('col-2 float-start')
             ->setLeitura($show)
             ->cr2opcoes();
+
+        $ret['rco_largura'] = (new MyCampo('cfg_rel_colunas', 'rco_largura'))
+            ->setValor($dados['rco_largura'] ?? $dados['rco_tamanho'] ?? 0)
+            ->setOrdem($pos)
+            ->setDispForm('col-2 float-start')
+            ->setLargura(10)
+            ->setLeitura($show)
+            ->crInput();
+
+        $ret['rco_comportamento'] = (new MyCampo('cfg_rel_colunas', 'rco_comportamento'))
+            ->setValor($dados['rco_comportamento'] ?? 'cortar')
+            ->setSelecionado($dados['rco_comportamento'] ?? 'cortar')
+            ->setOpcoes(['cortar' => 'Cortar', 'quebrar' => 'Quebrar', 'linha' => 'Linha inteira'])
+            ->setOrdem($pos)
+            ->setDispForm('col-2 float-start')
+            ->setLeitura($show)
+            ->crSelect();
+
+        // Botões
+        $atrib = ['data-index' => $pos];
+
+        $add           = new MyCampo();
+        $add->attrdata = $atrib;
+        $add->tipo     = 'button';
+        $add->dispForm = '1col';
+        $add->nome     = "bt_add_col[{$pos}]";
+        $add->id       = "bt_add_col[{$pos}]";
+        $add->i_cone   = "<i class='fas fa-plus'></i>";
+        $add->place    = 'Adicionar Coluna';
+        $add->classep  = 'btn-outline-success btn-sm bt-repete';
+        $add->funcChan = "addCampo('" . base_url('CfgRelatorio/addColuna/') . "','colunas',this)";
+        $ret['bt_add'] = $add->crBotao();
+
+        $del           = new MyCampo();
+        $del->attrdata = $atrib;
+        $del->tipo     = 'button';
+        $del->dispForm = '1col';
+        $del->nome     = "bt_del_col[{$pos}]";
+        $del->id       = "bt_del_col[{$pos}]";
+        $del->i_cone   = "<i class='fas fa-trash'></i>";
+        $del->classep  = 'btn-outline-danger btn-sm bt-exclui';
+        $del->funcChan = "exclui_campo('colunas',this)";
+        $del->place    = 'Excluir Coluna';
+        $ret['bt_del'] = $del->crBotao();
 
         return $ret;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  Helpers de exibição e cálculo
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Retorna o label legível do alinhamento.
-     */
     public function getAlinhamentoLabel(): string
     {
         return match ($this->rco_alinhamento) {
@@ -117,35 +163,9 @@ class EntCfgRelColunas extends Entity
         };
     }
 
-    /**
-     * Indica se o campo pode ter quebra de linha (tamanho original > 60).
-     */
-    public function permiteQuebraLinha(): bool
-    {
-        return (int) $this->rco_tamanho > 60;
-    }
-
-    /**
-     * Retorna o tamanho efetivo calculado com base na quebra de linha.
-     * Útil para recalcular no front antes de gravar.
-     */
-    public function calcTamanhoEfetivo(): int
-    {
-        if ($this->rco_quebra_linha && $this->permiteQuebraLinha()) {
-            return (int) ceil((int) $this->rco_tamanho / 2);
-        }
-
-        return (int) $this->rco_tamanho;
-    }
-
-    /**
-     * Retorna o fragmento SQL de SELECT para esta coluna.
-     * Ex.: "tabela.campo AS 'Label'"
-     */
     public function toSelectFragment(): string
     {
         $campo = $this->rco_alias ?: $this->rco_campo;
-
         return "{$this->rco_tabela}.{$campo} AS '{$this->rco_label}'";
     }
 }

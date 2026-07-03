@@ -551,7 +551,7 @@ class MyCampo
         $this->step    = 1;
         $this->maximo  = 100000;
         $this->size    = 10;
-        $this->largura = 15;
+        $this->largura = 10;
     }
 
     /** Configura campo numérico decimal */
@@ -852,7 +852,8 @@ class MyCampo
                 $auto = $largura;
             }
             if ($this->tipo === 'number') {
-                $larguraNum = max($this->largura, 28);
+                // Usa largura definida se houver, senão 28ch — alterado para permitir campos number menores (ex: rco_largura no relatório)
+                $larguraNum = $this->largura > 0 ? $this->largura : 28;
                 $largura    = "{$larguraNum}ch";
                 $auto       = $largura;
             }

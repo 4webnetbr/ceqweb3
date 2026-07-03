@@ -20,6 +20,8 @@ define('APPPATH', ROOTPATH . 'app' . DIRECTORY_SEPARATOR);
 define('WRITEPATH', ROOTPATH . 'writable' . DIRECTORY_SEPARATOR);
 define('SYSTEMPATH', ROOTPATH . 'vendor/codeigniter4/framework/system' . DIRECTORY_SEPARATOR);
 
+require_once APPPATH . 'Config/Constants.php';
+
 try {
     $logger = new Logger();
 } catch (\Throwable $e) {

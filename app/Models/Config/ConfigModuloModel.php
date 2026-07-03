@@ -23,13 +23,12 @@ class ConfigModuloModel extends Model
     ];
 
     protected $validationRules = [
-        'mod_nome' => 'required|isUniqueValue[default.cfg_modulo.mod_nome, mod_id]',
+        'mod_nome' => 'required',
     ];
 
     protected $validationMessages = [
         'mod_nome' => [
             'required'      => 'O campo Nome do Módulo é Obrigatório',
-            'isUniqueValue' => '8',
         ],
     ];
 
@@ -63,16 +62,16 @@ class ConfigModuloModel extends Model
         return $id
             ? $this->find($id)
             : $this->where('mod_excluido', null)
-                   ->orderBy('mod_nome')
-                   ->findAll();
+            ->orderBy('mod_nome')
+            ->findAll();
     }
 
     public function getModulosSearch(string $termo)
     {
         // Seleciona apenas os campos necessários
         return $this->select('mod_id, mod_nome, mod_icone')
-                    ->like('mod_nome', $termo, 'after')
-                    ->where('mod_excluido', null)
-                    ->findAll();
+            ->like('mod_nome', $termo, 'after')
+            ->where('mod_excluido', null)
+            ->findAll();
     }
 }

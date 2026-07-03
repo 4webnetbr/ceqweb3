@@ -83,20 +83,14 @@ class TipoMovimentacao extends BaseController
         $secao[0] = 'Dados Gerais';
         $campos[0][0] = $fields->tmo_id;
         $campos[0][]  = $fields->tmo_nome;
-        $campos[0][]  = $fields->tmo_acumulador;
         $campos[0][]  = $fields->tmo_conferencia;
-        $campos[0][]  = $fields->tmo_transacao_erp;
         $campos[0][]  = $fields->tmo_semestoque;
-        $campos[0][]  = $fields->tmo_transacao_erp_entrada;
         $campos[0][]  = $fields->tmo_atendeautomatico;
-        $campos[0][]  = $fields->tmo_transacao_erp_saida;
         $campos[0][]  = $fields->tmo_entrefiliais;
-        $campos[0][]  = 'vazio2';
         $campos[0][]  = $fields->tmo_estoquepadrao;
-        $campos[0][]  = 'vazio2';
         $campos[0][]  = $fields->tmo_requisicao;
-        $campos[0][] = 'vazio2';
         $campos[0][] = $fields->tmo_gestaoestoque;
+        $campos[0][] = $fields->tmo_exigeinspecao;
 
         $secao[1] = 'Movimentações';
         $displ[1] = 'tabela';
@@ -108,6 +102,7 @@ class TipoMovimentacao extends BaseController
         $campos[1][0][] = $fieldsMov->tmm_id;
         $campos[1][0][] = $fieldsMov->tmm_deposito_origem;
         $campos[1][0][] = $fieldsMov->tmm_deposito_destino;
+        $campos[1][0][] = $fieldsMov->tmm_transacao;
         $campos[1][0][] = $fieldsMov->bt_add;
         $campos[1][0][] = $fieldsMov->bt_del;
 
@@ -126,7 +121,7 @@ class TipoMovimentacao extends BaseController
         $this->data['script'] =
             "<script>
     acerta_botoes_rep('movimentacoes');
-    acertaObrigatorioTransacoesERP();
+    acertaObrigatorio('tmo_acumulador');
 </script>";
 
         echo view('vw_edicao', $this->data);
@@ -143,11 +138,12 @@ class TipoMovimentacao extends BaseController
         $entity = new EntTipoMovimentacao(null, false);
         $fields = $entity->defCamposMov(null, $ind, false);  // retorna OBJETO
 
-        $campo[0] = $fields->tmm_id;
-        $campo[1] = $fields->tmm_deposito_origem;
-        $campo[2] = $fields->tmm_deposito_destino;
-        $campo[3] = $fields->bt_add;
-        $campo[4] = $fields->bt_del;
+        $campo[] = $fields->tmm_id;
+        $campo[] = $fields->tmm_deposito_origem;
+        $campo[] = $fields->tmm_deposito_destino;
+        $campo[] = $fields->tmm_transacao;
+        $campo[] = $fields->bt_add;
+        $campo[] = $fields->bt_del;
 
         echo json_encode($campo);
         exit;
@@ -184,20 +180,14 @@ class TipoMovimentacao extends BaseController
         $secao[0] = 'Dados Gerais';
         $campos[0][] = $fields->tmo_id;
         $campos[0][] = $fields->tmo_nome;
-        $campos[0][] = $fields->tmo_acumulador;
         $campos[0][] = $fields->tmo_conferencia;
-        $campos[0][] = $fields->tmo_transacao_erp;
         $campos[0][] = $fields->tmo_semestoque;
-        $campos[0][] = $fields->tmo_transacao_erp_entrada;
         $campos[0][] = $fields->tmo_atendeautomatico;
-        $campos[0][] = $fields->tmo_transacao_erp_saida;
         $campos[0][] = $fields->tmo_entrefiliais;
-        $campos[0][] = 'vazio2';
         $campos[0][] = $fields->tmo_estoquepadrao;
-        $campos[0][] = 'vazio2';
         $campos[0][] = $fields->tmo_requisicao;
-        $campos[0][] = 'vazio2';
         $campos[0][] = $fields->tmo_gestaoestoque;
+        $campos[0][] = $fields->tmo_exigeinspecao;
 
         $secao[1] = 'Movimentações';
         $displ[1] = 'tabela';
@@ -208,32 +198,24 @@ class TipoMovimentacao extends BaseController
                 // debug($dados_tmmm[$c]);
                 $fields = $entity->defCamposMov((object) $dados_tmmm[$c], $c, $show);
 
-                $campos[1][$c][0] = $fields->tmm_id;
-                $campos[1][$c][count($campos[1][$c])] = $fields->tmm_deposito_origem;
-                $campos[1][$c][count($campos[1][$c])] = $fields->tmm_deposito_destino;
+                $campos[1][$c][] = $fields->tmm_id;
+                $campos[1][$c][] = $fields->tmm_deposito_origem;
+                $campos[1][$c][] = $fields->tmm_deposito_destino;
+                $campos[1][$c][] = $fields->tmm_transacao;
 
-                // if (!$show) {
-                $campos[1][$c][count($campos[1][$c])] = $fields->bt_add;
-                $campos[1][$c][count($campos[1][$c])] = $fields->bt_del;
-                // } else {
-                // $campos[1][$c][count($campos[1][$c])] = '';
-                // $campos[1][$c][count($campos[1][$c])] = '';
-                // }
+                $campos[1][$c][] = $fields->bt_add;
+                $campos[1][$c][] = $fields->bt_del;
             }
         } else {
             $fields = $entity->defCamposMov(null, 0, $show);
 
-            $campos[1][0][0] = $fields->tmm_id;
-            $campos[1][0][count($campos[1][0])] = $fields->tmm_deposito_origem;
-            $campos[1][0][count($campos[1][0])] = $fields->tmm_deposito_destino;
+            $campos[1][0][] = $fields->tmm_id;
+            $campos[1][0][] = $fields->tmm_deposito_origem;
+            $campos[1][0][] = $fields->tmm_deposito_destino;
+            $campos[1][0][] = $fields->tmm_transacao;
 
-            // if (!$show) {
-            $campos[1][0][count($campos[1][0])] = $fields->bt_add;
-            $campos[1][0][count($campos[1][0])] = $fields->bt_del;
-            // } else {
-            // $campos[1][0][count($campos[1][0])] = '';
-            // $campos[1][0][count($campos[1][0])] = '';
-            // }
+            $campos[1][0][] = $fields->bt_add;
+            $campos[1][0][] = $fields->bt_del;
         }
 
         $secao[2] = 'Permissões';
@@ -264,7 +246,7 @@ class TipoMovimentacao extends BaseController
         $this->data['script'] =
             "<script>
     acerta_botoes_rep('movimentacoes');
-    acertaObrigatorioTransacoesERP();
+    acertaObrigatorio('tmo_acumulador');
 </script>";
 
         $this->data['desc_edicao'] = $dados_tmov->tmo_nome;
@@ -295,7 +277,7 @@ class TipoMovimentacao extends BaseController
             $ret['msg'] = 'Tipo de Movimentação Excluída com Sucesso';
         } catch (\Exception $e) {
             $ret['erro'] = true;
-            $ret['msg']  = 3;
+            $ret['msg']  = $e->getMessage();
         }
 
         echo json_encode($ret);
@@ -314,7 +296,7 @@ class TipoMovimentacao extends BaseController
                 $dad_atin = [
                     'tmo_ativo' => 'I'
                 ];
-                $this->verificarUsoEmRelacionamentos('est_tipo_movimentacao', 'tmo_id', (int) $id);
+                // $this->verificarUsoEmRelacionamentos('est_tipo_movimentacao', 'tmo_id', (int) $id);
                 $msg = "Tipo de Movimentação Inativado com Sucesso";
             }
             $this->tpmov->update($id, $dad_atin);
@@ -356,17 +338,18 @@ class TipoMovimentacao extends BaseController
             $sql_tmo = [
                 'tmo_id'                    => $postado['tmo_id'],
                 'tmo_nome'                  => $postado['tmo_nome'],
-                'tmo_acumulador'            => $postado['tmo_acumulador'],
+                // 'tmo_acumulador'            => $postado['tmo_acumulador']  ?? null,
                 'tmo_conferencia'           => $postado['tmo_conferencia'],
                 'tmo_requisicao'            => $postado['tmo_requisicao'],
                 'tmo_semestoque'            => $postado['tmo_semestoque'],
-                'tmo_transacao_erp'         => $postado['tmo_transacao_erp'],
+                // 'tmo_transacao_erp'         => $postado['tmo_transacao_erp'] ?? null,
                 'tmo_atendeautomatico'      => $postado['tmo_atendeautomatico'],
-                'tmo_transacao_erp_entrada' => $postado['tmo_transacao_erp_entrada'] ?? null,
-                'tmo_transacao_erp_saida'   => $postado['tmo_transacao_erp_saida'],
+                // 'tmo_transacao_erp_entrada' => $postado['tmo_transacao_erp_entrada'] ?? null,
+                // 'tmo_transacao_erp_saida'   => $postado['tmo_transacao_erp_saida'] ?? null,
                 'tmo_entrefiliais'          => $postado['tmo_entrefiliais'],
                 'tmo_estoquepadrao'         => $postado['tmo_estoquepadrao'],
                 'tmo_gestaoestoque'         => $postado['tmo_gestaoestoque'],
+                'tmo_exigeinspecao'         => $postado['tmo_exigeinspecao'],
                 'tmo_ativo'                 => empty($postado['tmo_id']) ? 'A' : ($postado['tmo_ativo'] ?? 'A'),
             ];
             if ($this->tpmov->save($sql_tmo)) {
@@ -384,6 +367,7 @@ class TipoMovimentacao extends BaseController
                             'tmo_id'               => $tmo_id,
                             'tmm_deposito_origem'  => $postado['tmm_deposito_origem'][$key],
                             'tmm_deposito_destino' => isset($postado['tmm_deposito_destino'][$key]) ? $postado['tmm_deposito_destino'][$key] : null,
+                            'tmm_transacao'        => $postado['tmm_transacao'][$key],
                             'tmm_atualizado'       => $data_atu,
                         ];
                         if ($postado['tmm_id'][$key] == '') {

@@ -106,7 +106,7 @@ class Requisicao extends BaseController
 
         $perfilId = session()->get('usu_perfil_id');
         // Busca logs
-        $log = buscaLogTabela('est_requisicao', $req_ids_assoc);
+        $log = buscaLogTabelaFirst('est_requisicao', $req_ids_assoc);
         // debug($log);
         // Percorre entidades
 
@@ -323,196 +323,7 @@ class Requisicao extends BaseController
      *
      * @return void
      */
-    // public function show($id)
-    // {
-    //     $requisicao = $this->requisicao->getRequisicao($id);
 
-    //     if (!$requisicao) {
-    //         return redirectWithError(previous_url(), 41);
-    //     }
-    //     $requisicao = $requisicao[0];
-
-    //     $log = buscaLog('est_requisicao', $id);
-    //     $requisicao->usu_nome = $log['usua_alterou'] ?? '';
-
-    //     $secao[0] = 'Dados Gerais';
-    //     $campos[0] = $this->showCabecalho($requisicao);
-
-    //     // $secao[1] = 'Produtos';
-    //     $produtosreq = $this->requisicao->getRequisicaoProdutos($id);
-    //     // debug($produtosreq);
-
-    //     $pro_ids = array_unique(array_map(
-    //         fn($p) => $p->pro_id,
-    //         $produtosreq
-    //     ));
-
-    //     $colunas = [
-    //         'Cód ERP',
-    //         'Descrição',
-    //         'Fabricante',
-    //         'Lote <br>Validade',
-    //         'Saldo <br>Origem',
-    //         'Caixas',
-    //         'Multiplica',
-    //         '% Seg',
-    //         'Requisitado',
-    //         'Cancelado',
-    //         'Atendido',
-    //         'Data Atend.',
-    //         'Conferido',
-    //         'Data Confer.',
-    //         'Aprovado',
-    //         'Data Inspec.',
-    //         // 'Saldo',
-    //     ];
-    //     $alinha = [
-    //         'center',
-    //         'start',
-    //         'start',
-    //         'center',
-    //         'end',
-    //         'end',
-    //         'end',
-    //         'end',
-    //         'end',
-    //         'end',
-    //         'end',
-    //         'center',
-    //         'end',
-    //         'center',
-    //         'end',
-    //         'center',
-    //     ];
-
-    //     $produtos = [];
-    //     $produtos[0] = $id;
-
-    //     if (count($produtosreq) > 0) {
-    //         envia_msg_ws($this->data['controler'], "Buscando estoque de origem " . $requisicao->req_deporigem, 'MsgServer', session()->get('usu_id'), 1);
-    //         $estoqueOrigem = $this->busca->buscaEstoqueDeposito(
-    //             $requisicao->req_deporigem
-    //         );
-    //         $estoqueOrigem = indexarEstoque($estoqueOrigem);
-
-    //         for ($p = 0; $p < count($produtosreq); ++$p) {
-    //             // $prod = $produtosreq[$p];
-
-    //             $prod = (object) $produtosreq[$p];
-    //             if (trim($prod->lot_lote) == '') {
-    //                 $prod->lot_lote = 'Sem Lote';
-    //             }
-
-    //             $estoqProd = $estoqueOrigem[$prod->pro_codpro][trim($prod->lot_lote)][0] ?? null;
-
-    //             $estoqueEncontrado = $estoqProd
-    //                 ? (int) str_replace('.', '', (string) $estoqProd->quantidadeEstoque)
-    //                 : 0;                // // 🔒 Normaliza para array
-    //             $prod->estoque_origem = $estoqueEncontrado;                // debug($prod, true);
-    //             $valida = isset($prod->lot_validade) ? data_br($prod->lot_validade) : '';
-    //             $produto = [];
-    //             $produto[0] = $prod->rep_id ?? null;
-    //             $produto[] = $prod->pro_codpro ?? null;
-    //             $produto[] = $prod->pro_despro ?? null;
-    //             $produto[] = $prod->fab_apeFab ?? null;
-    //             $produto[] = $prod->lot_lote . '<br>' . $valida ?? null;
-    //             // $produto[]  = isset($prod->lot_validade) ? data_br($prod->lot_validade) : '';
-    //             $produto[] = $prod->estoque_origem ?? null;
-    //             $produto[] = $prod->qtd_caixa ?? null;
-    //             $produto[] = $prod->rep_multiplicador ?? null;
-    //             $produto[] = isset($prod->rep_seguranca) ? $prod->rep_seguranca . '%' : '';
-    //             $produto[] = $prod->rep_quantia ?? null;
-    //             $produto[] = $prod->rpa_cancelada ?? null;
-    //             $produto[] = ($prod->rpa_atendida == 0 && $prod->rpa_data === null)
-    //                 ? ''
-    //                 : ($prod->rpa_atendida ?? null);
-    //             $produto[] = data_br($prod->rpa_data) ?? null;
-    //             if ($prod->rpa_conferida < 0) {
-    //                 $prod->rpa_conferida = 'NA';
-    //                 $prod->rpa_data_conferencia = 'NA';
-    //             }
-    //             $produto[] = ($prod->rpa_conferida == 0 && $prod->rpa_data_conferencia === null)
-    //                 ? ''
-    //                 : ($prod->rpa_conferida ?? null);
-    //             $rpaData = $prod->rpa_data_conferencia;
-    //             $produto[] = ($rpaData === null || $rpaData === 'NA')
-    //                 ? $rpaData
-    //                 : data_br($rpaData);
-    //             // $produto[] = data_br($prod->rpa_data_conferencia) ?? null;
-
-    //             if ($prod->rpa_aprovada < 0) {
-    //                 $prod->rpa_aprovada = 'NA';
-    //                 $prod->rpa_data_inspecao = 'NA';
-    //             }
-
-    //             // regra adicional
-    //             $rpaAprovada = ($prod->rpa_aprovada == 0 && $prod->rpa_data_inspecao === null)
-    //                 ? ''
-    //                 : $prod->rpa_aprovada;
-    //             $produto[] = $rpaAprovada;
-
-    //             $rpaData = $prod->rpa_data_inspecao;
-    //             $produto[] = ($rpaData === null || $rpaData === 'NA')
-    //                 ? $rpaData
-    //                 : data_br($rpaData);
-
-    //             $produto[] = ($prod->rep_quantia ?? 0) - (($prod->rpa_atendida ?? 0) + ($prod->rpa_cancelada ?? 0));
-    //             $produtos[] = $produto;
-    //         }
-    //     }
-
-    //     $data = [
-    //         'show' => true,
-    //         'colunas' => $colunas,
-    //         'alinha' => $alinha,
-    //         'produtos' => $produtos,
-    //     ];
-
-    //     $dispositivo = Services::device();
-    //     if ($dispositivo->isMobile()) {
-    //         // if (1 == 1) {
-    //         $data['maxHeig'] = '70vh';
-    //         $secao[1] = 'Produtos';
-    //         $campos[1][] = view('partials/pw_show_produtos_req', $data);
-    //     } else {
-    //         $data['maxHeig'] = '49vh';
-    //         $campos[0][] =
-    //             view('partials/pw_show_produtos_req', $data);
-    //     }
-
-    //     $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' ' . fmtEtiquetaCor($requisicao->stt_cor, $requisicao->stt_nome, 1);
-    //     $this->data['secoes'] = $secao;
-    //     $this->data['campos'] = $campos;
-    //     $this->data['destino'] = '';
-    //     $this->data['scripts'] = 'my_requisicao';
-
-    //     echo view('vw_edicao', $this->data);
-    // }
-
-    // public function showCabecalho($requisicao)
-    // {
-    //     $ent = new EntRequisicao((array) $requisicao, true);
-    //     $fields = $ent->campos;
-
-    //     $campos[] = $fields['req_id'];
-    //     $campos[] = $fields['req_data'];
-    //     $campos[] = $fields['req_dataentrega'];
-    //     $campos[] = $fields['tmo_id'];
-    //     $campos[] = $fields['req_depdestino'];
-    //     $campos[] = $fields['req_consdiaanterior'];
-    //     $campos[] = $fields['req_percseguranca'];
-
-    //     if ($requisicao->req_consdiaanterior == 'N') {
-    //         $campos[] = $fields['req_medconsumodias'];
-    //         $campos[] = $fields['req_meddias'];
-    //     }
-
-    //     $campos[] = $fields['usu_nome'];
-    //     // $campos[] = $fields['stt_nome'];
-    //     $campos[] = $fields['req_observacao'];
-
-    //     return $campos;
-    // }
     public function show($id)
     {
         $requisicao = $this->requisicao->getRequisicao($id);
@@ -1633,7 +1444,7 @@ class Requisicao extends BaseController
             'msgsocket' => 'A Requisição Nº ' . $nreq . ' foi Conferida!',
         ];
 
-        if ($insvis->temN || $tmo_id != 8) {
+        if ($insvis->temN || $tipomov->tmo_exigeinspecao == 'N') {
             $result = [
                 'status'    => 5,
                 'destNotif' => 'Estoque\Requisicao',

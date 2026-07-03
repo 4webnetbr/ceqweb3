@@ -20,6 +20,7 @@ class EntTipoMovimentacao extends Entity
         'tmo_entrefiliais'          => 'N',
         'tmo_estoquepadrao'         => 'N',
         'tmo_gestaoestoque'         => 'S',
+        'tmo_exigeinspecao'         => 'N',
         'tmo_ativo'                 => 'A',
         'tmo_excluido'              => null,
     ];
@@ -66,7 +67,7 @@ class EntTipoMovimentacao extends Entity
 
         $tacu                 = new MyCampo('est_tipo_movimentacao', 'tmo_acumulador', false);
         $tacu->valor          = (isset($dados['tmo_acumulador'])) ? substr($dados['tmo_acumulador'], 0, 1) : '';
-        $tacu->funcChan       = "acertaObrigatorioTransacoesERP()";
+        $tacu->funcChan       = "acertaObrigatorio('tmo_acumulador')";
         $tacu->leitura        = $show;
         $tacu->obrigatorio    = true;
         $tacu->opcoes         = $op_ac;
@@ -158,11 +159,10 @@ class EntTipoMovimentacao extends Entity
         // Indica movimentação entre filiais
         $entf               = new MyCampo('est_tipo_movimentacao', 'tmo_entrefiliais', false);
         $entf->valor        = (isset($dados['tmo_entrefiliais'])) ? $dados['tmo_entrefiliais'] : 'N';
-        $entf->funcChan     = "acertaObrigatorioTransacoesERP()";
+        $entf->funcChan     = "acertaObrigatorio('tmo_acumulador')";
         // $entf->leitura      = $show;
         $entf->selecionado  = $entf->valor;
         $entf->opcoes       = $simnao;
-        $entf->funcChan     = "acertaObrigatorioTransacoesERP()";
         $entf->dispForm     = "col-6";
         $ret['tmo_entrefiliais'] = $entf->cr2opcoes();
 
@@ -183,6 +183,14 @@ class EntTipoMovimentacao extends Entity
         $requ->selecionado    = $requ->valor;
         $requ->dispForm       = 'col-6';
         $ret['tmo_requisicao'] = $requ->cr2opcoes();
+
+        $insp                 = new MyCampo('est_tipo_movimentacao', 'tmo_exigeinspecao', false);
+        $insp->valor          = (isset($dados['tmo_exigeinspecao'])) ? $dados['tmo_exigeinspecao'] : 'N';
+        // $requ->leitura        = $show;
+        $insp->opcoes         = $simnao;
+        $insp->selecionado    = $insp->valor;
+        $insp->dispForm       = 'col-6';
+        $ret['tmo_exigeinspecao'] = $insp->cr2opcoes();
 
         // Retorna os campos do tipo de movimentação
         return (object) $ret;
@@ -207,8 +215,8 @@ class EntTipoMovimentacao extends Entity
         // Deposito de Origem
         $config = [];
         $config['Label'] = 'Deposito de Origem';
-        $config['DispForm'] = 'col-6';
-        $config['Largura']  = 50;
+        $config['DispForm'] = 'col-4';
+        $config['Largura']  = 40;
         $config['Ordem']    = $pos;
         $config['Leitura']    = $show;
 
@@ -241,6 +249,25 @@ class EntTipoMovimentacao extends Entity
             [],
             $config,
             "tmm_deposito_destino"
+        );
+        // Transação ERP 
+        $config = [];
+        $config['DispForm'] = 'col-4';
+        $config['Largura']  = 40;
+        $config['Leitura']  = $show;
+        $config['Obrigatorio']  = false;
+        $config['Ordem']     = $pos;
+
+        $ret['tmm_transacao'] = criaSelectRelativo(
+            'est_sap_transacao',
+            'tns_codtns',
+            'tns_codDescricao',
+            $dados->tmm_transacao ?? '',
+            1,
+            'est_tipo_movimentacao_movimento',
+            [],
+            $config,
+            'tmm_transacao'
         );
 
         // Botão para adicionar nova linha de movimentação

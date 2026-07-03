@@ -13,13 +13,16 @@ jQuery(document).ready(function () {
       jQuery("#stat_server").removeClass("parado");
       jQuery("#stat_server").prop("title", "Servidor Conectado");
 
-      /** Registra a Aba no WebSocket */
+      // registra o usuário no servidor
+      var usuId = jQuery("#usu_id").val();
       conn.send(
         JSON.stringify({
-          msg: getTabId(),
+          msg: "register",
           tipo: "REGISTER_TAB",
+          usuario: parseInt(usuId) || 0,
         }),
       );
+
       startKeepAlive();
     };
 
@@ -76,17 +79,18 @@ jQuery(document).ready(function () {
           break;
         case "NovaInspecao":
           verificaInspecao(data.msg[0], data.msg[1], data.msg[2], data.msg[3]);
+          desBloqueiaTela();
+          break;
         case "NovaOcorrencia":
           verificaOcorrencia(data.msg[0], data.msg[1]);
-        case "SESSION_EXPIRED":
-          if (data.tabId === getTabId()) {
-            alert("Sua sessão expirou nesta aba. " + data.msg);
-            window.location.href = "/login/logout";
-          }
+          desBloqueiaTela();
+          break;
       }
     };
-
-    conn.onclose = function (e) {
+    conn.onclose = function (event) {
+      console.log("Código:", event.code);
+      console.log("Motivo:", event.reason);
+      console.log("Fechou limpo?", event.wasClean);
       jQuery("#stat_server").addClass("parado");
       jQuery("#rodape").addClass("parado");
       jQuery("#stat_server").prop("title", "Servidor Desconectado");
@@ -98,9 +102,9 @@ jQuery(document).ready(function () {
       // Reconnect após um pequeno delay
       setTimeout(() => conectaWs(), 3000);
     };
-
-    conn.onerror = function (err) {
-      console.error("Erro WebSocket:", err.message);
+    conn.onerror = function (event) {
+      console.error("Erro WebSocket - type:", event.type);
+      console.error("Objeto completo:", event);
     };
   }
 

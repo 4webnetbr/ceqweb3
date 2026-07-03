@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Traits;
 
 use App\Libraries\Notifica;
@@ -100,11 +101,9 @@ trait RequisicaoHelpersTrait
         $tipomov = $this->tipomovimentacao->getTipoMovimentacao($tmoId)[0];
         if ($tipomov->tmo_conferencia === 'N') {
             $insvis = retornaInsVis($reqId);
-            // Regra Atendimento: ($insvis->temN || $tmoId != 8) ? 5 : 25
-            // Regra Conferência: (!$insvis->temS || $insvis->temN || $tmoId != 8) ? 5 : 25
             $isConcluida = ($params['contexto'] === 'conferencia')
-                ? (! $insvis->temS || $insvis->temN || $tmoId != 8)
-                : ($insvis->temN || $tmoId != 8);
+                ? (! $insvis->temS || $insvis->temN || $tipomov->tmo_exigeinspecao == 'N')
+                : ($insvis->temN || $tipomov->tmo_exigeinspecao == 'N');
 
             return $isConcluida ? 5 : 25;
         }

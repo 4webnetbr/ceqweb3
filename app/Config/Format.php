@@ -64,6 +64,17 @@ class Format extends BaseConfig
     ];
 
     /**
+     * --------------------------------------------------------------------------
+     * JSON Encode Depth
+     * --------------------------------------------------------------------------
+     *
+     * Introduzido pelo JSONFormatter do framework a partir da atualização pra
+     * 4.7.3 (mesma categoria do $permittedURIChars em Config\App). 512 é o
+     * default do próprio PHP pro parâmetro $depth de json_encode().
+     */
+    public int $jsonEncodeDepth = 512;
+
+    /**
      * A Factory method to return the appropriate formatter for the given mime type.
      *
      * @return FormatterInterface

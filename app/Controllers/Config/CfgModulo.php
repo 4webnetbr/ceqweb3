@@ -3,8 +3,9 @@
 namespace App\Controllers\Config;
 
 use App\Controllers\BaseController;
-use App\Models\Config\ConfigModuloModel;
 use App\Entities\Config\EntCfgModulo;
+use App\Models\CommonModel;
+use App\Models\Config\ConfigModuloModel;
 use App\Traits\ForeignKeyUsageChecker;
 
 class CfgModulo extends BaseController
@@ -13,11 +14,13 @@ class CfgModulo extends BaseController
 
     protected array $data;
     protected ConfigModuloModel $modulo;
+    protected CommonModel $common;
 
     public function __construct()
     {
         $this->data   = session()->getFlashdata('dados_tela') ?? [];
         $this->modulo = new ConfigModuloModel();
+        $this->common    = new CommonModel();
     }
 
     public function index()
@@ -58,7 +61,7 @@ class CfgModulo extends BaseController
         $mod = $this->modulo->find($id);
 
         if (!$mod) {
-            return redirectWithError($this->data['controler'],41);
+            return redirectWithError($this->data['controler'], 41);
             // return view('errors/registro_nao_encontrado', [
             //     'mensagem' => 'Módulo não encontrado'
             // ]);
@@ -121,20 +124,42 @@ class CfgModulo extends BaseController
 
     public function store()
     {
-        $ent = new EntCfgModulo($this->request->getPost());
+        $ret = [];
+        $ret['erro'] = false;
+        $postado = $this->request->getPost();
+        $ent = new EntCfgModulo($postado);
 
-        if (!$this->modulo->save($ent)) {
-            echo json_encode([
-                'erro' => true,
-                'msg'  => implode('<br>', $this->modulo->errors())
-            ]);
-            return;
+        $exists = $this->common->verificaUnico($this->modulo, 'mod_nome', $postado['mod_nome'], 'mod_id', $postado['mod_id']);
+
+        // debug(var_dump($exists), true);
+        if (intval($exists) > 0) {
+            $ret['erro'] = true;
+            $ret['msg'] = 8;
+        } else {
+            $this->modulo->transBegin();
+            try {
+                // debug($ent, true);
+                $salva = $this->modulo->save($ent);
+                // debug($this->status->getLastQuery(), true);
+
+                if (!$salva) {
+                    $ret['erro'] = true;
+                    $ret['msg']  = implode('<br>', $this->modulo->errors());
+                }
+                if (!$ret['erro']) {
+                    $this->modulo->transCommit();
+                    session()->setFlashdata('msg', 'Módulo gravado com sucesso!');
+                    $ret['erro'] = false;
+                    $ret['url'] = site_url($this->data['controler']);
+                }
+            } catch (\Throwable $e) {
+                $this->modulo->transRollback();
+                $ret = [
+                    'erro' => true,
+                    'msg'  => $e->getMessage() ?: 'Erro ao salvar Módulo.'
+                ];
+            }
         }
-
-        session()->setFlashdata('msg', 'Módulo gravado com sucesso!');
-        echo json_encode([
-            'erro' => false,
-            'url'  => site_url($this->data['controler'])
-        ]);
+        echo json_encode($ret);
     }
 }

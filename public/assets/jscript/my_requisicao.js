@@ -52,9 +52,9 @@ function gerarCampoNumeroPadrao(
   classeDiv,
   digitos = 2,
 ) {
-  dmw = digitos * 6; //max-width da div
+  dmw = Math.max(digitos * 5, 18); //max-width da div
   return `
-        <div class="input-group input-group-sm d-inline-flex ${classeDiv}" style="max-width: ${dmw}ch;min-width: 15ch;font-size:10px">
+        <div class="input-group input-group-sm d-inline-flex ${classeDiv}" style="max-width: ${dmw}ch;min-width: 18ch;font-size:10px">
             <div class="input-group-text input-group-addon down-num pe-auto" data-refer="${id}">
                 <i class="fas fa-minus"></i>
             </div>
@@ -134,7 +134,7 @@ function criarLinhaProduto(
             data-max="${prod.pro_maximo}"
             data-saldo-destino="${estoqueDes}"
             data-saldo-disponivel="${estoqueDisp}"
-            data-loteemuso="${cor !== "" ? true : false}"
+            data-loteemuso=${cor !== "" ? true : false}
             data-sugestao-base="${prod.pro_sugestao}">
 
             <td class="text-end p-0 pe-2">
@@ -614,6 +614,7 @@ async function carregarProdutos(url, aba, obj) {
       let match = index.match(/^(.*?)(\d+)$/);
 
       let inicio = match[1]; // "cl7_pr"
+
       let ind = parseInt(match[2]); // "14"
       let indAnte = ind - 1;
       let indProx = ind + 1;
@@ -662,68 +663,32 @@ async function carregarProdutos(url, aba, obj) {
         trAnte = trAtual;
         trProx = trAtual;
       }
-
-      let ind = parseInt(match[2]); // "14"
-      let indAnte = ind - 1;
-      let indProx = ind + 1;
-      // verificar se o produto da linha atual é o mesmo da linha anterior ou da próxima linha
-      let trAnte = jQuery(`tr[data-index="${inicio + indAnte}"]`);
-      let trProx = jQuery(`tr[data-index="${inicio + indProx}"]`);
-      const codproAnte = trAnte.attr("data-codpro");
-      const codproProx = trProx.attr("data-codpro");
-      const trAtual = jQuery(`tr[data-index="${index}"]`);
-      const codproAtual = trAtual.attr("data-codpro");
-      const loteemusoAtual = trAtual.attr("data-loteemuso");
-      const loteemusoAnter = trAnte.attr("data-loteemuso");
-      const loteemusoProxi = trProx.attr("data-loteemuso");
-      let jaSolicitado = 0;
-      if (codproAtual == codproAnte) {
-        // saldoAnte = trAnte.attr("data-saldo-disponivel");
-        // saldoProx = trProx.attr("data-saldo-disponivel");
-        // solicAnte = jQuery("#requisicao_" + indAnte).val();
-        // solicProx = jQuery("#requisicao_" + indProx).val();
-        // solicAtual = jQuery("#requisicao_" + ind).val();
-        // jaSolicitado = jQuery(`#requisicao_${inicio + (ind - 1)}`).val();
-        if (loteemusoAtual == "false" && loteemusoAnter == "true") {
-          conf = await boxAlert(39, false, "", false, 1, true);
-          if (!conf) {
-            jQuery(this).val(0);
-            return;
-          }
-        }
-        novoInd = ind;
-        if (loteemusoAnter === "true") {
-          novoInd = indAnte;
-        } else if (loteemusoProxi === "true") {
-          novoInd = indProx;
-        }
-
-        indexMultip = inicio + novoInd;
-      } else if (codproAtual == codproProx) {
-        // saldoAnte = trAnte.attr("data-saldo-disponivel");
-        // saldoProx = trProx.attr("data-saldo-disponivel");
-        // solicAnte = jQuery("#requisicao_" + indAnte).val();
-        // solicProx = jQuery("#requisicao_" + indProx).val();
-        // solicAtual = jQuery("#requisicao_" + ind).val();
-        // jaSolicitado = jQuery(`#requisicao_${inicio + (ind - 1)}`).val();
-        if (loteemusoAtual == "false" && loteemusoProxi == "true") {
-          conf = await boxAlert(39, false, "", false, 1, true);
-          if (!conf) {
-            jQuery(this).val(0);
-            return;
-          }
-        }
-        novoInd = ind;
-        if (loteemusoAnter === "true") {
-          novoInd = indAnte;
-        } else if (loteemusoProxi === "true") {
-          novoInd = indProx;
-        }
-
-        indexMultip = inicio + novoInd;
-      } else {
-        trAnte = trAtual;
-      }
+      //   let ind = parseInt(match[2]); // "14"
+      //   // verificar se o produto da linha atual é o mesmo da linha anterior ou da próxima linha
+      //   let trAnte = jQuery(`tr[data-index="${inicio + (ind - 1)}"]`);
+      //   const codproAnte = trAnte.attr("data-codpro");
+      //   const trAtual = jQuery(`tr[data-index="${index}"]`);
+      //   const codproAtual = trAtual.attr("data-codpro");
+      //   const loteemuso = trAtual.attr("data-loteemuso");
+      //   let jaSolicitado = 0;
+      //   if (codproAnte == codproAtual) {
+      //     saldoAnte = trAnte.attr("data-saldo-disponivel");
+      //     solicAnte = jQuery("#requisicao_" + index).val();
+      //     jaSolicitado = jQuery(`#requisicao_${inicio + (ind - 1)}`).val();
+      //     if (
+      //       parseInt(saldoAnte) > parseInt(jaSolicitado) &&
+      //       loteemuso == "false"
+      //     ) {
+      //       conf = await boxAlert(39, false, "", false, 1, true);
+      //       if (!conf) {
+      //         jQuery(this).val(0);
+      //         return;
+      //       }
+      //     }
+      //     indexMultip = inicio + (ind - 1);
+      //   } else {
+      //     trAnte = trAtual;
+      //   }
 
       const multiplicador =
         parseInt(jQuery(`#pro_multiplica_${indexMultip}`).val()) || 1;
@@ -1427,7 +1392,7 @@ async function copiar_requisicao(url) {
 }
 
 async function gerarInspecao(tela, indice) {
-  url = window.location.origin + "/InspecaoProd/inspeciona";
+  url = window.location.origin + "/InspecaoProd/inspeciona/";
   telid = tela;
   reqid = jQuery("#req_id").val();
   proid = jQuery("#proid_" + indice).val();

@@ -2,9 +2,12 @@
 if (!isset($show)) {
     $show = false;
 }
+if (!isset($maxHeig)) {
+    $maxHeig = '49vh';
+}
 // debug($produtos, true);
 ?>
-<div class="accordion mb-5" id="accProdutos">
+<div class="accordion mb-0" id="accProdutos">
     <div class="accordion-item">
         <h2 class="accordion-header" id="headprod<?php echo $produtos[0]['req_id'] ?? '' ?>">
             <button class="accordion-button" type="button"
@@ -14,7 +17,7 @@ if (!isset($show)) {
             </button>
         </h2>
         <div id="collapseprod<?php echo $produtos[0]['req_id'] ?? '' ?>" class="accordion-collapse collapse show" aria-labelledby="headprod<?php echo $produtos[0]['req_id'] ?? '' ?>" data-bs-parent="#accProdutos">
-            <div class="accordion-body p-0" style="max-height:49vh; height:auto;border-top: 1px solid white;">
+            <div class="accordion-body p-0" style="max-height:<?php echo $maxHeig; ?>; height:auto; border-top: 1px solid white;">
                 <table class="display compact table table-sm table-info table-striped table-hover table-vertical-borders col-12 no-footer dataTable tabela-pequena" aria-describedby="table_info">
                     <thead class="table-default bg-table-blue-dark col-12 overflow-x-auto">
                         <tr class=' w-100' style='min-height:39px; height:39px;'>

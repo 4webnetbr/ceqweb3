@@ -112,12 +112,13 @@ class WorkAnalise extends BaseController
                 if ($movim) {
                     (new SoapSapiens())->transfProdutosSapiens(
                         $prod['pro_codpro'],
-                        $movim['tmo_transacao_erp'],
+                        $movim['tmm_transacao'],
                         $movim['dep_codorigem'],
                         date('d/m/Y'),
                         $quantidade,
                         $loteInfo['lot_lote'],
-                        $movim['dep_coddestino']
+                        $movim['dep_coddestino'],
+                        $loteInfo['lot_validade'],
                     );
                 }
                 $lotesToUpdate[] = [

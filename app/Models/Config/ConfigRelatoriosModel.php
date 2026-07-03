@@ -10,7 +10,7 @@ class ConfigRelatoriosModel extends Model
 {
     protected $DBGroup          = 'default';
     protected $table            = 'cfg_relatorios';
-    protected $view             = 'cfg_relatorios';
+    protected $view             = 'vw_cfg_relatorios_relac';
     protected $primaryKey       = 'rel_id';
 
     protected $returnType       = EntCfgRelatorios::class;
@@ -18,6 +18,7 @@ class ConfigRelatoriosModel extends Model
 
     protected $allowedFields = [
         'rel_id',
+        'rel_nome',
         'mod_id',
         'tel_id',
         'rel_titulo',
@@ -25,6 +26,7 @@ class ConfigRelatoriosModel extends Model
         'rel_formato',
         'rel_tamanho_fonte',
         'rel_chars_por_linha',
+        'rel_totalizar_registros',
         'rel_sql_gerado',
         'rel_ativo',
         'rel_criado_por',
@@ -33,10 +35,13 @@ class ConfigRelatoriosModel extends Model
     ];
 
     protected $validationRules = [
-        'rel_titulo'       => 'required|min_length[3]',
-        'rel_tabela_base'  => 'required',
-        'rel_formato'      => 'required|in_list[P,L]',
-        'rel_tamanho_fonte' => 'required|integer|greater_than_equal_to[8]|less_than_equal_to[14]',
+        'rel_id'            => 'permit_empty|integer',
+        'rel_nome'          => 'required|min_length[5]|max_length[50]|is_unique[cfg_relatorios.rel_nome,rel_id,{rel_id}]',
+        'rel_titulo'        => 'required|min_length[3]',
+        'rel_tabela_base'   => 'required',
+        'rel_formato'       => 'required|in_list[P,L]',
+        // Fontes de 6 a 16pt
+        'rel_tamanho_fonte' => 'required|integer|greater_than_equal_to[6]|less_than_equal_to[16]',
     ];
 
     protected $afterInsert = ['logInsert'];
@@ -120,6 +125,57 @@ class ConfigRelatoriosModel extends Model
     }
 
     /**
+     * Retorna relatórios ativos de um módulo, SEM tela vinculada (tel_id IS NULL),
+     * liberados para o perfil informado. A própria view vw_cfg_relatorios_relac
+     * já agrega as permissões em `prf_id` como GROUP_CONCAT(rp.prf_id, ',') —
+     * por isso o teste é FIND_IN_SET, sem precisar de JOIN adicional aqui.
+     * Usado pelo controller Utils/Relatorio::index() e por montaMenu() (app/Common.php).
+     */
+    public function getRelatoriosPorModuloPerfil(int $mod_id, int $perfil_id)
+    {
+        $db      = db_connect('default');
+        $builder = $db->table($this->view . ' r');
+        $builder->select('r.*');
+        // ANTES (BKP 30/06/2026): $builder->join('cfg_rel_permissao rlp', 'rlp.rel_id = r.rel_id', 'inner');
+        $builder->where('r.mod_id', $mod_id);
+        $builder->where('r.rel_ativo', 1);
+        // ANTES (BKP 30/06/2026): $builder->where('r.tel_id', null); // IS NULL - sem tela vinculada
+        $builder->where('r.tel_id', 0); // a view traz 0 (não NULL) quando não há tela vinculada
+        // ANTES (BKP 30/06/2026): $builder->where('rlp.prf_id', $perfil_id);
+        $builder->where('FIND_IN_SET(' . $perfil_id . ', r.prf_id) >', 0, false);
+        // ANTES (BKP 30/06/2026): $builder->groupBy('r.rel_id');
+        $builder->orderBy('r.rel_titulo');
+
+        $ret =  $builder->get()->getResult(EntCfgRelatorios::class);
+        // $sql = $db->getLastQuery();
+        // debug($sql);
+        return $ret;
+    }
+
+    /**
+     * Confirma que um relatório específico está liberado para o perfil
+     * informado (sem tela vinculada, ativo, com permissão agregada em
+     * `prf_id` na view — ver nota acima em getRelatoriosPorModuloPerfil()).
+     * Usado pelo controller Utils/Relatorio em filtro()/gerar() para checagem
+     * de segurança por relatório individual.
+     */
+    public function relatorioPermitido(int $rel_id, int $perfil_id): ?EntCfgRelatorios
+    {
+        $db      = db_connect('default');
+        $builder = $db->table($this->view . ' r');
+        $builder->select('r.*');
+        // ANTES (BKP 30/06/2026): $builder->join('cfg_rel_permissao rlp', 'rlp.rel_id = r.rel_id', 'inner');
+        $builder->where('r.rel_id', $rel_id);
+        $builder->where('r.rel_ativo', 1);
+        // ANTES (BKP 30/06/2026): $builder->where('r.tel_id', null);
+        $builder->where('r.tel_id', 0); // a view traz 0 (não NULL) quando não há tela vinculada
+        // ANTES (BKP 30/06/2026): $builder->where('rlp.prf_id', $perfil_id);
+        $builder->where('FIND_IN_SET(' . $perfil_id . ', r.prf_id) >', 0, false);
+
+        return $builder->get()->getFirstRow(EntCfgRelatorios::class);
+    }
+
+    /**
      * Busca por título (autocomplete / search).
      */
     public function getRelatoriosSearch(string $termo)
@@ -192,6 +248,7 @@ class ConfigRelatoriosModel extends Model
     public function gerarSQL(int $rel_id): string
     {
         $db = db_connect('default');
+        $dicDados = new \App\Models\Config\ConfigDicDadosModel();
 
         $relatorio = $db->table('cfg_relatorios')
             ->where('rel_id', $rel_id)
@@ -212,35 +269,49 @@ class ConfigRelatoriosModel extends Model
             ->orderBy('rfi_ordem')
             ->get()->getResult();
 
+        $cacheSchema = [];
+        $resolverSchema = function (string $tabela) use ($dicDados, &$cacheSchema): string {
+            if (!isset($cacheSchema[$tabela])) {
+                $info = $dicDados->getDbGroupAndSchema($tabela);
+                $cacheSchema[$tabela] = !empty($info['schema']) ? $info['schema'] . '.' . $tabela : $tabela;
+            }
+            return $cacheSchema[$tabela];
+        };
+
+        $tabelaBase = $resolverSchema($relatorio->rel_tabela_base);
+
         // SELECT
         $sel = [];
         foreach ($colunas as $col) {
-            $sel[] = "{$col->rco_tabela}.{$col->rco_campo} AS '{$col->rco_label}'";
+            $tabCol = $resolverSchema($col->rco_tabela);
+            $sel[] = "{$tabCol}.{$col->rco_campo} AS '{$col->rco_label}'";
         }
-        $sql  = 'SELECT ' . implode(',' . PHP_EOL . '       ', $sel);
+        $sql = 'SELECT ' . implode(',' . PHP_EOL . '       ', $sel);
 
         // FROM
-        $sql .= PHP_EOL . 'FROM ' . $relatorio->rel_tabela_base;
+        $sql .= PHP_EOL . 'FROM ' . $tabelaBase;
 
         // JOINs
         foreach ($joins as $j) {
-            $alias = $j->rjo_alias_join ? " AS {$j->rjo_alias_join}" : '';
-            $sql  .= PHP_EOL . "{$j->rjo_tipo_join} JOIN {$j->rjo_tabela_join}{$alias}"
-                . " ON {$j->rjo_condicao_on}";
-        }
+            $tabJoin = $resolverSchema($j->rjo_tabela_join);
+            $alias   = $j->rjo_alias_join ? " AS {$j->rjo_alias_join}" : '';
 
-        // WHERE
-        $sql .= PHP_EOL . 'WHERE 1=1';
-        foreach ($filtros as $f) {
-            if ($f->rfi_tipo_filtro === 'FK') {
-                $sql .= PHP_EOL . "  AND {$f->rfi_tabela}.{$f->rfi_campo} = :{$f->rfi_campo}";
-            } else {
-                $sql .= PHP_EOL . "  AND {$f->rfi_tabela}.{$f->rfi_campo} >= :{$f->rfi_campo}_de";
-                $sql .= PHP_EOL . "  AND {$f->rfi_tabela}.{$f->rfi_campo} <= :{$f->rfi_campo}_ate";
+            $condicao = $j->rjo_condicao_on;
+            foreach ($cacheSchema as $tab => $tabCompleta) {
+                $condicao = str_replace($tab . '.', $tabCompleta . '.', $condicao);
             }
+
+            $sql .= PHP_EOL . "{$j->rjo_tipo_join} JOIN {$tabJoin}{$alias}"
+                . " ON {$condicao}";
         }
 
-        $sql .= PHP_EOL . "ORDER BY {$relatorio->rel_tabela_base}.{$this->primaryKey}";
+        // ORDER BY na ordem das colunas definidas na aba Colunas
+        $ord = [];
+        foreach ($colunas as $col) {
+            $tabOrd = $resolverSchema($col->rco_tabela);
+            $ord[] = "{$tabOrd}.{$col->rco_campo}";
+        }
+        $sql .= PHP_EOL . 'ORDER BY ' . implode(', ', $ord);
 
         $this->gravarSqlGerado($rel_id, $sql);
 

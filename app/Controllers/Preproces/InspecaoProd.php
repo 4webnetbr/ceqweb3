@@ -81,7 +81,7 @@ class InspecaoProd extends BaseController
     {
         // if (!$requis = cache('requis')) {
         $campos       = montaColunasCampos($this->data, 'req_id');
-        $dados_requis = $this->requisicao->getRequisicaoLista(false, [21, 24, 25, 26]);
+        $dados_requis = $this->requisicao->getRequisicaoListaInsp(false, [21, 24, 25, 26]);
         // Filtra por perfil
         $dados_requis = filtrarPorPerfil($dados_requis);
         // Filtra por perfil do tipo de movimentação
@@ -90,7 +90,7 @@ class InspecaoProd extends BaseController
         if ($dados_requis) {
             $req_ids_assoc = array_map(fn($r) => $r->req_id, $dados_requis);
 
-            $log      = buscaLogTabela('est_requisicao', $req_ids_assoc);
+            $log      = buscaLogTabelaFirst('est_requisicao', $req_ids_assoc);
             $base_url = base_url($this->data['controler']);
             foreach ($dados_requis as $req) {
                 if ($req->req_id) {
@@ -142,8 +142,8 @@ class InspecaoProd extends BaseController
         $requisicao->usu_nome = $log['usua_alterou'] ?? '';
         // debug($requisicao, true);
         $contRequis = new Requisicao();
-        $secao[0]   = 'Dados Gerais';
-        $campos[0]  = $contRequis->showCabecalhoSimples($requisicao);
+        $secao[1]   = 'Dados Gerais';
+        $campos[1]  = $contRequis->showCabecalho($requisicao);
 
         $entRequisicao = new EntInspecaoProd((array) $requisicao, $show, 'conf');
 
@@ -214,7 +214,8 @@ class InspecaoProd extends BaseController
             // $verinsp .= "verificaInspecao(" . $prod->rep_id . "," . $prod->req_id . "," . $prod->pro_id . ",'" . $prod->lot_lote . "');";
         }
         // debug($resultado, true);
-        $campos[0][] = view('partials/pw_produtos_inspecao', ['produtos' => array_map(fn($p) => (array) $p, $resultado)]);
+        $secao[0]    = 'Produtos';
+        $campos[0][] = view('partials/pw_produtos_inspecao', ['produtos' => array_map(fn($p) => (array) $p, $resultado), 'maxHeig' => '65vh']);
 
         // Define dados principais da tela
         $this->data['desc_metodo'] = '';
@@ -276,7 +277,7 @@ class InspecaoProd extends BaseController
      * @param mixed $id
      * @return void
      */
-    public function inspeciona()
+    public function inspeciona(string $controler = 'Inspeção')
     {
         $request = service('request');
 
@@ -356,7 +357,7 @@ class InspecaoProd extends BaseController
         $req_id     = $req->crOculto();
 
         $desc        = new MyCampo('oco_ocorrencia', 'oco_descricao');
-        $desc->valor = 'Ocorrência gerada na Inspeção';
+        $desc->valor = 'Não Conformidade na Inspeção';
         $descreva    = $desc->crOculto();
 
         $qtd              = new MyCampo('oco_ocorrencia', 'oco_qtd');
@@ -364,7 +365,7 @@ class InspecaoProd extends BaseController
         $qtd->dispForm    = 'col-6';
         $qtd->minimo      = 1;
         $qtd->largura     = 10;
-        $qtd->size        = 3;
+        $qtd->size        = 4;
         $qtd->maximo      = $qtde;
         $qtd->obrigatorio = true;
         $quantia          = $qtd->crInput();
@@ -683,48 +684,52 @@ class InspecaoProd extends BaseController
         // ─── 3. PROCESSA OCORRÊNCIAS ─────────────────────────────────────────────
         envia_msg_ws($this->data['controler'], "Processando Ocorrências", 'MsgServer', session()->get('usu_id'), 1);
         $produtosreq = $this->requisicao->getRequisicaoProdutos($postado['req_id']);
+        $res = service('ocorrenciaService')->gerarOcorrencias($produtosreq, $postado['req_id']);
 
-        foreach ($produtosreq as $val) {
-            $filtro = [
-                'req_id'   => $postado['req_id'],
-                'pro_id'   => $val->pro_id,
-                'lot_lote' => $val->lot_lote,
-                'oco_id'   => null,
-            ];
-            $ocorrencias = $this->common->getRegFiltro('dbEstoque', 'vw_est_requisicao_produto_ocorrencia_relac', ['*'], $filtro);
+        // foreach ($produtosreq as $val) {
+        //     $filtro = [
+        //         'req_id'   => $postado['req_id'],
+        //         'pro_id'   => $val->pro_id,
+        //         'lot_lote' => $val->lot_lote,
+        //         'oco_id'   => null,
+        //     ];
+        //     $ocorrencias = $this->common->getRegFiltro('dbEstoque', 'vw_est_requisicao_produto_ocorrencia_relac', ['*'], $filtro);
 
-            for ($o = 0; $o < count($ocorrencias); $o++) {
-                $result = [];
-                foreach ($ocorrencias[$o] as $key => $value) {
-                    $result[$key] = $value;
-                }
-                $result['stt_id'] = 28;
-                $entity           = new EntOcoOcorrencia($result);
-                $salvaoco         = $this->ocorrencia->save($entity);
+        //     for ($o = 0; $o < count($ocorrencias); $o++) {
+        //         $result = [];
+        //         foreach ($ocorrencias[$o] as $key => $value) {
+        //             $result[$key] = $value;
+        //         }
+        //         $result['stt_id'] = 28;
+        //         $result['usu_criou'] = session()->get('usu_id');
 
-                if ($salvaoco) {
-                    $idoco                = $this->ocorrencia->getInsertID();
-                    $data                 = $entity->toArray();
-                    $lote                 = $this->lote->getLoteId($val->lot_lote)[0];
-                    $data['oco_id']       = $idoco;
-                    $data['lot_lote']     = $lote->lot_lote;
-                    $data['lot_validade'] = $lote->lot_validade;
-                    $ocoService           = service('ocorrenciaService');
-                    $ocoService->processAfterSave($data);
-                    $this->common->updateReg(
-                        'dbEstoque',
-                        'est_requisicao_produto_ocorrencia',
-                        'rpo_id = ' . $ocorrencias[$o]['rpo_id'],
-                        ['oco_id' => $idoco]
-                    );
-                } else {
-                    $ret['erro'] = true;
-                    $ret['msg']  = $this->ocorrencia->errors();
-                    echo json_encode($ret);
-                    return;
-                }
-            }
-        }
+        //         $entity           = new EntOcoOcorrencia($result);
+        //         $salvaoco         = $this->ocorrencia->save($entity);
+
+        //         if ($salvaoco) {
+        //             $idoco                = $this->ocorrencia->getInsertID();
+        //             $data                 = $entity->toArray();
+        //             $lote                 = $this->lote->getLoteId($val->lot_lote)[0];
+        //             $data['oco_id']       = $idoco;
+        //             $data['lot_lote']     = $lote->lot_lote;
+        //             $data['lot_validade'] = $lote->lot_validade;
+        //             $data['usu_fina']     = session()->get('usu_id');
+        //             $ocoService           = service('ocorrenciaService');
+        //             $ocoService->processAfterSave($data);
+        //             $this->common->updateReg(
+        //                 'dbEstoque',
+        //                 'est_requisicao_produto_ocorrencia',
+        //                 'rpo_id = ' . $ocorrencias[$o]['rpo_id'],
+        //                 ['oco_id' => $idoco]
+        //             );
+        //         } else {
+        //             $ret['erro'] = true;
+        //             $ret['msg']  = $this->ocorrencia->errors();
+        //             echo json_encode($ret);
+        //             return;
+        //         }
+        //     }
+        // }
 
         $ret['erro'] = false;
         $ret['msg'] = 'Inspeção gravada com sucesso!';

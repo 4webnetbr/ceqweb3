@@ -34,6 +34,7 @@ class OcorreOcorrenciaModel extends Model
         'oco_justi',
         'usu_criou',
         'usu_fina',
+        'oco_ativo'
     ];
 
     protected $validationRules = [
@@ -93,8 +94,7 @@ class OcorreOcorrenciaModel extends Model
 
         $builder = $db->table($this->view);
         $builder->select('*');
-        $builder->orderBy('stt_ordem');
-        $builder->orderBy('oco_id', 'ASC');
+        $builder->orderBy('oco_ativo, stt_ordem,oco_data DESC, oco_id ASC');
 
         return $builder->get()->getResult();
     }
@@ -105,7 +105,7 @@ class OcorreOcorrenciaModel extends Model
 
         $perfilId = session()->get('usu_perfil_id');
         $builder = $db->table($this->view . ' v');
-        $builder->distinct()->select('v.*');
+        $builder->select('v.*');
         $builder->join(
             'oco_subt_ocorrencia_permissao perm',
             "perm.sut_id = v.sut_id AND perm.prf_id = {$perfilId}",
@@ -115,6 +115,7 @@ class OcorreOcorrenciaModel extends Model
             $builder->whereIn('v.stt_id', $stt_ids);
         }
 
+        $builder->where('v.oco_ativo', 'A');
         $builder->orderBy('v.stt_ordem');
         $builder->orderBy('v.oco_id', 'DESC');
 

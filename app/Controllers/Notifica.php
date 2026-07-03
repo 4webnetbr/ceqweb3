@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
@@ -34,8 +35,8 @@ class Notifica extends BaseController
         $dados  = $_REQUEST;
         // debug($_REQUEST,true);
         $usuario       = $dados['usuario'];
-        $notificacoes  = $this->modnotif->getNotificaAberta();
-        // debug($notificcoes, true);
+        $notificacoes  = $this->modnotif->getNotificaAberta($usuario);
+        // debug(count($notificacoes), true);
         $lstnotif  = '';
         $lstnotif .= "<button type='button' id='li_todas' name='li_todas' class='btn btn-primary fs-7 col-12 d-block' style='line-height: 1rem' onclick='viuNotifica(0)' ><i class='fas fa-check me-3' style='font-size: 1rem;' aria-hidden='true'></i>Todas Lidas</button>";
         $lstnotif .= "<div id='notificacoes' class='col-11 overflow-y-auto'>";

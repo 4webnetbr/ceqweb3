@@ -61,6 +61,7 @@ class Lote extends BaseController
         $campos = montaColunasCampos($this->data, 'lot_id');
         $dados_lote = $this->lotes->getLote();
         $dados_lote = filtrarPorPerfil($dados_lote);
+        $this->data['allconsulta'] = true;
         $lotes = [
             'data' => montaListaColunasEnt($this->data, 'lot_id', $dados_lote, $campos[1]),
         ];
@@ -110,5 +111,81 @@ class Lote extends BaseController
             session()->setFlashdata('msg', $msg);
             $this->index();
         }
+    }
+
+    public function edit($id)
+    {
+        // Busca o lote pelo ID informado
+        $dados_lotes = $this->lotes->getLote($id);
+
+        // Caso não encontre pelo ID, tenta buscar pelo termo (ex: código/lote)
+        if (count($dados_lotes) === 0) {
+            $dados_lotes = $this->lotes->getLoteSearch($id);
+        }
+
+        // se encontrou algum lote
+        if (count($dados_lotes) > 0) {
+            /** @var \App\Entities\Produto\EntLote $lote */
+
+            $lote   = new EntLote($dados_lotes[0], false);
+            $fields = $lote->campos;    // Campos já montados pelo Entity
+
+            $secao = [];
+            $secao[0] = 'Dados Gerais';
+
+            // Monta os campos da seção "Dados Gerais"
+            $campos = [];
+            $campos[0][0] = $fields['lot_id'];
+            $campos[0][1] = $fields['lot_codbar'];
+            $campos[0][2] = $fields['lot_codpro'];
+            $campos[0][3] = $fields['pro_despro'];
+            $campos[0][4] = $fields['lot_lote'];
+            $campos[0][5] = $fields['lot_validade'];
+            $campos[0][6] = $fields['lot_status'];
+
+            $this->data['secoes']  = $secao;
+            $this->data['campos']  = $campos;
+            $this->data['destino'] = 'store';
+            $this->data['log']     = buscaLog('pro_sap_lote', $id);
+
+            echo view('vw_edicao', $this->data);
+        } else {
+
+            $msg = 'LOTE não Encontrado, ou não disponível!!!';
+            session()->setFlashdata('msg', $msg);
+            $this->index();
+        }
+    }
+
+    public function store()
+    {
+        $ret = ['erro' => false];
+        $postado = $this->request->getPost();
+
+        $ent = new EntLote($postado);
+        $ent->fill($postado);
+
+        $this->lotes->transBegin();
+
+        try {
+            $salva = $this->lotes->save($ent);
+
+            if (!$salva) {
+                $ret['erro'] = true;
+                $ret['msg']  = implode('<br>', $this->lotes->errors());
+            } else {
+                $this->lotes->transCommit();
+                session()->setFlashdata('msg', 'Lote gravado com sucesso!');
+                $ret['url'] = site_url($this->data['controler']);
+            }
+        } catch (\Throwable $e) {
+            $this->lotes->transRollback();
+            $ret = [
+                'erro' => true,
+                'msg'  => $e->getMessage() ?: 'Erro ao salvar Lote.',
+            ];
+        }
+
+        echo json_encode($ret);
     }
 }

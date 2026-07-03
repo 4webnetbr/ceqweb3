@@ -82,13 +82,15 @@ class OcoOcorrencia extends BaseController
             fn($o) => $o->oco_id,
             $dados
         );
-        $log = buscaLogTabela('oco_ocorrencia', $oco_ids_assoc);
-
+        $logcriou = buscaLogTabelaFirst('oco_ocorrencia', $oco_ids_assoc);
+        // debug($logcriou, true);
         foreach ($dados as $nov) {
 
             // finalizado por e gerado por:
             $nov->acao_person = [];
-            $nov->usu_nome    = $log[$nov->oco_id]['usua_alterou'] ?? '';
+            if ($nov->usu_nome == null) {
+                $nov->usu_nome    = $logcriou[$nov->oco_id]['usua_alterou'] ?? '';
+            }
 
             // Botão imprimir            // Botão imprimir
             if (trim($nov->stt_nome ?? '') !== 'Pendente') {
@@ -122,10 +124,10 @@ class OcoOcorrencia extends BaseController
         foreach ($dados as $index => $nov) {
             // SE TEM REQUISIÇÃO: NÃO PERMITE EDITAR e EXCLUIR
             if (! empty($nov->req_id)) {
-                $this->data['exclusao'] = false;
+                // $this->data['exclusao'] = false;
                 $this->data['edicao']   = false;
             } else {
-                $this->data['exclusao'] = true;
+                // $this->data['exclusao'] = true;
                 $this->data['edicao']   = true;
             }
             $linha        = montaListaColunasEnt($this->data, 'oco_id', [$nov], $campos[1]);
@@ -171,6 +173,38 @@ class OcoOcorrencia extends BaseController
 
         // Renderiza a view
         echo view('vw_edicao', $this->data);
+    }
+    public function ativinativ($id, $tipo)
+    {
+        $ret = [];
+        try {
+            if ($tipo == 1) {
+                $dad_atin = [
+                    'oco_ativo' => 'A'
+                ];
+            } else {
+                $dad_atin = [
+                    'oco_ativo' => 'I'
+                ];
+                // $this->verificarUsoEmRelacionamentos('cfg_status', 'stt_id', (int) $id);
+            }
+
+            $this->ocorrencia->update($id, $dad_atin);
+            $ret['erro'] = false;
+            session()->setFlashdata('msg', 'Ocorrência Alterada com Sucesso');
+            $ret['msg'] = 'Ocorrência Alterada com Sucesso';
+        } catch (\CodeIgniter\Database\Exceptions\DatabaseException $e) {
+            $ret['erro'] = true;
+            // $ret['msg']  = 'Não foi possível Alterar o Status, Verifique!<br><br> ' . $e . message();
+            $ret['msg']  = 14;
+        } catch (\Exception $e) {
+            debug($e, true);
+            $ret['erro'] = true;
+            // $ret['msg']  = 'Não foi possível Alterar o Status, Verifique!<br><br> ' . $e . message;
+            $ret['msg']  = 14; // ou código personalizado, se preferir
+        }
+
+        echo json_encode($ret);
     }
 
     /**
@@ -425,8 +459,8 @@ class OcoOcorrencia extends BaseController
         $qtd->dispForm    = 'col-6';
         $qtd->minimo      = 1;
         $qtd->largura     = 10;
-        $qtd->size        = 3;
-        $qtd->maximo      = 999;
+        $qtd->size        = 4;
+        $qtd->maximo      = 9999;
         $qtd->obrigatorio = true;
         $quantia          = $qtd->crInput();
 
@@ -601,12 +635,12 @@ class OcoOcorrencia extends BaseController
             }
 
             // Se tem req_id, foi gerada por outra tela
-            if (! empty($oco->req_id)) {
-                return $this->response->setJSON([
-                    'erro' => true,
-                    'msg'  => 3,
-                ]);
-            }
+            // if (! empty($oco->req_id)) {
+            //     return $this->response->setJSON([
+            //         'erro' => true,
+            //         'msg'  => 3,
+            //     ]);
+            // }
 
             $this->ocorrencia->delete($id);
 

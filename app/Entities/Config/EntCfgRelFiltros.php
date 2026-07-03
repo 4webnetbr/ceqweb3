@@ -18,103 +18,112 @@ class EntCfgRelFiltros extends Entity
         'rfi_ordem'       => 0,
     ];
 
-    public array $campos = [];
-
-    public function __construct(?array $data = null, bool $show = false)
+    public static function defCampos($dados = false, bool $show = false, int $pos = 0, array $opcoesCampo = []): array
     {
-        parent::__construct($data);
-        $this->campos = $this->defCampos($show);
-    }
+        $ret = [];
 
-    public function defCampos(bool $show = false): array
-    {
-        $dados = $this->toArray();
-        $ret   = [];
-
-        // ── Ocultos ──────────────────────────────────────────────────────────
         $ret['rfi_id'] = (new MyCampo('cfg_rel_filtros', 'rfi_id'))
             ->setValor($dados['rfi_id'] ?? '')
+            ->setOrdem($pos)
             ->crOculto();
 
-        $ret['rel_id'] = (new MyCampo('cfg_rel_filtros', 'rel_id'))
-            ->setValor($dados['rel_id'] ?? '')
+        $ret['rfi_tipo_filtro'] = (new MyCampo('cfg_rel_filtros', 'rfi_tipo_filtro'))
+            ->setValor($dados['rfi_tipo_filtro'] ?? 'FK')
+            ->setOrdem($pos)
             ->crOculto();
 
         $ret['rfi_tabela'] = (new MyCampo('cfg_rel_filtros', 'rfi_tabela'))
             ->setValor($dados['rfi_tabela'] ?? '')
-            ->crOculto();
-
-        $ret['rfi_campo'] = (new MyCampo('cfg_rel_filtros', 'rfi_campo'))
-            ->setValor($dados['rfi_campo'] ?? '')
+            ->setOrdem($pos)
             ->crOculto();
 
         $ret['rfi_ordem'] = (new MyCampo('cfg_rel_filtros', 'rfi_ordem'))
-            ->setValor($dados['rfi_ordem'] ?? 0)
+            ->setValor($dados['rfi_ordem'] ?? $pos)
+            ->setOrdem($pos)
             ->crOculto();
 
-        // ── Tipo do filtro ────────────────────────────────────────────────────
-        $ret['rfi_tipo_filtro'] = (new MyCampo('cfg_rel_filtros', 'rfi_tipo_filtro'))
-            ->setValor($dados['rfi_tipo_filtro'] ?? 'FK')
-            ->setSelecionado($dados['rfi_tipo_filtro'] ?? 'FK')
-            ->setOpcoes(['FK' => 'Chave Estrangeira', 'DATE' => 'Data'])
-            ->setDispForm('col-3')
-            ->setLeitura($show)
-            ->cr2opcoes();
+        $selecionadoVal = '';
+        if (!empty($dados['rfi_campo'])) {
+            $selecionadoVal = $dados['rfi_campo'] . '|' . ($dados['rfi_tabela'] ?? '') . '|' . ($dados['rfi_tipo_filtro'] ?? 'FK');
+            if (empty($opcoesCampo)) {
+                $opcoesCampo[$selecionadoVal] = ucwords(str_replace('_', ' ', $dados['rfi_campo']));
+            }
+        }
 
-        // ── Label ─────────────────────────────────────────────────────────────
+        $ret['rfi_campo'] = (new MyCampo('cfg_rel_filtros', 'rfi_campo'))
+            ->setValor($selecionadoVal)
+            ->setSelecionado($selecionadoVal)
+            ->setOpcoes($opcoesCampo)
+            ->setObrigatorio()
+            ->setOrdem($pos)
+            ->setDispForm('col-4')
+            ->setLargura(30)
+            ->setLeitura($show)
+            ->crSelect();
+
         $ret['rfi_label'] = (new MyCampo('cfg_rel_filtros', 'rfi_label'))
             ->setValor($dados['rfi_label'] ?? '')
             ->setObrigatorio()
-            ->setDispForm('col-6')
+            ->setMinLength(3)
+            ->setOrdem($pos)
+            ->setDispForm('col-4')
+            ->setLargura(30)
             ->setLeitura($show)
             ->crInput();
 
-        // ── Obrigatório ───────────────────────────────────────────────────────
         $ret['rfi_obrigatorio'] = (new MyCampo('cfg_rel_filtros', 'rfi_obrigatorio'))
             ->setValor($dados['rfi_obrigatorio'] ?? 0)
             ->setSelecionado($dados['rfi_obrigatorio'] ?? 0)
             ->setOpcoes([0 => 'Não', 1 => 'Sim'])
-            ->setDispForm('col-3')
+            ->setOrdem($pos)
+            ->setDispForm('col-2')
             ->setLeitura($show)
             ->cr2opcoes();
+
+        $atrib = ['data-index' => $pos];
+
+        $add           = new MyCampo();
+        $add->attrdata = $atrib;
+        $add->tipo     = 'button';
+        $add->dispForm = '1col';
+        $add->nome     = "bt_add_fil[{$pos}]";
+        $add->id       = "bt_add_fil[{$pos}]";
+        $add->i_cone   = "<i class='fas fa-plus'></i>";
+        $add->place    = 'Adicionar Filtro';
+        $add->classep  = 'btn-outline-success btn-sm bt-repete';
+        $add->funcChan = "addCampo('" . base_url('CfgRelatorio/addFiltro/') . "','filtros',this)";
+        $ret['bt_add'] = $add->crBotao();
+
+        $del           = new MyCampo();
+        $del->attrdata = $atrib;
+        $del->tipo     = 'button';
+        $del->dispForm = '1col';
+        $del->nome     = "bt_del_fil[{$pos}]";
+        $del->id       = "bt_del_fil[{$pos}]";
+        $del->i_cone   = "<i class='fas fa-trash'></i>";
+        $del->classep  = 'btn-outline-danger btn-sm bt-exclui';
+        $del->funcChan = "exclui_campo('filtros',this)";
+        $del->place    = 'Excluir Filtro';
+        $ret['bt_del'] = $del->crBotao();
 
         return $ret;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  Helpers de exibição
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Retorna o label legível do tipo de filtro.
-     */
     public function getTipoLabel(): string
     {
         return $this->rfi_tipo_filtro === 'DATE' ? 'Data' : 'Chave Estrangeira';
     }
 
-    /**
-     * Informa se o filtro é do tipo data.
-     */
     public function isData(): bool
     {
         return $this->rfi_tipo_filtro === 'DATE';
     }
 
-    /**
-     * Retorna os nomes dos placeholders gerados para este filtro no SQL.
-     * FK  → [':campo']
-     * DATE → [':campo_de', ':campo_ate']
-     */
     public function getPlaceholders(): array
     {
         if ($this->isData()) {
-            return [
-                ":{$this->rfi_campo}_de",
-                ":{$this->rfi_campo}_ate",
-            ];
+            return [":{$this->rfi_campo}_de", ":{$this->rfi_campo}_ate"];
         }
-
         return [":{$this->rfi_campo}"];
     }
 }

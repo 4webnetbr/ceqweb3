@@ -83,6 +83,35 @@ class EstoquRequisicaoModel extends Model
         return $builder->get()->getResult();
     }
 
+    public function getRequisicaoListaInsp($req_id = false, $status = false)
+    {
+        $db      = db_connect('dbEstoque');
+        $builder = $db->table($this->viewlista . ' r');
+        $builder->select('r.*');
+        if ($req_id) {
+            $builder->where('r.req_id', $req_id);
+        }
+        if ($status) {
+            $builder->whereIn('r.stt_id', $status);
+        }
+        // só requisições com produto pendente de inspeção
+        $builder->where(
+            'EXISTS (
+            SELECT 1
+            FROM est_requisicao_produto rep
+            JOIN est_requisicao_produto_atendimento rpa ON rpa.rep_id = rep.rep_id
+            WHERE rep.req_id = r.req_id
+              AND (rpa.rpa_atendida + rpa.rpa_cancelada) = rep.rep_quantia
+              AND rpa.rpa_conferida > 0
+              AND rpa.rpa_data_inspecao IS NULL
+        )',
+            null,
+            false
+        );
+        $builder->orderBy('stt_ordem, req_data DESC');
+        return $builder->get()->getResult();
+    }
+
     public function getRequisicao($req_id = false)
     {
         $db      = db_connect('dbEstoque');

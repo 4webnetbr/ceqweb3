@@ -56,10 +56,39 @@ $routes->match(['GET', 'POST'], 'buscas/(:any)', 'Buscas::$1', ['as' => 'buscas_
 
 $routes->match(['GET', 'POST'], 'Notifica/(:any)', 'Notifica::$1', ['as' => 'notifica_verNotifica_match']);
 // Grupo: Utils
-$routes->group('Utils', static function ($routes) {
-    $routes->get('/', 'Utils::index', ['as' => 'utils_index']);
-    $routes->match(['GET', 'POST'], '(:any)', 'Utils::$1', ['as' => 'utils_match']);
+// Controladores de Configuração
+// ANTES (BKP 30/06/2026): 'Relatorio' também passava pelo loop genérico abaixo,
+// mas isso só cobre "Relatorio/metodo/param" — o menu gera o link direto como
+// "Relatorio/{mod_id}" (numérico, sem o literal "index"), que precisa de uma
+// rota própria mapeando pra index($1). Por isso Relatorio saiu do loop.
+$utilsControllers = [
+    'Utilidade',
+];
+foreach ($utilsControllers as $ctrl) {
+    $routes->group($ctrl, static function ($routes) use ($ctrl) {
+        $name = strtolower($ctrl);
+        $routes->get('/', "Utils\\$ctrl::index", ['as' => "{$name}_index"]);
+        $routes->match(['GET', 'POST'], '(:any)', "Utils\\$ctrl::$1", ['as' => "{$name}_match"]);
+    });
+}
+
+// Grupo: Relatorio (link do menu é "Relatorio/{mod_id}", direto pro index —
+// a rota (:num) precisa vir ANTES do catch-all (:any), senão nunca é alcançada)
+$routes->group('Relatorio', static function ($routes) {
+    $routes->get('/', 'Utils\Relatorio::index', ['as' => 'relatorio_index']);
+    $routes->get('(:num)', 'Utils\Relatorio::index/$1', ['as' => 'relatorio_index_direct']);
+    $routes->match(['GET', 'POST'], '(:any)', 'Utils\Relatorio::$1', ['as' => 'relatorio_match']);
 });
+
+// $routes->group('Utils', static function ($routes) {
+//     // Relatórios dinâmicos por módulo (sub-namespace App\Controllers\Utils)
+//     // precisa vir ANTES do catch-all (:any) abaixo, senão ele nunca é alcançado.
+//     $routes->get('Relatorio', 'Utils\Relatorio::index', ['as' => 'utils_relatorio_index']);
+//     $routes->match(['GET', 'POST'], 'Relatorio/(:any)', 'Utils\Relatorio::$1', ['as' => 'utils_relatorio_match']);
+
+//     $routes->get('/', 'Utils::index', ['as' => 'utils_index']);
+//     $routes->match(['GET', 'POST'], '(:any)', 'Utils::$1', ['as' => 'utils_match']);
+// });
 
 // Grupo: Showfile
 $routes->group('Showfile', static function ($routes) {
@@ -214,6 +243,18 @@ $routes->get(
     'config/cfgmensagem/getMensagemAjax/(:num)',
     'Config\CfgMensagem::getMensagemAjax/$1'
 );
+
+// Controladores de Dashboard
+$dashboardControllers = [
+    'EstoqueDashboard',
+];
+foreach ($dashboardControllers as $ctrl) {
+    $routes->group($ctrl, static function ($routes) use ($ctrl) {
+        $name = strtolower($ctrl);
+        $routes->get('/', "Dashboard\\$ctrl::index", ['as' => "{$name}_index"]);
+        $routes->match(['GET', 'POST'], '(:any)', "Dashboard\\$ctrl::$1", ['as' => "{$name}_match"]);
+    });
+}
 
 // Rotas por ambiente
 if (is_file(APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php')) {

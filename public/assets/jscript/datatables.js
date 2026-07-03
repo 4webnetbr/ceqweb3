@@ -89365,7 +89365,7 @@ this.pdfMake = this.pdfMake || {}; this.pdfMake.vfs = {
 		if ( settings.oFeatures.bProcessing ) {
 			var n = $('<div/>', {
 					'id': settings.sTableId + '_processing',
-					'class': settings.oClasses.processing.container,
+					'class': settings.oClasses.processing.container + ' bg-info px-5 py-3 border border-1 border-dark rounded-pill text-center',
 					'role': 'status'
 				} )
 				.html( settings.oLanguage.sProcessing )

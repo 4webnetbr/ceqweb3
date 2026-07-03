@@ -3,6 +3,8 @@
 namespace App\Controllers\Ocorrencia;
 
 use App\Controllers\BaseController;
+use App\Controllers\Ocorrencia\OcoOcorrencia;
+
 use App\Entities\Ocorrencia\EntOcoOcorrencia;
 use App\Entities\Ocorrencia\EntOcoSubtOcorrencia;
 use App\Entities\Ocorrencia\EntOcoTratativa;
@@ -177,7 +179,6 @@ class OcoTrataOcorrencia extends BaseController
                 $fields = $entity->defCamposTelasAplicaveis(
                     $telas[$c],
                     $c,
-                    $total,
                     true
                 );
                 $campos[1][$c][] = $fields['mod_id'];

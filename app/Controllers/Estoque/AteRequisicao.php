@@ -101,7 +101,7 @@ class AteRequisicao extends BaseController
             $dados_requis
         );
 
-        $log = buscaLogTabela('est_requisicao', $req_ids_assoc);
+        $log = buscaLogTabelaFirst('est_requisicao', $req_ids_assoc);
 
         $base_url = base_url($this->data['controler']);
         foreach ($dados_requis as $req) {
@@ -241,8 +241,8 @@ class AteRequisicao extends BaseController
         $requisicao->usu_nome = $log['usua_alterou'] ?? '';
 
         $contRequis = new Requisicao();
-        $secao[0]   = 'Dados Gerais';
-        $campos[0]  = $contRequis->showCabecalhoSimples($requisicao);
+        $secao[1]   = 'Dados Gerais';
+        $campos[1]  = $contRequis->showCabecalhoSimples($requisicao);
         $entReq     = new EntAteRequisicao();
 
         $produtos = $this->requisicao->getRequisicaoProdutos($id);
@@ -292,9 +292,9 @@ class AteRequisicao extends BaseController
                     }
                 }
             }
-            // debug($resultado, true);
+            // debug($resultado, true);Q
 
-            envia_msg_ws($this->data['controler'], "Buscando estoque de origem " . $requisicao->req_deporigem, 'MsgServer', session()->get('usu_id'), 1);
+            // envia_msg_ws($this->data['controler'], "Buscando estoque de origem " . $requisicao->req_deporigem, 'MsgServer', session()->get('usu_id'), 1);
             $estoqueOrigem = $this->busca->buscaEstoqueDeposito(
                 $requisicao->req_deporigem
             );
@@ -314,7 +314,7 @@ class AteRequisicao extends BaseController
                     : 0;
                 $prod->estoque_origem = $estoqueEncontrado;                // debug($prod, true);
 
-                envia_msg_ws($this->data['controler'], "Definindo os Campos", 'MsgServer', session()->get('usu_id'), 1);
+                // envia_msg_ws($this->data['controler'], "Definindo os Campos", 'MsgServer', session()->get('usu_id'), 1);
                 if (! isset($prod->pre_cbfabricante)) {
                     // debug($prod);
                     $resultado[$p]['pre_cbfabricante']  = 'N';
@@ -360,17 +360,17 @@ class AteRequisicao extends BaseController
             $fields      = $entReq->defCampos($requisicao, $show);
             $dispositivo = Services::device();
 
-            if ($dispositivo->isMobile()) {
-                // if (1 == 1) {
-                $secao[1]    = 'Produtos';
-                $campos[1][] = $fields['lot_codbar'];
-                $campos[1][] =
-                    view('partials/pw_produtos_requisicao', ['produtos' => $resultado, 'maxHeig' => '60vh']); // mesma estrutura do add
-            } else {
-                $campos[0][] = $fields['lot_codbar'];
-                $campos[0][] =
-                    view('partials/pw_produtos_requisicao', ['produtos' => $resultado, 'maxHeig' => '49vh']); // mesma estrutura do add
-            }
+            // if ($dispositivo->isMobile()) {
+            // if (1 == 1) {
+            $secao[0]    = 'Produtos';
+            $campos[0][] = $fields['lot_codbar'];
+            $campos[0][] =
+                view('partials/pw_produtos_requisicao', ['produtos' => $resultado, 'maxHeig' => '60vh']); // mesma estrutura do add
+            // } else {
+            //     $campos[0][] = $fields['lot_codbar'];
+            //     $campos[0][] =
+            //         view('partials/pw_produtos_requisicao', ['produtos' => $resultado, 'maxHeig' => '49vh']); // mesma estrutura do add
+            // }
 
             $scripti = "<SCRIPT>jQuery('#lot_codbar').focus();</SCRIPT>";
 
@@ -393,7 +393,7 @@ class AteRequisicao extends BaseController
         $dadosAgrupados = [];
         $verOriginal    = false;
 
-        envia_msg_ws($this->data['controler'], "Preparando dados recebidos", 'MsgServer', session()->get('usu_id'), 1);
+        // envia_msg_ws($this->data['controler'], "Preparando dados recebidos", 'MsgServer', session()->get('usu_id'), 1);
 
         foreach ($postado as $key => $value) {
             if (preg_match('/^repid_(\d+)$/', $key, $matches)) {
@@ -438,7 +438,7 @@ class AteRequisicao extends BaseController
         $errosMov = 0;
 
         // ─── 1. GRAVA ATENDIMENTOS ───────────────────────────────────────────────
-        envia_msg_ws($this->data['controler'], "Gravando Atendimento", 'MsgServer', session()->get('usu_id'), 1);
+        // envia_msg_ws($this->data['controler'], "Gravando Atendimento", 'MsgServer', session()->get('usu_id'), 1);
         $nreq       = str_pad($postado['req_id'], 6, '0', STR_PAD_LEFT);
         // debug($ate, true);
         $dataagora = date('Y-m-d H:i:s');
@@ -453,7 +453,7 @@ class AteRequisicao extends BaseController
             // Movimento somente se houver quantidade atendida
             // Se falhar, o transRollback desfaz a inserção acima
             if ((int) $val['rpa_atendida'] > 0) {
-                envia_msg_ws($this->data['controler'], "Gerando Movimentação de Estoque", 'MsgServer', session()->get('usu_id'), 1);
+                // envia_msg_ws($this->data['controler'], "Gerando Movimentação de Estoque", 'MsgServer', session()->get('usu_id'), 1);
                 $movim = geraMovimentoRequisicoes([[
                     'id'      => $postado['tmo_id'],
                     'qt'      => $val['rpa_atendida'],
@@ -500,8 +500,9 @@ class AteRequisicao extends BaseController
         }
 
         // ─── 2. DETERMINA STATUS PELA CONSULTA DE PENDÊNCIAS ────────────────────
-        envia_msg_ws($this->data['controler'], "Acertando Status", 'MsgServer', session()->get('usu_id'), 1);
+        // envia_msg_ws($this->data['controler'], "Acertando Status", 'MsgServer', session()->get('usu_id'), 1);
         $pendencias = $this->reqprodutoate->getRequisicaoPendencias($postado['req_id']);
+
         $nreq       = str_pad($postado['req_id'], 6, '0', STR_PAD_LEFT);
         $destNotif  = 'Estoque\ConfRequisicao';
         $msgsocket  = "A Requisição Nº " . $nreq . " foi Atendida!";
@@ -521,7 +522,7 @@ class AteRequisicao extends BaseController
                 $status    = 25;
                 $destNotif = 'Preproces/InspecaoProd';
                 $msgsocket = "A Requisição Nº " . $nreq . " foi Conferida!";
-                if ($insvis->temN || $postado['tmo_id'] != 8) {
+                if ($insvis->temN || $tipomov->tmo_exigeinspecao == 'N') {
                     $status    = 5;
                     $destNotif = 'Estoque\Requisicao';
                     $msgsocket = "A Requisição Nº " . $nreq . " foi Concluída!";
@@ -536,11 +537,11 @@ class AteRequisicao extends BaseController
         if ($status == 5) {
             foreach ($produtosreq as $val) {
                 if ($val->rpa_data >= $dataagora) {
-                    envia_msg_ws($this->data['controler'], "Gerando Movimentações de Estoque", 'MsgServer', session()->get('usu_id'), 1);
+                    // envia_msg_ws($this->data['controler'], "Gerando Movimentações de Estoque", 'MsgServer', session()->get('usu_id'), 1);
                     $movim = geraMovimentoRequisicoes([[
                         'id'      => $postado['tmo_id'],
                         'qt'      => $val->rpa_atendida,
-                        'msg'     => 'Conclusão Automática da Requisição Nº ' . $nreq,
+                        'msg'     => 'Conclusão no Atendmento da Requisição Nº ' . $nreq,
                         'pro_id'  => $val->pro_id,
                         'rep_id'  => $val->rep_id,
                         'reserva' => "O",
@@ -571,54 +572,13 @@ class AteRequisicao extends BaseController
         // ─── 5. NOTIFICAÇÃO ──────────────────────────────────────────────────────
         $notif = new Notifica();
         $notif->gravaNotifica($destNotif, session()->get('usu_id'), $postado['req_id'], $msgsocket, 'C');
+        $db->transCommit();
 
         // ─── 6. OCORRÊNCIAS ──────────────────────────────────────────────────────
-        envia_msg_ws($this->data['controler'], "Processando Ocorrências", 'MsgServer', session()->get('usu_id'), 1);
-        foreach ($produtosreq as $val) {
-            $filtro = [
-                'req_id'   => $postado['req_id'],
-                'pro_id'   => $val->pro_id,
-                'lot_lote' => $val->lot_lote,
-                'oco_id'   => null,
-            ];
-            $ocorrencias = $this->common->getRegFiltro('dbEstoque', 'vw_est_requisicao_produto_ocorrencia_relac', ['*'], $filtro);
-
-            for ($o = 0; $o < count($ocorrencias); $o++) {
-                $result = [];
-                foreach ($ocorrencias[$o] as $key => $value) {
-                    $result[$key] = $value;
-                }
-                $result['stt_id'] = 28;
-                $entity           = new EntOcoOcorrencia($result);
-                $salvaoco         = $this->ocorrencia->save($entity);
-
-                if ($salvaoco) {
-                    $idoco                = $this->ocorrencia->getInsertID();
-                    $data                 = $entity->toArray();
-                    $lote                 = $this->lote->getLoteId($val->lot_lote)[0];
-                    $data['oco_id']       = $idoco;
-                    $data['lot_lote']     = $lote->lot_lote;
-                    $data['lot_validade'] = $lote->lot_validade;
-                    $ocoService           = service('ocorrenciaService');
-                    $ocoService->processAfterSave($data);
-                    $this->common->updateReg(
-                        'dbEstoque',
-                        'est_requisicao_produto_ocorrencia',
-                        'rpo_id = ' . $ocorrencias[$o]['rpo_id'],
-                        ['oco_id' => $idoco]
-                    );
-                } else {
-                    $ret['erro'] = true;
-                    $ret['msg']  = $this->ocorrencia->errors();
-                    $db->transRollback();
-                    echo json_encode($ret);
-                    return;
-                }
-            }
-        }
+        // envia_msg_ws($this->data['controler'], "Processando Ocorrências", 'MsgServer', session()->get('usu_id'), 1);
+        $res = service('ocorrenciaService')->gerarOcorrencias($produtosreq, $postado['req_id']);
 
         // ─── 7. COMMIT FINAL ─────────────────────────────────────────────────────
-        $db->transCommit();
         $ret['erro'] = false;
         $ret['msg'] = 'Atendimento gravado com sucesso!';
         $ret['url'] = site_url($this->data['controler']);

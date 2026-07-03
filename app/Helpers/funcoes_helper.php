@@ -85,16 +85,16 @@ function campos_tabela(array $campos)
     $tipos['varchar']   = 'Caracter longo';
     $tipos['mediumtext'] = 'Texto';
     $tipos['text']      = 'Texto';
-    $tipos['int']       = 'Inteiro';
-    $tipos['tinyint']       = 'Inteiro';
+    $tipos['enum']      = 'Opções';
     $tipos['smallint']       = 'Inteiro';
+    $tipos['tinyint']       = 'Inteiro';
+    $tipos['int']       = 'Inteiro';
     $tipos['bigint']       = 'Inteiro';
     $tipos['float']     = 'Moeda';
     $tipos['decimal']     = 'Decimal';
     $tipos['date']      = 'Data';
     $tipos['timestamp'] = 'Data e Hora';
     $tipos['datetime']  = 'Data e Hora';
-    $tipos['enum']  = 'Seleção';
 
     $simnao['YES'] = 'Não';
     $simnao['NO']  = 'Sim';
@@ -545,6 +545,52 @@ function buscaLogTabela($tabela, $registros)
     return $dados;
 };;
 
+/**
+ * buscaLogTabelaFirst
+ * Retorna os Logs do Registro da Tabela informados
+ *
+ * @param mixed $tabela
+ * @param mixed $registro
+ * @return array
+ */
+function buscaLogTabelaFirst($tabela, $registros)
+{
+    $logs      = new LogMonModel();
+    $logId = $logs->get_logs_firstVarios($tabela, $registros);
+    // debug($logId);
+    $dados = [];
+    $operacao = '';
+    // $ct = 0;
+    if ($logId) {
+        foreach ($logId as $document) {
+            // debug($document, true);
+            $operacao    = $document->first_record->log_operacao;
+            $user_id     = $document->first_record->log_id_usuario;
+            $user_nam    = $document->first_record->log_id_usuario;
+            if (isset($document->first_record->log_usuario)) {
+                $user_nam    = $document->first_record->log_usuario;
+            } else {
+                if (filter_var($document->first_record->log_id_usuario, FILTER_VALIDATE_INT)) {
+                    $user_nam = (new ConfigUsuarioModel())->getUsuarioId($user_id)[0]->usu_nome ?? '';
+                }
+            }
+            $registro    = $document->first_record->log_id_registro;
+            $data_alt    = data_br($document->first_record->log_data);
+            if ($operacao != '') {
+                $dados[$registro]['operacao']      = $operacao;
+                $dados[$registro]['usu_id']        = $user_id;
+                $dados[$registro]['usua_alterou']  = $user_nam;
+                $dados[$registro]['data_alterou']  = $data_alt;
+                $dados[$registro]['tabela']        = $tabela;
+                $dados[$registro]['registro']      = $registro;
+                // $ct++;
+            }
+        }
+    }
+
+    return $dados;
+};;
+
 
 /**
  * moedaToFloat
@@ -642,6 +688,8 @@ function buscaArquivos($pastaapp, $completo = true, $exceto = [])
         "Microb",
         "Estoque",
         "Estoqu",
+        "Utils",
+        "Dashboard",
         "Produto",
         "Produt",
         "Ocorrencia",
@@ -1140,18 +1188,6 @@ function retornaInsVis(int|string $req): InspecaoResult
 
 function buscaUsuarioLog($log)
 {
-    // $imgService = new UserImageService();
-
-    // $usuId = $log['usu_id'];
-
-    // $imgUrl = $imgService->getUserImage($usuId);
-    // $usu_img = '';
-
-    // if ($imgUrl) {
-    //     $usu_img = "<img src='". esc($imgUrl) ."' class='rounded-circle me-1 float-start' style='width:20px;height:20px' />";
-    // }
-
-    // $usuimgnome = $usu_img . ($log['usua_alterou'] ?? '');
     $usuimgnome = $log['usua_alterou'] ?? '';
 
     return $usuimgnome;

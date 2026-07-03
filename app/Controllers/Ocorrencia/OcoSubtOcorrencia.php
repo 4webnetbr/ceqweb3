@@ -341,9 +341,9 @@ class OcoSubtOcorrencia extends BaseController
                 ];
             } else {
                 // INATIVAR
-                if ($this->subtocorrencia->getUsoGestao((int) $id)) {
-                    throw new \Exception('MSG_14'); // possui ocorrência vinculada
-                }
+                // if ($this->subtocorrencia->getUsoGestao((int) $id)) {
+                //     throw new \Exception('MSG_14'); // possui ocorrência vinculada
+                // }
 
                 $dad_atin = [
                     'sut_ativo' => 'I'

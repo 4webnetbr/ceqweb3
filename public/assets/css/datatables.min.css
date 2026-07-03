@@ -156,23 +156,24 @@ div.dataTables_processing > div:last-child > div {
   border-radius: 50%;
   background: rgb(13, 110, 253);
   background: rgb(var(--dt-row-selected));
-  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+  /* animation-timing-function: cubic-bezier(0, 1, 1, 0); */
 }
+
 div.dataTables_processing > div:last-child > div:nth-child(1) {
   left: 8px;
-  animation: datatables-loader-1 0.6s infinite;
+  /* animation: datatables-loader-1 0.6s infinite; */
 }
 div.dataTables_processing > div:last-child > div:nth-child(2) {
   left: 8px;
-  animation: datatables-loader-2 0.6s infinite;
+  /* animation: datatables-loader-2 0.6s infinite; */
 }
 div.dataTables_processing > div:last-child > div:nth-child(3) {
   left: 32px;
-  animation: datatables-loader-2 0.6s infinite;
+  /* animation: datatables-loader-2 0.6s infinite; */
 }
 div.dataTables_processing > div:last-child > div:nth-child(4) {
   left: 56px;
-  animation: datatables-loader-3 0.6s infinite;
+  /* animation: datatables-loader-3 0.6s infinite; */
 }
 @keyframes datatables-loader-1 {
   0% {

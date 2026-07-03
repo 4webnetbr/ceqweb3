@@ -142,7 +142,7 @@ class OcoTipoAcao extends BaseController
                 $dad_atin = [
                     'tpa_ativo' => 'I'
                 ];
-                $this->verificarUsoEmRelacionamentos('oco_tipo_acao', 'tpa_id', (int) $id);
+                // $this->verificarUsoEmRelacionamentos('oco_tipo_acao', 'tpa_id', (int) $id);
             }
 
             $this->tipoacao->update($id, $dad_atin);

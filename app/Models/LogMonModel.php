@@ -40,7 +40,7 @@ class LogMonModel
 			];
 			$options = [
 				'projection' => ['_id' => 0],
-				'sort' => ['log_data' => -1],
+				'sort' => ['log_data' => 1],
 				'limit' => 1
 			];
 			$query = new Query($filter, $options);
@@ -87,6 +87,54 @@ class LogMonModel
 				]
 			];
 
+			$command = new Command([
+				'aggregate' => $this->collection,
+				'pipeline'  => $pipeline,
+				'cursor'    => new stdClass,
+			]);
+
+			$result = $this->conn->executeCommand($this->database, $command);
+			return $result->toArray();
+		} catch (RuntimeException $ex) {
+			show_error('Error while fetching logs: ' . $ex->getMessage(), 500);
+		}
+	}
+
+	function get_logs_firstVarios($tabela, $registros)
+	{
+		try {
+			// Define o pipeline de agregação
+			$pipeline = [
+				// Filtra os documentos pela tabela, pelos registros informados e pela data
+				[
+					'$match' => [
+						'log_tabela'      => $tabela,
+						'log_id_registro' => ['$in' => $registros],
+						'log_data'        => ['$gt' => '']
+					]
+				],
+				// Ordena os registros em ordem CRESCENTE pela data
+				[
+					'$sort' => ['log_data' => 1]
+				],
+				// Agrupa por log_id_registro e pega o primeiro documento de cada grupo
+				// (que, devido à ordenação crescente, é o mais antigo)
+				[
+					'$group' => [
+						'_id'          => '$log_id_registro',
+						'first_record' => ['$first' => '$$ROOT']
+					]
+				],
+				// Reformata o resultado
+				[
+					'$project' => [
+						'_id'             => 0,
+						'log_id_registro' => '$_id',
+						'first_record'    => 1
+					]
+				]
+			];
+			// debug($pipeline);
 			$command = new Command([
 				'aggregate' => $this->collection,
 				'pipeline'  => $pipeline,

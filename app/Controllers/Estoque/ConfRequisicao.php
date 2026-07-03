@@ -14,7 +14,9 @@ use App\Models\Estoqu\EstoquDepositoModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
+use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 use App\Models\Ocorre\OcorreOcorrenciaModel;
+use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
 use App\Models\Produt\ProdutClasseModel;
 use App\Models\Produt\ProdutLoteModel;
 use App\Models\Produt\ProdutProdutoModel;
@@ -32,6 +34,7 @@ class ConfRequisicao extends BaseController
     public $common;
     public $lote;
     public $busca;
+    public $tipomovimentacao;
     public $deposito;
     public $bt_envia;
 
@@ -48,6 +51,7 @@ class ConfRequisicao extends BaseController
         $this->requisicaoate     = new EstoquRequisicaoProdutoAtendimentoModel();
         $this->classes           = new ProdutClasseModel();
         $this->produtos          = new ProdutProdutoModel();
+        $this->tipomovimentacao  = new EstoquTipoMovimentacaoModel();
         $this->busca             = new BuscasSapiens();
         $this->deposito          = new EstoquDepositoModel();
         $this->lote              = new ProdutLoteModel();
@@ -98,7 +102,7 @@ class ConfRequisicao extends BaseController
             $dados_requis
         );
 
-        $log = buscaLogTabela('est_requisicao', $req_ids_assoc);
+        $log = buscaLogTabelaFirst('est_requisicao', $req_ids_assoc);
 
         $base_url = base_url($this->data['controler']);
 
@@ -226,15 +230,14 @@ class ConfRequisicao extends BaseController
         $requisicao->usu_nome = $log['usua_alterou'] ?? '';
 
         $contRequis = new Requisicao();
-        $secao[0]   = 'Dados Gerais';
-        $campos[0]  = $contRequis->showCabecalhoSimples($requisicao);
+        $secao[1]   = 'Dados Gerais';
+        $campos[1]  = $contRequis->showCabecalhoSimples($requisicao);
 
         // Montar campos como no add()
         $ent    = new EntConfRequisicao((array) $requisicao, $show, 'conf');
-        $fields = $ent->campos;
+        $fieldsini = $ent->campos;
         // debug($fields, true);
 
-        $campos[0][] = $fields['lot_codbar'];
         $resultado   = (new Buscas())->buscaProdutosMergeEstoques($id, $requisicao->req_depdestino, 'conferencia');
         // debug($resultado, true);
 
@@ -283,7 +286,7 @@ class ConfRequisicao extends BaseController
             $resultado[$p]->cla_insvisconf = $prod->cla_insvisconf ?? 'N';
             $resultado[$p]->bt_insvis      = "";
 
-            if ($prod->cla_insvis == 'S' && $prod->cla_insvisconf == 'S' && $requisicao->tmo_id == 8 && $prod->rpa_conferida > -1) {
+            if ($prod->cla_insvis == 'S' && $prod->cla_insvisconf == 'S' && $requisicao->tmo_exigeinspecao == 'S' && $prod->rpa_conferida > -1) {
                 $badge = "<span id='badgeinsp_{$prod->rep_id}' class='badgeinsp badge rounded-pill bg-black p-1 fs-7' style='max-height:16px'></span>";
 
                 $bt_insvis           = new MyCampo();
@@ -394,9 +397,13 @@ class ConfRequisicao extends BaseController
         }
         unset($prod);
 
+        $secao[0]    = 'Produtos';
+        $campos[0][] = $fieldsini['lot_codbar'];
         $campos[0][] =
-            view('partials/pw_produtos_conferencia', ['produtos' => $resultado]);
-        $campos[0][]               = '</>';
+            view('partials/pw_produtos_conferencia', ['produtos' => $resultado, 'maxHeig' => '60vh']); // mesma estrutura do add
+        // $campos[0][] =
+        //     view('partials/pw_produtos_conferencia', ['produtos' => $resultado]);
+        // $campos[0][]               = '</>';
         $this->data['desc_edicao'] = 'Req. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' ' . fmtEtiquetaCor($requisicao->stt_cor, $requisicao->stt_nome, 1);
         $this->data['desc_metodo'] = ' ';
         $this->data['secoes']      = $secao;
@@ -478,8 +485,7 @@ class ConfRequisicao extends BaseController
         // ─── 1. GRAVA CONFERÊNCIAS ───────────────────────────────────────────────
         envia_msg_ws($this->data['controler'], "Gravando Conferência", 'MsgServer', session()->get('usu_id'), 1);
         $nreq       = str_pad($postado['req_id'], 6, '0', STR_PAD_LEFT);
-        $ate = $this->requisicaoate
-            ->getRequisicaoProdutoAtendimento($postado['req_id']);
+        $ate = $this->requisicaoate->getRequisicaoProdutoAtendimento($postado['req_id']);
         $ate = indexarRequisicaoProdutos($ate);
         // debug($ate, true);
         $dataagora = date('Y-m-d H:i:s');
@@ -504,7 +510,7 @@ class ConfRequisicao extends BaseController
                     $movs = [[
                         'id'      => $postado['tmo_id'],
                         'qt'      => $val->rpa_conferida,
-                        'msg'     => 'Conclusão Automática da Requisição Nº ' . $nreq,
+                        'msg'     => 'Conclusão na Conferência da Requisição Nº ' . $nreq,
                         'pro_id'  => $val->proid,
                         'rep_id'  => $val->repid,
                         'reserva' => "O",
@@ -512,10 +518,7 @@ class ConfRequisicao extends BaseController
                     envia_msg_ws($this->data['controler'], "Gerando Movimentos de Estoque", 'MsgServer', session()->get('usu_id'), 1);
                     $movim = geraMovimentoRequisicoes($movs, $this->data['controler']);
                     if ($movim['status'] === 'Erro') {
-                        // $db->transRollback();
-                        // $ret['erro'] = true;
                         $ret['msg']  = $movim['mensagem'];
-                        // echo json_encode($ret);
                         continue;
                     }
                     $aprovada[] = $val->repid;
@@ -534,12 +537,42 @@ class ConfRequisicao extends BaseController
                         envia_msg_ws($this->data['controler'], "Gerando Movimentos de Estoque", 'MsgServer', session()->get('usu_id'), 1);
                         $movim = geraMovimentoRequisicoes($movs, $this->data['controler']);
                         if ($movim['status'] === 'Erro') {
-                            // $db->transRollback();
-                            // $ret['erro'] = true;
                             $ret['msg']  = $movim['mensagem'];
-                            // echo json_encode($ret);
                             continue;
                         }
+                        #TODO gerar a ocorrência
+                        $sutid = 56;
+                        $classes = (new OcorreSubtOcorrenciaModel())->getClassePorSubtipo($sutid) ?? [];
+                        $idsClasses = array_column($classes, 'cla_id');
+                        $lote = (new ProdutLoteModel())->getLoteClasse($val->lotlote, $idsClasses);
+
+                        $loteDados = [];
+                        if (!empty($lote)) {
+                            $loteDados = [
+                                'proid'    => $lote[0]->pro_id,
+                                'lotid'    => $lote[0]->lot_id,
+                                'despro'   => $lote[0]->pro_despro,
+                                'validade' => $lote[0]->lot_validade ?? '',
+                                'Fabrica'  => $lote[0]->fab_nomFab ?? '',
+                                'codErp'   => $lote[0]->lot_codpro ?? '',
+                            ];
+                        }
+
+                        $sql_oco = [
+                            'tpo_id'        => 3, // tipo
+                            'sut_id'        => $sutid, // subtipo
+                            'tel_id'        => 48, // tela de ocorrencia
+                            'req_id'        => $postado['req_id'],
+                            'rep_id'        => $val->repid,
+                            'rpo_descricao' => 'Divergência na Conferência da Requisição Nº ' . $nreq,
+                            'pro_id'        => $val->proid,
+                            'lot_id'        => $loteDados['lotid'],
+                            'rpo_qtd'       => $qtia,
+                            'rpo_data'      => date('Y-m-d H:i:s'),
+                        ];
+
+                        $oco_id = $this->common->insertReg('dbEstoque', 'est_requisicao_produto_ocorrencia', $sql_oco);
+                        session()->setFlashdata('msg', 'Ocorrência gravada com sucesso!');
                     }
                 }
                 // debug($sql_save, true);
@@ -559,16 +592,18 @@ class ConfRequisicao extends BaseController
         // ─── 3. PRODUTOS SEM INSPEÇÃO ────────────────────────────────────────────
         envia_msg_ws($this->data['controler'], "Finalizando produtos sem Inspeção", 'MsgServer', session()->get('usu_id'), 1);
         $produtosreq = $this->requisicao->getRequisicaoProdutos($postado['req_id']);
+        $tipomov = $this->tipomovimentacao->getTipoMovimentacao($postado['tmo_id'])[0];
 
         $db->transBegin();
         foreach ($produtosreq as $val) {
             if (! in_array($val->rep_id, $aprovada)) {
-                if (($val->cla_insvis == 'N' && $val->rpa_id != null) || $postado['tmo_id'] != 8) {
+                if (($val->cla_insvis == 'N' && $val->rpa_id != null) || $tipomov->tmo_exigeinspecao == 'N') {
                     // ── Update primeiro ──────────────────────────────────────────
                     $sql_save = [
                         'rpa_aprovada'      => -1,
                         'rpa_data_inspecao' => date('Y-m-d H:i:s'),
                     ];
+                    // debug($sql_save, true);
 
                     // ── Movimento depois do update ───────────────────────────────
                     if ((int) $val->rpa_conferida > 0) {
@@ -576,7 +611,7 @@ class ConfRequisicao extends BaseController
                             $movs = [[
                                 'id'      => $postado['tmo_id'],
                                 'qt'      => $val->rpa_conferida,
-                                'msg'     => 'Conclusão Automática da Requisição Nº ' . $nreq,
+                                'msg'     => 'Conclusão na Conferência da Requisição Nº ' . $nreq,
                                 'pro_id'  => $val->pro_id,
                                 'rep_id'  => $val->rep_id,
                                 'reserva' => "O",
@@ -584,10 +619,7 @@ class ConfRequisicao extends BaseController
                             envia_msg_ws($this->data['controler'], "Gerando Movimentos de Estoque", 'MsgServer', session()->get('usu_id'), 1);
                             $movim = geraMovimentoRequisicoes($movs, $this->data['controler']);
                             if ($movim['status'] === 'Erro') {
-                                // $db->transRollback();
-                                // $ret['erro'] = true;
                                 $ret['msg']  = $movim['mensagem'];
-                                // echo json_encode($ret);
                                 continue;
                             }
                         }
@@ -608,12 +640,13 @@ class ConfRequisicao extends BaseController
             $msgsocket = "A Requisição Nº " . $nreq . " foi Conferida!";
 
             $pendencias = $this->requisicaoate->getRequisicaoPendencias($postado['req_id']);
+
             if ($pendencias[0]['pendente_conferencia'] > 0) {
                 $status    = 24;
                 $msgsocket = "A Requisição Nº " . $nreq . " foi Conferida Parcial!";
             } else {
                 $insvis = retornaInsVis($postado['req_id']);
-                if (! $insvis->temS || $insvis->temN || $postado['tmo_id'] != 8) {
+                if (! $insvis->temS || $insvis->temN || $tipomov->tmo_exigeinspecao == 'N') {
                     $status      = 5;
                     $destNotif   = 'Estoque\Requisicao';
                     $msgsocket   = "A Requisição Nº " . $nreq . " foi Concluída!";
@@ -637,48 +670,8 @@ class ConfRequisicao extends BaseController
 
         // ─── 5. PROCESSA OCORRÊNCIAS ─────────────────────────────────────────────
         envia_msg_ws($this->data['controler'], "Processando Ocorrências", 'MsgServer', session()->get('usu_id'), 1);
-        foreach ($produtosreq as $val) {
-            $filtro = [
-                'req_id'   => $postado['req_id'],
-                'pro_id'   => $val->pro_id,
-                'lot_lote' => $val->lot_lote,
-                'oco_id'   => null,
-            ];
-            $ocorrencias = $this->common->getRegFiltro('dbEstoque', 'vw_est_requisicao_produto_ocorrencia_relac', ['*'], $filtro);
+        $res = service('ocorrenciaService')->gerarOcorrencias($produtosreq, $postado['req_id']);
 
-            for ($o = 0; $o < count($ocorrencias); $o++) {
-                $result = [];
-                foreach ($ocorrencias[0] as $key => $value) {
-                    $result[$key] = $value;
-                }
-                $result['stt_id'] = 28;
-                $entity           = new EntOcoOcorrencia($result);
-                $salvaoco         = $this->ocorrencia->save($entity);
-
-                if ($salvaoco) {
-                    $idoco                = $this->ocorrencia->getInsertID();
-                    $data                 = $entity->toArray();
-                    $lote                 = $this->lote->getLoteId($val->lot_lote)[0];
-                    $data['oco_id']       = $idoco;
-                    $data['lot_lote']     = $lote->lot_lote;
-                    $data['lot_validade'] = $lote->lot_validade;
-                    $ocoService           = service('ocorrenciaService');
-                    $ocoService->processAfterSave($data);
-                    $this->common->updateReg(
-                        'dbEstoque',
-                        'est_requisicao_produto_ocorrencia',
-                        'rpo_id = ' . $ocorrencias[0]['rpo_id'],
-                        ['oco_id' => $idoco]
-                    );
-                } else {
-                    $ret['erro'] = true;
-                    $ret['msg']  = $this->ocorrencia->errors();
-                    $db->transRollback();
-                    echo json_encode($ret);
-                    return;
-                }
-            }
-        }
 
         // ─── 6. COMMIT FINAL ─────────────────────────────────────────────────────
         $ret['erro'] = false;

@@ -33,6 +33,7 @@ class EstoquTipoMovimentacaoModel extends Model
         'tmo_excluido',
         'tmo_estoquepadrao',
         'tmo_gestaoestoque',
+        'tmo_exigeinspecao',
         'tmo_requisicao',
 
     ];
@@ -41,7 +42,7 @@ class EstoquTipoMovimentacaoModel extends Model
 
     protected $validationRules = [
         'tmo_nome' => 'required|min_length[5]|max_length[50]',
-        'tmo_acumulador' => 'required'
+        // 'tmo_acumulador' => 'required'
     ];
 
     protected $validationMessages = [
@@ -52,9 +53,9 @@ class EstoquTipoMovimentacaoModel extends Model
             'isUniqueValue' =>  '8'
         ],
 
-        'tmo_acumulador' => [
-            'required' => 'O campo acumulador é Obrigatório'
-        ]
+        // 'tmo_acumulador' => [
+        //     'required' => 'O campo acumulador é Obrigatório'
+        // ]
 
     ];
 

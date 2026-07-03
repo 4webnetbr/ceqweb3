@@ -5,312 +5,34 @@ use App\Libraries\SoapSapiens;
 use App\Models\CommonModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
 use App\Models\Estoqu\EstoquRequisicaoProdutoAtendimentoModel;
-use App\Models\Estoqu\EstoquRequisicaoProdutoModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 use App\Models\Produt\ProdutProdutoModel;
 
-
-// function geraMovimentoRequisicoes($movimentos, $controller)
-// {
-//     $mdproduto                = new ProdutProdutoModel();
-//     $tipomovimento          = new EstoquTipoMovimentacaoModel();
-//     $common                 = new CommonModel();
-//     $requisicao             = new EstoquRequisicaoModel();
-
-//     $soaptrf = new SoapSapiens();
-//     for ($m = 0; $m < count($movimentos); $m++) {
-//         $mov = $movimentos[$m];
-//         $lote = $mov['lot_lote'] ?? '';
-//         $loteval = $mov['lot_validade'] ?? '';
-//         if ($mov['rep_id'] != null) {
-//             $reqlote = $requisicao->getRequisicaoRep($mov['rep_id'])[0];
-//             $lote = $reqlote->lot_lote;
-//             $loteval = $reqlote->lot_validade;
-//         }
-//         $produto = (array) $mdproduto->getProduto($mov['pro_id'], false)[0];
-//         $codpro = $produto['pro_codpro'];
-//         $msg =  'Produto ' . $codpro . ' Lote ' . $lote . $mov['msg'];
-//         envia_msg_ws($controller, $msg, 'MsgServer', session()->get('usu_id'), 1);
-
-//         $datmov = date('d/m/Y');
-//         $codlot = $lote;
-//         $qtdmov = $mov['qt'];
-//         $qtdmov = str_replace(['.', ','], '', $qtdmov);
-//         // BUSCA TIPO MOVIMENTO
-//         $movim  = (array) $tipomovimento->getTipoMovimentacao($mov['id']);
-//         $codtns = $movim[0]->tmo_transacao_erp;
-//         $depori = $movim[0]->dep_codorigem;
-//         $depdes = $movim[0]->dep_coddestino;
-//         if (isset($mov['tipomov']) && $mov['tipomov'] == 'R') {
-//             $depori = $movim[0]->dep_coddestino;
-//             $depdes = $movim[0]->dep_codorigem;
-//         }
-//         // if ($mov['reserva'] != '') {
-//         if ($movim[0]->dep_reserva != '') {
-//             $reserva = strtoupper($mov['reserva']);
-//             if ($reserva === 'D') {
-//                 $depdes = $movim[0]->dep_reserva;
-//             } elseif ($reserva === 'O') {
-//                 $depori = $movim[0]->dep_reserva;
-//             }
-//         }
-//         $valida = data_br($loteval);
-
-//         // debug($movim);
-
-//         log_message('info', 'Movimento ' . json_encode($movim));
-//         log_message('info', 'Depósito Origem ' . $depori);
-//         log_message('info', 'Depósito Destino ' . $depdes);
-
-//         // debug( 'Movimento '.json_encoade($movim));
-//         // debug( 'Depósito Origem '.$depori);
-//         // debug( 'Depósito Destino '.$depdes);
-
-//         if ($depdes == null || $depdes == '') {
-//             log_message('info', 'Sem depósito de Destino, Somente Saída');
-//             $movimenta = $soaptrf->movimProdutosSapiens(
-//                 $codpro,
-//                 $codtns,
-//                 $depori,
-//                 $datmov,
-//                 $qtdmov,
-//                 $codlot,
-//                 $depdes,
-//                 $valida
-//             );
-//         } else {
-//             log_message('info', 'Com depósito de Destino, Transferência');
-//             $movimenta = $soaptrf->transfProdutosSapiens(
-//                 $codpro,
-//                 $codtns,
-//                 $depori,
-//                 $datmov,
-//                 $qtdmov,
-//                 $codlot,
-//                 $depdes,
-//                 $valida
-//             );
-//         }
-//         if ($movimenta['status'] == 'Erro') {
-//             // se o movimento deu erro, verifica se teve movimentos anteriores e desfaz
-//             if ($m > 0) {
-//                 for ($rv = ($m - 1); $rv >= 0; $rv--) {
-//                     $rev = $movimentos[$rv];
-//                     $produto = (array) $mdproduto->getProduto($rev['pro_id'], false)[0];
-//                     $codpro = $produto['pro_codpro'];
-//                     $lote = $rev['lot_lote'] ?? '';
-//                     $loteval = $rev['lot_validade'] ?? '';
-//                     if ($rev['rep_id'] != null) {
-//                         $reqlote = $requisicao->getRequisicaoRep($rev['rep_id'])[0];
-//                         $lote = $reqlote->lot_lote;
-//                         $loteval = $reqlote->lot_validade;
-//                     }
-
-//                     $msg =  'Produto ' . $codpro . ' Lote ' . $lote . $rev['msg'];
-//                     envia_msg_ws($controller, $msg, 'MsgServer', session()->get('usu_id'), 1);
-
-//                     $datmov = date('d/m/Y');
-//                     $codlot = $lote;
-//                     $qtdmov = $rev['qt'];
-//                     $qtdmov = str_replace(['.', ','], '', $qtdmov);
-//                     // BUSCA TIPO MOVIMENTO
-//                     $movim  = $tipomovimento->getTipoMovimentacao($rev['id']);
-//                     $codtns = $movim[0]->tmo_transacao_erp;
-//                     // deposito de destino é a origem, para reverter
-//                     $depdes = $movim[0]->dep_codorigem;
-//                     // depósito de origem é o destino, para reverter
-//                     $depori = $movim[0]->dep_coddestino;
-//                     $valida = data_br($loteval);
-
-//                     log_message('info', 'Movimento Reverso ' . json_encode($movim));
-//                     $reverte = $soaptrf->transfProdutosSapiens(
-//                         $codpro,
-//                         $codtns,
-//                         $depori,
-//                         $datmov,
-//                         $qtdmov,
-//                         $codlot,
-//                         $depdes,
-//                         $valida
-//                     );
-//                 }
-//             }
-//             break;
-//         }
-//     }
-//     return $movimenta;
-// }
-// function geraMovimentoRequisicoes($movimentos, $controller)
-// {
-//     $mdproduto     = new ProdutProdutoModel();
-//     $tipomovimento = new EstoquTipoMovimentacaoModel();
-//     $common        = new CommonModel();
-//     $requisicao    = new EstoquRequisicaoModel();
-//     $soaptrf       = new SoapSapiens();
-
-//     if (empty($movimentos)) {
-//         return ['status' => 'OK', 'mensagem' => 'Nenhum movimento a processar'];
-//     }
-
-//     $movimentosRealizados = [];
-
-//     for ($m = 0; $m < count($movimentos); $m++) {
-//         $mov     = $movimentos[$m];
-//         $lote    = $mov['lot_lote'] ?? '';
-//         $loteval = $mov['lot_validade'] ?? '';
-
-//         if ($mov['rep_id'] != null) {
-//             $reqlote = $requisicao->getRequisicaoRep($mov['rep_id'])[0];
-//             $lote    = $reqlote->lot_lote;
-//             $loteval = $reqlote->lot_validade;
-//         }
-//         $msg = $mov['msg'] ?? '';
-
-//         $produto = (array) $mdproduto->getProduto($mov['pro_id'], false)[0];
-//         $codpro  = $produto['pro_codpro'];
-//         $msg = (trim((string) $msg) !== '' ? $msg . '<br />' : '')
-//             . 'Produto ' . $codpro
-//             . ' Lote ' . (trim((string) $lote) !== '' ? $lote : 'Sem Lote');
-
-//         envia_msg_ws($controller, $msg, 'MsgServer', session()->get('usu_id'), 1);
-
-//         $datmov = date('d/m/Y');
-//         $codlot = $lote;
-//         $qtdmov = $mov['qt'];
-//         $qtdmov = str_replace(['.', ','], '', $qtdmov);
-
-//         // BUSCA TIPO MOVIMENTO
-//         $movim  = (array) $tipomovimento->getTipoMovimentacao($mov['id']);
-//         $codtns = $movim[0]->tmo_transacao_erp;
-//         $depori = $movim[0]->dep_codorigem;
-//         $depdes = $movim[0]->dep_coddestino;
-
-//         if (isset($mov['tipomov']) && $mov['tipomov'] == 'R') {
-//             $depori = $movim[0]->dep_coddestino;
-//             $depdes = $movim[0]->dep_codorigem;
-//         }
-
-//         if ($movim[0]->dep_reserva != '') {
-//             $reserva = strtoupper($mov['reserva']);
-//             if ($reserva === 'D') {
-//                 $depdes = $movim[0]->dep_reserva;
-//             } elseif ($reserva === 'O') {
-//                 $depori = $movim[0]->dep_reserva;
-//             }
-//         }
-
-//         $valida = data_br($loteval);
-
-//         log_message('info', 'Movimento ' . json_encode($movim));
-//         log_message('info', 'Depósito Origem ' . $depori);
-//         log_message('info', 'Depósito Destino ' . $depdes);
-
-//         if ($depdes == null || $depdes == '') {
-//             log_message('info', 'Sem depósito de Destino, Somente Saída');
-//             $movimenta = $soaptrf->movimProdutosSapiens(
-//                 $codpro,
-//                 $codtns,
-//                 $depori,
-//                 $datmov,
-//                 $qtdmov,
-//                 $codlot,
-//                 $depdes,
-//                 $valida,
-//                 $msg
-//             );
-//         } else {
-//             log_message('info', 'Com depósito de Destino, Transferência');
-//             $movimenta = $soaptrf->transfProdutosSapiens(
-//                 $codpro,
-//                 $codtns,
-//                 $depori,
-//                 $datmov,
-//                 $qtdmov,
-//                 $codlot,
-//                 $depdes,
-//                 $valida,
-//                 $msg
-//             );
-//         }
-
-//         if ($movimenta['status'] == 'Erro') {
-//             log_message('error', 'Erro no movimento ' . $m . ': ' . ($movimenta['mensagem'] ?? ''));
-
-//             // Reverte os movimentos já realizados
-//             if (!empty($movimentosRealizados)) {
-//                 log_message('info', 'Iniciando reversão de ' . count($movimentosRealizados) . ' movimento(s)');
-
-//                 foreach (array_reverse($movimentosRealizados) as $rv) {
-//                     $prodRev  = (array) $mdproduto->getProduto($rv['pro_id'], false)[0];
-//                     $codproRv = $prodRev['pro_codpro'];
-//                     $loteRv   = $rv['lot_lote'] ?? '';
-//                     $lotevRv  = $rv['lot_validade'] ?? '';
-
-//                     if ($rv['rep_id'] != null) {
-//                         $reqloteRv = $requisicao->getRequisicaoRep($rv['rep_id'])[0];
-//                         $loteRv    = $reqloteRv->lot_lote;
-//                         $lotevRv   = $reqloteRv->lot_validade;
-//                     }
-
-//                     $msgRv  = 'REVERSÃO - Produto ' . $codproRv . ' Lote ' . $loteRv . ' - ' . $rv['msg'];
-//                     envia_msg_ws($controller, $msgRv, 'MsgServer', session()->get('usu_id'), 1);
-
-//                     $qtdmovRv = str_replace(['.', ','], '', $rv['qt']);
-//                     $movimRv  = (array) $tipomovimento->getTipoMovimentacao($rv['id']);
-//                     $codtnsRv = $movimRv[0]->tmo_transacao_erp;
-//                     $validaRv = data_br($lotevRv);
-
-//                     // Inverte origem/destino para reverter
-//                     $deporiRv = $rv['depdes_realizado']; // destino que foi usado
-//                     $depdesRv = $rv['depori_realizado']; // origem que foi usada
-
-//                     log_message('info', 'Reversão: ' . $codproRv . ' Ori:' . $deporiRv . ' Des:' . $depdesRv);
-
-//                     $reverte = $soaptrf->transfProdutosSapiens(
-//                         $codproRv,
-//                         $codtnsRv,
-//                         $deporiRv,
-//                         date('d/m/Y'),
-//                         $qtdmovRv,
-//                         $loteRv,
-//                         $depdesRv,
-//                         $validaRv,
-//                         $msgRv
-//                     );
-
-//                     if ($reverte['status'] == 'Erro') {
-//                         log_message('error', 'Falha ao reverter movimento do produto ' . $codproRv . ': ' . ($reverte['mensagem'] ?? ''));
-//                     }
-//                 }
-//             }
-
-//             return [
-//                 'status'   => 'Erro',
-//                 'mensagem' => $movimenta['mensagem'] ?? 'Erro ao gerar movimento de estoque',
-//             ];
-//         }
-
-//         // Guarda os depósitos reais usados para permitir reversão correta
-//         $movimentosRealizados[] = array_merge($mov, [
-//             'depori_realizado' => $depori,
-//             'depdes_realizado' => $depdes,
-//             'lot_lote'         => $lote,
-//             'lot_validade'     => $loteval,
-//         ]);
-//     }
-
-//     return ['status' => 'OK', 'mensagem' => 'Movimentos realizados com sucesso'];
-// }
-
 function geraMovimentoRequisicoes($movimentos, $controller)
 {
+    // ← NOVO: Proteção contra execução duplicada
+    $lockKey = 'mov_lock_' . md5(json_encode($movimentos) . session()->get('usu_id'));
+
+    // Cache seguro - verifica se já foi processado
+    $cached = cache($lockKey);
+    if ($cached !== null) {
+        log_message('warning', 'Movimento duplicado detectado e bloqueado: ' . $lockKey);
+        return ['status' => 'OK', 'mensagem' => 'Movimento já processado'];
+    }
+
+    // Lock por 5 segundos
+    cache()->save($lockKey, true, 5);
+    // Lock por 5 segundos (tempo máximo de execução)
+
     $mdproduto     = new ProdutProdutoModel();
     $tipomovimento = new EstoquTipoMovimentacaoModel();
     $common        = new CommonModel();
     $requisicao    = new EstoquRequisicaoModel();
     $soaptrf       = new SoapSapiens();
 
-    return ['status' => 'OK', 'mensagem' => 'Nenhum movimento a processar'];
+    if (empty($movimentos)) {
+        return ['status' => 'OK', 'mensagem' => 'Nenhum movimento a processar'];
+    }
 
     // Estrutura: [ ['sub_movimentos' => [...]] ]
     $movimentosRealizados = [];
@@ -333,7 +55,7 @@ function geraMovimentoRequisicoes($movimentos, $controller)
             . 'Produto ' . $codpro
             . ' Lote ' . (trim((string) $lote) !== '' ? $lote : 'Sem Lote');
 
-        envia_msg_ws($controller, $msg, 'MsgServer', session()->get('usu_id'), 1);
+        // envia_msg_ws($controller, $msg, 'MsgServer', session()->get('usu_id'), 1);
 
         $datmov = date('d/m/Y');
         $codlot = $lote;
@@ -342,6 +64,7 @@ function geraMovimentoRequisicoes($movimentos, $controller)
 
         // BUSCA TODOS OS TIPOS DE MOVIMENTO CADASTRADOS
         $movim = (array) $tipomovimento->getTipoMovimentacaoMovim($mov['id']);
+        // debug($movim, true);
 
         $subMovimentosRealizados = [];
         $erroEncontrado          = false;
@@ -351,9 +74,10 @@ function geraMovimentoRequisicoes($movimentos, $controller)
         $primeiroMovimento = true;
 
         foreach ($movim as $tipoMov) {
-            $codtns = $primeiroMovimento
-                ? $tipoMov->tmo_transacao_erp
-                : $tipoMov->tmo_transacao_erp_saida;
+            // $codtns = $primeiroMovimento
+            //     ? $tipoMov->tmo_transacao_erp
+            //     : $tipoMov->tmo_transacao_erp_saida;
+            $codtns = $tipoMov->tmm_transacao;
 
             $primeiroMovimento = false;
             $depori = $tipoMov->dep_codorigem;
@@ -379,30 +103,30 @@ function geraMovimentoRequisicoes($movimentos, $controller)
 
             if ($depdes == null || $depdes == '') {
                 log_message('info', 'Sem depósito de Destino, Somente Saída');
-                // $movimenta = $soaptrf->movimProdutosSapiens(
-                //     $codpro,
-                //     $codtns,
-                //     $depori,
-                //     $datmov,
-                //     $qtdmov,
-                //     $codlot,
-                //     $depdes,
-                //     $valida,
-                //     $msg
-                // );
+                $movimenta = $soaptrf->movimProdutosSapiens(
+                    $codpro,
+                    $codtns,
+                    $depori,
+                    $datmov,
+                    $qtdmov,
+                    $codlot,
+                    $depdes,
+                    $valida,
+                    $msg
+                );
             } else {
                 log_message('info', 'Com depósito de Destino, Transferência');
-                // $movimenta = $soaptrf->transfProdutosSapiens(
-                //     $codpro,
-                //     $codtns,
-                //     $depori,
-                //     $datmov,
-                //     $qtdmov,
-                //     $codlot,
-                //     $depdes,
-                //     $valida,
-                //     $msg
-                // );
+                $movimenta = $soaptrf->transfProdutosSapiens(
+                    $codpro,
+                    $codtns,
+                    $depori,
+                    $datmov,
+                    $qtdmov,
+                    $codlot,
+                    $depdes,
+                    $valida,
+                    $msg
+                );
             }
 
             if ($movimenta['status'] == 'Erro') {
@@ -434,19 +158,19 @@ function geraMovimentoRequisicoes($movimentos, $controller)
 
                 foreach (array_reverse($subMovimentosRealizados) as $sv) {
                     $msgRv  = 'REVERSÃO - Produto ' . $sv['codpro'] . ' Lote ' . $sv['codlot'] . ' Transação ' . $sv['codtns'];
-                    envia_msg_ws($controller, $msgRv, 'MsgServer', session()->get('usu_id'), 1);
+                    // envia_msg_ws($controller, $msgRv, 'MsgServer', session()->get('usu_id'), 1);
 
-                    // $reverte = $soaptrf->transfProdutosSapiens(
-                    //     $sv['codpro'],
-                    //     $sv['codtns'],
-                    //     $sv['depdes'], // inverte: destino vira origem
-                    //     date('d/m/Y'),
-                    //     $sv['qtdmov'],
-                    //     $sv['codlot'],
-                    //     $sv['depori'], // inverte: origem vira destino
-                    //     $sv['valida'],
-                    //     $msgRv
-                    // );
+                    $reverte = $soaptrf->transfProdutosSapiens(
+                        $sv['codpro'],
+                        $sv['codtns'],
+                        $sv['depdes'], // inverte: destino vira origem
+                        date('d/m/Y'),
+                        $sv['qtdmov'],
+                        $sv['codlot'],
+                        $sv['depori'], // inverte: origem vira destino
+                        $sv['valida'],
+                        $msgRv
+                    );
 
                     if ($reverte['status'] == 'Erro') {
                         log_message('error', 'Falha ao reverter sub-movimento do produto ' . $sv['codpro'] . ': ' . ($reverte['mensagem'] ?? ''));
@@ -461,7 +185,7 @@ function geraMovimentoRequisicoes($movimentos, $controller)
                 foreach (array_reverse($movimentosRealizados) as $rv) {
                     foreach (array_reverse($rv['sub_movimentos']) as $sv) {
                         $msgRv = 'REVERSÃO - Produto ' . $sv['codpro'] . ' Lote ' . $sv['codlot'] . ' Transação ' . $sv['codtns'];
-                        envia_msg_ws($controller, $msgRv, 'MsgServer', session()->get('usu_id'), 1);
+                        // envia_msg_ws($controller, $msgRv, 'MsgServer', session()->get('usu_id'), 1);
 
                         $reverte = $soaptrf->transfProdutosSapiens(
                             $sv['codpro'],
@@ -631,8 +355,9 @@ function indexarArray(array|object|null $items, array $campos, bool $multiplos =
 
 function tratarOriginal(int|string $reqId): bool
 {
-    $requisicao    = new EstoquRequisicaoModel();
-    $requisicaoate = new EstoquRequisicaoProdutoAtendimentoModel();
+    $requisicao     = new EstoquRequisicaoModel();
+    $requisicaoate  = new EstoquRequisicaoProdutoAtendimentoModel();
+    $busca          = new BuscasSapiens();
 
     $reqDerivadaLista = $requisicao->getRequisicao($reqId);
 
@@ -696,8 +421,32 @@ function tratarOriginal(int|string $reqId): bool
         log_message('info', 'Produto Original ' . $prod->pro_codpro);
         log_message('info', 'Lote Original ' . $prod->lot_lote);
 
+        $atendida   = (int) $prod->rep_quantia;
+        $cancelada  =  0;
         if ((int) $qtdDerivada !== (int) $prod->rep_quantia || (int) $qtdDerivada == 0) {
-            continue;
+            if ((int) $qtdDerivada > 0) {
+                // busca o saldo do produto no depósito de origem da req Original
+                $estoqueOrigem = indexarEstoque(
+                    $busca->buscaEstoqueDeposito($reqoriginal->req_deporigem, $prod->pro_codpro)
+                );
+                $lote = trim($prod->lot_lote ?? '') ?: 'Sem Lote';
+
+                $estoqProd = $estoqueOrigem[$prod->pro_codpro][$lote][0] ?? null;
+                $prod->estoque_origem = $estoqProd
+                    ? (int) str_replace('.', '', (string) $estoqProd->quantidadeEstoque)
+                    : 0;
+                if ($prod->estoque_origem == 0) { // se o saldo no Sapiens for 0 não atende
+                    continue;
+                }
+                // gera atendimento automático com o saldo, e cancela a diferença na original
+                if ((int) $prod->estoque_origem < (int) $prod->rep_quantia) {
+                    // se o saldo no Sapiens for menor q a quantia solicitada
+                    $atendida   = (int) $prod->estoque_origem;
+                    $cancelada  = (int) $prod->rep_quantia - (int) $prod->estoque_origem;
+                }
+            } else { // se a quantidade aprovada na derivada for 0 não atende
+                continue;
+            }
         }
 
         $ate = $requisicaoate->getProdutoRequisicaoAtendimento($prod->rep_id, $prod->pro_id);
@@ -705,10 +454,10 @@ function tratarOriginal(int|string $reqId): bool
             continue;
         }
 
-        envia_msg_ws('AteRequisicao', 'Gerando Movimentação de Estoque', 'MsgServer', session()->get('usu_id'), 1);
+        // envia_msg_ws('AteRequisicao', 'Gerando Movimentação de Estoque', 'MsgServer', session()->get('usu_id'), 1);
         $movim = geraMovimentoRequisicoes([[
             'id'      => $reqoriginal->tmo_id,
-            'qt'      => (int) $prod->rep_quantia,
+            'qt'      => $atendida,
             'msg'     => 'Atendimento da Requisição Original Nº ' . str_pad($reqoriginal->req_id, 6, '0', STR_PAD_LEFT),
             'pro_id'  => $prod->pro_id,
             'rep_id'  => $prod->rep_id,
@@ -722,8 +471,8 @@ function tratarOriginal(int|string $reqId): bool
         $salva = $requisicaoate->insert([
             'rep_id'        => $prod->rep_id,
             'pro_id'        => $prod->pro_id,
-            'rpa_cancelada' => 0,
-            'rpa_atendida'  => (int) $prod->rep_quantia,
+            'rpa_cancelada' => $cancelada,
+            'rpa_atendida'  => $atendida,
             'rpa_data'      => date('Y-m-d H:i:s'),
         ]);
 

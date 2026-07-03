@@ -55,19 +55,18 @@ class EntCfgModulo extends Entity
         $icon->leitura = $show;
         $ret['mod_icone'] = $icon->crInput();
 
-        // Banco de Dados do Módulo
-        $dbOpcoes = [
-            ''              => '-- Selecione --',
-            'default'       => 'Configuração (config_ceqweb_db)',
-            'dbEstoque'     => 'Estoque (estoque_db)',
-            'dbProduto'     => 'Produto (produto_db)',
-            'dbOcorrencia'  => 'Ocorrência (ocorrencia_db)',
+        // Banco de dados do módulo
+        $opDb = [
+            'dbEstoque'    => 'Estoque',
+            'dbProduto'    => 'Produto',
+            'dbOcorrencia' => 'Ocorrência',
+            'default'      => 'Configuração',
         ];
+
         $dbg = new MyCampo('cfg_modulo', 'mod_dbgroup');
-        $dbg->label = 'Banco de Dados';
         $dbg->valor = $dados['mod_dbgroup'] ?? '';
         $dbg->selecionado = $dbg->valor;
-        $dbg->opcoes = $dbOpcoes;
+        $dbg->opcoes = $opDb;
         $dbg->leitura = $show;
         $ret['mod_dbgroup'] = $dbg->crSelect();
 

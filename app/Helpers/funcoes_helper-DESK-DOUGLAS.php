@@ -7,9 +7,10 @@ use App\Models\Config\ConfigPerfilItemModel;
 use App\Models\Config\ConfigTelaModel;
 use App\Models\Config\ConfigUsuarioModel;
 use App\Models\Estoqu\EstoquRequisicaoModel;
-use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 use App\Models\LogMonModel;
 use Config\Database;
+use App\DTOs\InspecaoResult;
+use App\Services\UserImageService;
 
 /**
  * funcExemplo
@@ -84,6 +85,7 @@ function campos_tabela(array $campos)
     $tipos['varchar']   = 'Caracter longo';
     $tipos['mediumtext'] = 'Texto';
     $tipos['text']      = 'Texto';
+    $tipos['enum']      = 'Opções';
     $tipos['int']       = 'Inteiro';
     $tipos['bigint']       = 'Inteiro';
     $tipos['float']     = 'Moeda';
@@ -319,7 +321,7 @@ function url_amigavel($variavel)
  */
 function formata_texto($texto)
 {
-    $texto_ret = html_entity_decode(trim(strip_tags(utf8_decode($texto))));
+    $texto_ret = html_entity_decode(trim(strip_tags(mb_convert_encoding($texto, 'ISO-8859-1', 'UTF-8'))));
     return $texto_ret;
 };;
 
@@ -528,6 +530,52 @@ function buscaLogTabela($tabela, $registros)
             $data_alt    = data_br($document->last_record->log_data);
             if ($operacao != '') {
                 $dados[$registro]['operacao']      = $operacao;
+                $dados[$registro]['usu_id']        = $user_id;
+                $dados[$registro]['usua_alterou']  = $user_nam;
+                $dados[$registro]['data_alterou']  = $data_alt;
+                $dados[$registro]['tabela']        = $tabela;
+                $dados[$registro]['registro']      = $registro;
+                // $ct++;
+            }
+        }
+    }
+
+    return $dados;
+};;
+
+/**
+ * buscaLogTabelaFirst
+ * Retorna os Logs do Registro da Tabela informados
+ *
+ * @param mixed $tabela
+ * @param mixed $registro
+ * @return array
+ */
+function buscaLogTabelaFirst($tabela, $registros)
+{
+    $logs      = new LogMonModel();
+    $logId = $logs->get_logs_firstVarios($tabela, $registros);
+    $dados = [];
+    $operacao = '';
+    // $ct = 0;
+    if ($logId) {
+        foreach ($logId as $document) {
+            // debug($document, true);
+            $operacao    = $document->first_record->log_operacao;
+            $user_id     = $document->first_record->log_id_usuario;
+            $user_nam    = $document->first_record->log_id_usuario;
+            if (isset($document->first_record->log_usuario)) {
+                $user_nam    = $document->first_record->log_usuario;
+            } else {
+                if (filter_var($document->first_record->log_id_usuario, FILTER_VALIDATE_INT)) {
+                    $user_nam = (new ConfigUsuarioModel())->getUsuarioId($user_id)[0]->usu_nome ?? '';
+                }
+            }
+            $registro    = $document->first_record->log_id_registro;
+            $data_alt    = data_br($document->first_record->log_data);
+            if ($operacao != '') {
+                $dados[$registro]['operacao']      = $operacao;
+                $dados[$registro]['usu_id']        = $user_id;
                 $dados[$registro]['usua_alterou']  = $user_nam;
                 $dados[$registro]['data_alterou']  = $data_alt;
                 $dados[$registro]['tabela']        = $tabela;
@@ -636,6 +684,7 @@ function buscaArquivos($pastaapp, $completo = true, $exceto = [])
         "Micro",
         "Microb",
         "Estoque",
+        "Utils",
         "Estoqu",
         "Produto",
         "Produt",
@@ -739,9 +788,9 @@ function fmtEtiquetaCorBst($cor, $label = '', $tipo = 0)
     if ($cor == '' || str_contains($cor, 'Selecione')) {
         $cor = 'bg-white';
     }
-    if (substr(trim($cor), 0, 1) == '#') {
+    if (substr($cor, 0, 1) == '#') {
         return fmtEtiquetaCor($cor, $label);
-    } else {
+    } else if (substr($cor, 0, 1) == 'b') {
         $cores["bg-primary"] = "&nbsp";
         $texto['bg-primary'] = 'text-black';
         $cores['bg-secondary'] = "&nbsp";
@@ -784,8 +833,9 @@ function fmtEtiquetaCorBst($cor, $label = '', $tipo = 0)
  */
 function fmtEtiquetaCor($cor, $label = '', $tipo = 0)
 {
+    // debug($cor);
     if (substr($cor, 0, 1) != '#') {
-        return fmtEtiquetaCorBst($cor, $label);
+        return fmtEtiquetaCorBst($cor, $label, $tipo);
     } else {
         if ($label == '') {
             $label = $cor;
@@ -871,56 +921,6 @@ function isValidDate($date, $format = 'Y-m-d')
     $d = DateTime::createFromFormat($format, $date);
     return $d && $d->format($format) === $date;
 }
-
-
-/**
- * Filtra array de requisições com base nas autorizações por perfil.
- *
- * @param array $dados_requis    Lista de requisições (cada item deve conter 'tmo_id')
- * @param int|null $perfilId     ID do perfil do usuário (se nulo, pega da sessão)
- * @return array                 Array filtrado com apenas requisições autorizadas
- */
-function filtrarRequisicoesPorPerfil(array $dados_requis, ?int $perfilId = null): array
-{
-    $tipomov = (new EstoquTipoMovimentacaoModel())->getTipoMovimentacao();
-    $autorizacoes = array_column($tipomov, 'prf_id', 'tmo_id');
-
-    if ($perfilId === null) {
-        $perfilId = session()->get('usu_perfil_id');
-    }
-
-    foreach ($dados_requis as $key => $req) {
-
-        // ⚠️ agora é OBJETO
-        if (!isset($req->tmo_id)) {
-            unset($dados_requis[$key]);
-            continue;
-        }
-
-        $tmo_id = $req->tmo_id;
-
-        if (!isset($autorizacoes[$tmo_id])) {
-            unset($dados_requis[$key]);
-            continue;
-        }
-
-        $prf_autorizados = explode(',', $autorizacoes[$tmo_id]);
-
-        if (!in_array($perfilId, $prf_autorizados)) {
-            unset($dados_requis[$key]);
-            continue;
-        }
-    }
-
-    // reindexa para evitar buraco de índice
-    $dados_requis = array_values($dados_requis);
-
-    usort($dados_requis, function ($a, $b) {
-        return intval($a->stt_ordem ?? 0) <=> intval($b->stt_ordem ?? 0);
-    });
-
-    return $dados_requis;
-};;
 
 
 function criaSelectRelativo(
@@ -1075,8 +1075,8 @@ function criaSelectRelativo(
         }
     }
 
-    $campo->setValor($valorStr);
-    $campo->setSelecionado($valorArr);
+    // $campo->setValor($valorStr);
+    // $campo->setSelecionado($valorArr);
 
     // AJUSTE PARA MULTIPLE
     if ($tipo == 3 || $tipo == 4) {
@@ -1118,17 +1118,25 @@ function criaSelectRelativo(
 }
 
 
-function filtrarPorPerfil(array $dados, ?int $perfilId = null): array
+/**
+ * filtrPorPerfil
+ * filtra o array dados, pelo perfil informado ou logado, pelo campo informado
+ * @param array $dados
+ * @param int $perfilId
+ * @param string $campoprf
+ * @return array
+ */
+function filtrarPorPerfil(array $dados, ?int $perfilId = null, ?string $campoprf = 'prf_id'): array
 {
     // Obtém o perfil do usuário da sessão, se não foi passado
-    if ($perfilId === null) {
+    if ($perfilId == null) {
         $perfilId = session()->get('usu_perfil_id');
     }
 
     // Filtra os dados
-    $dados_filtrados = array_filter($dados, function ($item) use ($perfilId) {
+    $dados_filtrados = array_filter($dados, function ($item) use ($perfilId, $campoprf) {
         // Suporta tanto objetos quanto arrays
-        $prf_id = is_object($item) ? ($item->prf_id ?? null) : ($item['prf_id'] ?? null);
+        $prf_id = is_object($item) ? ($item->$campoprf ?? null) : ($item[$campoprf] ?? null);
 
         // Pode conter múltiplos IDs separados por vírgula
         if ($prf_id !== null) {
@@ -1141,7 +1149,7 @@ function filtrarPorPerfil(array $dados, ?int $perfilId = null): array
 
     // Reindexa os dados
     return array_values($dados_filtrados);
-}
+};;
 
 /**
  * retornaInsVis
@@ -1150,7 +1158,6 @@ function filtrarPorPerfil(array $dados, ?int $perfilId = null): array
  * @return object   retorna S ou N
  */
 
-use App\DTOs\InspecaoResult;
 
 function retornaInsVis(int|string $req): InspecaoResult
 {
@@ -1173,4 +1180,11 @@ function retornaInsVis(int|string $req): InspecaoResult
         temS: $temS,
         temN: $temN,
     );
+}
+
+function buscaUsuarioLog($log)
+{
+    $usuimgnome = $log['usua_alterou'] ?? '';
+
+    return $usuimgnome;
 }

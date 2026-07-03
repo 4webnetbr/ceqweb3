@@ -13,9 +13,11 @@ class SoapSapiens
     {
         if ($servico) {
             $options = [
-                'connection_timeout' => 5, // segundos
+                'connection_timeout' => 20, // segundos
                 'exceptions' => true,      // permite capturar falhas com try/catch
-                'trace' => true            // útil para depuração (opcional)
+                'trace' => true,            // útil para depuração (opcional)
+                'keep_alive'         => false,
+                'cache_wsdl'         => WSDL_CACHE_NONE,
             ];
             $serv = 'http://hc170915cqn3007.cloudhialinx.com.br:12030/g5-senior-services/sapiens_Synccom_' . $servico . '?wsdl';
             // debug($serv, true);
@@ -128,12 +130,12 @@ class SoapSapiens
     public function movimProdutosSapiens($codpro, $codtns, $depori, $datmov, $qtdmov, $codlot, $depdes, $valida, $msg = '')
     {
         $options = [
-            'connection_timeout' => 5, // segundos
+            'connection_timeout' => 20, // segundos
             'exceptions' => true,      // permite capturar falhas com try/catch
             'trace' => true            // útil para depuração (opcional)
         ];
         #Instanciando o SoapClient com o WSDL o qual vamos acessar
-        $client = new SoapClient('http://hc170915cqn3007.cloudhialinx.com.br:12030/g5-senior-services/sapiens_Synccom_senior_g5_co_mcm_est_estoques?wsdl', $options);
+        // $client = new SoapClient('http://hc170915cqn3007.cloudhialinx.com.br:12030/g5-senior-services/sapiens_Synccom_senior_g5_co_mcm_est_estoques?wsdl', $options);
         #Operação a ser executada
         $function = 'MovimentarEstoque';
         #Montando o payload de requisição
@@ -149,7 +151,6 @@ class SoapSapiens
                     'codDer'   => '',
                     'codTns'   => $codtns,
                     'codDep'   => $depori,
-                    'codTns'   => $codtns,
                     'codLot'   => $codlot,
                     'qtdMov'   => $qtdmov,
                     'datMov'   => $datmov,
@@ -165,6 +166,7 @@ class SoapSapiens
         $status = '';
         #Chamada do serviço
         try {
+            $client = new SoapClient('http://hc170915cqn3007.cloudhialinx.com.br:12030/g5-senior-services/sapiens_Synccom_senior_g5_co_mcm_est_estoques?wsdl', $options);
 
             $result = $client->__soapCall($function, $parameters);
 
@@ -182,7 +184,7 @@ class SoapSapiens
                 $status = 'Erro';
             }
             // sucesso
-            log_message('info', 'SOAP retorno OK');
+            log_message('info', 'SOAP retorno OK ' . $msgretorno);
 
             $ret = [
                 'status' => $status,
@@ -192,7 +194,7 @@ class SoapSapiens
             // falha de conexão ou erro na resposta
             $msgretorno = 'Erro SOAP: ' . $e->getMessage();
             $status = 'Erro';
-            log_message('error', 'Erro SOAP: ' . $e->getMessage());
+            log_message('info', 'Erro SOAP: ' . $e->getMessage());
             $ret = [
                 'status' => $status,
                 'mensagem' => $msgretorno,
@@ -475,7 +477,11 @@ class SoapSapiens
 
         } catch (\SoapFault $e) {
             // falha de conexão ou erro na resposta
-            log_message('error', 'Erro SOAP: ' . $e->getMessage());
+            $falha = "Falha: " . $e->getMessage() . "\n\n";
+            $falha .= "=== REQUEST ===\n"        . $this->soapc->__getLastRequest() . "\n\n";
+            $falha .=  "=== RESPONSE HEADERS ===\n" . $this->soapc->__getLastResponseHeaders() . "\n\n";
+            $falha .=  "=== RESPONSE ===\n"        . $this->soapc->__getLastResponse() . "\n";
+            log_message('error', 'Erro SOAP: ' . $falha);
 
             // se quiser, pode lançar exceção ou retornar erro customizado
             $ret = [

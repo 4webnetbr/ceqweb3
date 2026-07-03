@@ -38,7 +38,7 @@ class ConfigDicDadosModel extends Model
     {
         $this->DBGroup          = 'dbEstoque';
         $db      = db_connect($this->DBGroup);
-        $pre = 'dev_';
+        $pre = '';
         $url = base_url();
         if (!str_contains($url, 'dev.')) {
             $pre = 'prd_';
@@ -106,6 +106,7 @@ class ConfigDicDadosModel extends Model
         foreach ($ret4 as $reg) {
             array_push($ret, $reg);
         }
+
         return $ret;
     }
 
@@ -162,20 +163,26 @@ class ConfigDicDadosModel extends Model
     //     $ret = $builder->get()->getResultArray();
     //     return $ret;
     // }
-
     public function getRelacionamentos($nome_tabela, $completo = 0)
     {
         $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
         $db = db_connect($dbGrSche['dbGroup']);
 
-        // Obtém os relacionamentos diretos da tabela base (com constraint)
+        // Relacionamentos diretos (tabela base aponta para → pais)
         $relacionamentos_base = $this->_obterRelacionamentosTabela(
             $db,
             $nome_tabela,
             $dbGrSche['schema']
         );
 
-        // Obtém potenciais relacionamentos sem constraint (por padrão de nomenclatura)
+        // Relacionamentos reversos (filhas → apontam para a tabela base via constraint)
+        $relacionamentos_filhas = $this->_obterRelacionamentosReversos(
+            $db,
+            $nome_tabela,
+            $dbGrSche['schema']
+        );
+
+        // Potenciais relacionamentos sem constraint (por padrão de nomenclatura)
         $relacionamentos_potenciais = $this->_obterRelacionamentosPotenciais(
             $db,
             $nome_tabela,
@@ -184,8 +191,17 @@ class ConfigDicDadosModel extends Model
             $dbGrSche['dbGroup']
         );
 
-        // Mescla os dois tipos de relacionamentos
-        $relacionamentos_completos = array_merge($relacionamentos_base, $relacionamentos_potenciais);
+        // Relacionamentos reversos potenciais (filhas sem constraint, por convenção de nome)
+        $todosJaEncontrados = array_merge($relacionamentos_base, $relacionamentos_filhas, $relacionamentos_potenciais);
+        $relacionamentos_filhas_potenciais = $this->_obterRelacionamentosReversosPotenciais(
+            $db,
+            $nome_tabela,
+            $dbGrSche['schema'],
+            $todosJaEncontrados
+        );
+
+        // Mescla todos os tipos de relacionamentos
+        $relacionamentos_completos = array_merge($todosJaEncontrados, $relacionamentos_filhas_potenciais);
 
         // Se completo = 0, retorna apenas os relacionamentos da tabela base
         if ($completo == 0) {
@@ -262,7 +278,195 @@ class ConfigDicDadosModel extends Model
         $builder->where('kc.TABLE_SCHEMA', $schema);
         $builder->where('kc.REFERENCED_TABLE_SCHEMA IS NOT NULL', null, false);
 
-        return $builder->get()->getResultArray();
+        $result = $builder->get();
+
+        return $result ? $result->getResultArray() : [];
+    }
+
+    /**
+     * Obtém relacionamentos reversos (tabelas filhas que referenciam a tabela informada).
+     */
+    private function _obterRelacionamentosReversos($db, $nome_tabela, $schema)
+    {
+        $builder = $db->table('information_schema.KEY_COLUMN_USAGE kc');
+
+        $builder->select(
+            'CONSTRAINT_NAME,
+            kc.TABLE_NAME,
+            kc.COLUMN_NAME,
+            kc.TABLE_NAME AS REFERENCED_TABLE_NAME,
+            kc.COLUMN_NAME AS REFERENCED_COLUMN_NAME,
+            tb.TABLE_COMMENT,
+            "constraint" as tipo_relacao'
+        );
+
+        $builder->join(
+            'information_schema.TABLES tb',
+            'tb.TABLE_NAME = kc.TABLE_NAME AND tb.TABLE_SCHEMA = kc.TABLE_SCHEMA',
+            'inner'
+        );
+
+        $builder->where('kc.REFERENCED_TABLE_NAME', $nome_tabela);
+        $builder->where('kc.REFERENCED_TABLE_SCHEMA', $schema);
+
+        $result = $builder->get();
+
+        return $result ? $result->getResultArray() : [];
+    }
+
+    /**
+     * Descobre recursivamente toda a rede de tabelas relacionadas.
+     *
+     * Regras:
+     *  - Campo _id que é PRI → busca tabelas filhas que possuem esse campo (mesmo schema)
+     *  - Campo _id que NÃO é PRI (MUL/FK ou sem chave) → busca tabela pai onde é PK (cross-schema)
+     *  - Tabelas cfg_ não expandem filhas (são config, teriam muitas)
+     *  - Só BASE TABLE, sem views
+     *  - Recursivo até esgotar a rede
+     *
+     * @return array Lista de nomes de tabelas relacionadas (sem a base)
+     */
+    /**
+     * @return array ['filhas' => [...], 'pais' => [...]]
+     *   filhas = descendentes (encontradas via expansão de PK) — todos os campos
+     *   pais   = tabelas referenciadas via FK — apenas campos _nome
+     */
+    public function getRedeRelacionamentos(string $tabelaBase): array
+    {
+        $processadas = [];
+        $filhas      = [];
+        $pais        = [];
+
+        // Fila: [tabela, tipo] — tipo 'filha' ou 'pai'
+        $fila = [[$tabelaBase, 'base']];
+
+        while (!empty($fila)) {
+            [$tabela, $origem] = array_shift($fila);
+            if (isset($processadas[$tabela])) continue;
+            $processadas[$tabela] = true;
+
+            if ($origem === 'filha') $filhas[] = $tabela;
+            if ($origem === 'pai')   $pais[]   = $tabela;
+
+            $dbGrSche = $this->getDbGroupAndSchema($tabela);
+            if (empty($dbGrSche['schema'])) continue;
+
+            $db     = db_connect($dbGrSche['dbGroup']);
+            $campos = $this->getCampos($tabela);
+
+            foreach ($campos as $col) {
+                $nome = $col['COLUMN_NAME'];
+                if (!str_ends_with($nome, '_id')) continue;
+                if (str_ends_with($nome, '_excluido')) continue;
+
+                $isPK = ($col['COLUMN_KEY'] === 'PRI');
+
+                if ($isPK && !str_starts_with($tabela, 'cfg_')) {
+                    // PK → buscar descendentes que possuem este campo
+                    $descend = $this->_buscarTabelasComColuna($db, $nome, $dbGrSche['schema'], $tabela);
+                    foreach ($descend as $f) {
+                        if (!isset($processadas[$f])) {
+                            $fila[] = [$f, 'filha'];
+                        }
+                    }
+                } elseif (!$isPK) {
+                    // FK → buscar tabela pai onde este campo é PK (cross-schema)
+                    $encontrados = $this->_procurarTabelasCorrespondentes(
+                        $db,
+                        $nome,
+                        $dbGrSche['schema'],
+                        $tabela,
+                        $dbGrSche['dbGroup']
+                    );
+                    foreach ($encontrados as $p) {
+                        $nomeTab = $p['TABLE_NAME'];
+                        if (!isset($processadas[$nomeTab])) {
+                            $fila[] = [$nomeTab, 'pai'];
+                        }
+                    }
+                }
+            }
+        }
+
+        return ['filhas' => $filhas, 'pais' => $pais];
+    }
+
+    /**
+     * Busca tabelas (BASE TABLE, sem views) que possuem a coluna informada.
+     */
+    private function _buscarTabelasComColuna($db, string $coluna, string $schema, string $excluirTabela): array
+    {
+        $builder = $db->table('information_schema.COLUMNS c');
+        $builder->distinct();
+        $builder->select('c.TABLE_NAME');
+        $builder->join('information_schema.TABLES t', 't.TABLE_NAME = c.TABLE_NAME AND t.TABLE_SCHEMA = c.TABLE_SCHEMA', 'inner');
+        $builder->where('c.COLUMN_NAME', $coluna);
+        $builder->where('c.TABLE_SCHEMA', $schema);
+        $builder->where('c.TABLE_NAME !=', $excluirTabela);
+        $builder->where('t.TABLE_TYPE', 'BASE TABLE');
+
+        $result = $builder->get();
+        $rows   = $result ? $result->getResultArray() : [];
+
+        return array_column($rows, 'TABLE_NAME');
+    }
+
+    /**
+     * Obtém relacionamentos reversos potenciais (sem constraint).
+     * Busca tabelas no mesmo schema que possuem a PK da tabela base como coluna.
+     * Ex: est_requisicao (PK req_id) → encontra est_requisicao_produto que tem req_id.
+     */
+    private function _obterRelacionamentosReversosPotenciais($db, $nome_tabela, $schema, $jaEncontrados)
+    {
+        $tabelasJaIncluidas = [$nome_tabela];
+        foreach ($jaEncontrados as $rel) {
+            if (!empty($rel['REFERENCED_TABLE_NAME'])) {
+                $tabelasJaIncluidas[] = $rel['REFERENCED_TABLE_NAME'];
+            }
+        }
+
+        $builderPK = $db->table('information_schema.COLUMNS');
+        $builderPK->select('COLUMN_NAME');
+        $builderPK->where('TABLE_NAME', $nome_tabela);
+        $builderPK->where('TABLE_SCHEMA', $schema);
+        $builderPK->where('COLUMN_KEY', 'PRI');
+        $result = $builderPK->get();
+        $pks = $result ? $result->getResultArray() : [];
+
+        if (empty($pks)) {
+            return [];
+        }
+
+        $pkName = $pks[0]['COLUMN_NAME'];
+
+        $builder = $db->table('information_schema.COLUMNS c');
+        $builder->select('c.TABLE_NAME, c.COLUMN_NAME, t.TABLE_COMMENT');
+        $builder->join('information_schema.TABLES t', 't.TABLE_NAME = c.TABLE_NAME AND t.TABLE_SCHEMA = c.TABLE_SCHEMA', 'inner');
+        $builder->where('c.COLUMN_NAME', $pkName);
+        $builder->where('c.TABLE_SCHEMA', $schema);
+        $builder->where('c.TABLE_NAME !=', $nome_tabela);
+        $builder->where('t.TABLE_TYPE', 'BASE TABLE');
+
+        $result = $builder->get();
+        $filhas = $result ? $result->getResultArray() : [];
+
+        $ret = [];
+        foreach ($filhas as $f) {
+            if (in_array($f['TABLE_NAME'], $tabelasJaIncluidas)) {
+                continue;
+            }
+            $ret[] = [
+                'CONSTRAINT_NAME'       => null,
+                'TABLE_NAME'            => $f['TABLE_NAME'],
+                'COLUMN_NAME'           => $pkName,
+                'REFERENCED_TABLE_NAME' => $f['TABLE_NAME'],
+                'REFERENCED_COLUMN_NAME' => $pkName,
+                'TABLE_COMMENT'         => $f['TABLE_COMMENT'],
+                'tipo_relacao'          => 'potencial',
+            ];
+        }
+
+        return $ret;
     }
 
     /**
@@ -435,6 +639,7 @@ class ConfigDicDadosModel extends Model
 
         return $tabelas_validas;
     }
+
     /**
      * Summary of getCampos
      * Retorna os Campos  da Tabela informada
@@ -536,19 +741,70 @@ class ConfigDicDadosModel extends Model
         return $ret;
     }
 
+    /**
+     * Retorna as tabelas de um banco específico pelo dbGroup do módulo.
+     * @param string $dbGroup      Ex: 'dbEstoque', 'dbProduto', 'dbOcorrencia', 'default'
+     * @param bool   $includeViews Se true, inclui views além das tabelas base
+     * @return array
+     */
+    public function getTabelasPorDbGroup(string $dbGroup, bool $includeViews = false, bool $tabelabase = true): array
+    {
+        $url = base_url();
+        $pre = str_contains($url, 'dev.') ? '' : 'prd_';
+
+        $schemaMap = [
+            'dbEstoque'    => [$pre . 'estoque_db',       'dbEstoque'],
+            'dbProduto'    => [$pre . 'produto_db',       'dbProduto'],
+            'dbOcorrencia' => [$pre . 'ocorrencia_db',    'dbOcorrencia'],
+            'default'      => [$pre . 'config_ceqweb_db', 'default'],
+        ];
+
+        if (!isset($schemaMap[$dbGroup])) {
+            return [];
+        }
+
+        [$schema, $group] = $schemaMap[$dbGroup];
+        $db      = db_connect($group);
+        $builder = $db->table('information_schema.tables');
+        $builder->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
+        $builder->where('table_schema', $schema);
+
+        if (!$includeViews) {
+            $builder->where('table_type', 'BASE TABLE');
+        }
+
+        $builder->orderBy('table_name', 'ASC');
+
+        $ret = $builder->get()->getResultArray();
+
+        if ($tabelabase) {
+            $all_names = array_column($ret, 'table_name');
+            $ret = array_values(array_filter($ret, function ($row) use ($all_names) {
+                foreach ($all_names as $other) {
+                    if ($other !== $row['table_name'] && str_starts_with($row['table_name'], $other . '_')) {
+                        return false;
+                    }
+                }
+                return true;
+            }));
+        }
+
+        return $ret;
+    }
+
     function getDbGroupAndSchema(?string $nome_tabela): array
     {
         $url = base_url();
         if (str_contains($url, 'dev.')) {
             $prefixMap = [
-                'vw_est' => ['dbGroup' => 'dbEstoque',    'schema' => 'dev_estoque_db'],
-                'est'    => ['dbGroup' => 'dbEstoque',    'schema' => 'dev_estoque_db'],
-                'vw_oco' => ['dbGroup' => 'dbOcorrencia', 'schema' => 'dev_ocorrencia_db'],
-                'oco'    => ['dbGroup' => 'dbOcorrencia', 'schema' => 'dev_ocorrencia_db'],
-                'vw_pro' => ['dbGroup' => 'dbProduto',    'schema' => 'dev_produto_db'],
-                'pro'    => ['dbGroup' => 'dbProduto',    'schema' => 'dev_produto_db'],
-                'vw_cfg' => ['dbGroup' => 'default',      'schema' => 'dev_config_ceqweb_db'],
-                'cfg'    => ['dbGroup' => 'default',      'schema' => 'dev_config_ceqweb_db'],
+                'vw_est' => ['dbGroup' => 'dbEstoque',    'schema' => 'estoque_db'],
+                'est'    => ['dbGroup' => 'dbEstoque',    'schema' => 'estoque_db'],
+                'vw_oco' => ['dbGroup' => 'dbOcorrencia', 'schema' => 'ocorrencia_db'],
+                'oco'    => ['dbGroup' => 'dbOcorrencia', 'schema' => 'ocorrencia_db'],
+                'vw_pro' => ['dbGroup' => 'dbProduto',    'schema' => 'produto_db'],
+                'pro'    => ['dbGroup' => 'dbProduto',    'schema' => 'produto_db'],
+                'vw_cfg' => ['dbGroup' => 'default',      'schema' => 'config_ceqweb_db'],
+                'cfg'    => ['dbGroup' => 'default',      'schema' => 'config_ceqweb_db'],
             ];
         } else {
             $prefixMap = [
@@ -575,7 +831,6 @@ class ConfigDicDadosModel extends Model
         // Retorna nulo caso nenhum prefixo conhecido seja encontrado
         return ['dbGroup' => null, 'schema' => null];
     }
-
 
     /**
      * Summary of getSchemaEstruturado

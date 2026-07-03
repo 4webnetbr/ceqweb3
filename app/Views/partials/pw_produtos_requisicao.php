@@ -6,7 +6,7 @@ if (!isset($maxHeig)) {
     $maxHeig = '49vh';
 }
 ?>
-<div class="accordion mb-5" id="accProdutos">
+<div class="accordion mb-0" id="accProdutos">
     <div class="accordion-item">
         <h2 class="accordion-header" id="headprod<?php echo $produtos[0]['req_id'] ?? '' ?>">
             <button class="accordion-button" type="button"
