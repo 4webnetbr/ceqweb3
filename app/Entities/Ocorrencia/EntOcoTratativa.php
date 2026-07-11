@@ -282,10 +282,21 @@ class EntOcoTratativa extends Entity
     /**
      * RN03.15 — Linha de "ação extra" (avulsa), adicionada manualmente pelo
      * usuário na aba Ações da tratativa (T12), além das ações de origem do
-     * subtipo. Vai em name diferente (tpa_id_extra[]) para o store()
-     * distinguir origem x manual sem precisar de flag nova de schema — e
-     * para permitir excluir apenas as manuais (a linha de origem nunca
-     * recebe botão de excluir).
+     * subtipo. Vai em name diferente (tpa_id_extra[]/tmo_id_extra[]/
+     * stt_id_extra[]/mod_id_extra[]/tel_id_extra[]) para o store() distinguir
+     * origem x manual sem precisar de flag nova de schema — e para permitir
+     * excluir apenas as manuais (a linha de origem nunca recebe botão de
+     * excluir).
+     *
+     * Bloqueante 2 (revisão 01, decisão do byarq — alternativa b): a ação
+     * extra NÃO é restrita a "Justificar". Replica o mesmo padrão condicional
+     * de campos já usado em EntOcoSubtOcorrencia::defCamposAcao() —
+     * tmo_id para tpa_tipo=3 (Gerar Movimentação), mod_id/tel_id para
+     * tpa_tipo=2 (Abrir Tela), stt_id para tpa_tipo=4 (Alterar Status) — para
+     * que a ação extra tenha efeito real independente do tipo escolhido.
+     * O toggle de visibilidade (divmovi/divtela/divstat) é feito pela função
+     * JS já existente `verificaTipoAcao()` (my_fields.js), reaproveitada sem
+     * alterações — o `FunChan` do select de tpa_id já a aciona.
      */
     public function defCamposAcaoExtra(int $pos = 0): array
     {
@@ -296,6 +307,7 @@ class EntOcoTratativa extends Entity
         $config['Label']    = 'Ação';
         $config['DispForm'] = 'col-6';
         $config['Ordem']    = $pos;
+        $config['FunChan']  = 'verificaTipoAcao(this)';
 
         $ret['tpa_id'] = criaSelectRelativo(
             'oco_tipo_acao',
@@ -307,6 +319,68 @@ class EntOcoTratativa extends Entity
             ['tpa_ativo' => 'A'],
             $config,
             'tpa_id_extra'
+        );
+
+        // TIPO DE MOVIMENTAÇÃO (tpa_tipo=3 — Gerar Movimentação)
+        $config['Label']    = 'Tipo de Movimentação';
+        $config['FunChan']  = '';
+        $config['DispForm'] = 'col-12';
+        $ret['tmo_id'] = criaSelectRelativo(
+            'est_tipo_movimentacao',
+            'tmo_id',
+            'tmo_nome',
+            null,
+            1,
+            'oco_tipo_acao',
+            [],
+            $config,
+            'tmo_id_extra'
+        );
+
+        // MÓDULO + TELA (tpa_tipo=2 — Abrir Tela)
+        $config['Label']    = 'Módulo';
+        $config['DispForm'] = 'col-6';
+        $ret['mod_id'] = criaSelectRelativo(
+            'cfg_modulo',
+            'mod_id',
+            'mod_nome',
+            null,
+            1,
+            'oco_tipo_acao',
+            [],
+            $config,
+            'mod_id_extra'
+        );
+
+        $config['Label']    = 'Tela';
+        $config['Pai']      = 'mod_id';
+        $config['Urlbusca'] = base_url('buscas/busca_tela_modulo');
+        $ret['tel_id'] = criaSelectRelativo(
+            'cfg_tela',
+            'tel_id',
+            'tel_nome',
+            null,
+            2,
+            'oco_tipo_acao',
+            [],
+            $config,
+            'tel_id_extra'
+        );
+
+        // STATUS (tpa_tipo=4 — Alterar Status)
+        $config = [];
+        $config['Label']    = 'Status';
+        $config['DispForm'] = 'col-12';
+        $ret['stt_id'] = criaSelectRelativo(
+            'cfg_status',
+            'stt_id',
+            'stt_nome',
+            null,
+            1,
+            'oco_tipo_acao',
+            [],
+            $config,
+            'stt_id_extra'
         );
 
         // EXCLUIR (somente ações adicionadas manualmente podem ser excluídas)

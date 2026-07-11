@@ -137,6 +137,9 @@ class OcoTrataOcorrencia extends BaseController
     /**
      * RN03.15 — retorna o HTML de uma nova linha de "ação extra" (avulsa),
      * para ser adicionada dinamicamente na aba Ações de finalizar().
+     * Bloqueante 2 (revisão 01): a linha traz também os campos condicionais
+     * (tmo_id/mod_id+tel_id/stt_id) escondidos por padrão — o mesmo padrão
+     * já usado em T9, alternado via `verificaTipoAcao()` (my_fields.js).
      *
      * @param mixed $oco_id
      * @param mixed $ind
@@ -149,6 +152,9 @@ class OcoTrataOcorrencia extends BaseController
 
         $html  = "<tr><td><div class='row'>";
         $html .= $fields['tpa_id'];
+        $html .= "<div id='divmovi[$ind]' class='d-none row col-6'>" . $fields['tmo_id'] . "</div>";
+        $html .= "<div id='divtela[$ind]' class='d-none row col-6'>" . $fields['mod_id'] . $fields['tel_id'] . "</div>";
+        $html .= "<div id='divstat[$ind]' class='d-none row col-6'>" . $fields['stt_id'] . "</div>";
         $html .= $fields['bt_del'];
         $html .= '</div></td></tr>';
 
@@ -269,24 +275,95 @@ class OcoTrataOcorrencia extends BaseController
             // Se veio via requisição HTTP
             $postado = $this->request->getPost();
         }
-        // RN03.15 — mescla ações de origem (tpa_id[]) com ações extras
-        // adicionadas manualmente pelo usuário (tpa_id_extra[]) para a
-        // execução (Justificar/Gerar Movimentação/Alterar Status).
-        $acaoSelecionada = array_filter(array_merge(
+
+        // Normaliza tpa_id para array — quando store() é chamado
+        // diretamente (via OcorrenciaService::processAfterSave -> $automatica),
+        // tpa_id vem como escalar (int|null), não array.
+        if (isset($postado['tpa_id']) && !is_array($postado['tpa_id'])) {
+            $postado['tpa_id'] = [$postado['tpa_id']];
+        }
+
+        // Bloqueante 2 (revisão 01, decisão do byarq — alternativa b):
+        // monta o catálogo (tpa_tipo) de TODOS os tpa_id envolvidos — ações de
+        // origem (tpa_id[], vindas do subtipo) e ações extras (tpa_id_extra[],
+        // adicionadas manualmente pelo usuário em T12/RN03.15) — para poder
+        // executar cada uma pelo tipo correto, sem restringir a extra a
+        // "Justificar".
+        $todosTpaIds = array_filter(array_merge(
             $postado['tpa_id'] ?? [],
             $postado['tpa_id_extra'] ?? []
         ));
-        // debug($postado, true);
-        // debug($acaoSelecionada, true);
 
-        $acoes = $this->tipoacao->getTipoAcao($acaoSelecionada);
-        // debug($acoes, true);
+        $catalogo = [];
+        foreach ($this->tipoacao->getTipoAcao($todosTpaIds) as $tp) {
+            $catalogo[$tp->tpa_id] = $tp;
+        }
+
+        // Monta a lista de ações a executar, distinguindo origem x extra:
+        //  - origem:  dados (tmo_id/stt_id/tel_id) vêm de oco_subt_ocorrencia_acao
+        //             (getTOAcao()/getAcaoPorId()) — comportamento já existente.
+        //  - extra:   dados vêm da própria linha do POST (tmo_id_extra[]/
+        //             stt_id_extra[]/tel_id_extra[]) — não há registro em
+        //             oco_subt_ocorrencia_acao para elas; não é criada
+        //             nenhuma tabela/coluna nova, os dados trafegam só no
+        //             POST do formulário de tratativa.
+        //
+        // Bug encontrado pelo bytest: nada impedia o usuário de escolher, na
+        // "ação extra", o MESMO tpa_id que já é ação de origem do subtipo —
+        // ou o mesmo tpa_id em DUAS linhas de ação extra diferentes — gerando
+        // duas entradas para o mesmo tpa_id e, para tpa_tipo=3 (Gerar
+        // Movimentação), duas chamadas a gerarMovimentacao() no mesmo submit
+        // (movimentação de estoque duplicada). Correção: deduplica por
+        // tpa_id usando um conjunto único progressivo ($tpaIdsUsados), com
+        // precedência para a ação de origem — cobre origem×extra e
+        // extra×extra ao mesmo tempo.
+        $acoesExecutar = [];
+        $tpaIdsOrigem  = [];
+
+        foreach (($postado['tpa_id'] ?? []) as $tpa_id) {
+            if (!$tpa_id || !isset($catalogo[$tpa_id])) {
+                continue;
+            }
+            $tpaIdsOrigem[$tpa_id] = true;
+            $acoesExecutar[] = (object) [
+                'tpa_id'   => $tpa_id,
+                'tpa_tipo' => $catalogo[$tpa_id]->tpa_tipo,
+                'origem'   => true,
+                'tmo_id'   => null,
+                'stt_id'   => null,
+                'tel_id'   => null,
+            ];
+        }
+
+        $tpaIdsUsados = $tpaIdsOrigem; // reaproveita o que já existe (origem)
+
+        foreach (($postado['tpa_id_extra'] ?? []) as $i => $tpa_id) {
+            if (!$tpa_id || !isset($catalogo[$tpa_id])) {
+                continue;
+            }
+            // Já usado (origem OU outra linha extra) — ignora a entrada
+            // duplicada para não executar a mesma ação duas vezes.
+            if (isset($tpaIdsUsados[$tpa_id])) {
+                continue;
+            }
+            $tpaIdsUsados[$tpa_id] = true;
+            $acoesExecutar[] = (object) [
+                'tpa_id'   => $tpa_id,
+                'tpa_tipo' => $catalogo[$tpa_id]->tpa_tipo,
+                'origem'   => false,
+                'tmo_id'   => $postado['tmo_id_extra'][$i] ?? null,
+                'stt_id'   => $postado['stt_id_extra'][$i] ?? null,
+                'tel_id'   => $postado['tel_id_extra'][$i] ?? null,
+            ];
+        }
+
+        // debug($postado, true);
+        // debug($acoesExecutar, true);
+
         $retTrat = [];
-        $retAcao = [];
-        foreach ($acoes as $key => $valor) {
-            // debug($key);
-            // debug($valor);
-            switch ($valor->tpa_tipo) {
+        $retAcao = ['erro' => false];
+        foreach ($acoesExecutar as $valor) {
+            switch ((int) $valor->tpa_tipo) {
                 case 1:
                     // lógica para Justificar
                     break;
@@ -313,8 +390,9 @@ class OcoTrataOcorrencia extends BaseController
             try {
                 // RN03.18.1 — status final: se houver ação "Alterar Status"
                 // (tpa_tipo=4) entre as ações executadas, usa o stt_id
-                // configurado para ela no subtipo; senão, Finalizada (30).
-                $sttIdFinal = $automatica ? 29 : $this->resolveStatusFinal($postado, $acoes);
+                // configurado para ela (no subtipo, se de origem; na própria
+                // linha, se extra); senão, Finalizada (30).
+                $sttIdFinal = $automatica ? 29 : $this->resolveStatusFinal($postado, $acoesExecutar);
 
                 $sql_save = [
                     'stt_id'       => $sttIdFinal,
@@ -343,31 +421,53 @@ class OcoTrataOcorrencia extends BaseController
     /**
      * RN03.18.1 — Resolve o stt_id final da ocorrência ao concluir a tratativa:
      * busca, entre as ações executadas, alguma do tipo "Alterar Status"
-     * (tpa_tipo=4) vinculada ao subtipo e usa o stt_id configurado para ela
-     * em oco_subt_ocorrencia_acao; se não houver, usa 30 (Finalizada).
+     * (tpa_tipo=4); se for uma ação de origem, usa o stt_id configurado para
+     * ela em oco_subt_ocorrencia_acao (getAcaoPorId()); se for uma ação extra
+     * (Bloqueante 2), usa o stt_id informado na própria linha do POST; se
+     * nenhuma resolver, usa 30 (Finalizada).
      */
-    private function resolveStatusFinal(array $postado, $acoes): int
+    private function resolveStatusFinal(array $postado, array $acoesExecutar): int
     {
-        foreach ($acoes as $acao) {
-            if ((int) $acao->tpa_tipo === 4) {
+        foreach ($acoesExecutar as $acao) {
+            if ((int) $acao->tpa_tipo !== 4) {
+                continue;
+            }
+
+            if ($acao->origem) {
                 $acaoSubt = $this->subtocorrencia->getAcaoPorId($acao->tpa_id, $postado['sut_id']);
                 if ($acaoSubt && !empty($acaoSubt->stt_id)) {
                     return (int) $acaoSubt->stt_id;
                 }
+            } elseif (!empty($acao->stt_id)) {
+                return (int) $acao->stt_id;
             }
         }
 
         return 30;
     }
 
+    /**
+     * Gera a movimentação de estoque para uma ação do tipo "Gerar
+     * Movimentação" (tpa_tipo=3). Para ação de origem, o tmo_id vem da
+     * configuração do subtipo (oco_subt_ocorrencia_acao, via getTOAcao());
+     * para ação extra (Bloqueante 2), o tmo_id vem da própria linha do POST
+     * (tmo_id_extra[]).
+     */
     private function gerarMovimentacao($postado, $acao)
     {
         $retMov         = [];
         $retMov['erro'] = false;
-        $acaosubt = $this->subtocorrencia->getTOAcao($postado['sut_id'], $acao->tpa_id)[0] ?? false;
-        if ($acaosubt) {
+
+        if ($acao->origem ?? true) {
+            $acaosubt = $this->subtocorrencia->getTOAcao($postado['sut_id'], $acao->tpa_id)[0] ?? false;
+            $tmoId    = $acaosubt->tmo_id ?? null;
+        } else {
+            $tmoId = $acao->tmo_id ?? null;
+        }
+
+        if ($tmoId) {
             $movsOco[] = [
-                'id'           => $acaosubt->tmo_id,
+                'id'           => $tmoId,
                 'qt'           => $postado['oco_qtd'],
                 'msg'          => $postado['oco_descricao'],
                 'pro_id'       => $postado['pro_id'],

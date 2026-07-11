@@ -346,7 +346,9 @@ class OcoOcorrencia extends BaseController
         // requisição/repartição não pode ser alterada (o botão "Alterar" já é
         // ocultado no front, mas isso não protege contra requisição forjada).
         if (!empty($dados->req_id) || !empty($dados->rep_id)) {
-            throw new \Exception(getMensagem('MSG_15') ?? 'Alteração não Permitida');
+            // Bloqueante 1 (revisão 01) — não chamar getMensagem() no
+            // controller; quem resolve o texto é o front (boxAlert()).
+            throw new \Exception('Alteração não Permitida');
         }
 
         // Instancia a entity

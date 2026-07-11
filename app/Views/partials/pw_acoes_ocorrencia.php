@@ -18,7 +18,7 @@
             </button>
         </h2>
 
-        <div id="collapseacao<?= $oco_id ?>"
+        <div id="collapseacao<?= $oco_id ?>" 
              class="accordion-collapse collapse show"
              aria-labelledby="headacao<?= $oco_id ?>"
              data-bs-parent="#accAcoes">

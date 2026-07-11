@@ -6,7 +6,24 @@
       "Bash(ln -sf \"/c/Users/ADMIN/AppData/Local/Microsoft/WinGet/Packages/JohnMacFarlane.Pandoc_Microsoft.Winget.Source_8wekyb3d8bbwe/pandoc-3.10/pandoc.exe\" ~/bin/pandoc.exe)",
       "Bash(pandoc --version)",
       "Bash(pandoc \"C:\\\\Users\\\\ADMIN\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--MyProjects-Ceqnep-CeqWeb3\\\\7eb604b2-199c-4c80-8038-6e1ef57fa32d\\\\scratchpad\\\\ocorrencias-t9-t11-t12-dev.md\" -f markdown -t docx -o \"docs\\\\desenvolvimento\\\\ocorrencias-t9-t11-t12-dev.docx\")",
-      "Bash(powershell -NoProfile -Command \"Get-Item 'c:\\\\MyProjects\\\\Ceqnep\\\\CeqWeb3\\\\docs\\\\desenvolvimento\\\\ocorrencias-t9-t11-t12-dev.docx' | Select-Object FullName, Length, LastWriteTime\")"
+      "Bash(powershell -NoProfile -Command \"Get-Item 'c:\\\\MyProjects\\\\Ceqnep\\\\CeqWeb3\\\\docs\\\\desenvolvimento\\\\ocorrencias-t9-t11-t12-dev.docx' | Select-Object FullName, Length, LastWriteTime\")",
+      "Bash(ls docs/revisao)",
+      "Bash(ls docs/desenvolvimento)",
+      "Bash(pandoc \"docs\\\\desenvolvimento\\\\ocorrencias-t9-t11-t12-dev.md\" -f markdown -t docx -o \"docs\\\\desenvolvimento\\\\ocorrencias-t9-t11-t12-dev.docx\")",
+      "Bash(pandoc \"docs\\\\revisao\\\\ocorrencias-t9-t11-t12-revisao-01.md\" -f markdown -t docx -o \"docs\\\\revisao\\\\ocorrencias-t9-t11-t12-revisao-01.docx\")",
+      "Bash(powershell -NoProfile -Command \"Get-Item 'c:\\\\MyProjects\\\\Ceqnep\\\\CeqWeb3\\\\docs\\\\revisao\\\\ocorrencias-t9-t11-t12-revisao-01.docx' | Select-Object FullName, Length, LastWriteTime, IsReadOnly\")",
+      "Bash(pandoc \"docs\\\\revisao\\\\ocorrencias-t9-t11-t12-revisao-01.md\" -f markdown -t docx -o \"docs\\\\revisao\\\\ocorrencias-t9-t11-t12-revisao-01-tmp.docx\")",
+      "Bash(powershell -NoProfile -Command 'Get-Process | Where-Object {$_.MainWindowTitle -match '\\\\''revisao-01'\\\\'' -or $_.ProcessName -match '\\\\''WINWORD'\\\\''} | Select-Object Id, ProcessName, MainWindowTitle')",
+      "Bash(powershell -NoProfile -Command \"Get-ChildItem 'c:\\\\MyProjects\\\\Ceqnep\\\\CeqWeb3\\\\docs\\\\revisao' | Select-Object Name, Length, LastWriteTime\")",
+      "Bash(git checkout *)",
+      "Bash(git status *)",
+      "Bash(sort -k6,7)",
+      "Bash(grep -c 'tpa_id.*=.*\\\\[$postado\\\\['\\\\''tpa_id'\\\\''\\\\]\\\\]' app/Controllers/Ocorrencia/OcoTrataOcorrencia.php)",
+      "Bash(powershell -Command \"Get-ChildItem 'c:\\\\MyProjects\\\\Ceqnep\\\\CeqWeb3\\\\app\\\\Controllers\\\\Ocorrencia' | Select-Object Name,Length\")",
+      "Bash(powershell -Command \"Get-Content -Path 'c:\\\\MyProjects\\\\Ceqnep\\\\CeqWeb3\\\\app\\\\Controllers\\\\Ocorrencia\\\\OcoOcorrencia.php' -Encoding UTF8 | Measure-Object -Line\")",
+      "Bash(grep -n 'isset\\($tpaIdsUsados' app/Controllers/Ocorrencia/OcoTrataOcorrencia.php)",
+      "Bash(pandoc \"docs\\\\testes\\\\ocorrencias-t9-t11-t12-plano-testes.md\" -f markdown -t docx -o \"docs\\\\testes\\\\ocorrencias-t9-t11-t12-plano-testes.docx\")",
+      "Bash(powershell -NoProfile -Command \"Get-ChildItem 'c:\\\\MyProjects\\\\Ceqnep\\\\CeqWeb3\\\\docs\\\\testes' | Select-Object Name, Length, LastWriteTime\")"
     ]
   }
 }

@@ -123,12 +123,24 @@ Arquivos: `OcoSubtOcorrencia.php` / `EntOcoSubtOcorrencia.php` / `OcorreSubtOcor
 
 **Situação atual:** checagem de uso em gestão (bloco `getUsoGestao`) está **comentada** no método `ativinativ()` do controller. `OcorreSubtOcorrenciaModel::getUsoGestao()` retorna apenas um `bool` (existe/não existe uso).
 
-**O que muda:**
+**O que muda (fluxo revisado e aprovado pelo `byarq` na rodada de revisão 01):**
 - Reativar a checagem em `ativinativ()` (remover comentário/reabilitar chamada).
-- Evoluir o método do model: substituir/complementar `getUsoGestao()` por `getPendenciasGestao(int $sut_id)`, que retorna a **lista** de ocorrências pendentes vinculadas ao subtipo (não apenas um booleano).
-- No controller, ao bloquear a inativação, exibir **MSG 14** via `boxAlert()`, passando a lista retornada em `dadosExtra` (conforme padrão de `boxAlert(mensagem, erro, url, aguardaClique, tipo, ..., titulo, dadosExtra)` documentado em `rascunho-runtime-js.md`), para o usuário visualizar quais ocorrências pendentes impedem a inativação.
+- Evoluir o método do model: substituir/complementar `getUsoGestao()` por `getPendenciasGestao(int $sut_id)`, que retorna a **lista** de ocorrências pendentes vinculadas ao subtipo (não apenas um booleano) — dados mínimos por item: número da ocorrência, subtipo, data.
+- **Controller (`OcoSubtOcorrencia::ativinativ()`):** ao encontrar pendências, retornar `$ret['msg'] = 14` (**inteiro puro**, sem montar texto em PHP — mesmo padrão já usado corretamente em `store()`/`delete()` desta e de outras telas) **e** um novo campo `$ret['pendencias']` — array simples vindo de `getPendenciasGestao(int $sut_id)`. Não usar `getMensagem()` no controller para este fluxo (ver observação de rastreabilidade abaixo).
+- **Front (JS específico da tela T9, dentro de `my_ocorrencia.js` — não alterar `my_default.js`):** no callback do AJAX de `ativinativ()`, se `ret.pendencias` vier preenchido:
+  1. chamar `await getMensagem(14)` (função JS global já existente, mesma usada internamente pelo `boxAlert()`) para obter o texto-base da MSG 14;
+  2. montar um `<ul>` a partir de `ret.pendencias`;
+  3. concatenar esse `<ul>` ao `msgvar.msg_mensagem`;
+  4. chamar `boxAlert(textoConcatenado, true, '', true, 1, false, tituloComIcone)` — usando o ramo já suportado por `boxAlert()` para **string literal** (quando `mensagem` não é numérico), conforme `rascunho-runtime-js.md`.
+- Reaproveita 100% do que já existe em `boxAlert()`/`getMensagem()` (JS) — não exige nenhuma alteração em `my_default.js`.
+- **Descartado:** uso do parâmetro `opcoes`/`dadosExtra` de `boxAlert()` para essa listagem — esse parâmetro é exclusivo do ramo `bootbox.prompt` do `boxAlert()`, não do ramo de string literal usado aqui.
+- **Tratamento de erro no `catch` de `ativinativ()` (item não-bloqueante aprovado junto com esta RN):** diferenciar exceção de "possui pendência" (→ `$ret['msg'] = 14` com `$ret['pendencias']`) de qualquer outro erro genérico (→ `$ret['msg'] = 17`, "Problema no Sistema", mensagem já cadastrada em `cfg_mensagem`) — não mascarar erro genérico como se fosse pendência.
 
-**Arquivos afetados:** `OcoSubtOcorrencia.php` (`ativinativ()`), `OcorreSubtOcorrenciaModel.php` (novo método `getPendenciasGestao()` ou evolução de `getUsoGestao()`), front da tela T9 (chamada `boxAlert(14, ...)` com `dadosExtra`).
+**Nota de rastreabilidade (Bloqueante 1, revisão 01):** o helper PHP `getMensagem()` (`app/Helpers/mensagem_helper.php`) não deve ser chamado no controller para resolver texto de mensagem — quem resolve o texto é o `boxAlert()` no front, via `GET /mensagem/{id}`. O controller apenas retorna o `msg_id` inteiro. A divergência de schema do próprio helper (`msg_codigo`/`msg_texto` inexistentes; schema real é `msg_id`/`msg_titulo`/`msg_mensagem`/`msg_tipo`/`msg_cor`) é **fora de escopo** desta feature — registrar como item para ticket de arquitetura separado, não corrigir aqui.
+
+**Arquivos afetados:** `OcoSubtOcorrencia.php` (`ativinativ()`), `OcorreSubtOcorrenciaModel.php` (novo método `getPendenciasGestao()`; ver decisão sobre remoção de `getUsoGestao()` órfão abaixo), `public/assets/jscript/my_ocorrencia.js` (ou arquivo JS equivalente específico da tela T9 — montagem do `<ul>` e chamada a `boxAlert()`/`getMensagem()`).
+
+**Sobre `getUsoGestao()` (item não-bloqueante aprovado):** após a introdução de `getPendenciasGestao()`, `getUsoGestao()` pode ficar órfão. Antes de remover, `bydev` deve rodar grep por `getUsoGestao` em todo o projeto — se não houver nenhum outro chamador (nem em T10/`OcoTipoOcorrencia`, nem em outro lugar), remover; se houver, manter e apenas registrar que o método permanece em uso por outro consumidor.
 
 ### RNs sem alteração necessária
 
@@ -163,7 +175,7 @@ Arquivos: `OcoOcorrencia.php` / `EntOcoOcorrencia.php` / `OcorreOcorrenciaModel.
 **O que muda:**
 - Adicionar validação server-side em `edit($id)`: se `req_id`/`rep_id` do registro não forem nulos, retornar erro sem carregar o formulário de edição.
 - Adicionar a mesma validação no início de `store()`, no branch em que `oco_id` já existe (fluxo de update): se `req_id`/`rep_id` não nulos, retornar erro **sem gravar**.
-- Mensagem de erro: reaproveitar **MSG_15** ("Alteração não Permitida"), conforme decisão 2 (Seção 1).
+- Mensagem de erro: reaproveitar **MSG_15** ("Alteração não Permitida"), conforme decisão 2 (Seção 1) — retornar `$ret['msg'] = 15` (**inteiro puro**, sem chamar `getMensagem()` no controller; mesmo padrão de `store()`/`delete()`). Ver nota de rastreabilidade do Bloqueante 1 na RN06.2 (Seção 5) — aplica-se igualmente aqui.
 
 **Arquivos afetados:** `OcoOcorrencia.php` (`edit()`, `store()`).
 
@@ -200,7 +212,16 @@ Arquivos: `OcoTrataOcorrencia.php` / `EntOcoTratativa.php` / `OcorreTrataOcorren
   - ações **adicionadas manualmente** pelo usuário na tratativa.
 - Bloquear exclusão apenas das ações de origem (o usuário não pode remover uma ação que veio configurada no subtipo; pode remover as que ele mesmo adicionou).
 
-**Arquivos afetados:** `OcoTrataOcorrencia.php` (view/campos de `finalizar()`, `store()`), `OcorreTrataOcorrenciaModel.php` (se a distinção origem/manual exigir persistência de flag adicional — a confirmar durante codificação; se necessário, sinalizar a `byarq` antes de alterar schema).
+**Escopo da "ação extra" (decisão do `byarq` na rodada de revisão 01 — Bloqueante 2, alternativa **(b)** escolhida):** a ação extra **não** é restrita a apenas "Justificar" (`tpa_tipo=1`). RN03.15 aprovada permite explicitamente ações extras de qualquer tipo cadastrado em T8, sem restrição — a alternativa de restringir o select apenas a "Justificar" foi descartada. A abordagem escolhida é coletar, na própria linha da ação adicionada, os dados extras que cada tipo de ação precisa — reaproveitando o padrão de campos condicionais já existente em `EntOcoSubtOcorrencia::defCamposAcao()` (campos `divmovi`/`divtela`/`divstat` conforme `tpa_tipo`), ou seja, é reaproveitamento de UI já existente, não UX nova.
+
+**Encaminhamento concreto para o `bydev`:**
+
+- Na linha de "ação extra" em T12 (`finalizar()`), replicar o mesmo padrão condicional de campos já usado em T9: `tmo_id` para `tpa_tipo=3` (Gerar Movimentação), `stt_id` para `tpa_tipo=4` (Alterar Status), `tel_id` para `tpa_tipo=2`.
+- Em `store()`, quando a ação executada for uma **ação extra** (sem correspondência em `oco_subt_ocorrencia_acao` para aquele subtipo), usar os valores informados na própria linha (`tmo_id`/`stt_id`/`tel_id` vindos do POST daquela linha) em vez de buscar via `getTOAcao()`/`getAcaoPorId()`. Para **ações de origem** (pré-configuradas no subtipo), `getTOAcao()`/`getAcaoPorId()` continuam sendo usados normalmente, sem alteração.
+- `gerarMovimentacao()` e `resolveStatusFinal()` (RN03.18.1) precisam aceitar dados vindos da linha quando a ação for extra, e só cair para `getTOAcao()`/`getAcaoPorId()` quando for ação de origem.
+- **Persistência:** não é necessária nova tabela/coluna. Os dados da ação extra trafegam apenas no POST do formulário de tratativa e são processados dentro do próprio `store()`; não persistem em `oco_subt_ocorrencia_acao` (exclusivo do cadastro em T9). Se durante a codificação o `bydev` perceber necessidade real de tabela de histórico/auditoria da tratativa, deve **sinalizar antes** de criar schema novo — não criar unilateralmente.
+
+**Arquivos afetados:** `OcoTrataOcorrencia.php` (view/campos de `finalizar()`, `store()`, `gerarMovimentacao()`, `resolveStatusFinal()`), `EntOcoTratativa.php` (campos condicionais da linha de ação extra, espelhando `EntOcoSubtOcorrencia::defCamposAcao()`).
 
 ### RN03.18 — Correção de bug: case 4 (Alterar Status) chamando `gerarMovimentacao()` (confirmado)
 

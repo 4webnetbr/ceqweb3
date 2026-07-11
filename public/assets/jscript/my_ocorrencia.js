@@ -4,6 +4,96 @@
  */
 
 /**
+ * ativInativ (override local — apenas nas páginas de T9/OcoSubtOcorrencia)
+ * RN06.2 (revisão 01) — a tela T9 precisa de uma UX diferente do
+ * ativInativ() genérico (my_default.js) quando a inativação é bloqueada por
+ * ocorrência(s) Pendente(s) vinculada(s) ao subtipo: além da mensagem base
+ * (MSG 14), deve listar as pendências para o usuário.
+ *
+ * Esta função é carregada só nas páginas de T9 (`OcoSubtOcorrencia::index()`
+ * define `$this->data['scripts'] = 'my_ocorrencia'`) e, por ser um `function`
+ * declarado no escopo global, sobrescreve — só nessas páginas — a
+ * `ativInativ()` genérica de `my_default.js` (que permanece intocada; o
+ * botão "Ativar/Inativar" da grid continua chamando `ativInativ(url, texto,
+ * ativo)`, conforme gerado por `app/Common.php`).
+ *
+ * Reaproveita 100% do que já existe: `boxAlert()` (confirmação + exibição de
+ * erro) e `getMensagem()` (texto da MSG 14) — nenhuma alteração em
+ * my_default.js.
+ *
+ * @param {string} url - url de ativinativ() do registro
+ * @param {string} registro - descrição do registro (nome do subtipo)
+ * @param {boolean} ativo - true = está ativo (vai inativar), false = vai ativar
+ */
+async function ativInativ(url, registro, ativo) {
+  let msg, tit;
+
+  if (ativo) {
+    msg =
+      "Confirma a Inativação do Registro?<br><h5 class='text-center'>" +
+      registro +
+      "</h5>";
+    tit = "Inativação de Registro";
+  } else {
+    msg =
+      "Confirma a Ativação do Registro?<br><h5 class='text-center'>" +
+      registro +
+      "</h5>";
+    tit = "Ativação de Registro";
+  }
+
+  const confirmado = await boxAlert(msg, false, "", true, 1, true, tit);
+  if (!confirmado) {
+    return;
+  }
+
+  retornoAjax = false;
+  await executaAjaxWait(url, "json");
+
+  if (!retornoAjax) {
+    return;
+  }
+
+  if (retornoAjax.erro) {
+    if (Array.isArray(retornoAjax.pendencias) && retornoAjax.pendencias.length) {
+      // RN06.2 — MSG 14 (base) + lista de pendências (ramo string literal do
+      // boxAlert(), já que o parâmetro opcoes/dadosExtra é exclusivo do ramo
+      // bootbox.prompt, não se aplica aqui).
+      const msgvar = await getMensagem(14);
+
+      const lista =
+        "<ul class='text-start mb-0'>" +
+        retornoAjax.pendencias
+          .map((p) => {
+            const numero = String(p.oco_id).padStart(6, "0");
+            return `<li>Nº ${numero} - ${p.sut_nome ?? ""} - ${p.oco_data ?? ""}</li>`;
+          })
+          .join("") +
+        "</ul>";
+
+      const tituloComIcone =
+        '<h3><i class="fas fa-exclamation-triangle"></i><span class="mx-2">' +
+        (msgvar?.msg_titulo ?? "Atenção") +
+        "</span></h3>";
+
+      const textoConcatenado = (msgvar?.msg_mensagem ?? "") + "<br>" + lista;
+
+      await boxAlert(textoConcatenado, true, "", true, 1, false, tituloComIcone);
+    } else {
+      // Erro genérico (ex.: MSG 17 "Problema no Sistema") — msg numérico,
+      // boxAlert() resolve o texto sozinho via getMensagem()/GET /mensagem/{id}.
+      await boxAlert(retornoAjax.msg, true, "", true, 1, false);
+    }
+    return;
+  }
+
+  jQuery("#table").DataTable().ajax.reload(null, false);
+  if (retornoAjax.msg) {
+    mostranoToast(retornoAjax.msg);
+  }
+}
+
+/**
  * adicionaAcaoExtra
  * RN03.15 — Adiciona uma linha de ação extra (avulsa) na aba Ações da
  * tratativa (T12), abaixo das ações de origem do subtipo. Segue o mesmo

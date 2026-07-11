@@ -152,30 +152,22 @@ class OcorreSubtOcorrenciaModel extends Model
         return $builder->get()->getResult();
     }
 
-    public function getUsoGestao(int $sut_id): bool
-    {
-        $db = db_connect('dbOcorrencia');
-
-        $builder = $db->table('oco_ocorrencia o');
-        $builder->select('o.oco_id');
-
-        $builder->where('o.sut_id', $sut_id);
-        $builder->where('o.stt_id', 28);
-
-        return $builder->countAllResults() > 0;
-    }
-
     /**
      * RN06.2 — Lista as ocorrências Pendentes (stt_id=28) vinculadas ao
      * subtipo, usada para bloquear a inativação em OcoSubtOcorrencia::ativinativ()
      * exibindo ao usuário quais ocorrências impedem a inativação.
+     * Dados mínimos por item (revisão 01): número da ocorrência, subtipo, data.
+     * Substitui getUsoGestao() (removido — sem chamadores após esta RN,
+     * confirmado via grep na revisão 01: o único outro getUsoGestao() do
+     * projeto pertence a OcorreModOcorrenciaModel, classe diferente).
      */
     public function getPendenciasGestao(int $sut_id): array
     {
         $db = db_connect('dbOcorrencia');
 
         $builder = $db->table('oco_ocorrencia o');
-        $builder->select('o.oco_id, o.oco_descricao, o.oco_data');
+        $builder->select('o.oco_id, s.sut_nome, o.oco_data');
+        $builder->join('oco_subt_ocorrencia s', 's.sut_id = o.sut_id');
 
         $builder->where('o.sut_id', $sut_id);
         $builder->where('o.stt_id', 28);
