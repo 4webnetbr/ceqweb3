@@ -110,7 +110,8 @@ class Relatorio extends BaseController
 
         $camposHtml = [];
         foreach ($listaFiltros as $f) {
-            $camposHtml[] = $this->_montaCampoFiltro($f, $relatorio->rel_tabela_base);
+            // *claude* passa rel_id pra montar a URL do endpoint de cascata quando o filtro for dependente
+            $camposHtml[] = $this->_montaCampoFiltro($f, $relatorio->rel_tabela_base, $rel_id);
         }
 
         $this->data['metodo']        = 'filtro';
@@ -122,6 +123,66 @@ class Relatorio extends BaseController
         $this->data['url_gerar']     = base_url('Relatorio/gerar/' . $rel_id);
 
         echo view('Utils/vw_relatorio_filtro', $this->data);
+    }
+
+    // *claude* AJAX chamado pelo busca_dependente() (my_fields.js) quando o usuário preenche
+    // o campo pai de um filtro em cascata. Só roda alguma query quando há valor(es) de pai
+    // selecionados — é isso que evita o SELECT DISTINCT antecipado desses filtros na tela.
+    public function filtroOpcoes(int $rel_id, int $rfi_id)
+    {
+        $relatorio = $this->relatorios->relatorioPermitido($rel_id, $this->perfilId);
+        if (!$relatorio) {
+            echo json_encode([]);
+            return;
+        }
+
+        $filtroEnt = $this->filtros->getFiltro($rfi_id);
+        if (!$filtroEnt || (int) $filtroEnt->rel_id !== $rel_id || empty($filtroEnt->rfi_campo_pai)) {
+            echo json_encode([]);
+            return;
+        }
+
+        // *claude* aceita valor único ou array (select do pai pode ser multi-select)
+        $valoresPai = $_REQUEST['busca'] ?? null;
+        if (empty($valoresPai)) {
+            echo json_encode([]);
+            return;
+        }
+        if (!is_array($valoresPai)) {
+            $valoresPai = [$valoresPai];
+        }
+
+        $tabelaBase = $relatorio->rel_tabela_base;
+        $dbGrSche   = $this->dicionario->getDbGroupAndSchema($tabelaBase);
+
+        // *claude* mesma consulta de _montaCampoFiltro(), mas agora com WHERE pelo(s) valor(es)
+        // do campo pai — é o que reduz drasticamente o volume varrido em relação ao DISTINCT sem filtro
+        $linhas = db_connect($dbGrSche['dbGroup'])
+            ->table($tabelaBase)
+            ->distinct()
+            ->select($filtroEnt->rfi_campo)
+            ->whereIn($filtroEnt->rfi_campo_pai, $valoresPai)
+            ->limit(500)
+            ->get()->getResultArray();
+
+        $valores = [];
+        foreach ($linhas as $linha) {
+            $valor = $linha[$filtroEnt->rfi_campo] ?? null;
+            if ($valor === null || $valor === '') {
+                continue;
+            }
+            $valores[] = $valor;
+        }
+
+        $opcoes = $this->_ordenaOpcoesFiltro($tabelaBase, $filtroEnt->rfi_campo, $valores);
+
+        // *claude* busca_dependente() (my_fields.js) espera um array de {id, text}
+        $ret = [];
+        foreach ($opcoes as $valor => $texto) {
+            $ret[] = ['id' => $valor, 'text' => $texto];
+        }
+
+        echo json_encode($ret);
     }
 
     /**
@@ -402,7 +463,8 @@ class Relatorio extends BaseController
      * Monta o HTML de UM campo de filtro (daterange ou multi-select via
      * SELECT DISTINCT na tabela base do relatório).
      */
-    private function _montaCampoFiltro($filtroEnt, string $tabelaBase): string
+    // *claude* novo parâmetro $rel_id: necessário só pra montar a URL do endpoint de cascata
+    private function _montaCampoFiltro($filtroEnt, string $tabelaBase, int $rel_id): string
     {
         $campo = new MyCampo();
         $campo->nome = $campo->id = 'f_' . $filtroEnt->rfi_campo;
@@ -422,6 +484,16 @@ class Relatorio extends BaseController
                 $campo->classep = 'daterange-opcional';
             }
             return $campo->crDaterange();
+        }
+
+        // *claude* Filtro dependente de outro (cascata): não roda SELECT DISTINCT nem
+        // _ordenaOpcoesFiltro() aqui — o select nasce vazio e só busca as opções via AJAX
+        // (filtroOpcoes()) quando o campo pai (rfi_campo_pai) for preenchido pelo usuário.
+        // Isso é o que elimina a query cara antecipada nos filtros marcados como dependentes.
+        if (!empty($filtroEnt->rfi_campo_pai)) {
+            $campo->setPai('f_' . $filtroEnt->rfi_campo_pai . '[]');
+            $campo->setUrlBusca(base_url("Relatorio/filtroOpcoes/{$rel_id}/{$filtroEnt->rfi_id}"));
+            return $campo->crDependeMultiplo();
         }
 
         // FK: SELECT DISTINCT na tabela base

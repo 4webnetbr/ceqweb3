@@ -165,6 +165,55 @@ class OcorreSubtOcorrenciaModel extends Model
         return $builder->countAllResults() > 0;
     }
 
+    /**
+     * RN06.2 — Lista as ocorrências Pendentes (stt_id=28) vinculadas ao
+     * subtipo, usada para bloquear a inativação em OcoSubtOcorrencia::ativinativ()
+     * exibindo ao usuário quais ocorrências impedem a inativação.
+     */
+    public function getPendenciasGestao(int $sut_id): array
+    {
+        $db = db_connect('dbOcorrencia');
+
+        $builder = $db->table('oco_ocorrencia o');
+        $builder->select('o.oco_id, o.oco_descricao, o.oco_data');
+
+        $builder->where('o.sut_id', $sut_id);
+        $builder->where('o.stt_id', 28);
+        $builder->orderBy('o.oco_data', 'ASC');
+
+        return $builder->get()->getResultArray();
+    }
+
+    /**
+     * RN03.1.6 / RN03.2.5 — Resolve o stt_id inicial de uma ocorrência a
+     * partir das ações cadastradas para o subtipo (oco_subt_ocorrencia_acao.sta_fina):
+     *  - sem nenhuma ação cadastrada        -> 29 (Finalização Automática)
+     *  - todas as ações com sta_fina = 'S'  -> 29 (Finalização Automática)
+     *  - ao menos uma ação com sta_fina='N' -> 28 (Pendente)
+     */
+    public function getStatusInicial(int $sut_id): int
+    {
+        $db = db_connect('dbOcorrencia');
+
+        $builder = $db->table('oco_subt_ocorrencia_acao');
+        $builder->select('sta_fina');
+        $builder->where('sut_id', $sut_id);
+
+        $acoes = $builder->get()->getResult();
+
+        if (empty($acoes)) {
+            return 29;
+        }
+
+        foreach ($acoes as $acao) {
+            if (($acao->sta_fina ?? 'N') !== 'S') {
+                return 28;
+            }
+        }
+
+        return 29;
+    }
+
     public function getSubtipoPorTipos(int $tpo_id)
     {
         $db = db_connect('dbOcorrencia');

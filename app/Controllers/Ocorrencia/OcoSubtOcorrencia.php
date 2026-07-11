@@ -93,7 +93,6 @@ class OcoSubtOcorrencia extends BaseController
         $campos[0][] = $fields['sut_nome'];
         $campos[0][] = $fields['tpo_id'];
         $campos[0][] = $fields['cla_id'];
-        $campos[0][] = $fields['sut_fina'];
         // debug($fields, true);
 
 
@@ -138,7 +137,7 @@ class OcoSubtOcorrencia extends BaseController
 
         for ($t = 0; $t < sizeof($ttelas); $t++) {
             $total = sizeof($ttelas);
-            // debug($ttelas[$t]); 
+            // debug($ttelas[$t]);
             $fields = $entity->defCamposTelasAplicaveis($ttelas[$t], $ind, $total);
             $campo[$t][0] = $fields['mod_id'];
             $campo[$t][1] = $fields['tel_id'];
@@ -173,8 +172,9 @@ class OcoSubtOcorrencia extends BaseController
             $campo[$a][1] = "<div id='divmovi[$ind]' class='d-none row col-6'>" . $fields['tmo_id'] . "</div>";
             $campo[$a][2] = "<div id='divtela[$ind]' class='d-none row col-6'>" . $fields['mod_id'] . $fields['tel_id'] . "</div>";
             $campo[$a][3] = "<div id='divstat[$ind]' class='d-none row col-6'>" . $fields['stt_id'] . "</div>";
-            $campo[$a][4] = '';
-            $campo[$a][5] = $fields['bt_deltp'];
+            $campo[$a][4] = $fields['sta_fina'];
+            $campo[$a][5] = '';
+            $campo[$a][6] = $fields['bt_deltp'];
             $ind++;
             //debug($campo);
 
@@ -187,7 +187,7 @@ class OcoSubtOcorrencia extends BaseController
      * Edição
      * edit
      *
-     * @param mixed $id 
+     * @param mixed $id
      * @return void
      */
     public function edit($id)
@@ -218,7 +218,6 @@ class OcoSubtOcorrencia extends BaseController
         $campos[0][] = $fields['sut_nome'];
         $campos[0][] = $fields['tpo_id'];
         $campos[0][] = $fields['cla_id'];
-        $campos[0][] = $fields['sut_fina'];
         // debug($fields, true);
 
         // Telas Aplicáveis
@@ -275,6 +274,7 @@ class OcoSubtOcorrencia extends BaseController
                 $campos[2][$c][] = "<div id='divmovi[$c]' class='{$clsMovi} row col-6'>{$fields['tmo_id']}</div>";
                 $campos[2][$c][] = "<div id='divtela[$c]' class='{$clsTela} row col-6'>{$fields['mod_id']}{$fields['tel_id']}</div>";
                 $campos[2][$c][] = "<div id='divstat[$c]' class='{$clsStat} row col-6'>{$fields['stt_id']}</div>";
+                $campos[2][$c][] = $fields['sta_fina'];
                 $campos[2][$c][] = '';
                 $campos[2][$c][] = $fields['bt_deltp'];
             }
@@ -301,7 +301,7 @@ class OcoSubtOcorrencia extends BaseController
      * Exclusão
      * delete
      *
-     * @param mixed $id 
+     * @param mixed $id
      * @return void
      */
     public function delete($id)
@@ -325,13 +325,14 @@ class OcoSubtOcorrencia extends BaseController
      * ATIVO
      * & INATIVO
      *
-     * @param mixed $id 
+     * @param mixed $id
      * @return void
      */
     public function ativinativ($id, $tipo)
     {
         // debug([$id, $tipo], true);
         $ret = [];
+        $pendencias = [];
 
         try {
             if ($tipo == 1) {
@@ -341,9 +342,12 @@ class OcoSubtOcorrencia extends BaseController
                 ];
             } else {
                 // INATIVAR
-                // if ($this->subtocorrencia->getUsoGestao((int) $id)) {
-                //     throw new \Exception('MSG_14'); // possui ocorrência vinculada
-                // }
+                // RN06.2 — bloqueia a inativação se houver ocorrência Pendente
+                // vinculada ao subtipo, listando as pendências para o usuário.
+                $pendencias = $this->subtocorrencia->getPendenciasGestao((int) $id);
+                if (!empty($pendencias)) {
+                    throw new \Exception('MSG_14');
+                }
 
                 $dad_atin = [
                     'sut_ativo' => 'I'
@@ -358,7 +362,21 @@ class OcoSubtOcorrencia extends BaseController
             cache()->clean();
         } catch (\Exception $e) {
             $ret['erro'] = true;
-            $ret['msg']  = 14;
+
+            if ($e->getMessage() === 'MSG_14') {
+                // Monta a mensagem base (MSG 14) + a lista de ocorrências
+                // pendentes que impedem a inativação (dadosExtra).
+                $texto = getMensagem('MSG_14') ?? 'Não é possível inativar: existem ocorrências pendentes vinculadas.';
+                $lista = '<ul class="text-start mb-0">';
+                foreach ($pendencias as $pend) {
+                    $lista .= '<li>Nº ' . str_pad($pend['oco_id'], 6, '0', STR_PAD_LEFT)
+                        . ' - ' . esc($pend['oco_descricao']) . '</li>';
+                }
+                $lista .= '</ul>';
+                $ret['msg'] = $texto . '<br>' . $lista;
+            } else {
+                $ret['msg'] = 14;
+            }
         }
 
         return $this->response->setJSON($ret);
@@ -382,10 +400,6 @@ class OcoSubtOcorrencia extends BaseController
         // tipo de ocorrência
         if (is_array($postado['tpo_id'] ?? null)) {
             $postado['tpo_id'] = $postado['tpo_id'][0];
-        }
-        //finalização automática
-        if (is_array($postado['sut_fina'] ?? null)) {
-            $postado['sut_fina'] = $postado['sut_fina'][0];
         }
         // classes
         $classesSelecionadas = $postado['cla_id'] ?? [];
@@ -433,31 +447,47 @@ class OcoSubtOcorrencia extends BaseController
             // debug($sut_id);
 
             // Ações
+            $acoes = [];
             if (!empty($postado['tpa_id'])) {
                 // debug($postado, true);
-                $acoes = [];
 
                 foreach ($postado['tpa_id'] as $i => $tpa_id) {
 
                     if (!$tpa_id) continue;
 
-                    $mod_id = $postado['mod_id_tpa'][$i];
-                    $tel_id = $postado['tel_id_tpa'][$i];
-                    $stt_id = $postado['stt_id_tpa'][$i];
-                    $tmo_id = $postado['tmo_id_tpa'][$i];
+                    $mod_id    = $postado['mod_id_tpa'][$i];
+                    $tel_id    = $postado['tel_id_tpa'][$i];
+                    $stt_id    = $postado['stt_id_tpa'][$i];
+                    $tmo_id    = $postado['tmo_id_tpa'][$i];
+                    $sta_fina  = $postado['sta_fina_tpa'][$i] ?? 'N';
 
                     $acoes[] = [
-                        'sut_id' => $sut_id,
-                        'tpa_id' => $tpa_id,
-                        'mod_id' => $mod_id,
-                        'tel_id' => $tel_id,
-                        'stt_id' => $stt_id,
-                        'tmo_id' => $tmo_id,
+                        'sut_id'   => $sut_id,
+                        'tpa_id'   => $tpa_id,
+                        'mod_id'   => $mod_id,
+                        'tel_id'   => $tel_id,
+                        'stt_id'   => $stt_id,
+                        'tmo_id'   => $tmo_id,
+                        'sta_fina' => $sta_fina,
                     ];
                 }
                 // debug($acoes, true);
-                $this->common->insertRegBatch($grupo, 'oco_subt_ocorrencia_acao', $acoes);
+                if (!empty($acoes)) {
+                    $this->common->insertRegBatch($grupo, 'oco_subt_ocorrencia_acao', $acoes);
+                }
             }
+
+            // RN03.6 — sut_fina é campo DERIVADO: 'S' se não houver ação
+            // cadastrada, ou se todas as ações tiverem sta_fina='S'; 'N' caso
+            // contrário. Mantém compatibilidade com OcoOcorrencia::storetmp().
+            $sutFina = 'S';
+            foreach ($acoes as $acao) {
+                if (($acao['sta_fina'] ?? 'N') !== 'S') {
+                    $sutFina = 'N';
+                    break;
+                }
+            }
+            $this->common->updateReg($grupo, 'oco_subt_ocorrencia', "sut_id = {$sut_id}", ['sut_fina' => $sutFina]);
 
             // Inserir telas
             if (!empty($postado['mod_id']) && !empty($postado['tel_id'])) {

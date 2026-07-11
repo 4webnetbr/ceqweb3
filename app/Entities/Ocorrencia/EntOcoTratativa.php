@@ -55,7 +55,7 @@ class EntOcoTratativa extends Entity
         $dados = (array) $dados;
         $ret = [];
 
-        // ID DA OCORRÊNCIA 
+        // ID DA OCORRÊNCIA
         $ocoid = new MyCampo('oco_ocorrencia', 'oco_id');
         $ocoid->valor = $dados['oco_id'] ?? null;
         $ret['oco_id'] = $ocoid->crOculto();
@@ -91,7 +91,7 @@ class EntOcoTratativa extends Entity
             $config
         );
 
-        // USUÁRIO 
+        // USUÁRIO
         $usu           = new MyCampo('oco_ocorrencia', 'usu_nome');
         $usu->valor    = (isset($dados['usu_nome'])) ? $dados['usu_nome'] : '';
         $usu->objeto   = '';
@@ -131,7 +131,7 @@ class EntOcoTratativa extends Entity
             $prod = $modProduto->getProduto($dados['pro_id']);
             $descpro = !empty($listaProd) ? $prod[0]->pro_despro : '';
         }
-        // PRODUTO 
+        // PRODUTO
         $produto           = new MyCampo('pro_sap_produto', 'pro_despro');
         $produto->valor    = $descpro;
         $produto->dispForm = '2col';
@@ -174,6 +174,15 @@ class EntOcoTratativa extends Entity
         $tpaHidden->valor = $dados->tpa_id ?? null;
 
         $ret['tpa_id'] = $tpaHidden->crOculto();
+
+        // RN03.18.2 — marca oculta com o tipo da ação (não é enviada ao
+        // servidor como dado de negócio; usada apenas pelo front para saber
+        // se há ação "Gerar Movimentação" (tpa_tipo=3) marcada, e então pedir
+        // confirmação (MSG 6) antes de submeter a tratativa.
+        $tpaTipoHidden = new MyCampo();
+        $tpaTipoHidden->nome  = 'tpa_tipo_marca[]';
+        $tpaTipoHidden->valor = $dados->tpa_tipo ?? null;
+        $ret['tpa_tipo_marca'] = $tpaTipoHidden->crOculto();
 
         // TIPO DE AÇÃO
         $acao = new MyCampo('oco_tipo_acao', 'tpa_nome');
@@ -266,6 +275,50 @@ class EntOcoTratativa extends Entity
 
             $ret['tel_id'] = $tela->crInput();
         }
+
+        return $ret;
+    }
+
+    /**
+     * RN03.15 — Linha de "ação extra" (avulsa), adicionada manualmente pelo
+     * usuário na aba Ações da tratativa (T12), além das ações de origem do
+     * subtipo. Vai em name diferente (tpa_id_extra[]) para o store()
+     * distinguir origem x manual sem precisar de flag nova de schema — e
+     * para permitir excluir apenas as manuais (a linha de origem nunca
+     * recebe botão de excluir).
+     */
+    public function defCamposAcaoExtra(int $pos = 0): array
+    {
+        $ret = [];
+
+        // AÇÃO (editável)
+        $config = [];
+        $config['Label']    = 'Ação';
+        $config['DispForm'] = 'col-6';
+        $config['Ordem']    = $pos;
+
+        $ret['tpa_id'] = criaSelectRelativo(
+            'oco_tipo_acao',
+            'tpa_id',
+            'tpa_nome',
+            null,
+            1,
+            'oco_ocorrencia',
+            ['tpa_ativo' => 'A'],
+            $config,
+            'tpa_id_extra'
+        );
+
+        // EXCLUIR (somente ações adicionadas manualmente podem ser excluídas)
+        $del            = new MyCampo();
+        $del->dispForm  = '2col';
+        $del->nome      = "bt_delacaoextra[$pos]";
+        $del->id        = "bt_delacaoextra[$pos]";
+        $del->i_cone    = "<i class='fas fa-trash'></i>";
+        $del->classep   = "btn-outline-danger btn-sm bt-exclui";
+        $del->funcChan  = "removeAcaoExtra(this)";
+        $del->place     = "Excluir Ação";
+        $ret['bt_del']  = $del->crBotao();
 
         return $ret;
     }

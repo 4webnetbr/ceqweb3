@@ -12,6 +12,8 @@ class EntCfgRelFiltros extends Entity
         'rel_id'          => null,
         'rfi_tabela'      => null,
         'rfi_campo'       => null,
+        // *claude* nome do rfi_campo (mesmo relatório) do qual este filtro depende, ou null
+        'rfi_campo_pai'   => null,
         'rfi_tipo_filtro' => 'FK',
         'rfi_label'       => null,
         'rfi_obrigatorio' => 0,
@@ -56,8 +58,32 @@ class EntCfgRelFiltros extends Entity
             ->setOpcoes($opcoesCampo)
             ->setObrigatorio()
             ->setOrdem($pos)
-            ->setDispForm('col-4')
+            // *claude* col-4 -> col-3 pra abrir espaço pro novo campo "depende de" na mesma linha
+            ->setDispForm('col-3')
             ->setLargura(30)
+            ->setLeitura($show)
+            ->crSelect();
+
+        // *claude* select "depende de": só semeia aqui a opção já salva (se houver), igual o
+        // padrão usado acima pra rfi_campo. A lista real de candidatos (os rfi_campo já
+        // escolhidos nas OUTRAS linhas da grade) é montada em tempo real por
+        // atualizaDependeDe() em my_relatorio.js, porque isso muda conforme o usuário
+        // adiciona/remove/edita linhas — não dá pra saber isso só no render do servidor.
+        $campoPaiVal = $dados['rfi_campo_pai'] ?? '';
+        $opcoesPai   = ['' => '(Nenhum)'];
+        if (!empty($campoPaiVal)) {
+            $opcoesPai[$campoPaiVal] = ucwords(str_replace('_', ' ', $campoPaiVal));
+        }
+
+        $ret['rfi_campo_pai'] = (new MyCampo('cfg_rel_filtros', 'rfi_campo_pai'))
+            // *claude* label explícito — a coluna nova não tem COLUMN_COMMENT no banco
+            ->setLabel('Depende de')
+            ->setValor($campoPaiVal)
+            ->setSelecionado($campoPaiVal)
+            ->setOpcoes($opcoesPai)
+            ->setOrdem($pos)
+            ->setLargura(30)
+            ->setDispForm('col-3')
             ->setLeitura($show)
             ->crSelect();
 
@@ -66,7 +92,8 @@ class EntCfgRelFiltros extends Entity
             ->setObrigatorio()
             ->setMinLength(3)
             ->setOrdem($pos)
-            ->setDispForm('col-4')
+            // *claude* col-4 -> col-3 pra abrir espaço pro novo campo "depende de" na mesma linha
+            ->setDispForm('col-3')
             ->setLargura(30)
             ->setLeitura($show)
             ->crInput();

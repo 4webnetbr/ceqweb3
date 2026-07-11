@@ -18,7 +18,7 @@
             </button>
         </h2>
 
-        <div id="collapseacao<?= $oco_id ?>" 
+        <div id="collapseacao<?= $oco_id ?>"
              class="accordion-collapse collapse show"
              aria-labelledby="headacao<?= $oco_id ?>"
              data-bs-parent="#accAcoes">
@@ -47,7 +47,26 @@
                         <?php endforeach; ?>
 
                     </tbody>
+                    <?php if (!empty($permiteAcaoExtra)): ?>
+                        <!-- RN03.15 — ações extras adicionadas manualmente pelo usuário -->
+                        <tbody id="rep_acoesextra" data-index="<?= count($acoes) ?>">
+                        </tbody>
+                    <?php endif; ?>
                 </table>
+
+                <?php if (!empty($permiteAcaoExtra)): ?>
+                    <div class="row px-2 pb-2">
+                        <div class="col-12 text-end">
+                            <button type="button"
+                                class="btn btn-outline-success btn-sm bt-repete"
+                                data-index="<?= count($acoes) ?>"
+                                title="Adicionar Ação"
+                                onclick="adicionaAcaoExtra('<?= base_url('OcoTrataOcorrencia/addCampoAcaoExtra/' . $oco_id) ?>', this)">
+                                <i class="fas fa-plus"></i> Adicionar Ação
+                            </button>
+                        </div>
+                    </div>
+                <?php endif; ?>
 
             </div>
         </div>

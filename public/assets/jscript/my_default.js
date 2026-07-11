@@ -64,6 +64,14 @@ jQuery(document)
           desBloqueiaTela();
           return; // para aqui e não executa mais nada
         }
+      } else if (controller.toLowerCase() === "ocotrataocorrencia") {
+        // RN03.18.2 — confirma (MSG 6) antes de submeter quando houver ação
+        // "Gerar Movimentação" (tpa_tipo=3) entre as ações marcadas.
+        submeter = await confirmaAcaoTratativa();
+        if (!submeter) {
+          desBloqueiaTela();
+          return; // para aqui e não executa mais nada
+        }
       }
     }
     if (submeter) {

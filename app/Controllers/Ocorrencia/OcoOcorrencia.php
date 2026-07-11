@@ -342,6 +342,13 @@ class OcoOcorrencia extends BaseController
             throw new \Exception('Ocorrência não encontrada');
         }
 
+        // RN04.1 — bloqueio server-side: ocorrência já vinculada a uma
+        // requisição/repartição não pode ser alterada (o botão "Alterar" já é
+        // ocultado no front, mas isso não protege contra requisição forjada).
+        if (!empty($dados->req_id) || !empty($dados->rep_id)) {
+            throw new \Exception(getMensagem('MSG_15') ?? 'Alteração não Permitida');
+        }
+
         // Instancia a entity
         // debug($dados, true);
         $oco    = new EntOcoOcorrencia((array) $dados, false);
@@ -517,31 +524,23 @@ class OcoOcorrencia extends BaseController
                 unset($postado['oco_id']);
             }
 
-            // SUBTIPO / STATUS
+            // SUBTIPO / STATUS — RN03.1.6 / RN03.2.5
             $modModel = new OcorreSubtOcorrenciaModel();
             $subtipo  = $modModel->getSubtOcorrencia((int) $postado['sut_id'])[0] ?? null;
             // debug($subtipo, true);
             if ($subtipo) {
-                $postado['tpo_id'] = $subtipo->tpo_id;
-                if ($subtipo->sut_fina === 'S') {
+                $postado['tpo_id']  = $subtipo->tpo_id;
+                $postado['stt_id']  = $modModel->getStatusInicial((int) $postado['sut_id']);
+
+                if ($postado['stt_id'] === 29) {
                     // FINALIZA AUTOMÁTICO
-                    $postado['stt_id'] = 29;
                     $postado['tpa_id'] = null;
                     $postado['tmo_id'] = null;
                 } else {
                     $acao = $modModel->getAcaoConfigurada((int) $postado['sut_id']);
                     // debug($acao);
-                    if (! $acao) {
-                        $postado['stt_id'] = 29;
-                    } elseif ((int) $acao->tpa_id === 12) {
-                        $postado['stt_id'] = 29;
-                    } else {
-                        $postado['stt_id'] = 28;
-                    }
-                    // if ($acao) {
                     $postado['tpa_id'] = $acao->tpa_id ?? null;
                     $postado['tmo_id'] = $acao->tmo_id ?? null;
-                    // }
                 }
             } else {
                 return $this->response->setJSON([
@@ -634,13 +633,14 @@ class OcoOcorrencia extends BaseController
                 throw new \Exception('Ocorrência não encontrada');
             }
 
-            // Se tem req_id, foi gerada por outra tela
-            // if (! empty($oco->req_id)) {
-            //     return $this->response->setJSON([
-            //         'erro' => true,
-            //         'msg'  => 3,
-            //     ]);
-            // }
+            // RN05.1 — só pode excluir ocorrência Pendente (stt_id=28) e sem
+            // vínculo com requisição (req_id).
+            if (!empty($oco->req_id) || (int) $oco->stt_id !== 28) {
+                return $this->response->setJSON([
+                    'erro' => true,
+                    'msg'  => 3,
+                ]);
+            }
 
             $this->ocorrencia->delete($id);
 
@@ -685,25 +685,24 @@ class OcoOcorrencia extends BaseController
         try {
             if (empty($postado['oco_id'])) {
                 unset($postado['oco_id']);
+            } else {
+                // RN04.1 — bloqueio server-side: não permite alterar (update)
+                // uma ocorrência já vinculada a requisição/repartição.
+                $existente = $this->ocorrencia->getOcorrencia($postado['oco_id']);
+                if ($existente && (!empty($existente->req_id) || !empty($existente->rep_id))) {
+                    return $this->response->setJSON([
+                        'erro' => true,
+                        'msg'  => 15,
+                    ]);
+                }
             }
 
-            // SUBTIPO / STATUS
-            $modModel = new OcorreSubtOcorrenciaModel();
-            $subtipo  = $modModel->getSubtOcorrencia((int) $postado['sut_id'])[0] ?? null;
+            // SUBTIPO / STATUS — RN03.1.6 / RN03.2.5
+            $modModel          = new OcorreSubtOcorrenciaModel();
+            $postado['stt_id'] = $modModel->getStatusInicial((int) $postado['sut_id']);
 
-            if ($subtipo && $subtipo->sut_fina === 'S') {
-                // FINALIZA AUTOMÁTICO
-                $postado['stt_id'] = 29;
-            } else {
+            if ($postado['stt_id'] != 29) {
                 $acao = $modModel->getAcaoConfigurada((int) $postado['sut_id']);
-
-                if (! $acao) {
-                    $postado['stt_id'] = 29;
-                } elseif ((int) $acao->tpa_id === 12) {
-                    $postado['stt_id'] = 29;
-                } else {
-                    $postado['stt_id'] = 28;
-                }
                 if ($acao) {
                     $postado['tpa_id'] = $acao->tpa_id ?? null;
                     $postado['tmo_id'] = $acao->tmo_id ?? null;

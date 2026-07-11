@@ -96,21 +96,9 @@ class EntOcoSubtOcorrencia extends Entity
         // debug($ret, true);
         // ['cla_id' => $dados['cla_id'] ?? ''],
 
-        // FINALIZAÇÃO AUTOMÁTICA
-        $simnao['S']    = 'Sim';
-        $simnao['N']    = 'Não';
-
-        $Subt_SimNao            = new MyCampo('oco_subt_ocorrencia', 'sut_fina');
-        $Subt_SimNao->valor     = (isset($dados['sut_fina'])) ? $dados['sut_fina'] : 'N';
-        $Subt_SimNao->leitura   = $show;
-        $Subt_SimNao->selecionado    = $Subt_SimNao->valor;
-        $Subt_SimNao->opcoes    = $simnao;
-        $Subt_SimNao->leitura   = $show;
-        $Subt_SimNao->ordem       = $pos;
-        $Subt_SimNao->dispForm    = "col-8";
-        // $etc_italico->funcChan    = "prevEtiqueta('" . $base_url . "')";
-        $ret['sut_fina']     = $Subt_SimNao->cr2opcoes();
-
+        // RN03.6 — sut_fina deixou de ser editável em Dados Gerais.
+        // Passa a ser um campo DERIVADO, calculado em OcoSubtOcorrencia::store()
+        // a partir do sta_fina de cada linha da aba Ações (ver defCamposAcao()).
 
         return $ret;
     }
@@ -292,6 +280,17 @@ class EntOcoSubtOcorrencia extends Entity
             $config,
             'stt_id_tpa'
         );
+
+        // RN03.6 — Finalização automática (por ação, aba Ações)
+        $staFina                = new MyCampo();
+        $staFina->nome          = "sta_fina_tpa[$pos]";
+        $staFina->id            = "sta_fina_tpa[$pos]";
+        $staFina->label         = 'Finalização Automática';
+        $staFina->valor         = 'S';
+        $staFina->selecionado   = $dados['sta_fina'] ?? 'N';
+        $staFina->dispForm      = 'col-6';
+        $staFina->classep       = 'sta_fina_tpa';
+        $ret['sta_fina'] = $staFina->crCheckbox();
 
         $atrib['data-index'] = $pos;
         $add            = new MyCampo();

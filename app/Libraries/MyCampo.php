@@ -1948,6 +1948,15 @@ class MyCampo
         $this->tipo        = 'select';
         $this->selecionado ??= $this->valor;
 
+        // *claude* normaliza selecionado como array — igual crMultiple() já faz. Sem isso,
+        // form_multiselect() recebe string (o default de $valor) e quebra com TypeError
+        // quando o campo dependente nasce vazio (nenhuma opção pré-selecionada ainda).
+        if (! is_array($this->selecionado)) {
+            $this->selecionado = ($this->selecionado !== null && $this->selecionado !== '')
+                ? array_filter(explode(',', (string) $this->selecionado))
+                : [];
+        }
+
         $this->field = [
             'name'             => $this->nome . '[]',
             'id'               => $this->id . '[]',

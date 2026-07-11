@@ -580,6 +580,7 @@ class CfgRelatorio extends BaseController
             $fields['rfi_campo'],       // select dependente da tabela base
             $fields['rfi_tipo_filtro'], // oculto — preenchido ao selecionar campo
             $fields['rfi_tabela'],      // oculto — preenchido ao selecionar campo
+            $fields['rfi_campo_pai'],   // *claude* novo: de qual outro filtro este depende (cascata) — opções montadas via JS (my_relatorio.js) a partir dos rfi_campo já escolhidos nas outras linhas
             $fields['rfi_label'],
             $fields['rfi_obrigatorio'],
             $fields['rfi_ordem'],       // oculto
@@ -624,6 +625,8 @@ class CfgRelatorio extends BaseController
         $tipos        = $postado['rfi_tipo_filtro']  ?? [];
         $labels       = $postado['rfi_label']        ?? [];
         $obrigatorios = $postado['rfi_obrigatorio']  ?? [];
+        // *claude* array paralelo do novo select "depende de"
+        $camposPai    = $postado['rfi_campo_pai']    ?? [];
 
         foreach ($campos as $i => $campo) {
             if (empty($campo)) {
@@ -636,10 +639,36 @@ class CfgRelatorio extends BaseController
                 'rfi_campo'       => $partes[0] ?? $campo,
                 'rfi_tabela'      => !empty($tabelas[$i]) ? $tabelas[$i] : ($partes[1] ?? ''),
                 'rfi_tipo_filtro' => !empty($tipos[$i])   ? $tipos[$i]   : ($partes[2] ?? 'FK'),
+                // *claude* nome puro da coluna (não é composto igual rfi_campo) — vazio = sem cascata
+                'rfi_campo_pai'   => !empty($camposPai[$i]) ? $camposPai[$i] : null,
                 'rfi_label'       => $labels[$i]        ?? '',
                 'rfi_obrigatorio' => $obrigatorios[$i]  ?? 0,
             ];
         }
+
+        // *claude* valida as dependências antes de persistir (sem custo de DB — só cruza o
+        // array já montado, na mesma ordem de exibição/rfi_ordem). Mesma regra do
+        // atualizaDependeDe() em my_relatorio.js: um filtro só pode depender de outro que
+        // apareça ANTES dele na lista — por isso o array de campos válidos é acumulado
+        // conforme percorre $filtros, nunca contendo a própria linha nem as seguintes.
+        // Filtro DATA não depende de nada (usa daterange, não select) nem serve de "pai".
+        $camposAteAqui = [];
+        foreach ($filtros as $i => &$f) {
+            $tipo = $f['rfi_tipo_filtro'] ?? 'FK';
+
+            if ($tipo === 'DATE') {
+                $f['rfi_campo_pai'] = null;
+            } elseif (!empty($f['rfi_campo_pai']) && !in_array($f['rfi_campo_pai'], $camposAteAqui, true)) {
+                throw new \RuntimeException(
+                    "O filtro \"{$f['rfi_label']}\" só pode depender de um filtro que apareça ANTES dele na lista."
+                );
+            }
+
+            if ($tipo !== 'DATE' && !empty($f['rfi_campo'])) {
+                $camposAteAqui[] = $f['rfi_campo'];
+            }
+        }
+        unset($f);
 
         return $filtros;
     }

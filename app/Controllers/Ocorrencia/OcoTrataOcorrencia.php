@@ -135,6 +135,27 @@ class OcoTrataOcorrencia extends BaseController
     }
 
     /**
+     * RN03.15 — retorna o HTML de uma nova linha de "ação extra" (avulsa),
+     * para ser adicionada dinamicamente na aba Ações de finalizar().
+     *
+     * @param mixed $oco_id
+     * @param mixed $ind
+     * @return void
+     */
+    public function addCampoAcaoExtra($oco_id, $ind)
+    {
+        $entity = new EntOcoTratativa();
+        $fields = $entity->defCamposAcaoExtra((int) $ind);
+
+        $html  = "<tr><td><div class='row'>";
+        $html .= $fields['tpa_id'];
+        $html .= $fields['bt_del'];
+        $html .= '</div></td></tr>';
+
+        return $this->response->setJSON(['html' => $html]);
+    }
+
+    /**
      * finalização da tratativa
      * finalizar
      *
@@ -198,24 +219,23 @@ class OcoTrataOcorrencia extends BaseController
         // BLOCO DAS AÇÕES
         $entity = new EntOcoTratativa($dados, true);
         $acoes  = $this->ocorrencia->getAcoesFinalizar($id);
-        if (! empty($acoes)) {
+        $acoesResultado = [];
 
-            $acoesResultado = [];
-
-            foreach ($acoes as $acao) {
-                $acao->somente_leitura = false;
-                $camposAcao            = $entity->defCamposAcao($acao);
-                $acoesResultado[]      = $camposAcao;
-            }
-
-            $campos[0][] = view(
-                'partials/pw_acoes_ocorrencia',
-                [
-                    'acoes'  => $acoesResultado,
-                    'oco_id' => $id,
-                ]
-            );
+        foreach ($acoes as $acao) {
+            $acao->somente_leitura = false;
+            $camposAcao            = $entity->defCamposAcao($acao);
+            $acoesResultado[]      = $camposAcao;
         }
+
+        // RN03.15 — permite adicionar ação extra apenas na tratativa (edição)
+        $campos[0][] = view(
+            'partials/pw_acoes_ocorrencia',
+            [
+                'acoes'            => $acoesResultado,
+                'oco_id'           => $id,
+                'permiteAcaoExtra' => true,
+            ]
+        );
 
         // CONFIG VIEW
         $this->data['desc_edicao'] = ' Ocorrência. Nº ' . str_pad($id, 6, '0', STR_PAD_LEFT) . ' - ' . $etiqueta;
@@ -225,6 +245,8 @@ class OcoTrataOcorrencia extends BaseController
         $this->data['destino']     = "store";
         $this->data['desc_metodo'] = '';
         $this->data['script']      = '<script>jQuery("#form1").attr("data-alter", true);</script>';
+        // RN03.18.2 — carrega o script com confirmaAcaoTratativa() (MSG 6)
+        $this->data['scripts']     = 'my_ocorrencia';
 
         echo view('vw_edicao', $this->data);
     }
@@ -247,7 +269,13 @@ class OcoTrataOcorrencia extends BaseController
             // Se veio via requisição HTTP
             $postado = $this->request->getPost();
         }
-        $acaoSelecionada = $postado['tpa_id'] ?? [];
+        // RN03.15 — mescla ações de origem (tpa_id[]) com ações extras
+        // adicionadas manualmente pelo usuário (tpa_id_extra[]) para a
+        // execução (Justificar/Gerar Movimentação/Alterar Status).
+        $acaoSelecionada = array_filter(array_merge(
+            $postado['tpa_id'] ?? [],
+            $postado['tpa_id_extra'] ?? []
+        ));
         // debug($postado, true);
         // debug($acaoSelecionada, true);
 
@@ -270,8 +298,9 @@ class OcoTrataOcorrencia extends BaseController
                     $retAcao = $this->gerarMovimentacao($postado, $valor);
                     break;
                 case 4:
-                    $retAcao = $this->gerarMovimentacao($postado, $valor);
-                    // lógica para Alterar Status
+                    // RN03.18 — Alterar Status apenas resolve o stt_id alvo
+                    // (ver resolveStatusFinal()); NÃO gera movimentação.
+                    $retAcao = ['erro' => false];
                     break;
                 default:
                     // opcional: tratar valores inesperados
@@ -282,8 +311,13 @@ class OcoTrataOcorrencia extends BaseController
             $db = \Config\Database::connect();
             $db->transBegin();
             try {
+                // RN03.18.1 — status final: se houver ação "Alterar Status"
+                // (tpa_tipo=4) entre as ações executadas, usa o stt_id
+                // configurado para ela no subtipo; senão, Finalizada (30).
+                $sttIdFinal = $automatica ? 29 : $this->resolveStatusFinal($postado, $acoes);
+
                 $sql_save = [
-                    'stt_id'       => $automatica ? 29 : 30,
+                    'stt_id'       => $sttIdFinal,
                     'usu_fina'     => session()->get('usu_id'),
                     'oco_data_fim' => date('Y-m-d H:i:s'),
                 ];
@@ -304,6 +338,26 @@ class OcoTrataOcorrencia extends BaseController
             $retTrat = $retAcao;
         }
         return $retTrat;
+    }
+
+    /**
+     * RN03.18.1 — Resolve o stt_id final da ocorrência ao concluir a tratativa:
+     * busca, entre as ações executadas, alguma do tipo "Alterar Status"
+     * (tpa_tipo=4) vinculada ao subtipo e usa o stt_id configurado para ela
+     * em oco_subt_ocorrencia_acao; se não houver, usa 30 (Finalizada).
+     */
+    private function resolveStatusFinal(array $postado, $acoes): int
+    {
+        foreach ($acoes as $acao) {
+            if ((int) $acao->tpa_tipo === 4) {
+                $acaoSubt = $this->subtocorrencia->getAcaoPorId($acao->tpa_id, $postado['sut_id']);
+                if ($acaoSubt && !empty($acaoSubt->stt_id)) {
+                    return (int) $acaoSubt->stt_id;
+                }
+            }
+        }
+
+        return 30;
     }
 
     private function gerarMovimentacao($postado, $acao)

@@ -39,6 +39,7 @@ class Database extends Config
     public function __construct()
     {
         parent::__construct();
+        // debug(env('database.hostname'));
 
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
@@ -47,9 +48,9 @@ class Database extends Config
         $this->default = [
             'DSN'      => '',
             'hostname' => env('database.hostname', 'localhostNao'),
-            'username' => 'prd_user',
+            'username' => env('database.prefuser', 'prd_') . 'user',
             'password' => 'NI0j4@EUEAWpD#OrdVB',
-            'database' => 'prd_config_ceqweb_db',
+            'database' => env('database.prefixo', 'prd_') . 'config_ceqweb_db',
             'DBDriver' => 'MySQLi',
             'DBPrefix' => '',
             'pConnect' => false,
@@ -67,9 +68,9 @@ class Database extends Config
         $this->dbEstoque = [
             'DSN'      => '',
             'hostname' => env('database.hostname', 'localhostNao'),
-            'username' => 'prd_user',
+            'username' => env('database.prefuser', 'prd_') . 'user',
             'password' => 'NI0j4@EUEAWpD#OrdVB',
-            'database' => 'prd_estoque_db',
+            'database' => env('database.prefixo', 'prd_') . 'estoque_db',
             'DBDriver' => 'MySQLi',
             'DBPrefix' => '',
             'pConnect' => false,
@@ -87,9 +88,9 @@ class Database extends Config
         $this->dbProduto = [
             'DSN'      => '',
             'hostname' => env('database.hostname', 'localhostNao'),
-            'username' => 'prd_user',
+            'username' => env('database.prefuser', 'prd_') . 'user',
             'password' => 'NI0j4@EUEAWpD#OrdVB',
-            'database' => 'prd_produto_db',
+            'database' => env('database.prefixo', 'prd_') . 'produto_db',
             'DBDriver' => 'MySQLi',
             'DBPrefix' => '',
             'pConnect' => false,
@@ -107,9 +108,9 @@ class Database extends Config
         $this->dbOcorrencia = [
             'DSN'      => '',
             'hostname' => env('database.hostname', 'localhostNao'),
-            'username' => 'prd_user',
+            'username' => env('database.prefuser', 'prd_') . 'user',
             'password' => 'NI0j4@EUEAWpD#OrdVB',
-            'database' => 'prd_ocorrencia_db',
+            'database' => env('database.prefixo', 'prd_') . 'ocorrencia_db',
             'DBDriver' => 'MySQLi',
             'DBPrefix' => '',
             'pConnect' => false,

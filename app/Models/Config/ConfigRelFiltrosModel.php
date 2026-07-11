@@ -20,6 +20,8 @@ class ConfigRelFiltrosModel extends Model
         'rel_id',
         'rfi_tabela',
         'rfi_campo',
+        // *claude* novo campo: nome do rfi_campo (do mesmo relatório) do qual este filtro depende
+        'rfi_campo_pai',
         'rfi_tipo_filtro',
         'rfi_label',
         'rfi_obrigatorio',

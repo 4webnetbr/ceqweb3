@@ -172,10 +172,10 @@ class CfgDicionario extends BaseController
     {
         $campos = $this->dicionario->getCampos($tabela);
         $relac = $this->dicionario->getRelacionamentos($tabela);
-        // debug($campos, false);
-        for ($r = 0; $r < count($relac); $r++) {
+        // debug($relac, false);
+        for ($r = 0; $r < count($relac['relacionamentos']); $r++) {
             $cprel = [];
-            $table = $relac[$r]['REFERENCED_TABLE_NAME'];
+            $table = $relac['relacionamentos'][$r]['REFERENCED_TABLE_NAME'];
             $cprel = $this->dicionario->getCampos($table);
             // debug($cprel, false);
             for ($c = 0; $c < count($cprel); $c++) {
@@ -202,7 +202,7 @@ class CfgDicionario extends BaseController
         $trel->size = 'auto';
         $trel->tamanho = 'auto';
         $trel->valor = '';
-        $trel->valor = relacion_tabela($relac);
+        $trel->valor = relacion_tabela($relac['relacionamentos']);
         $this->tab_trel = $trel->create();
     }
 }

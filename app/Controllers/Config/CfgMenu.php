@@ -118,11 +118,12 @@ class CfgMenu extends BaseController
 
         echo view('vw_edicao', $this->data);
     }
-    public function show($id){
+    public function show($id)
+    {
         $this->edit($id, true);
     }
 
-    public function edit($id,$show = false)
+    public function edit($id, $show = false)
     {
         $dados_menu = $this->menu->getMenu($id)[0];
         $this->defCampos($dados_menu, $show);
@@ -261,23 +262,27 @@ class CfgMenu extends BaseController
         $ord_ = [];
         $hierant = '';
         foreach ($req as $key => $value) {
+            if (strpos($value, 'rel_mod_') === 0) {
+                continue;
+            }
+
             $menu = $this->menu->getMenu($value)[0];
             // debug($menu,true);
             $hier = $menu['men_hierarquia'];
-            if($hier == 1){
+            if ($hier == 1) {
                 $order = $ord[$hier];
-                $ord[$hier] =$ord[$hier]+10;
-            } else if($hier == 2){
+                $ord[$hier] = $ord[$hier] + 10;
+            } else if ($hier == 2) {
                 $order = $ord[$hier];
                 $ord[$hier] = $ord[$hier] + 100;
-            } else if($hier == 3){
+            } else if ($hier == 3) {
                 $pai = $menu['men_menupai_id'];
-                $menupai = $this->menu->getMenu($pai)[0];                
+                $menupai = $this->menu->getMenu($pai)[0];
                 // debug($menupai['men_order']);
-                if(!isset($ord_[$menupai['men_order']])){
+                if (!isset($ord_[$menupai['men_order']])) {
                     $ord_[$menupai['men_order']] = 10;
                 }
-                if($hier != $hierant){
+                if ($hier != $hierant) {
                     $ord_[$menupai['men_order']] += 10;
                     $hierant = $hier;
                 }
@@ -285,15 +290,15 @@ class CfgMenu extends BaseController
                 $order = $menupai['men_order'] + $ord_[$menupai['men_order']];
                 // debug($order,true);
                 $ord_[$menupai['men_order']] = $ord_[$menupai['men_order']] + 10;
-            } else if($hier == 4){
+            } else if ($hier == 4) {
                 $sub = $menu['men_submenu_id'];
-                if($sub > 0){
+                if ($sub > 0) {
                     $menupai = $this->menu->getMenu($sub)[0];
                 } else {
                     $pai = $menu['men_menupai_id'];
                     $menupai = $this->menu->getMenu($pai)[0];
                 }
-                if(!isset($ord_[$menupai['men_order']])){
+                if (!isset($ord_[$menupai['men_order']])) {
                     $ord_[$menupai['men_order']] = 1;
                 }
                 $order = $menupai['men_order'] + $ord_[$menupai['men_order']];
@@ -326,43 +331,44 @@ class CfgMenu extends BaseController
             'men_etiqueta'      => $dados_men['men_etiqueta'],
             'men_icone'         => $dados_men['men_icone'],
         ];
-        if($dados_men['men_hierarquia'] == 1){
+        if ($dados_men['men_hierarquia'] == 1) {
             $somador = 1;
             $ordem = $this->menu->getProximo($dados_men['men_hierarquia'], false, false)[0];
-        } else if($dados_men['men_hierarquia'] == 4){
+        } else if ($dados_men['men_hierarquia'] == 4) {
             $somador = 1;
-            if($dados_men['men_submenu_id'] != null && $dados_men['men_submenu_id'] > 0){
+            if ($dados_men['men_submenu_id'] != null && $dados_men['men_submenu_id'] > 0) {
                 $modulo = $this->menu->getMenu($dados_men['men_submenu_id'])[0];
                 // debug($modulo);
                 $save_men['mod_id'] = $modulo['mod_id'];
                 $ordem = $this->menu->getProximo(false, $dados_men['men_submenu_id'], false);
-                if(count($ordem) == 0){
+                if (count($ordem) == 0) {
                     $ordem['ordem'] = $modulo['men_order'];
                 } else {
                     $ordem = $ordem[0];
-                }    
+                }
             } else { // se não tem submenu
                 $modulo = $this->menu->getMenu($dados_men['men_menupai_id'])[0];
                 $save_men['mod_id'] = $modulo['mod_id'];
-                $ordem = $this->menu->getProximo(false, false, $dados_men['men_menupai_id']);                
-                if(count($ordem) == 0){
+                $ordem = $this->menu->getProximo(false, false, $dados_men['men_menupai_id']);
+                if (count($ordem) == 0) {
                     $ordem['ordem'] = $modulo['men_order'];
                 } else {
                     $ordem = $ordem[0];
-                }    
+                }
             }
-        } else if($dados_men['men_hierarquia'] == 3){
+        } else if ($dados_men['men_hierarquia'] == 3) {
             $modulo = $this->menu->getMenu($dados_men['men_menupai_id'])[0];
             $save_men['mod_id'] = $modulo['mod_id'];
 
             $ordem = $this->menu->getProximo(false, false, $dados_men['men_menupai_id']);
-            if(count($ordem) == 0){
+            if (count($ordem) == 0) {
                 $ordem['ordem'] = $modulo['men_order'];
             } else {
                 $ordem = $ordem[0];
             }
             $somador = 10;
-        } if($dados_men['men_hierarquia'] == 2){
+        }
+        if ($dados_men['men_hierarquia'] == 2) {
             $ordem = $this->menu->getProximo($dados_men['men_hierarquia'], false, false)[0];
             $somador = 100;
         }

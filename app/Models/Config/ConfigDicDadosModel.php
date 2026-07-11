@@ -36,76 +36,32 @@ class ConfigDicDadosModel extends Model
      */
     public function getTabelas($nome_tabela = false)
     {
-        $this->DBGroup          = 'dbEstoque';
-        $db      = db_connect($this->DBGroup);
-        $pre = '';
-        $url = base_url();
-        if (!str_contains($url, 'dev.')) {
-            $pre = 'prd_';
+        $dbGroups = ['dbEstoque', 'dbProduto', 'dbOcorrencia', 'default'];
+
+        $ret = [];
+
+        foreach ($dbGroups as $dbGroup) {
+            $this->DBGroup = $dbGroup;
+            $db      = db_connect($dbGroup);
+            // Usa o schema real da conexão (app/Config/Database.php), em vez de
+            // adivinhar dev_/prd_ pela base_url() — isso falha fora de requests HTTP
+            // (CLI, jobs, cron) e retorna 0 linhas silenciosamente.
+            $schema  = $db->getDatabase();
+
+            $builder = $db->table('information_schema.tables');
+            $builder->select(['table_schema', 'table_name', 'table_rows', 'table_comment', 'table_type']);
+
+            if ($nome_tabela) {
+                $builder->where('table_name', $nome_tabela);
+            }
+            $builder->where('table_schema', $schema);
+            $builder->orderBy('table_name', 'ASC');
+
+            foreach ($builder->get()->getResultArray() as $reg) {
+                $ret[] = $reg;
+            }
         }
-        $builder = $db->table('information_schema.tables');
-        $builder
-            ->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
-
-        if ($nome_tabela) {
-            $builder->where('table_name', $nome_tabela);
-        }
-        $builder->where('table_schema', $pre . 'estoque_db');
-        $builder->orderBy('table_name', 'ASC');
-
-        $ret = $builder->get()->getResultArray();
-        // debug($db->getLastQuery());
-
-        $this->DBGroup          = 'dbProduto';
-        $db      = db_connect($this->DBGroup);
-        $builder = $db->table('information_schema.tables');
-        $builder
-            ->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
-
-        if ($nome_tabela) {
-            $builder->where('table_name', $nome_tabela);
-        }
-        $builder->where('table_schema', $pre . 'produto_db');
-        $builder->orderBy('table_name', 'ASC');
-
-        $ret2 = $builder->get()->getResultArray();
-        foreach ($ret2 as $reg) {
-            array_push($ret, $reg);
-        }
-
-        $this->DBGroup          = 'dbOcorrencia';
-        $db      = db_connect($this->DBGroup);
-        $builder = $db->table('information_schema.tables');
-
-        $builder
-            ->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
-
-        if ($nome_tabela) {
-            $builder->where('table_name', $nome_tabela);
-        }
-        $builder->where('table_schema', $pre . 'ocorrencia_db');
-        $builder->orderBy('table_name', 'ASC');
-        $ret3 = $builder->get()->getResultArray();
-        foreach ($ret3 as $reg) {
-            array_push($ret, $reg);
-        }
-
-        $this->DBGroup          = 'default';
-        $db      = db_connect($this->DBGroup);
-        $builder = $db->table('information_schema.tables');
-
-        $builder
-            ->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
-
-        if ($nome_tabela) {
-            $builder->where('table_name', $nome_tabela);
-        }
-        $builder->where('table_schema', $pre . 'config_ceqweb_db');
-        $builder->orderBy('table_name', 'ASC');
-        $ret4 = $builder->get()->getResultArray();
-        foreach ($ret4 as $reg) {
-            array_push($ret, $reg);
-        }
+        $this->DBGroup = 'default';
 
         return $ret;
     }
@@ -749,22 +705,16 @@ class ConfigDicDadosModel extends Model
      */
     public function getTabelasPorDbGroup(string $dbGroup, bool $includeViews = false, bool $tabelabase = true): array
     {
-        $url = base_url();
-        $pre = str_contains($url, 'dev.') ? '' : 'prd_';
+        $gruposValidos = ['dbEstoque', 'dbProduto', 'dbOcorrencia', 'default'];
 
-        $schemaMap = [
-            'dbEstoque'    => [$pre . 'estoque_db',       'dbEstoque'],
-            'dbProduto'    => [$pre . 'produto_db',       'dbProduto'],
-            'dbOcorrencia' => [$pre . 'ocorrencia_db',    'dbOcorrencia'],
-            'default'      => [$pre . 'config_ceqweb_db', 'default'],
-        ];
-
-        if (!isset($schemaMap[$dbGroup])) {
+        if (!in_array($dbGroup, $gruposValidos, true)) {
             return [];
         }
 
-        [$schema, $group] = $schemaMap[$dbGroup];
-        $db      = db_connect($group);
+        $db      = db_connect($dbGroup);
+        // Schema real da conexão (app/Config/Database.php), em vez de adivinhar
+        // dev_/prd_ pela base_url() — falha fora de requests HTTP (CLI, jobs, cron).
+        $schema  = $db->getDatabase();
         $builder = $db->table('information_schema.tables');
         $builder->select(['table_schema', 'table_name', 'table_rows', 'table_comment']);
         $builder->where('table_schema', $schema);
@@ -794,37 +744,31 @@ class ConfigDicDadosModel extends Model
 
     function getDbGroupAndSchema(?string $nome_tabela): array
     {
-        $url = base_url();
-        if (str_contains($url, 'dev.')) {
-            $prefixMap = [
-                'vw_est' => ['dbGroup' => 'dbEstoque',    'schema' => 'estoque_db'],
-                'est'    => ['dbGroup' => 'dbEstoque',    'schema' => 'estoque_db'],
-                'vw_oco' => ['dbGroup' => 'dbOcorrencia', 'schema' => 'ocorrencia_db'],
-                'oco'    => ['dbGroup' => 'dbOcorrencia', 'schema' => 'ocorrencia_db'],
-                'vw_pro' => ['dbGroup' => 'dbProduto',    'schema' => 'produto_db'],
-                'pro'    => ['dbGroup' => 'dbProduto',    'schema' => 'produto_db'],
-                'vw_cfg' => ['dbGroup' => 'default',      'schema' => 'config_ceqweb_db'],
-                'cfg'    => ['dbGroup' => 'default',      'schema' => 'config_ceqweb_db'],
-            ];
-        } else {
-            $prefixMap = [
-                'vw_est' => ['dbGroup' => 'dbEstoque',    'schema' => 'prd_estoque_db'],
-                'est'    => ['dbGroup' => 'dbEstoque',    'schema' => 'prd_estoque_db'],
-                'vw_oco' => ['dbGroup' => 'dbOcorrencia', 'schema' => 'prd_ocorrencia_db'],
-                'oco'    => ['dbGroup' => 'dbOcorrencia', 'schema' => 'prd_ocorrencia_db'],
-                'vw_pro' => ['dbGroup' => 'dbProduto',    'schema' => 'prd_produto_db'],
-                'pro'    => ['dbGroup' => 'dbProduto',    'schema' => 'prd_produto_db'],
-                'vw_cfg' => ['dbGroup' => 'default',      'schema' => 'prd_config_ceqweb_db'],
-                'cfg'    => ['dbGroup' => 'default',      'schema' => 'prd_config_ceqweb_db'],
-            ];
-        }
+        // Mapeia o prefixo do nome da tabela para o dbGroup correspondente.
+        $groupMap = [
+            'vw_est' => 'dbEstoque',
+            'est'    => 'dbEstoque',
+            'vw_oco' => 'dbOcorrencia',
+            'oco'    => 'dbOcorrencia',
+            'vw_pro' => 'dbProduto',
+            'pro'    => 'dbProduto',
+            'vw_cfg' => 'default',
+            'cfg'    => 'default',
+        ];
 
         // Ordem de verificação: prefixos maiores primeiro para evitar conflito (ex: vw_est vs est)
         $prefixes = ['vw_est', 'vw_oco', 'vw_pro', 'vw_cfg', 'est', 'oco', 'pro', 'cfg'];
 
         foreach ($prefixes as $prefix) {
             if (str_starts_with($nome_tabela, $prefix)) {
-                return $prefixMap[$prefix];
+                $dbGroup = $groupMap[$prefix];
+
+                // Schema real da conexão (app/Config/Database.php), em vez de adivinhar
+                // dev_/prd_ pela base_url() — falha fora de requests HTTP (CLI, jobs, cron).
+                return [
+                    'dbGroup' => $dbGroup,
+                    'schema'  => db_connect($dbGroup)->getDatabase(),
+                ];
             }
         }
 

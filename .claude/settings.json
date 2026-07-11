@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"/c/Users/ADMIN/AppData/Local/Microsoft/WinGet/Packages/JohnMacFarlane.Pandoc_Microsoft.Winget.Source_8wekyb3d8bbwe/pandoc-3.10/pandoc.exe\" --version)",
+      "Bash(mkdir -p ~/bin)",
+      "Bash(ln -sf \"/c/Users/ADMIN/AppData/Local/Microsoft/WinGet/Packages/JohnMacFarlane.Pandoc_Microsoft.Winget.Source_8wekyb3d8bbwe/pandoc-3.10/pandoc.exe\" ~/bin/pandoc.exe)",
+      "Bash(pandoc --version)",
+      "Bash(pandoc \"C:\\\\Users\\\\ADMIN\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--MyProjects-Ceqnep-CeqWeb3\\\\7eb604b2-199c-4c80-8038-6e1ef57fa32d\\\\scratchpad\\\\ocorrencias-t9-t11-t12-dev.md\" -f markdown -t docx -o \"docs\\\\desenvolvimento\\\\ocorrencias-t9-t11-t12-dev.docx\")",
+      "Bash(powershell -NoProfile -Command \"Get-Item 'c:\\\\MyProjects\\\\Ceqnep\\\\CeqWeb3\\\\docs\\\\desenvolvimento\\\\ocorrencias-t9-t11-t12-dev.docx' | Select-Object FullName, Length, LastWriteTime\")"
+    ]
+  }
+}

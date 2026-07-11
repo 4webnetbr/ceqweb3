@@ -13,9 +13,9 @@ class EstoqueDashboardModel extends Model
         $db = db_connect('dbEstoque');
         return array_column(
             $db->table('est_tipo_movimentacao_permissao')
-               ->select('tmo_id')
-               ->where('prf_id', $perfilId)
-               ->get()->getResultArray(),
+                ->select('tmo_id')
+                ->where('prf_id', $perfilId)
+                ->get()->getResultArray(),
             'tmo_id'
         );
     }
@@ -85,8 +85,10 @@ class EstoqueDashboardModel extends Model
                 SUM(rep.rep_quantia)    as total_solicitado,
                 SUM(rpa.rpa_cancelada)  as total_cancelado,
                 SUM(rpa.rpa_atendida)   as total_atendido,
-                SUM(rpa.rpa_conferida)  as total_conferido,
-                SUM(rpa.rpa_aprovada)   as total_aprovado
+                SUM(CASE WHEN rpa.rpa_conferida = -1 THEN rpa.rpa_atendida ELSE rpa.rpa_conferida END) as total_conferido,
+                SUM(CASE WHEN rpa.rpa_aprovada = -1 THEN
+                        (CASE WHEN rpa.rpa_conferida = -1 THEN rpa.rpa_atendida ELSE rpa.rpa_conferida END)
+                    ELSE rpa.rpa_aprovada END) as total_aprovado
             ')
             ->join('est_requisicao r', 'r.req_id = rep.req_id')
             ->join('est_requisicao_produto_atendimento rpa', 'rpa.rep_id = rep.rep_id', 'left')
@@ -138,7 +140,7 @@ class EstoqueDashboardModel extends Model
         }
 
         $db = db_connect('dbEstoque');
-        return $db->table('est_requisicao r')
+        $rows = $db->table('est_requisicao r')
             ->select('DATE(r.req_data) as data_dia, COUNT(DISTINCT r.req_id) as total_requisicoes')
             ->where('r.req_data >=', $dataIni . ' 00:00:00')
             ->where('r.req_data <=', $dataFim . ' 23:59:59')
@@ -146,6 +148,18 @@ class EstoqueDashboardModel extends Model
             ->groupBy('DATE(r.req_data)')
             ->orderBy('data_dia', 'ASC')
             ->get()->getResultArray();
+
+        if (empty($rows)) {
+            return [];
+        }
+
+        $media = round(array_sum(array_column($rows, 'total_requisicoes')) / count($rows), 2);
+
+        foreach ($rows as &$row) {
+            $row['media_requisicoes'] = $media;
+        }
+
+        return $rows;
     }
 
     public function getStatusAtual(string $dataIni, string $dataFim, array $tmoIds): array
@@ -170,7 +184,7 @@ class EstoqueDashboardModel extends Model
         $sttIds  = array_column($rows, 'stt_id');
         $dbConf  = db_connect('default');
         $status  = $dbConf->table('vw_cfg_status_relac')
-            ->select('stt_id, stt_nome, cor_valorrgb')
+            ->select('stt_id, stt_nome, cor_valorrgb, stt_ordem')
             ->whereIn('stt_id', $sttIds)
             ->get()->getResultArray();
 
@@ -179,12 +193,15 @@ class EstoqueDashboardModel extends Model
         $result = [];
         foreach ($rows as $row) {
             $result[] = [
-                'stt_id'      => $row['stt_id'],
-                'stt_nome'    => $sttMap[$row['stt_id']]['stt_nome'] ?? 'Status ' . $row['stt_id'],
-                'cor_valorrgb'=> $sttMap[$row['stt_id']]['cor_valorrgb'] ?? '#6c757d',
-                'total'       => (int) $row['total'],
+                'stt_id'       => $row['stt_id'],
+                'stt_nome'     => $sttMap[$row['stt_id']]['stt_nome'] ?? 'Status ' . $row['stt_id'],
+                'cor_valorrgb' => $sttMap[$row['stt_id']]['cor_valorrgb'] ?? '#6c757d',
+                'stt_ordem'    => $sttMap[$row['stt_id']]['stt_ordem'] ?? 0,
+                'total'        => (int) $row['total'],
             ];
         }
+
+        usort($result, fn($a, $b) => $a['stt_ordem'] <=> $b['stt_ordem']);
 
         return $result;
     }
