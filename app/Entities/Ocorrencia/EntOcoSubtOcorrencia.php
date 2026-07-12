@@ -200,7 +200,7 @@ class EntOcoSubtOcorrencia extends Entity
         $config = [];
         $config['Label']    = 'Tipo de Ação';
         $config['Leitura']  = true;
-        $config['DispForm'] = 'col-6';
+        $config['DispForm'] = 'col-5';
         $config['Largura']  = 50;
         $config['Ordem']    = $pos;
         $config['FunChan']  = 'verificaTipoAcao(this)';
@@ -282,15 +282,18 @@ class EntOcoSubtOcorrencia extends Entity
         );
 
         // RN03.6 — Finalização automática (por ação, aba Ações)
+        $simnao['S'] = 'Sim';
+        $simnao['N'] = 'Não';
+
         $staFina                = new MyCampo();
         $staFina->nome          = "sta_fina_tpa[$pos]";
         $staFina->id            = "sta_fina_tpa[$pos]";
         $staFina->label         = 'Finalização Automática';
-        $staFina->valor         = 'S';
-        $staFina->selecionado   = $dados['sta_fina'] ?? 'N';
-        $staFina->dispForm      = 'col-6';
+        $staFina->opcoes        = $simnao;
+        $staFina->valor         = $staFina->selecionado = $dados['sta_fina'] ?? 'N';
+        $staFina->dispForm      = 'col-2';
         $staFina->classep       = 'sta_fina_tpa';
-        $ret['sta_fina'] = $staFina->crCheckbox();
+        $ret['sta_fina'] = $staFina->cr2opcoes();
 
         $atrib['data-index'] = $pos;
         $add            = new MyCampo();

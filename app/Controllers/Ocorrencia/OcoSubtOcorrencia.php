@@ -53,6 +53,7 @@ class OcoSubtOcorrencia extends BaseController
     {
         $this->data['colunas']   = montaColunasLista($this->data, 'sut_id');
         $this->data['url_lista'] = base_url($this->data['controler'] . '/lista');
+        $this->data['scripts']   = 'my_ocorrencia';
         echo view('vw_lista', $this->data);
     }
 
@@ -169,9 +170,9 @@ class OcoSubtOcorrencia extends BaseController
             $total = sizeof($tacao);
             $fields = $entity->defCamposAcao($tacao[$a], $ind, $total);
             $campo[$a][0] = $fields['tpa_id'];
-            $campo[$a][1] = "<div id='divmovi[$ind]' class='d-none row col-6'>" . $fields['tmo_id'] . "</div>";
-            $campo[$a][2] = "<div id='divtela[$ind]' class='d-none row col-6'>" . $fields['mod_id'] . $fields['tel_id'] . "</div>";
-            $campo[$a][3] = "<div id='divstat[$ind]' class='d-none row col-6'>" . $fields['stt_id'] . "</div>";
+            $campo[$a][1] = "<div id='divmovi[$ind]' class='d-none row col-5 float-start'>" . $fields['tmo_id'] . "</div>";
+            $campo[$a][2] = "<div id='divtela[$ind]' class='d-none row col-5 float-start'>" . $fields['mod_id'] . $fields['tel_id'] . "</div>";
+            $campo[$a][3] = "<div id='divstat[$ind]' class='d-none row col-5 float-start'>" . $fields['stt_id'] . "</div>";
             $campo[$a][4] = $fields['sta_fina'];
             $campo[$a][5] = '';
             $campo[$a][6] = $fields['bt_deltp'];
@@ -271,9 +272,9 @@ class OcoSubtOcorrencia extends BaseController
                 }
 
                 $campos[2][$c][] = $fields['tpa_id'];
-                $campos[2][$c][] = "<div id='divmovi[$c]' class='{$clsMovi} row col-6'>{$fields['tmo_id']}</div>";
-                $campos[2][$c][] = "<div id='divtela[$c]' class='{$clsTela} row col-6'>{$fields['mod_id']}{$fields['tel_id']}</div>";
-                $campos[2][$c][] = "<div id='divstat[$c]' class='{$clsStat} row col-6'>{$fields['stt_id']}</div>";
+                $campos[2][$c][] = "<div id='divmovi[$c]' class='{$clsMovi} row col-5 float-start'>{$fields['tmo_id']}</div>";
+                $campos[2][$c][] = "<div id='divtela[$c]' class='{$clsTela} row col-5 float-start'>{$fields['mod_id']}{$fields['tel_id']}</div>";
+                $campos[2][$c][] = "<div id='divstat[$c]' class='{$clsStat} row col-5 float-start'>{$fields['stt_id']}</div>";
                 $campos[2][$c][] = $fields['sta_fina'];
                 $campos[2][$c][] = '';
                 $campos[2][$c][] = $fields['bt_deltp'];
@@ -332,7 +333,6 @@ class OcoSubtOcorrencia extends BaseController
     {
         // debug([$id, $tipo], true);
         $ret = [];
-        $pendencias = [];
 
         try {
             if ($tipo == 1) {
@@ -342,11 +342,18 @@ class OcoSubtOcorrencia extends BaseController
                 ];
             } else {
                 // INATIVAR
-                // RN06.2 — bloqueia a inativação se houver ocorrência Pendente
-                // vinculada ao subtipo, listando as pendências para o usuário.
+                // RN06.2 (revisão 01) — bloqueia a inativação se houver
+                // ocorrência Pendente vinculada ao subtipo. Não usa
+                // getMensagem() no controller (Bloqueante 1) — retorna apenas
+                // o msg_id inteiro (14) + a lista de pendências; quem resolve
+                // o texto é o front (getMensagem()/boxAlert() em my_ocorrencia.js).
                 $pendencias = $this->subtocorrencia->getPendenciasGestao((int) $id);
                 if (!empty($pendencias)) {
-                    throw new \Exception('MSG_14');
+                    $ret['erro']       = true;
+                    $ret['msg']        = 14;
+                    $ret['pendencias'] = $pendencias;
+
+                    return $this->response->setJSON($ret);
                 }
 
                 $dad_atin = [
@@ -361,22 +368,10 @@ class OcoSubtOcorrencia extends BaseController
             session()->setFlashdata('msg', $ret['msg']);
             cache()->clean();
         } catch (\Exception $e) {
+            // Erro genérico (não é bloqueio por pendência) — MSG 17
+            // "Problema no Sistema", já cadastrada em cfg_mensagem.
             $ret['erro'] = true;
-
-            if ($e->getMessage() === 'MSG_14') {
-                // Monta a mensagem base (MSG 14) + a lista de ocorrências
-                // pendentes que impedem a inativação (dadosExtra).
-                $texto = getMensagem('MSG_14') ?? 'Não é possível inativar: existem ocorrências pendentes vinculadas.';
-                $lista = '<ul class="text-start mb-0">';
-                foreach ($pendencias as $pend) {
-                    $lista .= '<li>Nº ' . str_pad($pend['oco_id'], 6, '0', STR_PAD_LEFT)
-                        . ' - ' . esc($pend['oco_descricao']) . '</li>';
-                }
-                $lista .= '</ul>';
-                $ret['msg'] = $texto . '<br>' . $lista;
-            } else {
-                $ret['msg'] = 14;
-            }
+            $ret['msg']  = 17;
         }
 
         return $this->response->setJSON($ret);

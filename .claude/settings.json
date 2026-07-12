@@ -23,7 +23,30 @@
       "Bash(powershell -Command \"Get-Content -Path 'c:\\\\MyProjects\\\\Ceqnep\\\\CeqWeb3\\\\app\\\\Controllers\\\\Ocorrencia\\\\OcoOcorrencia.php' -Encoding UTF8 | Measure-Object -Line\")",
       "Bash(grep -n 'isset\\($tpaIdsUsados' app/Controllers/Ocorrencia/OcoTrataOcorrencia.php)",
       "Bash(pandoc \"docs\\\\testes\\\\ocorrencias-t9-t11-t12-plano-testes.md\" -f markdown -t docx -o \"docs\\\\testes\\\\ocorrencias-t9-t11-t12-plano-testes.docx\")",
-      "Bash(powershell -NoProfile -Command \"Get-ChildItem 'c:\\\\MyProjects\\\\Ceqnep\\\\CeqWeb3\\\\docs\\\\testes' | Select-Object Name, Length, LastWriteTime\")"
+      "Bash(powershell -NoProfile -Command \"Get-ChildItem 'c:\\\\MyProjects\\\\Ceqnep\\\\CeqWeb3\\\\docs\\\\testes' | Select-Object Name, Length, LastWriteTime\")",
+      "Bash(echo \"exit code: $?\")",
+      "Bash(printenv)",
+      "Bash(where mysql *)",
+      "Bash(mysql --version)",
+      "Bash(where php *)",
+      "Bash(php --version)",
+      "Bash(php -v)",
+      "Bash(composer --version)",
+      "Bash(composer dump-autoload *)",
+      "Bash(grep -iE \"BKP|^nov\\\\.php$|^teste\\\\.php$\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 3 http://localhost:8080/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 3 http://127.0.0.1/)",
+      "Bash(netstat -ano)",
+      "Bash(git log --oneline -3 -- public/assets/jscript/my_default.js public/assets/jscript/my_ocorrencia.js *)",
+      "Bash(grep -v \"// debug\")",
+      "Bash(pandoc \"C:\\\\Users\\\\ADMIN\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--MyProjects-Ceqnep-CeqWeb3\\\\2b008c81-657c-464b-a023-7c016b5386ef\\\\scratchpad\\\\fornecedores-t42-t43-dev.md\" -f markdown -t docx -o \"docs\\\\desenvolvimento\\\\fornecedores-t42-t43-dev.docx\")",
+      "Bash(pandoc \"C:/Users/ADMIN/AppData/Local/Temp/claude/c--MyProjects-Ceqnep-CeqWeb3/2b008c81-657c-464b-a023-7c016b5386ef/scratchpad/fornecedores-t42-t43-dev.md\" -f markdown -t docx -o \"docs/desenvolvimento/fornecedores-t42-t43-dev.docx\")",
+      "Bash(pandoc \"docs/desenvolvimento/fornecedores-t42-t43-dev.docx\" -f docx -t gfm -o \"docs/desenvolvimento/fornecedores-t42-t43-dev.md\" --wrap=preserve)",
+      "Bash(sed -i 's/T42 \\(Fornecedores \\\\\\\\> Desvio de Qualidade\\) e T43 \\(Fornecedores \\\\\\\\> Notificação de Evento\\)/T42 \\(Fornecedores > Desvio de Qualidade\\) e T43 \\(Fornecedores > Notificação de Evento\\)/' \"docs/desenvolvimento/fornecedores-t42-t43-dev.md\")",
+      "Bash(grep -n '\\\\\\\\>' \"docs/desenvolvimento/fornecedores-t42-t43-dev.md\")"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }

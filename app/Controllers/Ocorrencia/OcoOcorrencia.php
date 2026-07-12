@@ -124,10 +124,10 @@ class OcoOcorrencia extends BaseController
         foreach ($dados as $index => $nov) {
             // SE TEM REQUISIÇÃO: NÃO PERMITE EDITAR e EXCLUIR
             if (! empty($nov->req_id)) {
-                // $this->data['exclusao'] = false;
+                $this->data['exclusao'] = false;
                 $this->data['edicao']   = false;
             } else {
-                // $this->data['exclusao'] = true;
+                $this->data['exclusao'] = true;
                 $this->data['edicao']   = true;
             }
             $linha        = montaListaColunasEnt($this->data, 'oco_id', [$nov], $campos[1]);
@@ -198,7 +198,7 @@ class OcoOcorrencia extends BaseController
             // $ret['msg']  = 'Não foi possível Alterar o Status, Verifique!<br><br> ' . $e . message();
             $ret['msg']  = 14;
         } catch (\Exception $e) {
-            debug($e, true);
+            log_message('error', 'Erro ao alterar status da Ocorrência: ' . $e->getMessage());
             $ret['erro'] = true;
             // $ret['msg']  = 'Não foi possível Alterar o Status, Verifique!<br><br> ' . $e . message;
             $ret['msg']  = 14; // ou código personalizado, se preferir
