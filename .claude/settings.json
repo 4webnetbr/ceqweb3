@@ -43,7 +43,27 @@
       "Bash(pandoc \"C:/Users/ADMIN/AppData/Local/Temp/claude/c--MyProjects-Ceqnep-CeqWeb3/2b008c81-657c-464b-a023-7c016b5386ef/scratchpad/fornecedores-t42-t43-dev.md\" -f markdown -t docx -o \"docs/desenvolvimento/fornecedores-t42-t43-dev.docx\")",
       "Bash(pandoc \"docs/desenvolvimento/fornecedores-t42-t43-dev.docx\" -f docx -t gfm -o \"docs/desenvolvimento/fornecedores-t42-t43-dev.md\" --wrap=preserve)",
       "Bash(sed -i 's/T42 \\(Fornecedores \\\\\\\\> Desvio de Qualidade\\) e T43 \\(Fornecedores \\\\\\\\> Notificação de Evento\\)/T42 \\(Fornecedores > Desvio de Qualidade\\) e T43 \\(Fornecedores > Notificação de Evento\\)/' \"docs/desenvolvimento/fornecedores-t42-t43-dev.md\")",
-      "Bash(grep -n '\\\\\\\\>' \"docs/desenvolvimento/fornecedores-t42-t43-dev.md\")"
+      "Bash(grep -n '\\\\\\\\>' \"docs/desenvolvimento/fornecedores-t42-t43-dev.md\")",
+      "Bash(ls \"docs/Origens\")",
+      "Bash(find \"docs\" -iname \"*fornecedor*\" -o -iname \"*t42*\" -o -iname \"*t43*\")",
+      "Bash(pandoc \"docs/desenvolvimento/fornecedores-t42-t43-dev.md\" -f markdown -t docx -o \"docs/desenvolvimento/fornecedores-t42-t43-dev.docx\")",
+      "Bash(grep -n 'forge\\\\|\\\\$db\\\\b\\\\|protected $DBGroup' /c/MyProjects/Ceqnep/CeqWeb3/vendor/codeigniter4/framework/system/Database/Migration.php)",
+      "Bash(mkdir -p \"c:\\\\MyProjects\\\\Ceqnep\\\\CeqWeb3\\\\docs\\\\revisao\")",
+      "Bash(cp \"C:\\\\Users\\\\ADMIN\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--MyProjects-Ceqnep-CeqWeb3\\\\2b008c81-657c-464b-a023-7c016b5386ef\\\\scratchpad\\\\fornecedores-t42-revisao-01.md\" \"c:\\\\MyProjects\\\\Ceqnep\\\\CeqWeb3\\\\docs\\\\revisao\\\\fornecedores-t42-revisao-01.md\")",
+      "Bash(pandoc \"docs\\\\revisao\\\\fornecedores-t42-revisao-01.md\" -f markdown -t docx -o \"docs\\\\revisao\\\\fornecedores-t42-revisao-01.docx\")",
+      "Bash(php spark *)",
+      "PowerShell(Get-Command php -ErrorAction SilentlyContinue)",
+      "PowerShell(php -v)",
+      "Read(//c/laragon/bin/**)",
+      "PowerShell(& \"c:\\\\srvlocal\\\\php\\\\php.exe\" spark migrate:status 2>&1)",
+      "PowerShell(& \"c:\\\\srvlocal\\\\php\\\\php.exe\" spark migrate 2>&1)",
+      "Bash(pkill -f \"php.exe\")",
+      "Bash(command -v mysql)",
+      "Bash(c:/srvlocal/php/php.exe spark *)",
+      "PowerShell(& \"c:\\\\srvlocal\\\\php\\\\php.exe\" spark tmp:verifydb 2>&1)",
+      "Bash(pandoc docs/desenvolvimento/fornecedores-t42-t43-dev.md -f markdown -t docx -o docs/desenvolvimento/fornecedores-t42-t43-dev.docx)",
+      "Bash(git log *)",
+      "Bash(git diff *)"
     ],
     "additionalDirectories": [
       "\\tmp"

@@ -11,6 +11,7 @@ use App\Entities\Ocorrencia\EntOcoTratativa;
 use App\Models\Ocorre\OcorreOcorrenciaModel;
 use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
 use App\Models\Ocorre\OcorreTipoAcaoModel;
+use App\Models\Fornec\FornecNotifDesvioModel;
 
 class OcoTrataOcorrencia extends BaseController
 {
@@ -379,6 +380,14 @@ class OcoTrataOcorrencia extends BaseController
                     // (ver resolveStatusFinal()); NÃO gera movimentação.
                     $retAcao = ['erro' => false];
                     break;
+                case 5:
+                    // RN02.3 de T42 — "Notificação do Fornecedor": cria
+                    // automaticamente um registro Pendente em
+                    // oco_notif_desvio (Fornecedores > Desvio de Qualidade).
+                    // Ver docs/desenvolvimento/fornecedores-t42-t43-dev.md,
+                    // decisão 3.2.
+                    $retAcao = $this->gerarNotificacaoDesvio($postado);
+                    break;
                 default:
                     // opcional: tratar valores inesperados
                     break;
@@ -483,5 +492,50 @@ class OcoTrataOcorrencia extends BaseController
             }
         }
         return $retMov;
+    }
+
+    /**
+     * RN02.3 (T42) — ação "Notificação do Fornecedor" (tpa_tipo = 5): cria
+     * automaticamente um registro Pendente em oco_notif_desvio para o
+     * oco_id da ocorrência sendo tratada/finalizada.
+     *
+     * Idempotente: não duplica se já existir um oco_notif_desvio para o
+     * mesmo oco_id (ex.: reprocessamento/reenvio do mesmo submit).
+     */
+    private function gerarNotificacaoDesvio($postado)
+    {
+        $ret = ['erro' => false];
+
+        $modelNotif = new FornecNotifDesvioModel();
+
+        $jaExiste = \Config\Database::connect('dbOcorrencia')
+            ->table('oco_notif_desvio')
+            ->where('oco_id', $postado['oco_id'])
+            ->countAllResults();
+
+        if ($jaExiste > 0) {
+            return $ret; // já notificado — não duplica
+        }
+
+        $sttPendente = $modelNotif->getStatusPendenteId();
+        if (!$sttPendente) {
+            $ret['erro'] = true;
+            $ret['msg']  = 'Status "Pendente" de Desvio de Qualidade não configurado (cfg_status)';
+            return $ret;
+        }
+
+        // Insert via Model (não CommonModel::insertReg()) — preserva os
+        // hooks de auditoria (afterInsert => depoisInsert, log gravado com
+        // a PK real ndv_id) e os timestamps (ndv_criado). skipValidation()
+        // porque ndv_local/ndv_descreva legitimamente ainda não existem
+        // neste momento — só serão preenchidos depois pelo usuário em T42
+        // (RN03.7/RN03.14).
+        $modelNotif->skipValidation(true)->insert([
+            'oco_id'    => $postado['oco_id'],
+            'stt_id'    => $sttPendente,
+            'usu_criou' => session()->get('usu_id'),
+        ]);
+
+        return $ret;
     }
 }

@@ -51,6 +51,23 @@ foreach ($ocoControllers as $ctrl) {
     });
 }
 
+// Controladores de Fornecedores (T42 — Desvio de Qualidade / T43 — Notificação
+// de Evento) — ver docs/desenvolvimento/fornecedores-t42-t43-dev.md
+$fornecedoresControllers = [
+    'NotifDesvio',
+    'NotifEvento',
+];
+
+foreach ($fornecedoresControllers as $ctrl) {
+    $routes->group($ctrl, static function ($routes) use ($ctrl) {
+        $name = strtolower($ctrl);
+        $routes->get('/', "Fornecedores\\$ctrl::index", ['as' => "{$name}_index"]);
+        $routes->match(['GET', 'POST'], '(:any)', "Fornecedores\\$ctrl::$1", ['as' => "{$name}_match"]);
+    });
+}
+$routes->get('NotifDesvio/GeraEtiqueta/(:num)/(:num)', 'Fornecedores\\NotifDesvio::GeraEtiqueta/$1/$2', ['as' => 'notifdesvio_GeraEtiqueta_match']);
+$routes->get('NotifEvento/GeraEtiqueta/(:num)/(:num)', 'Fornecedores\\NotifEvento::GeraEtiqueta/$1/$2', ['as' => 'notifevento_GeraEtiqueta_match']);
+
 $routes->match(['GET', 'POST'], 'buscas/(:any)/(:any)', 'Buscas::$1/$2', ['as' => 'buscas_two_params']);
 $routes->match(['GET', 'POST'], 'buscas/(:any)', 'Buscas::$1', ['as' => 'buscas_one_params']);
 

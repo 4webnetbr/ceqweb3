@@ -110,7 +110,7 @@ Prefixo: `nev_`. Colunas diretas na tabela (relações 1:1 com a notificação):
 | `nev_notificado` | texto, 5–200, obrigatório (“empresa/responsável/setor”) | RN03.15 | Providências |
 | `nev_parecer` | texto, 5–500, obrigatório | RN03.17 | Parecer Final |
 | `nev_notivisa` | `char(1)` S/N, default `N` | RN03.18 | Parecer Final |
-| `nev_notivisa_num` | `varchar(50)`, obrigatório somente se `nev_notivisa = 'S'` | RN03.19 | Parecer Final |
+| `nev_notivisa_num` | `varchar(50)`, obrigatório somente se `nev_notivisa = 'S'`, min 5 / max 50 caracteres | RN03.19 | Parecer Final |
 | `stt_id` | FK → `cfg_status` (Pendente/Concluída da T43) |  |  |
 | `usu_criou` + timestamps/log padrão |  |  |  |
 
@@ -177,23 +177,28 @@ Prefixo: `nac_`. Reaproveita diretamente o padrão de campo condicional por `tpa
 #### Listagem
 
 - Colunas: N°, Data, Produto, Fabricante, Lote, Usuário, Status, Ação.
-- Botões por linha (visualizar/alterar/excluir/imprimir) conforme status — usar `montaListaDados()` (padrão de grid do projeto, conforme `rascunho-runtime-js.md`), última coluna “Ação” automaticamente não ordenável/pesquisável.
-- **Integração automática de origem:** produtos de T11 associados à nova ação de T8 (“Notificação do Fornecedor”) geram automaticamente um registro em `oco_notif_desvio` com status Pendente, disparada a partir da execução da ação em T11 (`stt_id = 28` em T11, conforme convenção do módulo Ocorrências).
-- Coloração/ordenação de status seguindo padrão já usado em T1 (referência visual existente no sistema — badge de status via `fmtEtiquetaCor`/ `fmtEtiquetaCorBst`, conforme `rascunho-helpers-php.md`).
+- Botões por linha (visualizar/alterar/excluir/imprimir) conforme status — usar `montaListaDados()` (padrão de grid do projeto, conforme `rascunho-runtime-js.md`), última coluna “Ação” automaticamente não ordenável/pesquisável. (RN02.1/RN02.2)
+- **Integração automática de origem (RN02.3):** produtos de T11 associados à nova ação de T8 (“Notificação do Fornecedor”) geram automaticamente um registro em `oco_notif_desvio` com status Pendente, disparada a partir da execução da ação em T11 (`stt_id = 28` em T11, conforme convenção do módulo Ocorrências).
+- Coloração/ordenação de status seguindo padrão já usado em T1 (RN02.4 — referência visual existente no sistema — badge de status via `fmtEtiquetaCor`/ `fmtEtiquetaCorBst`, conforme `rascunho-helpers-php.md`).
 
-#### Aba única — Dados Gerais
+#### Aba única — Dados Gerais (RN02.5)
 
-| Campo | Origem | Editável | Regra |
-|----|----|----|----|
-| Desvio n° | `ndv_id` | Não | Exibição (`setLeitura(true)` / `crShow()`) |
-| Tipo | via T11 | Não | JOIN até `oco_ocorrencia` |
-| Subtipo | via T11 | Não | JOIN até `oco_ocorrencia` |
-| Data da Ocorrência | via T11 | Não | JOIN até `oco_ocorrencia` |
-| Usuário | via T11 | Não | JOIN até `oco_ocorrencia` |
-| Tela Geradora | via T11 | Não | JOIN até `oco_ocorrencia` |
-| **Local** | `ndv_local` | **Sim** | RN03.7 — texto livre, min 5 / max 50 |
-| Grid de produto (Código ERP, Descrição, Fabricante, Lote, Validade, Quantidade) | via T11 | Não | Todos não-editáveis, vindos de T11 |
-| **Descreva** | `ndv_descreva` | **Sim** | RN03.14 — texto livre, min 5 / max 200 |
+| Campo | Origem | Editável | RN | Regra |
+|----|----|----|----|----|
+| Desvio n° | `ndv_id` | Não | RN03.1 | Exibição (`setLeitura(true)` / `crShow()`), numeração sequencial |
+| Tipo | via T11 | Não | RN03.2 | JOIN até `oco_ocorrencia` |
+| Subtipo | via T11 | Não | RN03.3 | JOIN até `oco_ocorrencia` |
+| Data da Ocorrência | via T11 | Não | RN03.4 | JOIN até `oco_ocorrencia` |
+| Usuário | via T11 | Não | RN03.5 | JOIN até `oco_ocorrencia` |
+| Tela Geradora | via T11 | Não | RN03.6 | JOIN até `oco_ocorrencia` (quando aplicável, não obrigatório) |
+| **Local** | `ndv_local` | **Sim** | RN03.7 | texto livre, min 5 / max 50 |
+| Código ERP (grid produto) | via T11 | Não | RN03.8 | JOIN até `oco_ocorrencia` |
+| Descrição (grid produto) | via T11 | Não | RN03.9 | JOIN até `oco_ocorrencia` |
+| Fabricante (grid produto) | via T11 | Não | RN03.10 | JOIN até `oco_ocorrencia` |
+| Lote (grid produto) | via T11 | Não | RN03.11 | JOIN até `oco_ocorrencia` |
+| Validade (grid produto) | via T11 | Não | RN03.12 | JOIN até `oco_ocorrencia` |
+| Quantidade (grid produto) | via T11 | Não | RN03.13 | JOIN até `oco_ocorrencia` |
+| **Descreva** | `ndv_descreva` | **Sim** | RN03.14 | texto livre, min 5 / max 200 |
 
 Campos não-editáveis devem usar `MyCampo::setLeitura(true)` (nunca `readonly`/ `disabled` manual, conforme `rascunho-MyCampo.md`).
 
@@ -201,8 +206,8 @@ Campos não-editáveis devem usar `MyCampo::setLeitura(true)` (nunca `readonly`/
 
 - Ao Salvar: grava e já conclui (`stt_id` = Concluída da T42), conforme decisão 3.3. Oferece impressão de etiqueta em seguida (não bloqueante, ver 3.1).
 - Validação de “campo alterado”: comportamento genérico do runtime já existente (`data-valid`, `rascunho-runtime-js.md`) — sem necessidade de código server-side extra.
-  - Cancelar com alteração pendente → confirmação **MSG ID 2** (T2).
-  - Salvar sem alteração real → **MSG ID 7** (T2).
+  - Salvar sem alteração real → **MSG ID 7** (T2) — RN03.16 de T42.
+  - Cancelar com alteração pendente → confirmação **MSG ID 2** (T2) — RN03.17 de T42.
 
 ### 5.2 T43 — Notificação de Evento
 
@@ -212,15 +217,28 @@ Campos não-editáveis devem usar `MyCampo::setLeitura(true)` (nunca `readonly`/
 - **Integração automática de origem:** registros **Concluídos** de T42 alimentam a base de seleção de produtos disponível para nova notificação.
 - Botão “Imprimir” na listagem (gatilho de impressão de etiqueta, ver 3.1).
 
+#### Adendo — Exibição de colunas 1:N na listagem (decisão do `byarq`)
+
+Uma notificação (`nev_id`) pode ter múltiplos produtos vinculados (`oco_notif_evento_produto`, 1:N). Decisão final sobre como representar isso na grid de listagem, sem duplicar linha por produto:
+
+- **1 linha da listagem = 1 notificação (`nev_id`)**, nunca 1 linha por produto — mantém a semântica de ação por linha (RN02.2) e o padrão de status ao estilo T1 (RN02.4).
+- **Coluna Produto:** exibe o primeiro produto + “e mais N” quando há mais de 1 produto vinculado (ex.: “Gliconato de Cálcio 10ml e mais 1”), com a lista completa disponível via tooltip usando o mecanismo já existente `<ttp>...</ttp>` de `my_lista.js` (`montaListaDados()`, conforme `rascunho-runtime-js.md`) — reaproveitamento do runtime, não é componente novo.
+- **Coluna Lote:** mesmo tratamento (primeiro + “e mais N” + tooltip com a lista completa).
+- **Coluna Fabricante:** sempre valor único, sem agregação/tooltip — porque RN03.1 já restringe a seleção de produtos de uma notificação ao mesmo fabricante, logo nunca há mais de um fabricante distinto por notificação.
+- **Coluna Data:** mostra a data mais antiga do conjunto de produtos vinculados (`MIN`), como referência na listagem. Todas as datas individuais de cada produto continuam disponíveis no grid da aba Dados Gerais (RN03.2), que é um contexto diferente (1 linha por produto dentro do cadastro, não da listagem).
+
+**Rastreabilidade:** RN02.1, RN02.2, RN02.4, RN03.1, RN03.2 (ver seção 6.2).
+
 #### Tela intermediária — Seleção de produtos (RN03.1)
 
 - Grid: N°, Data, Produto, Fabricante, Lote, Usuário, Selecione (checkbox).
-- Seleção inicial: todos os produtos do **mesmo fabricante** com status Pendente em T42 (nota: leia-se “Pendente em T42” no sentido de registros de T42 já Concluídos disponíveis para notificação, cujos produtos ainda não foram vinculados a uma notificação de evento — usar `ndv_id`/status conforme fluxo de integração acima).
+- Seleção inicial (RN03.1): todos os produtos do **mesmo fabricante** que estejam **disponíveis para notificação** — ou seja, registros de `oco_notif_desvio` com `stt_id` = **Concluída** em T42 (RN02.3) **e** ainda **não vinculados** a nenhuma linha de `oco_notif_evento_produto` (nenhuma notificação de evento criada para aquele `ndv_id` ainda).
+  - **Nota terminológica:** "disponível para notificação" é um conceito distinto do `cfg_status` "Pendente" de T42 (que se refere ao status *antes* da conclusão do cadastro em T42). Aqui o produto já está com T42 **Concluído**; "disponível"/"ainda não notificado" descreve apenas a ausência de vínculo em T43, evitando sobrepor o termo "Pendente" a dois sentidos diferentes no documento.
 - Abre o cadastro (4 abas) somente após confirmação da seleção.
 
 #### Aba 1 — Dados Gerais
 
-- Grid multi-linha dos produtos selecionados (`oco_notif_evento_produto`): Código ERP, Descrição, Fabricante, Lote, Validade, Quantidade (read-only, via JOIN) + **Defeito** (`nvp_defeito`, editável, RN03.9, valor inicial copiado de `ndv_descreva` de T42).
+- Grid multi-linha dos produtos selecionados (`oco_notif_evento_produto`), colunas read-only via JOIN: Data (RN03.2, traz todas as datas dos produtos selecionados), Código ERP (RN03.3), Descrição (RN03.4), Fabricante (RN03.5), Lote (RN03.6, traz todos os lotes selecionados), Validade (RN03.7), Quantidade (RN03.8, por lote) + **Defeito** (`nvp_defeito`, editável, RN03.9, valor inicial copiado de `ndv_descreva` de T42).
 - Campos de cabeçalho: Quantidade adquirida (`nev_qtd_adquirida`, RN03.10), Número NF (`nev_numero_nf`, RN03.11), Fornecedor (`nev_fornecedor`, RN03.12, texto livre), Fabricação (`nev_fabricacao`, RN03.13, data).
 
 #### Aba 2 — Providências
@@ -232,7 +250,7 @@ Campos não-editáveis devem usar `MyCampo::setLeitura(true)` (nunca `readonly`/
 #### Aba 3 — Parecer Final
 
 - Textarea Parecer (`nev_parecer`, RN03.17).
-- Toggle Notivisa (`nev_notivisa`, RN03.18, `MyCampo::crCheckbox()` estilo switch/toggle) com campo n° condicional (`nev_notivisa_num`, RN03.19, obrigatório somente se `nev_notivisa = 'S'` — exibição condicional via `verificaTipoAcao()`/padrão equivalente de campo condicional já usado no projeto).
+- Toggle Notivisa (`nev_notivisa`, RN03.18, `MyCampo::crCheckbox()` estilo switch/toggle) com campo n° condicional (`nev_notivisa_num`, RN03.19, obrigatório somente se `nev_notivisa = 'S'`, 5–50 caracteres — exibição condicional via `verificaTipoAcao()`/padrão equivalente de campo condicional já usado no projeto).
 - Upload múltiplo de anexos (RN03.20) — `oco_notif_evento_anexo` com `nva_origem = 'PARECER'`.
 
 #### Aba 4 — Ações (RN03.21/RN03.22)
@@ -244,31 +262,82 @@ Campos não-editáveis devem usar `MyCampo::setLeitura(true)` (nunca `readonly`/
 #### Salvar / Cancelar
 
 - Mesma regra de T42: Salvar já grava e conclui (`stt_id` = Concluída da T43), impressão de etiqueta oferecida em seguida via botão Imprimir na listagem (não no fluxo de salvar, diferente de T42).
-- Validação de campo alterado (Salvar/Cancelar) via runtime genérico (`data-valid`), mesmas mensagens MSG 2 / MSG 7 de T2.
+- Validação de campo alterado (Salvar/Cancelar) via runtime genérico (`data-valid`):
+  - Salvar sem alteração real → **MSG ID 7** (T2) — RN03.22 de T43.
+  - Cancelar com alteração pendente → confirmação **MSG ID 2** (T2) — RN03.23 de T43.
+
+#### Botão Imprimir (listagem, RN04.1/RN04.2 de T43)
+
+- **RN04.1:** clique em "Imprimir" na listagem abre a seleção de etiqueta/relatório disponível para a notificação (mesmo mecanismo genérico de `gerarEtiquetaZPL()`/`buscaetiqcontroler`, ver 3.1 — 1 etiqueta cadastrada usa direto, 2+ oferece escolha via `boxAlert` tipo 9).
+- **RN04.2:** ao fechar o modal de impressão (`openImgModal()`), o fluxo retorna para a listagem de T43, sem qualquer alteração de status ou dado do registro.
 
 ------------------------------------------------------------------------
 
 ## 6. Regras de Validação (resumo consolidado)
 
-| Regra | Tela | Campo | Validação |
-|----|----|----|----|
-| RN03.7 | T42 | `ndv_local` | Obrigatório, 5–50 caracteres |
-| RN03.14 | T42 | `ndv_descreva` | Obrigatório, 5–200 caracteres |
-| RN03.9 | T43 | `nvp_defeito` | Obrigatório, 5–200 caracteres, valor inicial copiado de `ndv_descreva` |
-| RN03.10 | T43 | `nev_qtd_adquirida` | Obrigatório, numérico, até 5 dígitos |
-| RN03.11 | T43 | `nev_numero_nf` | Obrigatório, numérico, até 20 dígitos |
-| RN03.12 | T43 | `nev_fornecedor` | Obrigatório, texto livre, 5–200 caracteres |
-| RN03.13 | T43 | `nev_fabricacao` | Obrigatório, data |
-| RN03.14 | T43 | `nev_providencias` | Obrigatório, 5–500 caracteres |
-| RN03.15 | T43 | `nev_notificado` | Obrigatório, 5–200 caracteres |
-| RN03.16 | T43 | anexos Providências | Upload múltiplo, `.pdf,.png,.jpeg,.jpg` |
-| RN03.17 | T43 | `nev_parecer` | Obrigatório, 5–500 caracteres |
-| RN03.18 | T43 | `nev_notivisa` | S/N, default N |
-| RN03.19 | T43 | `nev_notivisa_num` | Obrigatório somente se `nev_notivisa = 'S'` |
-| RN03.20 | T43 | anexos Parecer Final | Upload múltiplo, `.pdf,.png,.jpeg,.jpg` |
-| RN03.21/22 | T43 | Ações | Execução sequencial por `nac_ordem`, movimentação iterada por produto/lote |
-| RN04.3 (T2) | T42/T43 | Salvar sem alteração | MSG ID 7, via `data-valid` (runtime) |
-| RN04.2 (T2) | T42/T43 | Cancelar com alteração | MSG ID 2, via `data-valid` (runtime) |
+Códigos conforme os documentos de requisito originais (`docs/Origens/(T42) Fornecedor - Desvio de qualidade v1.0.pdf` e `docs/Origens/(T43) Fornecedor - Notificação de Evento v1.0.pdf`).
+
+### 6.1 T42 — Desvio de Qualidade
+
+| Regra | Campo/Assunto | Validação |
+|----|----|----|
+| RN02.1 | Listagem | Exibe todos os registros em lista — ver 5.1 |
+| RN02.2 | Botões de ação por linha | Visualizar/alterar/excluir/imprimir conforme status — ver 5.1 |
+| RN02.3 | Integração de origem | Produtos de T11 com a ação ID 13 de T8 (Notificação do Fornecedor) — ver 5.1 |
+| RN02.4 | Coloração/ordenação de status | Segue padrão de T1 — ver 5.1 |
+| RN02.5 | Abas da tela | Aba única "Dados Gerais" — ver 5.1 |
+| RN03.1 | Desvio n° | Obrigatório, não editável, numeração sequencial — ver 5.1 |
+| RN03.2 | Tipo | Obrigatório, não editável, via T11 — ver 5.1 |
+| RN03.3 | Subtipo | Obrigatório, não editável, via T11 — ver 5.1 |
+| RN03.4 | Data da Ocorrência | Obrigatório, não editável, via T11 — ver 5.1 |
+| RN03.5 | Usuário | Obrigatório, não editável, via T11 — ver 5.1 |
+| RN03.6 | Tela Geradora | Não obrigatório, não editável, via T11 (quando aplicável) — ver 5.1 |
+| RN03.7 | `ndv_local` | Obrigatório, editável, 5–50 caracteres |
+| RN03.8 | Código ERP (grid produto) | Obrigatório, não editável, via T11 — ver 5.1 |
+| RN03.9 | Descrição (grid produto) | Obrigatório, não editável, via T11 — ver 5.1 |
+| RN03.10 | Fabricante (grid produto) | Obrigatório, não editável, via T11 — ver 5.1 |
+| RN03.11 | Lote (grid produto) | Obrigatório, não editável, via T11 — ver 5.1 |
+| RN03.12 | Validade (grid produto) | Obrigatório, não editável, via T11 — ver 5.1 |
+| RN03.13 | Quantidade (grid produto) | Obrigatório, não editável, via T11 — ver 5.1 |
+| RN03.14 | `ndv_descreva` | Obrigatório, editável, 5–200 caracteres |
+| RN03.15 | Salvar → impressão + conclusão | No PDF original: abre seleção de relatórios; ao fechar, status vai para Concluído. Decisão final do `byarq` (ver 3.1/3.3): impressão de **etiqueta** (não relatório novo); Salvar já grava e conclui na mesma transação (não espera fechamento do modal) — ver 3.1, 3.3, 5.1 |
+| RN03.16 | Salvar sem alteração | MSG ID 7 (T2), via `data-valid` (runtime) — ver 5.1 |
+| RN03.17 | Cancelar com alteração pendente | MSG ID 2 (T2), via `data-valid` (runtime) — ver 5.1 |
+
+### 6.2 T43 — Notificação de Evento
+
+| Regra | Campo/Assunto | Validação |
+|----|----|----|
+| RN02.1 | Listagem | Exibe todos os registros em lista, 1 linha por notificação (`nev_id`), nunca 1 linha por produto — ver 5.2 (Adendo — Colunas 1:N) |
+| RN02.2 | Botões de ação por linha | Visualizar/alterar/excluir/imprimir conforme status; 1 linha = 1 notificação garante semântica de ação por linha mesmo com N produtos vinculados — ver 5.2 (Adendo — Colunas 1:N) |
+| RN02.3 | Integração de origem | Registros de T42 no status CONCLUÍDO — ver 5.2 |
+| RN02.4 | Coloração/ordenação de status | Segue padrão de T1 — ver 5.2 (Adendo — Colunas 1:N) |
+| RN02.5 | Abas da tela | 4 abas: Dados Gerais, Providências, Parecer Final, Ações — ver 5.2 |
+| RN03.1 | Seleção de produtos | Produtos do mesmo fabricante disponíveis para notificação (ver nota terminológica em 5.2); mesmo fabricante garante coluna Fabricante da listagem sem agregação/tooltip — ver 5.2 (Adendo — Colunas 1:N) |
+| RN03.2 | Data (grid produto) | Obrigatório, não editável, via T42, todas as datas dos produtos selecionados; na listagem, exibida como a data mais antiga (`MIN`) do conjunto — ver 5.2 (Adendo — Colunas 1:N) |
+| RN03.3 | Código ERP (grid produto) | Obrigatório, não editável, via T42 — ver 5.2 |
+| RN03.4 | Descrição (grid produto) | Obrigatório, não editável, via T42 — ver 5.2 |
+| RN03.5 | Fabricante (grid produto) | Obrigatório, não editável, via T42 — ver 5.2 |
+| RN03.6 | Lote (grid produto) | Obrigatório, não editável, via T42, todos os lotes dos produtos selecionados — ver 5.2 |
+| RN03.7 | Validade (grid produto) | Obrigatório, não editável, via T42 — ver 5.2 |
+| RN03.8 | Quantidade (grid produto) | Obrigatório, não editável, via T42, por lote — ver 5.2 |
+| RN03.9 | `nvp_defeito` | Obrigatório, editável, 5–200 caracteres, valor inicial copiado de `ndv_descreva` de T42 |
+| RN03.10 | `nev_qtd_adquirida` | Obrigatório, numérico, até 5 dígitos |
+| RN03.11 | `nev_numero_nf` | Obrigatório, numérico, até 20 dígitos |
+| RN03.12 | `nev_fornecedor` | Obrigatório, texto livre, 5–200 caracteres |
+| RN03.13 | `nev_fabricacao` | Obrigatório, data |
+| RN03.14 | `nev_providencias` | Obrigatório, 5–500 caracteres |
+| RN03.15 | `nev_notificado` | Obrigatório, 5–200 caracteres |
+| RN03.16 | Anexos (Providências) | Não obrigatório, upload múltiplo `.pdf,.png,.jpeg,.jpg`, adicionar/excluir |
+| RN03.17 | `nev_parecer` | Obrigatório, 5–500 caracteres |
+| RN03.18 | `nev_notivisa` | Checkbox, default Não; se marcado, abre campo n° |
+| RN03.19 | `nev_notivisa_num` | Obrigatório somente se `nev_notivisa = 'S'`, 5–50 caracteres |
+| RN03.20 | Anexos (Parecer Final) | Não obrigatório, upload múltiplo `.pdf,.png,.jpeg,.jpg`, adicionar/excluir |
+| RN03.21 | Campo Ação (dropdown T8) | Obrigatório, múltiplas linhas com adicionar/excluir |
+| RN03.22 | Salvar: execução das ações + validação de alteração | Executa ações cadastradas na sequência de cadastro (`nac_ordem`); se ação = gerar movimentação, saldo movimentado é a Quantidade (RN03.8) por produto/lote selecionado; **e** valida se houve alteração de campo — se não houve, MSG ID 7 (T2) |
+| RN03.23 | Cancelar com alteração pendente | MSG ID 2 (T2), via `data-valid` (runtime) |
+| RN04.1 | Botão Imprimir (listagem) | No PDF original: abre seleção de relatórios vinculados à tela. Decisão final do `byarq` (ver 3.1): mecanismo de **etiqueta** (não relatório novo) — ver 5.2 |
+| RN04.2 | Fechamento da impressão | Ao fechar o modal de impressão, retorna à listagem, sem alteração de status/dado do registro — ver 5.2 |
 
 **Segurança server-side (obrigatório desde o primeiro commit — não deixar para depois):** bloqueio de edição/exclusão fora de status permitido em T42/T43, mesmo tipo de gap já corrigido anteriormente em outra tela do projeto (ver histórico do módulo Ocorrências, RN04.1/RN05.1 de T11 em `ocorrencias-t9-t11-t12-dev.md`) — validar no backend, não só ocultar botão no front.
 
@@ -301,7 +370,7 @@ Campos não-editáveis devem usar `MyCampo::setLeitura(true)` (nunca `readonly`/
 - Ação nova “Notificação do Fornecedor” cadastrada em `oco_tipo_acao` (T8) e associável por subtipo em T9, sem alteração de schema em T9.
 - 5 tabelas novas criadas com FKs corretas para `oco_ocorrencia`, `oco_tipo_acao`, `cfg_status`.
 - T42: listagem funcional com integração automática de T11; cadastro Dados Gerais com campos editáveis (`ndv_local`, `ndv_descreva`) e não-editáveis (via JOIN T11) corretos; Salvar grava e conclui na mesma transação; `GeraEtiqueta()` funcional e oferecida após Salvar (não bloqueante).
-- T43: listagem funcional com integração automática de T42 Concluídos; tela de seleção de produtos por fabricante/Pendente; 4 abas completas (Dados Gerais, Providências, Parecer Final, Ações) com todos os campos e uploads; execução sequencial de ações por `nac_ordem` ao Salvar; movimentação iterada corretamente por produto/lote, sem duplicidade; `GeraEtiqueta()` funcional via botão Imprimir na listagem.
+- T43: listagem funcional com integração automática de T42 Concluídos; tela de seleção de produtos por fabricante/disponível para notificação; 4 abas completas (Dados Gerais, Providências, Parecer Final, Ações) com todos os campos e uploads; execução sequencial de ações por `nac_ordem` ao Salvar; movimentação iterada corretamente por produto/lote, sem duplicidade; `GeraEtiqueta()` funcional via botão Imprimir na listagem.
 - Bloqueio server-side de edição/exclusão fora de status permitido implementado em ambas as telas desde o primeiro commit.
 - Validação de campo alterado (Salvar/Cancelar) funcionando via runtime genérico (`data-valid`), sem código server-side extra.
 - `byrev` sem apontamentos pendentes; `bytest` com plano de testes cobrindo todas as RNs deste documento.
