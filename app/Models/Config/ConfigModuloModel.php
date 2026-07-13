@@ -56,22 +56,28 @@ class ConfigModuloModel extends Model
 
 
     // Métodos de domínio
-    public function getModulo(?int $id = null)
+    public function getModulo($mod_id = false)
     {
-        // Se for informado um ID, retorna o módulo correspondente
-        return $id
-            ? $this->find($id)
-            : $this->where('mod_excluido', null)
-            ->orderBy('mod_nome')
-            ->findAll();
+        $db = db_connect('default');
+        $builder = $db->table($this->table);
+        $builder->select('*');
+        if ($mod_id) {
+            $builder->where('mod_id', $mod_id);
+        }
+        $builder->where('mod_excluido', null);
+        $builder->orderBy('mod_order');
+        return $builder->get()->getResult();
     }
 
-    public function getModulosSearch(string $termo)
+    public function getModulosSearch($termo)
     {
-        // Seleciona apenas os campos necessários
-        return $this->select('mod_id, mod_nome, mod_icone')
-            ->like('mod_nome', $termo, 'after')
-            ->where('mod_excluido', null)
-            ->findAll();
+        $array = ['mod_nome' => $termo . '%'];
+        $db = db_connect('default');
+        $builder = $db->table($this->table);
+        $builder->select(['mod_id', 'mod_nome', 'mod_icone']);
+        $builder->where('mod_excluido', null);
+        $builder->like($array);
+
+        return $builder->get()->getResultArray();
     }
 }

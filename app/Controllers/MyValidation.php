@@ -59,4 +59,23 @@ class MyValidation
 
         return $builder->countAllResults() === 0;
     }
+
+    /**
+     * RN03.19 (T43 — Fornecedores > Notificação de Evento): nev_notivisa_num
+     * só é obrigatório (5 a 50 caracteres) quando nev_notivisa = 'S'; se
+     * nev_notivisa = 'N', o campo pode vir vazio. Validação de negócio real
+     * (não só checagem solta no Controller) — usada em
+     * App\Models\Fornec\FornecNotifEventoModel::$validationRules.
+     * Uso: obrigatorioSeNotivisaSim
+     */
+    public function obrigatorioSeNotivisaSim($value, ?string $params, array $data): bool
+    {
+        if (($data['nev_notivisa'] ?? 'N') !== 'S') {
+            return true; // não obrigatório quando Notivisa = Não
+        }
+
+        $valor = trim((string) $value);
+
+        return mb_strlen($valor) >= 5 && mb_strlen($valor) <= 50;
+    }
 }

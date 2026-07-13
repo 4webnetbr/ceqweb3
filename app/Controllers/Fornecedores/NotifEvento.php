@@ -28,6 +28,19 @@ use App\Models\Ocorre\OcorreTipoAcaoModel;
  */
 class NotifEvento extends BaseController
 {
+    /**
+     * RN03.16/RN03.20 — whitelist única de anexos, usada tanto no client
+     * (MyCampo::setTipoArq(), ver montaLinhaAnexo()/pw_anexos_notif.php)
+     * quanto na validação server-side de salvaAnexos() — mesma lista, sem
+     * duplicar em dois lugares.
+     */
+    public const ANEXO_EXTENSOES_PERMITIDAS = ['pdf', 'png', 'jpeg', 'jpg'];
+    public const ANEXO_MIMES_PERMITIDOS = [
+        'application/pdf',
+        'image/png',
+        'image/jpeg',
+    ];
+
     public $data = [];
     public $permissao = '';
     public $model;
@@ -125,12 +138,16 @@ class NotifEvento extends BaseController
         $itens = explode("\x1F", $listaRaw);
 
         if (count($itens) <= 1) {
-            return $itens[0] ?? '';
+            return esc($itens[0] ?? '');
         }
 
         $resto = count($itens) - 1;
 
-        return $itens[0] . ' e mais ' . $resto . '<ttp>' . esc(implode(', ', $itens)) . '</ttp>';
+        // Bloqueante (byarq, revisão 01) — o primeiro item também precisa
+        // passar por esc(): montaListaDados() renderiza a célula como HTML
+        // bruto, e pro_despro/lot_lote vêm de cadastro (superfície real de
+        // stored XSS se não escapado, igual ao que já era feito no tooltip).
+        return esc($itens[0]) . ' e mais ' . $resto . '<ttp>' . esc(implode(', ', $itens)) . '</ttp>';
     }
 
     /**
@@ -188,6 +205,20 @@ class NotifEvento extends BaseController
             return $this->response->setJSON([
                 'erro' => true,
                 'msg'  => 'Selecione ao menos um produto para notificar',
+            ]);
+        }
+
+        // RN03.1 (byarq, revisão 02) — 1ª checagem de elegibilidade (não
+        // transacional, só evita abrir o cadastro de 4 abas com um produto
+        // que já deixou de estar disponível). A checagem que realmente
+        // protege contra corrida é a de store() (dentro da transação) +
+        // UNIQUE KEY no banco.
+        $indisponiveis = $this->modelDesvio->validaDisponibilidade($ndvIds);
+        if (!empty($indisponiveis)) {
+            return $this->response->setJSON([
+                'erro' => true,
+                'msg'  => 'Produto(s) não estão mais disponíveis para notificação (nº '
+                    . implode(', ', $indisponiveis) . ') — atualize a lista e selecione novamente.',
             ]);
         }
 
@@ -306,7 +337,7 @@ class NotifEvento extends BaseController
         $campo->objeto = 'file';
         $campo->nome   = $campo->id = "nva_arquivo_{$sufixo}[{$ind}]";
         $campo->label  = 'Anexo';
-        $campo->setTipoArq('.pdf,.png,.jpeg,.jpg');
+        $campo->setTipoArq('.' . implode(',.', self::ANEXO_EXTENSOES_PERMITIDAS));
 
         $del           = new \App\Libraries\MyCampo();
         $del->nome     = $del->id = "bt_delanexo_{$sufixo}[{$ind}]";
@@ -370,6 +401,21 @@ class NotifEvento extends BaseController
         foreach ($arquivos as $arquivo) {
             if (!$arquivo || !$arquivo->isValid() || $arquivo->getError() === UPLOAD_ERR_NO_FILE) {
                 continue;
+            }
+
+            // Validação server-side de tipo de arquivo (RN03.16/RN03.20) —
+            // setTipoArq() no client só impede a seleção na UI; sem isso,
+            // um POST forjado passava qualquer extensão/MIME direto pro
+            // disco. Extensão do nome original + MIME detectado pelo PHP
+            // (getMimeType() do CI4 usa finfo sobre o conteúdo real do
+            // arquivo, não o que o client informou) — os dois precisam
+            // bater com a whitelist.
+            $extensao = strtolower(pathinfo($arquivo->getClientName(), PATHINFO_EXTENSION));
+            if (
+                !in_array($extensao, self::ANEXO_EXTENSOES_PERMITIDAS, true)
+                || !in_array($arquivo->getMimeType(), self::ANEXO_MIMES_PERMITIDOS, true)
+            ) {
+                throw new \Exception('Tipo de arquivo não permitido: ' . esc($arquivo->getClientName()) . ' (permitidos: .' . implode(', .', self::ANEXO_EXTENSOES_PERMITIDAS) . ')');
             }
 
             $nomeOriginal = $arquivo->getClientName();
@@ -515,6 +561,42 @@ class NotifEvento extends BaseController
                 throw new \Exception('Nenhum produto selecionado para a notificação');
             }
 
+            // RN03.1 (byarq, revisão 02) — 2ª camada de proteção, agora
+            // dentro da transação: revalida elegibilidade (Concluída em T42
+            // + ainda não vinculado) no momento real do Salvar, cobrindo a
+            // janela entre a seleção e o submit (corrida de duplo
+            // clique/outra notificação concorrente). Sem isso, o UNIQUE
+            // KEY(ndv_id) do banco (oco_notif_evento_produto) estouraria
+            // como erro de SQL cru pro usuário em vez de mensagem de negócio.
+            $indisponiveis = $this->modelDesvio->validaDisponibilidade($ndvIds);
+            if (!empty($indisponiveis)) {
+                throw new \Exception(
+                    'Produto(s) não estão mais disponíveis para notificação (nº '
+                    . implode(', ', $indisponiveis) . ') — outra notificação pode já tê-los usado. Atualize a lista e selecione novamente.'
+                );
+            }
+
+            // RN03.9 (byarq) — validação server-side de nvp_defeito: campo
+            // obrigatório, 5-200 caracteres, por produto. insertReg()
+            // (CommonModel) não roda Model::validate(), então sem isso o
+            // campo persiste vazio (achado bytest T43-15).
+            $defeitosValidar = (array) ($postado['nvp_defeito'] ?? []);
+            foreach (array_values($ndvIds) as $ordem => $ndvId) {
+                $defeito = trim((string) ($defeitosValidar[$ordem] ?? ''));
+                $tam     = mb_strlen($defeito);
+                if ($tam < 5 || $tam > 200) {
+                    throw new \Exception('O campo Defeito é obrigatório (5 a 200 caracteres) para todos os produtos selecionados');
+                }
+            }
+
+            // RN03.21 (byarq) — ao menos 1 Ação é obrigatória. O loop de
+            // gravação de ações (abaixo) só ignora linhas vazias, sem checar
+            // se sobra pelo menos 1 válida (achado bytest T43-40).
+            $tpaIdsValidar = array_filter((array) ($postado['tpa_id'] ?? []));
+            if (empty($tpaIdsValidar)) {
+                throw new \Exception('É obrigatório cadastrar ao menos uma Ação (aba Ações)');
+            }
+
             $sttConcluida = $this->model->getStatusConcluidaId();
             if (!$sttConcluida) {
                 throw new \Exception('Status "Concluída" de Notificação de Evento não configurado (cfg_status)');
@@ -537,8 +619,21 @@ class NotifEvento extends BaseController
             $nevId = (int) ($postado['nev_id'] ?? 0);
 
             if ($nevId) {
-                // update — mantido por simetria; bloqueio server-side já
-                // impede chegar aqui fora de status Pendente (ver edit()).
+                // Bloqueio server-side (byarq, achado na revisão do plano de
+                // testes) — store() é rota própria (POST direto), não passa
+                // por edit(); o comentário anterior ("bloqueio já impede
+                // chegar aqui") era falso — um POST forjado com nev_id de
+                // notificação já Concluída caía direto no update()/deletes
+                // sem checagem nenhuma. Mesmo padrão de
+                // NotifDesvio::store() (T42): só grava enquanto Pendente.
+                $existente = $this->model->getNotifEvento($nevId);
+                if (!$existente) {
+                    throw new \Exception('Notificação de Evento não encontrada');
+                }
+                if (trim($existente->stt_nome ?? '') !== 'Pendente') {
+                    throw new \Exception('Alteração não Permitida — Notificação de Evento já concluída');
+                }
+
                 unset($dadosCabecalho['usu_criou']);
                 $this->model->update($nevId, $dadosCabecalho);
                 (new CommonModel())->deleteReg('dbOcorrencia', 'oco_notif_evento_produto', "nev_id = {$nevId}");

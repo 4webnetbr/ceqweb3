@@ -152,4 +152,41 @@ class FornecNotifDesvioModel extends Model
 
         return $builder->get()->getResult();
     }
+
+    /**
+     * RN03.1 (byarq, revisão 02) — 2ª camada de proteção contra vínculo
+     * duplicado de produto, revalidada DENTRO da transação de
+     * NotifEvento::store()/selecionaProdutos() (a 1ª camada é o
+     * UNIQUE KEY(ndv_id) em oco_notif_evento_produto — ver migration
+     * 2026-07-12-000001_FornecedoresT42T43). Sem isso, um ndv_id que deixou
+     * de estar "disponível" entre a tela de seleção e o Salvar (corrida de
+     * duplo clique/outra notificação concorrente) estouraria como erro de
+     * SQL cru (constraint) em vez de mensagem de negócio.
+     *
+     * @param int[] $ndvIds
+     * @return int[] os ndv_id que NÃO estão mais disponíveis (Concluída em
+     *               T42 + ainda não vinculados) — vazio se todos elegíveis.
+     */
+    public function validaDisponibilidade(array $ndvIds): array
+    {
+        if (empty($ndvIds)) {
+            return [];
+        }
+
+        $db = db_connect('dbOcorrencia');
+
+        $disponiveis = $db->table($this->view . ' v')
+            ->select('v.ndv_id')
+            ->where('v.stt_nome', 'Concluída')
+            ->whereIn('v.ndv_id', $ndvIds)
+            ->where('NOT EXISTS (
+                SELECT 1 FROM oco_notif_evento_produto p WHERE p.ndv_id = v.ndv_id
+            )', null, false)
+            ->get()
+            ->getResultArray();
+
+        $idsDisponiveis = array_map('intval', array_column($disponiveis, 'ndv_id'));
+
+        return array_values(array_diff(array_map('intval', $ndvIds), $idsDisponiveis));
+    }
 }

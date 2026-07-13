@@ -136,7 +136,6 @@ class Buscas extends BaseController
 
         if ($_REQUEST['busca']) {
             $modulos = $this->modulo->getModulo($_REQUEST['busca']);
-
             if (empty($modulos)) {
                 $o = new \stdClass();
                 $o->id = '-1';
@@ -144,6 +143,7 @@ class Buscas extends BaseController
                 $ret[] = $o;
             } else {
                 foreach ($modulos as $m) {
+                    // debug($m, true);
                     $o = new \stdClass();
                     $o->id = $m->mod_id;
                     $o->text = $m->mod_nome;
@@ -1060,9 +1060,7 @@ class Buscas extends BaseController
 
             if (isset($telas->tel_model) && $telas->tel_model != null) {
                 $model = $telas->tel_model;
-                $compl_model = substr($model, 0, 6);
-                $pasta = "App\\Models\\" . $compl_model . "\\";
-                $model_atual = model($pasta . $model);
+                $model_atual = model(localizaModel($model));
                 $view   = $model_atual->view;
                 if (isset($model_atual->viewoutra)) {
                     $view   = $model_atual->viewoutra;

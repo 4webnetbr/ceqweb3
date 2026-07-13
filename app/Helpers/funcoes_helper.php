@@ -664,6 +664,27 @@ function floatToQuantia($valor, $decimais = 3)
 };;
 
 /**
+ * localizaModel
+ * Localiza o namespace completo de uma Model pelo nome, varrendo as
+ * subpastas de App\Models (não depende do nome da Model começar com
+ * o nome da pasta)
+ * @param string $model
+ * @return string
+ */
+function localizaModel(string $model): string
+{
+    $encontrados = glob(APPPATH . 'Models/*/' . $model . '.php');
+
+    if (empty($encontrados)) {
+        throw new \RuntimeException("Model {$model} não encontrada em App\\Models");
+    }
+
+    $pasta = basename(dirname($encontrados[0]));
+
+    return "App\\Models\\{$pasta}\\{$model}";
+}
+
+/**
  * buscaArquivos
  * Busca os arquivos da pasta informada
  * @param string $pastaapp
@@ -690,6 +711,8 @@ function buscaArquivos($pastaapp, $completo = true, $exceto = [])
         "Estoqu",
         "Utils",
         "Dashboard",
+        "Fornecedores",
+        "Fornec",
         "Produto",
         "Produt",
         "Ocorrencia",

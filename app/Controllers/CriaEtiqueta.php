@@ -80,9 +80,7 @@ class CriaEtiqueta extends BaseController
                 $telas = $this->tela->getTelaId($telid)[0];
                 if (isset($telas['tel_model']) && $telas['tel_model'] != null) {
                     $model = $telas['tel_model'];
-                    $compl_model = substr($model, 0, 6);
-                    $pasta = "App\\Models\\" . $compl_model . "\\";
-                    $model_atual = model($pasta . $model);
+                    $model_atual = model(localizaModel($model));
                     $banco   = $model_atual->DBGroup;
                     $view   = $model_atual->view;
                     $dados = $this->common->getListaTabela($banco, $view, $fields);
@@ -278,9 +276,7 @@ class CriaEtiqueta extends BaseController
 
         if (isset($telas['tel_model']) && $telas['tel_model'] != null) {
             $model = $telas['tel_model'];
-            $compl_model = substr($model, 0, 6);
-            $pasta = "App\\Models\\" . $compl_model . "\\";
-            $model_atual = model($pasta . $model);
+            $model_atual = model(localizaModel($model));
 
             $banco = $model_atual->DBGroup;
             $view  = $model_atual->view;

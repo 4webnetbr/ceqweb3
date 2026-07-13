@@ -20,7 +20,7 @@ $routes->set404Override(function () {
         'title'     => current_url(),
         'permissao' => false,
         'erromsg'   => "<h2>Atenção</h2>O Caminho <b>" . current_url() . "</b><br>
-        <span style='color:red; font-size:16px'>Não foi Encontrado!</span><br>
+        <span style='color:red; font-size:16px'>Não foi Encontrado! aqi</span><br>
         Informe o Problema ao Administrador do Sistema!",
     ]);
 });

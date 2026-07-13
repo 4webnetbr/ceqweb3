@@ -937,16 +937,15 @@ class MyCampo
     {
         $altu = isset($this->alturashow) && $this->alturashow > 0
             ? "{$this->alturashow}rem"
-            : '30rem';
+            : '33.1px';
 
-        $larg = $this->largura > 0 ? "{$this->largura}ch" : '100%';
+        $larg = $this->largura > 0 ? "{$this->largura}ch" : '50%';
 
         $html  = "<div class='row {$this->dispForm} align-items-center float-start d-inline-flex'>";
         if ($this->label !== '') {
             $html .= $this->crLabel();
         }
-        $html .= "<div class='border rounded bg-gradient-secondary input-group mb-lg-1 mb-2
-                    overflow-auto form-control'
+        $html .= "<div class='form-control disabled'
                     style='width: {$larg} !important; height: {$altu} !important'>";
         $html .= $this->valor;
         $html .= '</div>';

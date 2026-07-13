@@ -44,10 +44,20 @@ class FornecNotifEventoModel extends Model
         'nev_qtd_adquirida' => 'required|is_natural',
         'nev_numero_nf'     => 'required|max_length[20]',
         'nev_fornecedor'    => 'required|min_length[5]|max_length[200]',
-        'nev_fabricacao'    => 'required|valid_date',
+        'nev_fabricacao'    => 'required|valid_date[Y-m-d]',
         'nev_providencias'  => 'required|min_length[5]|max_length[500]',
         'nev_notificado'    => 'required|min_length[5]|max_length[200]',
         'nev_parecer'       => 'required|min_length[5]|max_length[500]',
+        // RN03.19 — obrigatório (5 a 50 caracteres) somente quando
+        // nev_notivisa = 'S'; regra condicional de negócio, não checagem
+        // solta no Controller (ver App\Controllers\MyValidation::obrigatorioSeNotivisaSim()).
+        'nev_notivisa_num'  => 'obrigatorioSeNotivisaSim[nev_notivisa]',
+    ];
+
+    protected $validationMessages = [
+        'nev_notivisa_num' => [
+            'obrigatorioSeNotivisaSim' => 'O campo Nº Notivisa é obrigatório (5 a 50 caracteres) quando a notificação ao Notivisa estiver marcada como Sim',
+        ],
     ];
 
     protected $allowCallbacks = true;

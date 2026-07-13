@@ -22,3 +22,56 @@ function geraEiquetaGenerico(obj, url, qtia = 1) {
     gerarEtiquetaZPL(res.link, false, res.chave, qtia);
   });
 }
+
+/**
+ * mostraNotivisaNum
+ * RN03.18/RN03.19 (T43) — mostra/oculta o campo nev_notivisa_num conforme o
+ * toggle Notivisa (EntOcoNotifEvento::defCampos(), funcChan do
+ * crCheckbox()). Reaproveita o mecanismo genérico já existente
+ * `mostraOcultaCampo(obj, regra, fields)` (my_fields.js) — o mesmo usado em
+ * outros campos condicionais por checkbox do projeto (ex.:
+ * Preproces\InspecaoProd) — sem reimplementar show/hide na mão.
+ */
+function mostraNotivisaNum(obj) {
+  mostraOcultaCampo(obj, "S", "nev_notivisa_num");
+}
+
+/**
+ * excluiAnexoExistente
+ * RN03.16/RN03.20 (T43) — exclui um anexo JÁ PERSISTIDO (diferente de
+ * exclui_campo(), que só remove uma linha ainda não salva do form). Confirma
+ * via boxAlert (nunca confirm() nativo — rascunho-runtime-js.md), chama
+ * NotifEvento::deleteAnexo() via executaAjax() (nunca jQuery.ajax cru), e
+ * remove a linha do DOM só se o back confirmar sucesso.
+ *
+ * @param {object} obj    - elemento clicado (botão Excluir), usado pra achar a linha (.row) a remover
+ * @param {number} nva_id - PK de oco_notif_evento_anexo
+ * @param {string} sufixo - "anexo_provid" | "anexo_parecer" (mesmo nome do container usado por addCampo()/exclui_campo())
+ */
+async function excluiAnexoExistente(obj, nva_id, sufixo) {
+  const confirmado = await boxAlert(
+    "Confirma a exclusão deste anexo?",
+    false,
+    "",
+    false,
+    1,
+    true,
+    "Excluir Anexo",
+  );
+
+  if (!confirmado) {
+    return;
+  }
+
+  const url = window.location.origin + "/NotifEvento/deleteAnexo/" + nva_id;
+  retornoAjax = false;
+  executaAjax(url, "json");
+
+  if (retornoAjax && !retornoAjax.erro) {
+    jQuery(obj).closest(".row").remove();
+    jQuery("#form1").attr("data-alter", true);
+    mostranoToast(retornoAjax.msg);
+  } else if (retornoAjax) {
+    boxAlert(retornoAjax.msg, true, "");
+  }
+}

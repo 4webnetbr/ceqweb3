@@ -125,7 +125,13 @@ class EntOcoNotifEvento extends Entity
         // não precisa reaproveitar verificaTipoAcao() em si, que é específico
         // de tpa_tipo; ver my_fornecedores.js:mostraNotivisaNum()).
         $notivisa              = new MyCampo('oco_notif_evento', 'nev_notivisa');
-        $notivisa->valor       = $notivisa->selecionado = $dados['nev_notivisa'] ?? 'N';
+        // valor = valor SUBMETIDO quando marcado (fixo 'S'); selecionado =
+        // valor ATUAL do registro, usado por crCheckbox() só pra decidir se
+        // nasce marcado ou não. Antes os dois vinham iguais ao dado atual
+        // (sempre 'N'==selecionado ou 'S'==selecionado), o que fazia o
+        // checkbox nascer sempre marcado (bug corrigido nesta rodada).
+        $notivisa->valor       = 'S';
+        $notivisa->selecionado = $dados['nev_notivisa'] ?? 'N';
         $notivisa->leitura     = $show;
         $notivisa->dispForm    = 'col-3';
         $notivisa->funcChan    = 'mostraNotivisaNum(this)';

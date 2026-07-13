@@ -12,9 +12,11 @@
  */
 
 use App\Libraries\MyCampo;
+use App\Controllers\Fornecedores\NotifEvento;
 
-$sufixo = strtolower($origem) === 'provid' ? 'provid' : 'parecer';
-$anexos = $anexos ?? [];
+$sufixo    = strtolower($origem) === 'provid' ? 'provid' : 'parecer';
+$anexos    = $anexos ?? [];
+$tipoArq   = '.' . implode(',.', NotifEvento::ANEXO_EXTENSOES_PERMITIDAS);
 ?>
 <div class="col-12 mt-2">
     <label class="form-label fw-bold">Anexos</label>
@@ -42,7 +44,7 @@ $anexos = $anexos ?? [];
         $campo->objeto  = 'file';
         $campo->nome    = $campo->id = "nva_arquivo_{$sufixo}[" . count($anexos) . ']';
         $campo->label   = 'Anexo';
-        $campo->setTipoArq('.pdf,.png,.jpeg,.jpg');
+        $campo->setTipoArq($tipoArq);
         ?>
         <div class="row tableDiv table2 mb-2 table-anexo_<?= $sufixo ?> align-items-center" data-index="<?= count($anexos) ?>">
             <div class="col-9"><?= $campo->crArquivo() ?></div>

@@ -120,7 +120,7 @@ class EntOcoNotifEventoAcao extends Entity
         $add->i_cone    = "<i class='fas fa-plus'></i>";
         $add->place     = 'Adicionar Ação';
         $add->classep   = 'btn-outline-success btn-sm bt-repete';
-        $add->funcChan  = "addCampo('" . base_url('NotifEvento/addCampoAcao/') . "','acoes',this)";
+        $add->funcChan  = "addCampo('" . base_url('NotifEvento/addCampoAcao/') . "','acoes_notif',this)";
         $ret['bt_addac'] = $add->crBotao();
 
         $del            = new MyCampo();
@@ -130,7 +130,7 @@ class EntOcoNotifEventoAcao extends Entity
         $del->id        = "bt_delac[$pos]";
         $del->i_cone    = "<i class='fas fa-trash'></i>";
         $del->classep   = 'btn-outline-danger btn-sm bt-exclui';
-        $del->funcChan  = "exclui_campo('acoes',this)";
+        $del->funcChan  = "exclui_campo('acoes_notif',this)";
         $del->place     = 'Excluir Ação';
         $ret['bt_delac'] = $del->crBotao();
 
