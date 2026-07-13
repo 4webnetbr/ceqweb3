@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Grid "Dados do Produto" (aba Dados Gerais, RN03.2-RN03.9). Uma linha por
  * produto/lote selecionado na tela intermediária (imutável nesta tela — a
@@ -12,13 +13,13 @@
         <tbody>
             <?php foreach ($produtos as $linha): ?>
                 <tr>
-                    <td>
-                        <div class="row">
-                            <?php foreach ($linha as $chave => $campo): ?>
-                                <?= $campo ?>
-                            <?php endforeach; ?>
-                        </div>
-                    </td>
+                    <?php foreach ($linha as $chave => $campo): ?>
+                        <td>
+                            <!-- <div class="row"> -->
+                            <?= $campo ?>
+                            <!-- </div> -->
+                        </td>
+                    <?php endforeach; ?>
                 </tr>
             <?php endforeach; ?>
         </tbody>

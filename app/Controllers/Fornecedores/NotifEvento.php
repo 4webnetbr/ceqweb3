@@ -245,7 +245,8 @@ class NotifEvento extends BaseController
                 'lot_validade' => $desvio->lot_validade,
                 'oco_qtd'     => $desvio->oco_qtd,
             ], false, $ordem);
-            $gridProdutos[] = $entProd->campos;
+            $gridProdutos[] = $desvio;
+            // $gridProdutos[] = $entProd->campos;
         }
 
         $campos[0] = [
@@ -572,7 +573,7 @@ class NotifEvento extends BaseController
             if (!empty($indisponiveis)) {
                 throw new \Exception(
                     'Produto(s) não estão mais disponíveis para notificação (nº '
-                    . implode(', ', $indisponiveis) . ') — outra notificação pode já tê-los usado. Atualize a lista e selecione novamente.'
+                        . implode(', ', $indisponiveis) . ') — outra notificação pode já tê-los usado. Atualize a lista e selecione novamente.'
                 );
             }
 

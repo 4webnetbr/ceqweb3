@@ -1,4 +1,5 @@
 <?php
+
 /**
  * RN03.1 — tela intermediária de seleção de produtos: desvios (T42)
  * Concluídos e ainda não vinculados a nenhuma notificação. Seleção inicial
@@ -16,7 +17,7 @@
 <?php else: ?>
     <div class="col-12">
         <table class="table table-bordered table-sm align-middle" id="tbl_selecao_produtos_notif">
-            <thead class="table-light">
+            <thead class="table-default">
                 <tr>
                     <th>N°</th>
                     <th>Data</th>
