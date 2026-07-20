@@ -112,10 +112,58 @@ class NotifDesvio extends BaseController
 
         $entity = new EntOcoNotifDesvio((array) $dados, true);
 
+        $colunas = [
+            'Cód ERP',
+            'Descrição',
+            'Fabricante',
+            'Lote <br>Validade',
+            'Quantidade',
+        ];
+
+        $alinha = [
+            'center',
+            'start',
+            'start',
+            'center',
+            'end',
+        ];
+
+        $prods[] = [
+            $dados->pro_codpro,
+            $dados->pro_despro,
+            $dados->fab_apeFab,
+            $dados->lot_lote . ' <br>' . data_br($dados->lot_validade),
+            $dados->oco_qtd
+        ];
+
+        $data = [
+            'id'    => $id,
+            'show'     => true,
+            'colunas'  => $colunas,
+            'alinha'   => $alinha,
+            'produtos' => $prods,
+            'maxHeig'  => '20vh'
+        ];
+
+
+        $campos[0] = [];
+        $campos[0][]     = $entity->campos['ndv_id'];
+        $campos[0][]     = $entity->campos['oco_id'];
+        $campos[0][]     = $entity->campos['ndv_numero'];
+        $campos[0][]     = $entity->campos['tpo_nome'];
+        $campos[0][]     = $entity->campos['sut_nome'];
+        $campos[0][]     = $entity->campos['oco_data_show'];
+        $campos[0][]     = $entity->campos['usu_nome'];
+        $campos[0][]     = $entity->campos['tel_nome'];
+        $campos[0][]     = $entity->campos['ndv_local'];
+
+        $campos[0][]     = view('partials/pw_show_produtos', $data);
+        $campos[0][]     = $entity->campos['ndv_descreva'];
+
         $this->data['desc_edicao'] = 'Desvio n° ' . str_pad($id, 6, '0', STR_PAD_LEFT)
             . ' - ' . fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
         $this->data['secoes']  = ['Dados Gerais'];
-        $this->data['campos']  = [array_values($entity->campos)];
+        $this->data['campos']  = $campos;
         $this->data['destino'] = '';
 
         echo view('vw_edicao', $this->data);
@@ -141,8 +189,58 @@ class NotifDesvio extends BaseController
 
         $entity = new EntOcoNotifDesvio((array) $dados, false);
 
-        $this->data['secoes']      = ['Dados Gerais'];
-        $this->data['campos']      = [array_values($entity->campos)];
+        $colunas = [
+            'Cód ERP',
+            'Descrição',
+            'Fabricante',
+            'Lote <br>Validade',
+            'Quantidade',
+        ];
+
+        $alinha = [
+            'center',
+            'start',
+            'start',
+            'center',
+            'end',
+        ];
+
+        $prods[] = [
+            $dados->pro_codpro,
+            $dados->pro_despro,
+            $dados->fab_apeFab,
+            $dados->lot_lote . ' <br>' . data_br($dados->lot_validade),
+            $dados->oco_qtd
+        ];
+
+        $data = [
+            'id'    => $id,
+            'show'     => true,
+            'colunas'  => $colunas,
+            'alinha'   => $alinha,
+            'produtos' => $prods,
+            'maxHeig'  => '20vh'
+        ];
+
+
+        $campos[0] = [];
+        $campos[0][]     = $entity->campos['ndv_id'];
+        $campos[0][]     = $entity->campos['oco_id'];
+        $campos[0][]     = $entity->campos['ndv_numero'];
+        $campos[0][]     = $entity->campos['tpo_nome'];
+        $campos[0][]     = $entity->campos['sut_nome'];
+        $campos[0][]     = $entity->campos['oco_data_show'];
+        $campos[0][]     = $entity->campos['usu_nome'];
+        $campos[0][]     = $entity->campos['tel_nome'];
+        $campos[0][]     = $entity->campos['ndv_local'];
+
+        $campos[0][]     = view('partials/pw_show_produtos', $data);
+        $campos[0][]     = $entity->campos['ndv_descreva'];
+
+        $this->data['desc_edicao'] = 'Desvio n° ' . str_pad($id, 6, '0', STR_PAD_LEFT)
+            . ' - ' . fmtEtiquetaCor($dados->stt_cor, $dados->stt_nome, 1);
+        $this->data['secoes']  = ['Dados Gerais'];
+        $this->data['campos']  = $campos;
         $this->data['destino']     = 'store';
         $this->data['desc_edicao'] = 'Desvio n° ' . str_pad($id, 6, '0', STR_PAD_LEFT);
 

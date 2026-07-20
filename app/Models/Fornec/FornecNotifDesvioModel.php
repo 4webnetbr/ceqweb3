@@ -139,7 +139,7 @@ class FornecNotifDesvioModel extends Model
 
         $builder = $db->table($this->view . ' v');
         $builder->select('v.*');
-        $builder->where('v.stt_nome', 'Concluída');
+        $builder->where('v.stt_nome', 'Concluído');
         $builder->where('NOT EXISTS (
             SELECT 1 FROM oco_notif_evento_produto p WHERE p.ndv_id = v.ndv_id
         )', null, false);
@@ -149,8 +149,9 @@ class FornecNotifDesvioModel extends Model
         }
 
         $builder->orderBy('v.oco_data DESC');
-
-        return $builder->get()->getResult();
+        $ret = $builder->get()->getResult();
+        // debug($db->getLastQuery());
+        return $ret;
     }
 
     /**
@@ -177,7 +178,7 @@ class FornecNotifDesvioModel extends Model
 
         $disponiveis = $db->table($this->view . ' v')
             ->select('v.ndv_id')
-            ->where('v.stt_nome', 'Concluída')
+            ->where('v.stt_nome', 'Concluído')
             ->whereIn('v.ndv_id', $ndvIds)
             ->where('NOT EXISTS (
                 SELECT 1 FROM oco_notif_evento_produto p WHERE p.ndv_id = v.ndv_id

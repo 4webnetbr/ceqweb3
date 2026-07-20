@@ -59,7 +59,7 @@ class EntOcoNotifEvento extends Entity
         $qtdAdquirida->valor       = $dados['nev_qtd_adquirida'] ?? '';
         $qtdAdquirida->obrigatorio = true;
         $qtdAdquirida->leitura     = $show;
-        $qtdAdquirida->dispForm    = 'col-3';
+        $qtdAdquirida->dispForm    = 'col-2';
         $ret['nev_qtd_adquirida'] = $qtdAdquirida->crInput();
 
         $numeroNf              = new MyCampo('oco_notif_evento', 'nev_numero_nf');
@@ -67,7 +67,7 @@ class EntOcoNotifEvento extends Entity
         $numeroNf->obrigatorio = true;
         $numeroNf->leitura     = $show;
         $numeroNf->maximo      = 20;
-        $numeroNf->dispForm    = 'col-3';
+        $numeroNf->dispForm    = 'col-2';
         $ret['nev_numero_nf'] = $numeroNf->crInput();
 
         $fornecedor              = new MyCampo('oco_notif_evento', 'nev_fornecedor');
@@ -76,14 +76,14 @@ class EntOcoNotifEvento extends Entity
         $fornecedor->leitura     = $show;
         $fornecedor->minimo      = 5;
         $fornecedor->maximo      = 200;
-        $fornecedor->dispForm    = 'col-6';
+        $fornecedor->dispForm    = 'col-5';
         $ret['nev_fornecedor'] = $fornecedor->crInput();
 
         $fabricacao              = new MyCampo('oco_notif_evento', 'nev_fabricacao');
         $fabricacao->valor       = $dados['nev_fabricacao'] ?? '';
         $fabricacao->obrigatorio = true;
         $fabricacao->leitura     = $show;
-        $fabricacao->dispForm    = 'col-4';
+        $fabricacao->dispForm    = 'col-3';
         $ret['nev_fabricacao'] = $fabricacao->crInput();
 
         // ---- Providências ----

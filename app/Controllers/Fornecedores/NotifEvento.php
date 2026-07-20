@@ -200,7 +200,6 @@ class NotifEvento extends BaseController
     public function selecionaProdutos()
     {
         $ndvIds = array_filter((array) ($this->request->getPost('ndv_id') ?? []));
-
         if (empty($ndvIds)) {
             return $this->response->setJSON([
                 'erro' => true,
@@ -227,6 +226,26 @@ class NotifEvento extends BaseController
         $campos    = [];
 
         // --- Aba 1: Dados Gerais (cabeçalho + grid de produtos) ---
+        $colunas = [
+            'Data',
+            'Cód ERP',
+            'Descrição',
+            'Fabricante',
+            'Lote <br>Validade',
+            'Quantidade',
+            'Defeito',
+        ];
+
+        $alinha = [
+            'center',
+            'center',
+            'start',
+            'start',
+            'center',
+            'end',
+            'start',
+        ];
+
         $gridProdutos = [];
         foreach (array_values($ndvIds) as $ordem => $ndvId) {
             $desvio = $this->modelDesvio->getNotifDesvio((int) $ndvId);
@@ -245,13 +264,25 @@ class NotifEvento extends BaseController
                 'lot_validade' => $desvio->lot_validade,
                 'oco_qtd'     => $desvio->oco_qtd,
             ], false, $ordem);
-            $gridProdutos[] = $desvio;
-            // $gridProdutos[] = $entProd->campos;
+            $gridProdutos[] = [
+                $desvio->oco_data,
+                $desvio->pro_codpro,
+                $desvio->pro_despro,
+                $desvio->fab_apeFab,
+                $desvio->lot_lote . '<br>' . $desvio->lot_validade,
+                $desvio->oco_qtd,
+                $desvio->ndv_descreva,
+            ];
         }
 
         $campos[0] = [
             $entEvento->campos['nev_id'],
-            view('partials/pw_grid_produtos_notif', ['produtos' => $gridProdutos]),
+            view('partials/pw_show_produtos', [
+                'id'       => null,
+                'colunas'  => $colunas,
+                'alinha'   => $alinha,
+                'produtos' => $gridProdutos,
+            ]),
             $entEvento->campos['nev_qtd_adquirida'],
             $entEvento->campos['nev_numero_nf'],
             $entEvento->campos['nev_fornecedor'],
@@ -496,10 +527,38 @@ class NotifEvento extends BaseController
         $entEvento = new EntOcoNotifEvento((array) $header, $show);
 
         $produtos     = $this->model->getProdutosNotificacao($id);
+        $colunas = [
+            'Data',
+            'Cód ERP',
+            'Descrição',
+            'Fabricante',
+            'Lote <br>Validade',
+            'Quantidade',
+            'Defeito',
+        ];
+
+        $alinha = [
+            'center',
+            'center',
+            'start',
+            'start',
+            'center',
+            'end',
+            'start',
+        ];
+
         $gridProdutos = [];
         foreach (array_values($produtos) as $ordem => $p) {
-            $entProd        = new EntOcoNotifEventoProduto((array) $p, $show, $ordem);
-            $gridProdutos[] = $entProd->campos;
+            // $entProd        = new EntOcoNotifEventoProduto((array) $p, $show, $ordem);
+            $gridProdutos[] = [
+                $p->oco_data,
+                $p->pro_codpro,
+                $p->pro_despro,
+                $p->fab_apeFab,
+                $p->lot_lote . '<br>' . data_br($p->lot_validade),
+                $p->oco_qtd,
+                $p->nvp_defeito, // RN03.9: Defeito editável
+            ];
         }
 
         $acoes      = $this->model->getAcoesNotificacao($id);
@@ -515,7 +574,12 @@ class NotifEvento extends BaseController
         $campos = [];
         $campos[0] = [
             $entEvento->campos['nev_id'],
-            view('partials/pw_grid_produtos_notif', ['produtos' => $gridProdutos]),
+            view('partials/pw_show_produtos', [
+                'id'       => $id,
+                'colunas'  => $colunas,
+                'alinha'   => $alinha,
+                'produtos' => $gridProdutos,
+            ]),
             $entEvento->campos['nev_qtd_adquirida'],
             $entEvento->campos['nev_numero_nf'],
             $entEvento->campos['nev_fornecedor'],
