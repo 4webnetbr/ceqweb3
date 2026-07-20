@@ -56,7 +56,7 @@ class Logger extends BaseConfig
         \App\Log\Handlers\WorkerHandler::class => [
             'handles'        => ['info', 'error', 'debug'],
             'path'           => WRITEPATH . 'logs/cron/',
-            'filenameFormat' => 'workanalise-{date}',
+            'filenameFormat' => 'workanalise_{date}',
             'dateFormat'     => 'd/m/Y H:i:s',
         ],
 
