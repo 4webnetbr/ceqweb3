@@ -211,11 +211,23 @@
       "Bash(c:/srvlocal/php/php.exe /c/Users/ADMIN/AppData/Local/Temp/claude/c--MyProjects-Ceqnep-CeqWeb3/2b008c81-657c-464b-a023-7c016b5386ef/scratchpad/qc.php 'SELECT nac_id, nev_id, tpa_id, nac_ordem FROM oco_notif_evento_acao ORDER BY nev_id DESC, nac_ordem ASC LIMIT 3' dev_ocorrencia_db)",
       "Bash(cp /c/Users/ADMIN/AppData/Local/Temp/claude/c--MyProjects-Ceqnep-CeqWeb3/2b008c81-657c-464b-a023-7c016b5386ef/scratchpad/env.bak3 c:/MyProjects/Ceqnep/CeqWeb3/.env)",
       "Bash(cp \"C:\\\\Users\\\\ADMIN\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--MyProjects-Ceqnep-CeqWeb3\\\\2b008c81-657c-464b-a023-7c016b5386ef\\\\scratchpad\\\\fornecedores-t42-t43-entrega.md\" \"c:\\\\MyProjects\\\\Ceqnep\\\\CeqWeb3\\\\docs\\\\entrega\\\\fornecedores-t42-t43-entrega.md\")",
-      "Bash(pandoc \"docs/entrega/fornecedores-t42-t43-entrega.md\" -f markdown -t docx -o \"docs/entrega/fornecedores-t42-t43-entrega.docx\")"
+      "Bash(pandoc \"docs/entrega/fornecedores-t42-t43-entrega.md\" -f markdown -t docx -o \"docs/entrega/fornecedores-t42-t43-entrega.docx\")",
+      "Bash(grep -n \"logisticaControllers\\\\|fornecedoresControllers\\\\|Fornecedores\\\\\\\\\\\\\\\\\\\\|Ocorrencia\\\\\\\\\\\\\\\\\" app/Config/Routes.php)",
+      "Bash(grep -rn 'pit_permissao\\\\|CAEXN\\\\|'\\\\''C'\\\\''\\\\|strpos\\($permissao' app/Filters/LoginFilter.php)",
+      "Bash(grep -n \"public \\\\$\" app/Config/Database.php)",
+      "Bash(grep -n 'class \\\\|public $default\\\\|public $dbOcorrencia\\\\|public $dbEstoque\\\\|public $dbProduto\\\\|public $group' app/Config/Database.php)",
+      "Bash(mkdir -p \"C:/Users/ADMIN/.claude/plans\" 2>/dev/null; echo ok)",
+      "Bash(powershell -NoProfile -Command \"exit 0\")",
+      "Bash(cat > *)",
+      "Bash(cat)",
+      "Read(//c/Users/ADMIN/.claude/plans/**)",
+      "Bash(PLAN=\"/c/Users/ADMIN/.claude/plans/de-acordo-com-a-snug-karp-agent-a81ee6a40bac43e92.md\" *)",
+      "Bash(pandoc \"C:/Users/ADMIN/AppData/Local/Temp/claude/c--MyProjects-Ceqnep-CeqWeb3/2b0ee2e1-d835-4487-af09-0ddc0429ce0a/scratchpad/notificacoes-sms-dev.md\" -f markdown -t docx -o \"c:/MyProjects/Ceqnep/CeqWeb3/docs/desenvolvimento/notificacoes-sms-dev.docx\")"
     ],
     "additionalDirectories": [
       "\\tmp",
-      "C:\\Users\\ADMIN\\AppData\\Local\\Temp\\claude\\c--MyProjects-Ceqnep-CeqWeb3\\2b008c81-657c-464b-a023-7c016b5386ef\\scratchpad"
+      "C:\\Users\\ADMIN\\AppData\\Local\\Temp\\claude\\c--MyProjects-Ceqnep-CeqWeb3\\2b008c81-657c-464b-a023-7c016b5386ef\\scratchpad",
+      "C:\\Users\\ADMIN\\.claude\\plans"
     ]
   }
 }
