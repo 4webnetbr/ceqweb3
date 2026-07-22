@@ -68,6 +68,18 @@ foreach ($fornecedoresControllers as $ctrl) {
 $routes->get('NotifDesvio/GeraEtiqueta/(:num)/(:num)', 'Fornecedores\\NotifDesvio::GeraEtiqueta/$1/$2', ['as' => 'notifdesvio_GeraEtiqueta_match']);
 $routes->get('NotifEvento/GeraEtiqueta/(:num)/(:num)', 'Fornecedores\\NotifEvento::GeraEtiqueta/$1/$2', ['as' => 'notifevento_GeraEtiqueta_match']);
 
+// Controladores de Logística (Notificações SMS) — ver
+// docs/desenvolvimento/notificacoes-sms-dev.docx
+$logisticaControllers = ['NotifSmsConfig', 'NotifSmsEnviadas'];
+
+foreach ($logisticaControllers as $ctrl) {
+    $routes->group($ctrl, static function ($routes) use ($ctrl) {
+        $name = strtolower($ctrl);
+        $routes->get('/', "Logistica\\$ctrl::index", ['as' => "{$name}_index"]);
+        $routes->match(['GET', 'POST'], '(:any)', "Logistica\\$ctrl::$1", ['as' => "{$name}_match"]);
+    });
+}
+
 $routes->match(['GET', 'POST'], 'buscas/(:any)/(:any)', 'Buscas::$1/$2', ['as' => 'buscas_two_params']);
 $routes->match(['GET', 'POST'], 'buscas/(:any)', 'Buscas::$1', ['as' => 'buscas_one_params']);
 

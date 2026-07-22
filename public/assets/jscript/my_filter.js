@@ -226,3 +226,55 @@ async function buscaLogUser() {
     }
   }
 }
+
+/**
+ * buscaSmsEnviadas
+ * Processa a busca da Consulta de SMS Enviados (Logística), moldada em
+ * buscaLogUser() — período obrigatório, filtro por regra opcional.
+ */
+async function buscaSmsEnviadas() {
+  var periodo = jQuery.trim(jQuery("#nse_periodo").val());
+  if (periodo == "" || periodo == null) {
+    boxAlert("Informe o Período", true, "", true, 1, false, "Alerta");
+    return;
+  }
+  var startDate = periodo.substr(0, 10);
+  var endDate = periodo.substr(-10);
+  var nscId = jQuery("#nse_nsc_id").val();
+
+  urlBusca = "NotifSmsEnviadas/lista";
+  dados = {
+    periodo: periodo,
+    inicio: startDate,
+    fim: endDate,
+    nse_nsc_id: nscId,
+  };
+  try {
+    const retornoAjax = await executaAjaxWait(urlBusca, "json", dados);
+    montaListaSmsEnviadas(retornoAjax);
+  } catch (error) {
+    console.log("Erro na requisição AJAX:", error);
+  }
+}
+
+/**
+ * montaListaSmsEnviadas
+ * Monta a tabela de SMS Enviados, moldada em montaListaLogs(dados).
+ */
+function montaListaSmsEnviadas(dados) {
+  jQuery("#table").DataTable().destroy();
+  removeLinhas("table", 0);
+
+  linha = "";
+  for (var index in dados) {
+    item = dados[index];
+
+    linha = linha + "<tr>";
+    linha = linha + "<td class='align-middle'>" + item.data_envio + "</td>";
+    linha = linha + "<td class='align-middle'>" + item.chave + "</td>";
+    linha = linha + "<td class='align-middle'>" + item.regra + "</td>";
+    linha = linha + "</tr>";
+  }
+  jQuery("#table tbody").append(linha);
+  dtResult("table");
+}

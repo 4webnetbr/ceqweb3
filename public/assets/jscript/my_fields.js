@@ -2455,6 +2455,29 @@ function verificaTipoAcao(obj) {
   }
 }
 
+/**
+ * alternaCamposTipoRegra
+ * Notificações SMS (Logística) — toggle dos grupos de campos condicionais
+ * por nsc_tipo_regra (entrega / saldo_baixo), moldado em verificaTipoAcao(),
+ * porém mais simples (2 valores estáticos, sem consulta AJAX). Cuida
+ * apenas do show/hide dos wrappers #divEntrega/#divSaldo e delega a
+ * obrigatoriedade condicional para mudaObrigatorioElemDiv() já existente.
+ */
+function alternaCamposTipoRegra(obj) {
+  var entrega = jQuery(obj).val() == "entrega";
+
+  // Usa a classe "d-none" (em vez de jQuery.toggle(), que só manipula o
+  // style inline) porque o HTML inicial de #divSaldo já nasce com d-none
+  // por padrão (nsc_tipo_regra default = 'entrega') — ver
+  // EntLogNotifSmsConfig/NotifSmsConfig::montaCamposFormulario(). Alternar
+  // apenas o display inline não sobrepõe o "!important" da classe.
+  jQuery("#divEntrega").toggleClass("d-none", !entrega);
+  jQuery("#divSaldo").toggleClass("d-none", entrega);
+
+  mudaObrigatorioElemDiv("#divEntrega", entrega);
+  mudaObrigatorioElemDiv("#divSaldo", !entrega);
+}
+
 function mudaObrigatorioElemDiv(div, obriga) {
   // Garantir valor booleano
   obriga = obriga === true;

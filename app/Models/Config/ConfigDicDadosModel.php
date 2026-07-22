@@ -754,10 +754,12 @@ class ConfigDicDadosModel extends Model
             'pro'    => 'dbProduto',
             'vw_cfg' => 'default',
             'cfg'    => 'default',
+            'vw_log' => 'dbLogistica',
+            'log'    => 'dbLogistica',
         ];
 
         // Ordem de verificação: prefixos maiores primeiro para evitar conflito (ex: vw_est vs est)
-        $prefixes = ['vw_est', 'vw_oco', 'vw_pro', 'vw_cfg', 'est', 'oco', 'pro', 'cfg'];
+        $prefixes = ['vw_est', 'vw_oco', 'vw_pro', 'vw_cfg', 'vw_log', 'est', 'oco', 'pro', 'cfg', 'log'];
 
         foreach ($prefixes as $prefix) {
             if (str_starts_with($nome_tabela, $prefix)) {

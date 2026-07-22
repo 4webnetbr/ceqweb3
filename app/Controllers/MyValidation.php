@@ -78,4 +78,33 @@ class MyValidation
 
         return mb_strlen($valor) >= 5 && mb_strlen($valor) <= 50;
     }
+
+    /**
+     * Notificações SMS (Logística): campos do grupo "Entrega"
+     * (nsc_ren_tipo, nsc_ren_status_max, nsc_condicao, nsc_minutos_limite)
+     * só são obrigatórios quando nsc_tipo_regra = 'entrega'.
+     * Uso: obrigatorioSeTipoRegraEntrega[nsc_tipo_regra]
+     */
+    public function obrigatorioSeTipoRegraEntrega($value, ?string $params, array $data): bool
+    {
+        if (($data['nsc_tipo_regra'] ?? '') !== 'entrega') {
+            return true;
+        }
+
+        return trim((string) $value) !== '';
+    }
+
+    /**
+     * Notificações SMS (Logística): campo nsc_saldo_minimo (grupo "Saldo
+     * Baixo") só é obrigatório quando nsc_tipo_regra = 'saldo_baixo'.
+     * Uso: obrigatorioSeTipoRegraSaldo[nsc_tipo_regra]
+     */
+    public function obrigatorioSeTipoRegraSaldo($value, ?string $params, array $data): bool
+    {
+        if (($data['nsc_tipo_regra'] ?? '') !== 'saldo_baixo') {
+            return true;
+        }
+
+        return trim((string) $value) !== '';
+    }
 }

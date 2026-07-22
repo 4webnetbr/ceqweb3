@@ -28,7 +28,7 @@ class WorkerHandler extends BaseHandler
     {
         // Filtra: só grava se vier da classe WorkAnalise
         if (!$this->isFromWorker()) {
-            return false;
+            return true;
         }
 
         $filename = str_replace('{date}', date('Y-m-d'), $this->filenameFormat) . '.log';

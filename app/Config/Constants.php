@@ -3,6 +3,7 @@
 
 define('NAME_APP', 'CeqWeb 3.0');
 define('LINK_CEQWEB2', 'https://ceqweb2.ceqnep.com.br/producao/home/ajax/');
+define('LINK_LOGISTICA', 'https://logistica.ceqnep.com.br/api2026/');
 /*
  | --------------------------------------------------------------------
  | App Namespace

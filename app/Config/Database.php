@@ -13,6 +13,7 @@ class Database extends Config
     public array $dbEstoque;
     public array $dbProduto;
     public array $dbOcorrencia;
+    public array $dbLogistica;
 
     public array $tests = [
         'DSN'         => '',
@@ -110,6 +111,26 @@ class Database extends Config
             'username' => env('database.prefixo', 'dev_') . 'user',
             'password' => 'NI0j4@EUEAWpD#OrdVB',
             'database' => env('database.prefixo', 'dev_') . 'ocorrencia_db',
+            'DBDriver' => 'MySQLi',
+            'DBPrefix' => '',
+            'pConnect' => false,
+            'DBDebug'  => true,
+            'charset'  => 'utf8mb4',
+            'DBCollat' => 'utf8mb4_unicode_ci',
+            'swapPre'  => '',
+            'encrypt'  => false,
+            'compress' => false,
+            'strictOn' => false,
+            'failover' => [],
+            'port'     => 3306,
+        ];
+
+        $this->dbLogistica = [
+            'DSN'      => '',
+            'hostname' => env('database.hostname', 'localhostNao'),
+            'username' => env('database.prefixo', 'dev_') . 'user',
+            'password' => 'NI0j4@EUEAWpD#OrdVB',
+            'database' => env('database.prefixo', 'dev_') . 'logistica_db',
             'DBDriver' => 'MySQLi',
             'DBPrefix' => '',
             'pConnect' => false,
