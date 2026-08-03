@@ -2458,31 +2458,24 @@ function verificaTipoAcao(obj) {
 /**
  * alternaCamposTipoRegra
  * Notificações SMS (Logística) — toggle dos grupos de campos condicionais
- * por nsc_tipo_regra (saldo_baixo / api / consulta), moldado em
- * verificaTipoAcao(), porém mais simples (3 valores estáticos, sem
- * consulta AJAX). Cuida apenas do show/hide dos wrappers
- * #divSaldo/#divApi/#divConsulta e delega a obrigatoriedade condicional
- * para mudaObrigatorioElemDiv() já existente (não reimplementada aqui).
+ * por nsc_tipo_regra (entrega / saldo_baixo), moldado em verificaTipoAcao(),
+ * porém mais simples (2 valores estáticos, sem consulta AJAX). Cuida
+ * apenas do show/hide dos wrappers #divEntrega/#divSaldo e delega a
+ * obrigatoriedade condicional para mudaObrigatorioElemDiv() já existente.
  */
 function alternaCamposTipoRegra(obj) {
-  var tipo = jQuery(obj).val();
-  var saldo = tipo == "saldo_baixo";
-  var api = tipo == "api";
-  var consulta = tipo == "consulta";
+  var entrega = jQuery(obj).val() == "entrega";
 
   // Usa a classe "d-none" (em vez de jQuery.toggle(), que só manipula o
-  // style inline) porque o HTML inicial de #divApi/#divConsulta já nasce
-  // com d-none por padrão (nsc_tipo_regra default = 'saldo_baixo') — ver
-  // EntLogNotifSmsConfig/NotifSmsConfig::montaCamposFormulario() (seções
-  // 4.12/4.13). Alternar apenas o display inline não sobrepõe o
-  // "!important" da classe.
-  jQuery("#divSaldo").toggleClass("d-none", !saldo);
-  jQuery("#divApi").toggleClass("d-none", !api);
-  jQuery("#divConsulta").toggleClass("d-none", !consulta);
+  // style inline) porque o HTML inicial de #divSaldo já nasce com d-none
+  // por padrão (nsc_tipo_regra default = 'entrega') — ver
+  // EntLogNotifSmsConfig/NotifSmsConfig::montaCamposFormulario(). Alternar
+  // apenas o display inline não sobrepõe o "!important" da classe.
+  jQuery("#divEntrega").toggleClass("d-none", !entrega);
+  jQuery("#divSaldo").toggleClass("d-none", entrega);
 
-  mudaObrigatorioElemDiv("#divSaldo", saldo);
-  mudaObrigatorioElemDiv("#divApi", api);
-  mudaObrigatorioElemDiv("#divConsulta", consulta);
+  mudaObrigatorioElemDiv("#divEntrega", entrega);
+  mudaObrigatorioElemDiv("#divSaldo", !entrega);
 }
 
 function mudaObrigatorioElemDiv(div, obriga) {

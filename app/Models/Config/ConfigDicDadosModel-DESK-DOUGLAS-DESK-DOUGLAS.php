@@ -28,15 +28,6 @@ class ConfigDicDadosModel extends Model
     ];
 
     /**
-     * Lista central de dbGroups conhecidos do sistema, usada por
-     * getTabelas()/getTabelasPorDbGroup()/getViewsPorPrefixo() — evita
-     * repetir (e desatualizar) essa lista em cada método. Inclui
-     * 'dbLogistica', ausente antes deste ciclo (ver
-     * docs/desenvolvimento/notificacoes-sms-tipos-alerta-dev.md, seção 4.2).
-     */
-    protected array $dbGroupsConhecidos = ['default', 'dbEstoque', 'dbProduto', 'dbOcorrencia', 'dbLogistica'];
-
-    /**
      * Summary of getTabelas
      * Retorna as Tabelas do Sistema com seus Detalhes
      * @param mixed $nome_tabela
@@ -45,7 +36,7 @@ class ConfigDicDadosModel extends Model
      */
     public function getTabelas($nome_tabela = false)
     {
-        $dbGroups = $this->dbGroupsConhecidos;
+        $dbGroups = ['dbEstoque', 'dbProduto', 'dbOcorrencia', 'default'];
 
         $ret = [];
 
@@ -714,7 +705,7 @@ class ConfigDicDadosModel extends Model
      */
     public function getTabelasPorDbGroup(string $dbGroup, bool $includeViews = false, bool $tabelabase = true): array
     {
-        $gruposValidos = $this->dbGroupsConhecidos;
+        $gruposValidos = ['dbEstoque', 'dbProduto', 'dbOcorrencia', 'default'];
 
         if (!in_array($dbGroup, $gruposValidos, true)) {
             return [];
@@ -748,34 +739,6 @@ class ConfigDicDadosModel extends Model
             }));
         }
 
-        return $ret;
-    }
-
-    /**
-     * Lista as views que começam com o prefixo informado, em todos os
-     * dbGroups conhecidos do sistema ($dbGroupsConhecidos). Usada pelo tipo
-     * de alerta 'consulta' de Notificações SMS (nsc_view_consulta), ver
-     * docs/desenvolvimento/notificacoes-sms-tipos-alerta-dev.md, seção 4.2.
-     *
-     * @return array<int, array{dbGroup: string, schema: string, view: string}>
-     */
-    public function getViewsPorPrefixo(string $prefixo): array
-    {
-        $ret = [];
-        foreach ($this->dbGroupsConhecidos as $dbGroup) {
-            $db     = db_connect($dbGroup);
-            $schema = $db->getDatabase();
-
-            $builder = $db->table('information_schema.tables');
-            $builder->select(['table_schema', 'table_name']);
-            $builder->where('table_schema', $schema);
-            $builder->where('table_type', 'VIEW');
-            $builder->like('table_name', $prefixo, 'after');
-
-            foreach ($builder->get()->getResultArray() as $row) {
-                $ret[] = ['dbGroup' => $dbGroup, 'schema' => $row['table_schema'], 'view' => $row['table_name']];
-            }
-        }
         return $ret;
     }
 
