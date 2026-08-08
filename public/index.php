@@ -1,4 +1,5 @@
 <?php
+
 use CodeIgniter\Boot;
 use Config\Paths;
 
@@ -46,11 +47,7 @@ if (getcwd() . DIRECTORY_SEPARATOR !== FCPATH) {
  * our autoloader, along with Composer's, loads our constants
  * and fires up an environment-specific bootstrapping.
  */
-
-// LOAD OUR PATHS CONFIG FILE
-// This is the line that might need to be changed, depending on your folder structure.
-require FCPATH . '../app/Config/Paths.php';
-// ^^^ Change this line if you move your application folder
+require FCPATH . '../vendor/autoload.php';
 
 $paths = new Paths();
 

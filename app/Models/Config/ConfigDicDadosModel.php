@@ -645,6 +645,7 @@ class ConfigDicDadosModel extends Model
     {
         $dbGrSche = $this->getDbGroupAndSchema($nome_tabela);
         $db = db_connect($dbGrSche['dbGroup']);
+        // debug($db);
         $consulta = "SELECT TABLE_NAME, 
                             COLUMN_NAME, 
                             IS_NULLABLE, 
@@ -667,13 +668,13 @@ class ConfigDicDadosModel extends Model
         } else {
             $consulta .= "AND column_name = '" . $nome_campo . "' ";
         }
-        // debug($consulta, true);
+        // debug($consulta);
 
         $query = $db->query($consulta);
+        // debug($query, true);
         $ret = $query->getResultArray();
         $lq = $query = $db->getLastQuery();
-        // debug($lq);
-        // debug($ret);
+        // debug($ret, true);
         return $ret;
     }
 

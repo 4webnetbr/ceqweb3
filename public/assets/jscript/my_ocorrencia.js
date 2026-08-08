@@ -55,7 +55,10 @@ async function ativInativ(url, registro, ativo) {
   }
 
   if (retornoAjax.erro) {
-    if (Array.isArray(retornoAjax.pendencias) && retornoAjax.pendencias.length) {
+    if (
+      Array.isArray(retornoAjax.pendencias) &&
+      retornoAjax.pendencias.length
+    ) {
       // RN06.2 — MSG 14 (base) + lista de pendências (ramo string literal do
       // boxAlert(), já que o parâmetro opcoes/dadosExtra é exclusivo do ramo
       // bootbox.prompt, não se aplica aqui).
@@ -78,7 +81,15 @@ async function ativInativ(url, registro, ativo) {
 
       const textoConcatenado = (msgvar?.msg_mensagem ?? "") + "<br>" + lista;
 
-      await boxAlert(textoConcatenado, true, "", true, 1, false, tituloComIcone);
+      await boxAlert(
+        textoConcatenado,
+        true,
+        "",
+        true,
+        1,
+        false,
+        tituloComIcone,
+      );
     } else {
       // Erro genérico (ex.: MSG 17 "Problema no Sistema") — msg numérico,
       // boxAlert() resolve o texto sozinho via getMensagem()/GET /mensagem/{id}.
@@ -108,15 +119,12 @@ async function adicionaAcaoExtra(url, btn) {
   const atual = parseInt(btn.getAttribute("data-index")) || 0;
 
   retornoAjax = false;
-  await executaAjaxWait(url + "/" + atual, "json");
+  await executaAjax(url + "/" + atual, "json");
 
   if (retornoAjax && retornoAjax.html) {
-    jQuery("#rep_acoesextra").append(retornoAjax.html);
+    jQuery("#tbacoes tbody").append(retornoAjax.html);
 
-    jQuery("#rep_acoesextra select")
-      .last()
-      .selectpicker({ container: "body" })
-      .selectpicker("render");
+    jQuery("#tbacoes select").selectpicker();
 
     btn.setAttribute("data-index", atual + 1);
     jQuery("#form1").attr("data-alter", true);

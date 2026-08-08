@@ -97,7 +97,94 @@ Events::on('pre_system', static function () {
  * novamente, evitando loop e duplicação de logs.
  * --------------------------------------------------------------------
  */
+// Events::on('DBQuery', function ($query) {
+
+//     // Proteção contra re-entrada (loop/recursão)
+//     static $isProcessing = false;
+
+//     if ($isProcessing) {
+//         return;
+//     }
+
+//     $isProcessing = true;
+
+//     try {
+//         $sql = $query->getQuery();
+
+//         // Verifica se é INSERT, UPDATE ou DELETE
+//         if (! preg_match('/^(insert into|update|delete from)\s+`?(\w+)`?/i', $sql, $matches)) {
+//             return;
+//         }
+
+//         $tabelaAfetada = $matches[2];
+
+//         // Ignora tabelas de configuração (prefixo cfg_)
+//         if (str_starts_with($tabelaAfetada, 'cfg')) {
+//             return;
+//         }
+
+//         log_message('info', 'Sql ' . $sql);
+//         log_message('info', 'Tabela Afetada: ' . $tabelaAfetada);
+
+//         // Busca qual Model usa essa tabela
+//         $modelEncontrado = null;
+//         $nomeModel       = null;
+
+//         foreach (get_declared_classes() as $class) {
+//             if (! is_subclass_of($class, \CodeIgniter\Model::class)) {
+//                 continue;
+//             }
+
+//             $reflection = new \ReflectionClass($class);
+
+//             if ($reflection->isAbstract()) {
+//                 continue;
+//             }
+
+//             $instance = new $class();
+
+//             if (property_exists($instance, 'table') && $instance->table === $tabelaAfetada) {
+//                 $modelEncontrado = $class;
+//                 $nomeModel       = $reflection->getShortName();
+//                 break;
+//             }
+//         }
+
+//         log_message('info', 'Model Encontrada: ' . ($nomeModel ?? 'nenhuma'));
+
+//         if (! $nomeModel) {
+//             log_message('warning', "Nenhuma Model encontrada para a tabela [{$tabelaAfetada}].");
+//             return;
+//         }
+
+//         // Consulta cfg_tela para obter o controller associado
+//         // (esta query interna não será reprocessada graças ao flag $isProcessing)
+//         $db     = \Config\Database::connect();
+//         $result = $db->table('cfg_tela')
+//             ->select('tel_controler')
+//             ->where('tel_model', $nomeModel)
+//             ->get()
+//             ->getRow();
+
+//         if (! $result) {
+//             log_message('warning', "Model [{$modelEncontrado}] encontrada, mas nenhum tel_controler correspondente na cfg_tela.");
+//             return;
+//         }
+
+//         $telController = $result->tel_controler;
+
+//         if ($telController !== '') {
+//             envia_msg_ws($telController, $telController, 'AtualizarControler', 0, 1);
+//             log_message('info', "Tabela [{$tabelaAfetada}] atualizada. Model: [{$modelEncontrado}]. Controller: [{$telController}]");
+//         }
+//     } finally {
+//         // Garante que o flag é sempre liberado, mesmo em caso de exceção
+//         $isProcessing = false;
+//     }
+// });
 Events::on('DBQuery', function ($query) {
+
+    // ── Sua lógica original de notificação via WebSocket ──
 
     // Proteção contra re-entrada (loop/recursão)
     static $isProcessing = false;

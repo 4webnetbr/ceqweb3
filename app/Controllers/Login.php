@@ -32,6 +32,7 @@ class Login extends BaseController
         $login->size        = 21;
         // $login->tamanho     = 21;
         $this->usu_login    = $login->crInput();
+        // debug($this->usu_login, true);
 
         $senha              = new MyCampo('cfg_usuario', 'usu_senha');
         $senha->tipo        = 'password';
@@ -63,6 +64,7 @@ class Login extends BaseController
         if (session()->logged_in === true) {
             session()->destroy();
         }
+
         $logo = base_url('assets/images/logo_header.jpg');
 
         $this->defCampos();

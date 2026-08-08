@@ -398,6 +398,8 @@ class MyCampo
             return;
         }
 
+        // debug($tabela . ' - ' . $campo, true);
+
         // Usa o container do CI4 para instanciar o model (respeita cache e DI)
         $dicionario  = model(ConfigDicDadosModel::class);
         $dadosCampo  = $dicionario->getDetalhesCampo($tabela, $campo);

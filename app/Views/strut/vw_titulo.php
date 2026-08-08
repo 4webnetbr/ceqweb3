@@ -39,7 +39,7 @@ if (strlen($ajuda) > 5) {
 $cor = 'bg-danger-subtle';
 $url = base_url();
 if (!str_contains($url, 'dev.')) {
-  $pre = 'bg-blue-dark';
+  $cor = 'bg-blue-dark';
 }
 
 ?>

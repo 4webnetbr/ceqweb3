@@ -4,6 +4,9 @@ namespace App\Entities\Ocorrencia;
 
 use CodeIgniter\Entity\Entity;
 use App\Libraries\MyCampo;
+use App\Models\Config\ConfigStatusModel;
+use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
+use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 use App\Models\Produt\ProdutLoteModel;
 use App\Models\Produt\ProdutProdutoModel;
 
@@ -46,7 +49,6 @@ class EntOcoTratativa extends Entity
     }
 
     public function defCampos(object $dados)
-
     // DADOS GERAIS
     {
         $dados = (array) $dados;
@@ -56,7 +58,6 @@ class EntOcoTratativa extends Entity
         $ocoid = new MyCampo('oco_ocorrencia', 'oco_id');
         $ocoid->valor = $dados['oco_id'] ?? null;
         $ret['oco_id'] = $ocoid->crOculto();
-
 
         // TIPO DE AÇÃO
         $config['Label'] = 'Ação';
@@ -160,4 +161,230 @@ class EntOcoTratativa extends Entity
         return $ret;
     }
 
+    /**
+     * RN03.15 — quando $dados for null, monta a linha de "ação extra"
+     * (avulsa) adicionada manualmente pelo usuário na aba Ações da
+     * tratativa (T12), com campos editáveis (name com sufixo `_extra[]`,
+     * ordenados por $pos) e botão de exclusão. Quando $dados for
+     * informado, monta os campos somente leitura da ação de origem do
+     * subtipo (comportamento original de defCamposAcao()).
+     *
+     * Bloqueante 2 (revisão 01, decisão do byarq — alternativa b): a ação
+     * extra NÃO é restrita a "Justificar". Replica o mesmo padrão condicional
+     * de campos já usado em EntOcoSubtOcorrencia::defCamposAcao() —
+     * tmo_id para tpa_tipo=3 (Gerar Movimentação), mod_id/tel_id para
+     * tpa_tipo=2 (Abrir Tela), stt_id para tpa_tipo=4 (Alterar Status) — para
+     * que a ação extra tenha efeito real independente do tipo escolhido.
+     * O toggle de visibilidade (divmovi/divtela/divstat) é feito pela função
+     * JS já existente `verificaTipoAcao()` (my_fields.js), reaproveitada sem
+     * alterações — o `FunChan` do select de tpa_id já a aciona.
+     */
+    public function defCamposAcao(?object $dados = null, int $pos = 0): array
+    {
+        $ret = [];
+
+        if ($dados === null) {
+            // AÇÃO (editável)
+            $config = [];
+            $config['Label']    = 'Ação';
+            $config['DispForm'] = 'col-6';
+            $config['Ordem']    = $pos;
+            $config['FunChan']  = 'verificaTipoAcao(this)';
+
+            $ret['tpa_id'] = criaSelectRelativo(
+                'oco_tipo_acao',
+                'tpa_id',
+                'tpa_nome',
+                null,
+                1,
+                'oco_ocorrencia',
+                ['tpa_ativo' => 'A'],
+                $config,
+            );
+
+            // TIPO DE MOVIMENTAÇÃO (tpa_tipo=3 — Gerar Movimentação)
+            $config['Label']    = 'Tipo de Movimentação';
+            $config['FunChan']  = '';
+            $config['DispForm'] = 'col-12';
+            $ret['tmo_id'] = criaSelectRelativo(
+                'est_tipo_movimentacao',
+                'tmo_id',
+                'tmo_nome',
+                null,
+                1,
+                'oco_tipo_acao',
+                [],
+                $config,
+            );
+
+            // MÓDULO + TELA (tpa_tipo=2 — Abrir Tela)
+            $config['Label']    = 'Módulo';
+            $config['DispForm'] = 'col-6';
+            $ret['mod_id'] = criaSelectRelativo(
+                'cfg_modulo',
+                'mod_id',
+                'mod_nome',
+                null,
+                1,
+                'oco_tipo_acao',
+                [],
+                $config,
+            );
+
+            $config['Label']    = 'Tela';
+            $config['Pai']      = 'mod_id';
+            $config['Urlbusca'] = base_url('buscas/busca_tela_modulo');
+            $ret['tel_id'] = criaSelectRelativo(
+                'cfg_tela',
+                'tel_id',
+                'tel_nome',
+                null,
+                2,
+                'oco_tipo_acao',
+                [],
+                $config,
+            );
+
+            // STATUS (tpa_tipo=4 — Alterar Status)
+            $config = [];
+            $config['Label']    = 'Status';
+            $config['DispForm'] = 'col-12';
+            $ret['stt_id'] = criaSelectRelativo(
+                'cfg_status',
+                'stt_id',
+                'stt_nome',
+                null,
+                1,
+                'oco_tipo_acao',
+                [],
+                $config,
+            );
+
+            // EXCLUIR (somente ações adicionadas manualmente podem ser excluídas)
+            $del            = new MyCampo();
+            $del->dispForm  = '2col';
+            $del->nome      = "bt_del[$pos]";
+            $del->id        = "bt_del[$pos]";
+            $del->i_cone    = "<i class='fas fa-trash'></i>";
+            $del->classep   = "btn-outline-danger btn-sm bt-exclui";
+            $del->funcChan  = "exclui_campo('acoes',this)";
+            $del->place     = "Excluir Campo";
+            $ret['bt_del']  = $del->crBotao();
+
+            return $ret;
+        }
+
+        // AÇÃO DE ORIGEM (somente leitura)
+        $dados->tpa_id = $dados->tpa_id ?? null;
+        $leitura = $dados->somente_leitura ?? false;
+
+        // ENVIA O TPA_ID OCULTO
+        $tpaHidden = new MyCampo('oco_ocorrencia', 'tpa_id[]');
+        $tpaHidden->valor = $dados->tpa_id ?? null;
+
+        $ret['tpa_id'] = $tpaHidden->crOculto();
+
+        // RN03.18.2 — marca oculta com o tipo da ação (não é enviada ao
+        // servidor como dado de negócio; usada apenas pelo front para saber
+        // se há ação "Gerar Movimentação" (tpa_tipo=3) marcada, e então pedir
+        // confirmação (MSG 6) antes de submeter a tratativa.
+        $tpaTipoHidden = new MyCampo();
+        $tpaTipoHidden->nome  = 'tpa_tipo_marca[]';
+        $tpaTipoHidden->valor = $dados->tpa_tipo ?? null;
+        $ret['tpa_tipo_marca'] = $tpaTipoHidden->crOculto();
+
+        // TIPO DE AÇÃO
+        $acao = new MyCampo('oco_tipo_acao', 'tpa_nome');
+        $acao->valor    = $dados->tpa_nome ?? '';
+        $acao->leitura  = true;
+        $acao->size     = 50;
+        $acao->dispForm = 'col-6';
+
+        $ret['tpa_nome'] = $acao->crInput();
+
+        // JUSTIFICAR
+        if ((int)$dados->tpa_tipo === 1) {
+            $justi = new MyCampo('oco_ocorrencia', 'oco_justi');
+            $justi->valor       = $dados->oco_justi ?? '';
+            $justi->obrigatorio = true;
+            $justi->dispForm    = 'col-6';
+            $justi->linhas      = 3;
+            $justi->colunas     = 56;
+            $justi->leitura     = $leitura;
+            $justi->obrigatorio = !$leitura;
+
+            $ret['oco_justi'] = $justi->crInput();
+        }
+
+        // MOVIMENTAÇÃO
+        if ((int)$dados->tpa_id === 3) {
+
+            $tmo_id = $dados->tmo_id ?? null;
+
+            $tmoModel = new EstoquTipoMovimentacaoModel();
+            $opc_tmo = [];
+
+            foreach ($tmoModel->asObject()->findAll() as $tmo) {
+                $opc_tmo[$tmo->tmo_id] = $tmo->tmo_nome;
+            }
+
+            $movNome = new MyCampo('est_tipo_movimentacao', 'tmo_nome');
+            $movNome->valor    = $opc_tmo[$tmo_id] ?? '';
+            $movNome->label    = 'Movimentação';
+            $movNome->leitura  = true;
+            $movNome->dispForm = 'col-6';
+            $movNome->size     = 50;
+
+            $ret['tmo_id'] = $movNome->crInput();
+        }
+
+        // STATUS
+        if ((int) $dados->stt_id > 0) {
+
+            $statModel = new ConfigStatusModel();
+
+            // Busca status completo no cfg_status
+            $stt = $statModel->getStatus($dados->stt_id);
+
+            $stat = new MyCampo();
+            $stat->id       = $stat->nome = 'stt_nome';
+            $stat->label    = 'Status';
+            $stat->leitura  = true;
+            $stat->dispForm = 'col-4';
+            $stat->size     = 50;
+            // debug($stt);
+            $stat->valor = $stt
+                // ? fmtEtiquetaClasse($stt->stt_cor, $stt->stt_nome)
+                ? fmtEtiquetaCor($stt->cor_valorrgb, $stt->stt_nome)
+                : '';
+            $ret['stt_nome'] = $stat->crShow();
+        }
+
+        // TELA
+        if ((int)$dados->tpa_id === 2) {
+
+            $mod = new OcorreSubtOcorrenciaModel();
+            $opc = [];
+
+            foreach ($mod->getTelas() as $tel) {
+                $opc[$tel->tel_id] = $tel->tel_nome;
+            }
+
+            $tel_id = $mod->getTelaByTpoTpa(
+                $dados->tpo_id,
+                $dados->tpa_id
+            );
+
+            $tela = new MyCampo('', 'tel_id');
+            $tela->valor    = $opc[$tel_id] ?? '';
+            $tela->label    = 'Tela';
+            $tela->leitura  = true;
+            $tela->dispForm = 'col-6';
+            $tela->size     = 60;
+
+            $ret['tel_id'] = $tela->crInput();
+        }
+
+        return $ret;
+    }
 }
