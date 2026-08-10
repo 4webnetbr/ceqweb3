@@ -16,6 +16,15 @@
                 aria-controls="collapseacao<?= $oco_id ?>">
                 <div class='col-12 text-center'>Ações</div>
             </button>
+            <?php if (!empty($permiteAcaoExtra)): ?>
+                <button type="button"
+                    class="btn btn-outline-success btn-sm bt-repete float-end m-1"
+                    data-index="<?= count($acoes) ?>"
+                    title="Adicionar Ação"
+                    onclick="adicionaAcaoExtra('<?= base_url('OcoTrataOcorrencia/addCampoAcao/' . $oco_id) ?>', this)">
+                    <i class="fas fa-plus"></i> Adicionar Ação
+                </button>
+            <?php endif; ?>
         </h2>
 
         <div id="collapseacao<?= $oco_id ?>"
@@ -24,21 +33,6 @@
             data-bs-parent="#accAcoes">
 
             <div class="accordion-body p-0">
-                <?php if (!empty($permiteAcaoExtra)): ?>
-                    <div class="row px-2 pb-2">
-                        <div class="col-12 text-end">
-                            <button type="button"
-                                class="btn btn-outline-success btn-sm bt-repete"
-                                data-index="<?= count($acoes) ?>"
-                                title="Adicionar Ação"
-                                onclick="adicionaAcaoExtra('<?= base_url('OcoTrataOcorrencia/addCampoAcao/' . $oco_id) ?>', this)">
-                                <i class="fas fa-plus"></i> Adicionar Ação
-                            </button>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
-
                 <table id='tbacoes' class="table table-bordered table-sm align-middle">
                     <tbody>
                         <?php foreach ($acoes as $acao): ?>

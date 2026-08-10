@@ -12,6 +12,7 @@ use App\Models\Ocorre\OcorreOcorrenciaModel;
 use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
 use App\Models\Ocorre\OcorreTipoAcaoModel;
 use App\Models\Fornec\FornecNotifDesvioModel;
+use App\Models\Produt\ProdutProdutoModel;
 
 class OcoTrataOcorrencia extends BaseController
 {
@@ -139,8 +140,9 @@ class OcoTrataOcorrencia extends BaseController
      * RN03.15 — retorna o HTML de uma nova linha de "ação extra" (avulsa),
      * para ser adicionada dinamicamente na aba Ações de finalizar().
      * Bloqueante 2 (revisão 01): a linha traz também os campos condicionais
-     * (tmo_id/mod_id+tel_id/stt_id) escondidos por padrão — o mesmo padrão
-     * já usado em T9, alternado via `verificaTipoAcao()` (my_fields.js).
+     * (oco_justi/tmo_id/mod_id+tel_id/stt_id) escondidos por padrão — o
+     * mesmo padrão já usado em T9, alternado via `verificaTipoAcao()`
+     * (my_fields.js).
      *
      * @param mixed $oco_id
      * @param mixed $ind
@@ -154,12 +156,21 @@ class OcoTrataOcorrencia extends BaseController
         $fields = $entity->defCamposAcao(null, (int) $ind);
         // $html = debug($fields);
 
-        $html = "<tr><td><div class='row'>";
+        $html = "<tr><td><div class='row col-12'>";
+        $html .= "<div class='col-11'>";
+        $html .= "<div class='col-4 float-start'>";
         $html .= $fields['tpa_id'];
-        $html .= "<div id='divmovi[$ind]' class='d-none row col-6'>" . $fields['tmo_id'] . "</div>";
-        $html .= "<div id='divtela[$ind]' class='d-none row col-6'>" . $fields['mod_id'] . $fields['tel_id'] . "</div>";
-        $html .= "<div id='divstat[$ind]' class='d-none row col-6'>" . $fields['stt_id'] . "</div>";
+        $html .= "</div>";
+        $html .= "<div class='col-8 float-start'>";
+        $html .= "<div id='divjust[$ind]' class='d-none row col-12'>" . $fields['oco_justi'] . "</div>";
+        $html .= "<div id='divmovi[$ind]' class='d-none row col-12'>" . $fields['tmo_id'] . "</div>";
+        $html .= "<div id='divtela[$ind]' class='d-none row col-12'>" . $fields['mod_id'] . $fields['tel_id'] . "</div>";
+        $html .= "<div id='divstat[$ind]' class='d-none row col-12'>" . $fields['stt_id'] . "</div>";
+        $html .= "</div>";
+        $html .= "</div>";
+        $html .= "<div class='col-1'>";
         $html .= $fields['bt_del'];
+        $html .= "</div>";
         $html .= '</div></td></tr>';
 
         return $this->response->setJSON(['html' => $html]);
@@ -197,34 +208,34 @@ class OcoTrataOcorrencia extends BaseController
         // BLOCO TELAS APLICAVEIS
         $entity   = new EntOcoSubtOcorrencia((array) $dados);
         $sutModel = new OcorreSubtOcorrenciaModel();
-        $telas    = $sutModel->getTOTelasAplicaveis($dados->sut_id);
+        // $telas    = $sutModel->getTOTelasAplicaveis($dados->sut_id);
         // debug($telas, true);
 
-        if (! empty($telas)) {
+        // if (! empty($telas)) {
 
-            $telasResultado = [];
-            $total          = count($telas);
+        //     $telasResultado = [];
+        //     $total          = count($telas);
 
-            for ($c = 0; $c < $total; $c++) {
-                // debug($telas[$c]);
-                $fields = $entity->defCamposTelasAplicaveis(
-                    $telas[$c],
-                    $c,
-                    true
-                );
-                $campos[1][$c][] = $fields['mod_id'];
-                $campos[1][$c][] = $fields['tel_id'];
-                $campos[1][$c][] = $fields['tof_campo'];
-            }
-            $telasResultado = $campos[1];
-            $campos[0][]    = view(
-                'partials/pw_telas_aplicaveis_ocorrencia',
-                [
-                    'telas'  => $telasResultado,
-                    'oco_id' => $id,
-                ]
-            );
-        }
+        //     for ($c = 0; $c < $total; $c++) {
+        //         // debug($telas[$c]);
+        //         $fields = $entity->defCamposTelasAplicaveis(
+        //             $telas[$c],
+        //             $c,
+        //             true
+        //         );
+        //         $campos[1][$c][] = $fields['mod_id'];
+        //         $campos[1][$c][] = $fields['tel_id'];
+        //         $campos[1][$c][] = $fields['tof_campo'];
+        //     }
+        //     $telasResultado = $campos[1];
+        //     $campos[0][]    = view(
+        //         'partials/pw_telas_aplicaveis_ocorrencia',
+        //         [
+        //             'telas'  => $telasResultado,
+        //             'oco_id' => $id,
+        //         ]
+        //     );
+        // }
         // debug($campos[0], true);
         // BLOCO DAS AÇÕES
         $entity = new EntOcoTratativa($dados, true);
@@ -330,12 +341,13 @@ class OcoTrataOcorrencia extends BaseController
             }
             $tpaIdsOrigem[$tpa_id] = true;
             $acoesExecutar[] = (object) [
-                'tpa_id'   => $tpa_id,
-                'tpa_tipo' => $catalogo[$tpa_id]->tpa_tipo,
-                'origem'   => true,
-                'tmo_id'   => null,
-                'stt_id'   => null,
-                'tel_id'   => null,
+                'tpa_id'    => $tpa_id,
+                'tpa_tipo'  => $catalogo[$tpa_id]->tpa_tipo,
+                'origem'    => true,
+                'tmo_id'    => null,
+                'stt_id'    => null,
+                'tel_id'    => null,
+                'oco_justi' => $postado['oco_justi'] ?? null,
             ];
         }
 
@@ -352,12 +364,13 @@ class OcoTrataOcorrencia extends BaseController
             }
             $tpaIdsUsados[$tpa_id] = true;
             $acoesExecutar[] = (object) [
-                'tpa_id'   => $tpa_id,
-                'tpa_tipo' => $catalogo[$tpa_id]->tpa_tipo,
-                'origem'   => false,
-                'tmo_id'   => $postado['tmo_id_extra'][$i] ?? null,
-                'stt_id'   => $postado['stt_id_extra'][$i] ?? null,
-                'tel_id'   => $postado['tel_id_extra'][$i] ?? null,
+                'tpa_id'    => $tpa_id,
+                'tpa_tipo'  => $catalogo[$tpa_id]->tpa_tipo,
+                'origem'    => false,
+                'tmo_id'    => $postado['tmo_id_extra'][$i] ?? null,
+                'stt_id'    => $postado['stt_id_extra'][$i] ?? null,
+                'tel_id'    => $postado['tel_id_extra'][$i] ?? null,
+                'oco_justi' => $postado['oco_justi_extra'][$i] ?? null,
             ];
         }
 
@@ -369,7 +382,10 @@ class OcoTrataOcorrencia extends BaseController
         foreach ($acoesExecutar as $valor) {
             switch ((int) $valor->tpa_tipo) {
                 case 1:
-                    // lógica para Justificar
+                    // RN03.19 — "Justificar" apenas resolve o texto (ver
+                    // resolveJustificativa()); a gravação em
+                    // oco_ocorrencia.oco_justi ocorre junto com o update
+                    // final da ocorrência, igual ao stt_id em case 4.
                     break;
                 case 2:
                     // lógica para Abrir Tela
@@ -379,8 +395,10 @@ class OcoTrataOcorrencia extends BaseController
                     $retAcao = $this->gerarMovimentacao($postado, $valor);
                     break;
                 case 4:
-                    // RN03.18 — Alterar Status apenas resolve o stt_id alvo
-                    // (ver resolveStatusFinal()); NÃO gera movimentação.
+                    // RN03.18 — "Alterar Status" altera o status do PRODUTO
+                    // (pro_sap_produto.stt_id, pelo pro_id da ocorrência), não
+                    // o status da ocorrência. O stt_id alvo é resolvido em
+                    // resolveStatusProduto() e gravado após o loop.
                     $retAcao = ['erro' => false];
                     break;
                 case 5:
@@ -400,19 +418,35 @@ class OcoTrataOcorrencia extends BaseController
             $db = \Config\Database::connect();
             $db->transBegin();
             try {
-                // RN03.18.1 — status final: se houver ação "Alterar Status"
-                // (tpa_tipo=4) entre as ações executadas, usa o stt_id
-                // configurado para ela (no subtipo, se de origem; na própria
-                // linha, se extra); senão, Finalizada (30).
-                $sttIdFinal = $automatica ? 29 : $this->resolveStatusFinal($postado, $acoesExecutar);
+                // OCORRÊNCIA = SEMPRE FINALIZADA — o stt_id da ocorrência não
+                // depende mais da ação "Alterar Status" (RN03.18, revisão do
+                // Douglas: essa ação altera o status do PRODUTO, não o da
+                // ocorrência).
+                $sttIdFinal = $automatica ? 29 : 30;
 
                 $sql_save = [
                     'stt_id'       => $sttIdFinal,
                     'usu_fina'     => session()->get('usu_id'),
                     'oco_data_fim' => date('Y-m-d H:i:s'),
                 ];
-                // OCORRÊNCIA = SEMPRE FINALIZADA
+
+                // RN03.19 — se houver ação "Justificar" (tpa_tipo=1) entre
+                // as ações executadas, grava o texto em oco_ocorrencia.oco_justi.
+                $justificativa = $this->resolveJustificativa($acoesExecutar);
+                if ($justificativa !== null) {
+                    $sql_save['oco_justi'] = $justificativa;
+                }
+
                 $this->ocorrencia->update($postado['oco_id'], $sql_save);
+
+                // RN03.18 — se houver ação "Alterar Status" (tpa_tipo=4)
+                // entre as ações executadas, usa o stt_id configurado para
+                // ela (no subtipo, se de origem; na própria linha, se extra)
+                // e grava em pro_sap_produto.stt_id (produto da ocorrência).
+                $sttIdProduto = $this->resolveStatusProduto($postado, $acoesExecutar);
+                if ($sttIdProduto !== null) {
+                    (new ProdutProdutoModel())->update($postado['pro_id'], ['stt_id' => $sttIdProduto]);
+                }
 
                 $db->transCommit();
                 $retTrat['erro'] = false;
@@ -431,14 +465,15 @@ class OcoTrataOcorrencia extends BaseController
     }
 
     /**
-     * RN03.18.1 — Resolve o stt_id final da ocorrência ao concluir a tratativa:
-     * busca, entre as ações executadas, alguma do tipo "Alterar Status"
-     * (tpa_tipo=4); se for uma ação de origem, usa o stt_id configurado para
-     * ela em oco_subt_ocorrencia_acao (getAcaoPorId()); se for uma ação extra
-     * (Bloqueante 2), usa o stt_id informado na própria linha do POST; se
-     * nenhuma resolver, usa 30 (Finalizada).
+     * RN03.18 — Resolve o stt_id do PRODUTO (pro_sap_produto.stt_id) ao
+     * concluir a tratativa: busca, entre as ações executadas, alguma do
+     * tipo "Alterar Status" (tpa_tipo=4); se for uma ação de origem, usa o
+     * stt_id configurado para ela em oco_subt_ocorrencia_acao
+     * (getAcaoPorId()); se for uma ação extra (Bloqueante 2), usa o stt_id
+     * informado na própria linha do POST. Retorna null se nenhuma ação
+     * "Alterar Status" foi executada (produto não é alterado).
      */
-    private function resolveStatusFinal(array $postado, array $acoesExecutar): int
+    private function resolveStatusProduto(array $postado, array $acoesExecutar): ?int
     {
         foreach ($acoesExecutar as $acao) {
             if ((int) $acao->tpa_tipo !== 4) {
@@ -455,7 +490,31 @@ class OcoTrataOcorrencia extends BaseController
             }
         }
 
-        return 30;
+        return null;
+    }
+
+    /**
+     * RN03.19 — Resolve o texto de justificativa a gravar em
+     * oco_ocorrencia.oco_justi: busca, entre as ações executadas, alguma
+     * do tipo "Justificar" (tpa_tipo=1); se for uma ação de origem, usa o
+     * campo `oco_justi` digitado no formulário de finalizar; se for uma
+     * ação extra (Bloqueante 2), usa o `oco_justi_extra[]` da própria
+     * linha do POST. Retorna null se nenhuma ação "Justificar" foi
+     * executada ou o texto veio vazio.
+     */
+    private function resolveJustificativa(array $acoesExecutar): ?string
+    {
+        foreach ($acoesExecutar as $acao) {
+            if ((int) $acao->tpa_tipo !== 1) {
+                continue;
+            }
+
+            if (!empty($acao->oco_justi)) {
+                return $acao->oco_justi;
+            }
+        }
+
+        return null;
     }
 
     /**

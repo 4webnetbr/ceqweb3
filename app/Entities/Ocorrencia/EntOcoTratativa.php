@@ -187,7 +187,7 @@ class EntOcoTratativa extends Entity
             // AÇÃO (editável)
             $config = [];
             $config['Label']    = 'Ação';
-            $config['DispForm'] = 'col-6';
+            $config['DispForm'] = 'col-12';
             $config['Ordem']    = $pos;
             $config['FunChan']  = 'verificaTipoAcao(this)';
 
@@ -216,6 +216,15 @@ class EntOcoTratativa extends Entity
                 [],
                 $config,
             );
+
+            // JUSTIFICATIVA (tpa_tipo=1 — Justificar)
+            $justi = new MyCampo('oco_ocorrencia', 'oco_justi');
+            $justi->label    = 'Justificativa';
+            $justi->dispForm = 'col-12';
+            $justi->linhas   = 3;
+            $justi->colunas  = 56;
+            $justi->setOrdem($pos);
+            $ret['oco_justi'] = $justi->crTexto();
 
             // MÓDULO + TELA (tpa_tipo=2 — Abrir Tela)
             $config['Label']    = 'Módulo';

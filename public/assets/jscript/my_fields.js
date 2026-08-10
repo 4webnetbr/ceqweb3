@@ -2425,6 +2425,10 @@ function verificaTipoAcao(obj) {
   if (retornoAjax) {
     acao = retornoAjax.acao;
     let ind = parseInt(obj.getAttribute("data-index"));
+    let dvJust = escIdColchetes("#divjust\\[" + ind + "\\]");
+    jQuery(dvJust).not(".d-none").addClass("d-none");
+    mudaObrigatorioElemDiv(dvJust, false);
+
     let dvTela = escIdColchetes("#divtela\\[" + ind + "\\]");
     jQuery(dvTela).not(".d-none").addClass("d-none");
     mudaObrigatorioElemDiv(dvTela, false);
@@ -2437,7 +2441,11 @@ function verificaTipoAcao(obj) {
     jQuery(dvStat).not(".d-none").addClass("d-none");
     mudaObrigatorioElemDiv(dvStat, false);
 
-    if (acao == 2) {
+    if (acao == 1) {
+      // Justificar
+      jQuery(dvJust).removeClass("d-none");
+      mudaObrigatorioElemDiv(dvJust, true);
+    } else if (acao == 2) {
       // LISTAR TELAS
       jQuery(dvTela).removeClass("d-none");
       mudaObrigatorioElemDiv(dvTela, true);
