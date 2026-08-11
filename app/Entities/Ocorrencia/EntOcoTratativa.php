@@ -5,7 +5,6 @@ namespace App\Entities\Ocorrencia;
 use CodeIgniter\Entity\Entity;
 use App\Libraries\MyCampo;
 use App\Models\Config\ConfigStatusModel;
-use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
 use App\Models\Estoqu\EstoquTipoMovimentacaoModel;
 use App\Models\Produt\ProdutLoteModel;
 use App\Models\Produt\ProdutProdutoModel;
@@ -162,29 +161,43 @@ class EntOcoTratativa extends Entity
     }
 
     /**
-     * RN03.15 — quando $dados for null, monta a linha de "ação extra"
-     * (avulsa) adicionada manualmente pelo usuário na aba Ações da
-     * tratativa (T12), com campos editáveis (name com sufixo `_extra[]`,
-     * ordenados por $pos) e botão de exclusão. Quando $dados for
-     * informado, monta os campos somente leitura da ação de origem do
-     * subtipo (comportamento original de defCamposAcao()).
+     * Monta os campos de UMA linha da aba Ações da tratativa (T12).
      *
-     * Bloqueante 2 (revisão 01, decisão do byarq — alternativa b): a ação
-     * extra NÃO é restrita a "Justificar". Replica o mesmo padrão condicional
-     * de campos já usado em EntOcoSubtOcorrencia::defCamposAcao() —
-     * tmo_id para tpa_tipo=3 (Gerar Movimentação), mod_id/tel_id para
-     * tpa_tipo=2 (Abrir Tela), stt_id para tpa_tipo=4 (Alterar Status) — para
-     * que a ação extra tenha efeito real independente do tipo escolhido.
-     * O toggle de visibilidade (divmovi/divtela/divstat) é feito pela função
-     * JS já existente `verificaTipoAcao()` (my_fields.js), reaproveitada sem
-     * alterações — o `FunChan` do select de tpa_id já a aciona.
+     * - `$dados === null`: linha ad-hoc nova (botão "+", RN03.15) — select
+     *   livre de `tpa_id` (`FunChan='verificaTipoAcao(this)'`), todos os
+     *   campos condicionais disponíveis (JS decide visibilidade via
+     *   `verificaTipoAcao()`), sem `oac_id` (fica implícito que é um
+     *   INSERT em `oco_ocorrencia_acao`), e checkbox "Executar agora"
+     *   marcado por padrão.
+     * - `$dados !== null` e `oac_executada === 'S'`: linha já executada
+     *   (automática ou manual, de qualquer rodada) — somente leitura, com
+     *   indicação de quando/como foi executada.
+     * - `$dados !== null` e pendente: linha vinda do seed (criação da
+     *   ocorrência) ou de uma rodada anterior que não a marcou — campo
+     *   oculto `oac_id[$pos]` (identifica o UPDATE), ação já definida pelo
+     *   catálogo (exibida como rótulo, não é mais um select livre),
+     *   checkbox "Executar agora" marcado por padrão, e os campos
+     *   condicionais editáveis conforme `tpa_tipo` (oco_justi/tmo_id/
+     *   stt_id/tel_id).
+     *
+     * Todos os campos usam `MyCampo::setOrdem($pos)` (gera `nome[$pos]`),
+     * garantindo indexação posicional consistente entre as linhas — sem
+     * distinção "origem"/"extra".
+     *
+     * @param bool $forcaLeitura Quando `true`, força o branch somente-leitura
+     *   INDEPENDENTE de `oac_executada` — usado por telas de CONSULTA
+     *   (ex.: `OcoOcorrencia::show()`), onde nenhuma linha pode ser editável
+     *   mesmo que a ação ainda esteja pendente. Nesse caso (pendente +
+     *   forçado) o texto exibido é "Pendente" em vez de "Executada em...",
+     *   sem checkbox nem campos condicionais editáveis. `finalizar()` e
+     *   `store()` continuam chamando sem esse argumento (default `false`).
      */
-    public function defCamposAcao(?object $dados = null, int $pos = 0): array
+    public function defCamposAcao(?object $dados = null, int $pos = 0, bool $forcaLeitura = false): array
     {
         $ret = [];
 
         if ($dados === null) {
-            // AÇÃO (editável)
+            // AÇÃO (editável — linha ad-hoc nova, botão "+")
             $config = [];
             $config['Label']    = 'Ação';
             $config['DispForm'] = 'col-12';
@@ -228,6 +241,7 @@ class EntOcoTratativa extends Entity
 
             // MÓDULO + TELA (tpa_tipo=2 — Abrir Tela)
             $config['Label']    = 'Módulo';
+            $config['Largura'] = 30;
             $config['DispForm'] = 'col-6';
             $ret['mod_id'] = criaSelectRelativo(
                 'cfg_modulo',
@@ -241,7 +255,7 @@ class EntOcoTratativa extends Entity
             );
 
             $config['Label']    = 'Tela';
-            $config['Pai']      = 'mod_id';
+            $config['Pai']      = "mod_id[$pos]";
             $config['Urlbusca'] = base_url('buscas/busca_tela_modulo');
             $ret['tel_id'] = criaSelectRelativo(
                 'cfg_tela',
@@ -258,6 +272,7 @@ class EntOcoTratativa extends Entity
             $config = [];
             $config['Label']    = 'Status';
             $config['DispForm'] = 'col-12';
+            $config['Ordem']    = $pos;
             $ret['stt_id'] = criaSelectRelativo(
                 'cfg_status',
                 'stt_id',
@@ -268,6 +283,10 @@ class EntOcoTratativa extends Entity
                 [],
                 $config,
             );
+
+            // EXECUTAR AGORA — marcado por padrão (mesmo tratamento das
+            // demais linhas, não é mais uma linha "extra" à parte)
+            $ret['executar'] = $this->campoExecutar($pos);
 
             // EXCLUIR (somente ações adicionadas manualmente podem ser excluídas)
             $del            = new MyCampo();
@@ -283,117 +302,240 @@ class EntOcoTratativa extends Entity
             return $ret;
         }
 
-        // AÇÃO DE ORIGEM (somente leitura)
-        $dados->tpa_id = $dados->tpa_id ?? null;
-        $leitura = $dados->somente_leitura ?? false;
+        $dados->tpa_id      = $dados->tpa_id ?? null;
+        $dados->tpa_tipo    = $dados->tpa_tipo ?? null;
+        $executada          = ($dados->oac_executada ?? 'N') === 'S';
+        // "somente leitura" cobre tanto a linha já executada quanto uma
+        // linha pendente exibida numa tela de CONSULTA ($forcaLeitura) — em
+        // ambos os casos não há checkbox nem campo condicional editável.
+        $readonly           = $executada || $forcaLeitura;
 
-        // ENVIA O TPA_ID OCULTO
-        $tpaHidden = new MyCampo('oco_ocorrencia', 'tpa_id[]');
-        $tpaHidden->valor = $dados->tpa_id ?? null;
-
-        $ret['tpa_id'] = $tpaHidden->crOculto();
-
-        // RN03.18.2 — marca oculta com o tipo da ação (não é enviada ao
-        // servidor como dado de negócio; usada apenas pelo front para saber
-        // se há ação "Gerar Movimentação" (tpa_tipo=3) marcada, e então pedir
-        // confirmação (MSG 6) antes de submeter a tratativa.
-        $tpaTipoHidden = new MyCampo();
-        $tpaTipoHidden->nome  = 'tpa_tipo_marca[]';
-        $tpaTipoHidden->valor = $dados->tpa_tipo ?? null;
-        $ret['tpa_tipo_marca'] = $tpaTipoHidden->crOculto();
-
-        // TIPO DE AÇÃO
+        // NOME DA AÇÃO (somente leitura — a ação já vem definida pelo
+        // catálogo/seed, não é mais um select livre nesta linha)
         $acao = new MyCampo('oco_tipo_acao', 'tpa_nome');
         $acao->valor    = $dados->tpa_nome ?? '';
         $acao->leitura  = true;
-        $acao->size     = 50;
-        $acao->dispForm = 'col-6';
-
+        $acao->size     = 40;
+        $acao->dispForm = 'col-4';
         $ret['tpa_nome'] = $acao->crInput();
 
-        // JUSTIFICAR
-        if ((int)$dados->tpa_tipo === 1) {
+        if ($executada) {
+            // LINHA JÁ EXECUTADA — somente leitura, sem reenvio ao servidor
+            $ret['tpa_id'] = '';
+
+            $quando = !empty($dados->oac_executado_em)
+                ? toDataBr(new \DateTime($dados->oac_executado_em))
+                : '';
+            $status = 'Executada em ' . $quando . (!empty($dados->oac_automatica) ? ' (Automática)' : ' (Manual)');
+
+            $info            = new MyCampo();
+            $info->id        = $info->nome = 'oac_status_exec';
+            $info->label     = 'Status';
+            $info->leitura   = true;
+            $info->dispForm  = 'col-6';
+            $info->size      = 50;
+            $info->valor     = $status;
+            $ret['oac_status_exec'] = $info->crShow();
+        } elseif ($forcaLeitura) {
+            // LINHA PENDENTE, EXIBIDA EM TELA DE CONSULTA — somente
+            // informativa: sem reenvio ao servidor, sem checkbox.
+            $ret['tpa_id'] = '';
+
+            $info            = new MyCampo();
+            $info->id        = $info->nome = 'oac_status_exec';
+            $info->label     = 'Status';
+            $info->leitura   = true;
+            $info->dispForm  = 'col-6';
+            $info->size      = 50;
+            $info->valor     = 'Pendente';
+            $ret['oac_status_exec'] = $info->crShow();
+        } else {
+            // LINHA PENDENTE (do seed ou de rodada anterior) — oac_id
+            // oculto identifica o UPDATE; checkbox "Executar agora" marcado
+            // por padrão.
+            $oacHidden        = new MyCampo();
+            $oacHidden->nome  = 'oac_id';
+            $oacHidden->valor = $dados->oac_id ?? null;
+            $oacHidden->setOrdem($pos);
+            $ret['oac_id'] = $oacHidden->crOculto();
+
+            $tpaHidden        = new MyCampo();
+            $tpaHidden->nome  = 'tpa_id';
+            $tpaHidden->valor = $dados->tpa_id;
+            $tpaHidden->setOrdem($pos);
+            $ret['tpa_id'] = $tpaHidden->crOculto();
+
+            // RN03.18.2 — marca oculta com o tipo da ação (não é dado de
+            // negócio; usada apenas pelo front para saber se há ação
+            // "Gerar Movimentação" (tpa_tipo=3) marcada, e então pedir
+            // confirmação (MSG 6) antes de submeter a tratativa.
+            $tpaTipoHidden        = new MyCampo();
+            $tpaTipoHidden->nome  = 'tpa_tipo_marca[]';
+            $tpaTipoHidden->valor = $dados->tpa_tipo;
+            $ret['tpa_tipo_marca'] = $tpaTipoHidden->crOculto();
+        }
+
+        // JUSTIFICAR (tpa_tipo=1)
+        if ((int) $dados->tpa_tipo === 1) {
             $justi = new MyCampo('oco_ocorrencia', 'oco_justi');
             $justi->valor       = $dados->oco_justi ?? '';
-            $justi->obrigatorio = true;
             $justi->dispForm    = 'col-6';
             $justi->linhas      = 3;
             $justi->colunas     = 56;
-            $justi->leitura     = $leitura;
-            $justi->obrigatorio = !$leitura;
+            $justi->leitura     = $readonly;
+            $justi->obrigatorio = !$readonly;
+            $justi->setOrdem($pos);
 
             $ret['oco_justi'] = $justi->crInput();
         }
 
-        // MOVIMENTAÇÃO
-        if ((int)$dados->tpa_id === 3) {
+        // MOVIMENTAÇÃO (tpa_tipo=3 — Gerar Movimentação)
+        if ((int) $dados->tpa_tipo === 3) {
+            if ($readonly) {
+                $tmoModel = new EstoquTipoMovimentacaoModel();
+                $opc_tmo  = [];
+                foreach ($tmoModel->asObject()->findAll() as $tmo) {
+                    $opc_tmo[$tmo->tmo_id] = $tmo->tmo_nome;
+                }
 
-            $tmo_id = $dados->tmo_id ?? null;
+                $movNome = new MyCampo('est_tipo_movimentacao', 'tmo_nome');
+                $movNome->valor    = $opc_tmo[$dados->tmo_id ?? null] ?? '';
+                $movNome->label    = 'Movimentação';
+                $movNome->leitura  = true;
+                $movNome->dispForm = 'col-6';
+                $movNome->size     = 50;
 
-            $tmoModel = new EstoquTipoMovimentacaoModel();
-            $opc_tmo = [];
+                $ret['tmo_id'] = $movNome->crInput();
+            } else {
+                $config = [];
+                $config['Label']    = 'Tipo de Movimentação';
+                $config['DispForm'] = 'col-6';
+                $config['Ordem']    = $pos;
+                // criaSelectRelativo() força leitura automática quando um
+                // $valor pré-selecionado é passado (ver funcoes_helper.php)
+                // — precisa ser sobrescrito para o campo continuar editável.
+                $config['Leitura']  = false;
 
-            foreach ($tmoModel->asObject()->findAll() as $tmo) {
-                $opc_tmo[$tmo->tmo_id] = $tmo->tmo_nome;
+                $ret['tmo_id'] = criaSelectRelativo(
+                    'est_tipo_movimentacao',
+                    'tmo_id',
+                    'tmo_nome',
+                    $dados->tmo_id ?? null,
+                    1,
+                    'oco_tipo_acao',
+                    [],
+                    $config,
+                );
             }
-
-            $movNome = new MyCampo('est_tipo_movimentacao', 'tmo_nome');
-            $movNome->valor    = $opc_tmo[$tmo_id] ?? '';
-            $movNome->label    = 'Movimentação';
-            $movNome->leitura  = true;
-            $movNome->dispForm = 'col-6';
-            $movNome->size     = 50;
-
-            $ret['tmo_id'] = $movNome->crInput();
         }
 
-        // STATUS
-        if ((int) $dados->stt_id > 0) {
+        // ABRIR TELA (tpa_tipo=2)
+        if ((int) $dados->tpa_tipo === 2) {
+            if ($readonly) {
+                // Correção de bug pré-existente: o código original chamava
+                // getTelas() em OcorreSubtOcorrenciaModel, que não tem esse
+                // método (só existe em ConfigTelaModel) — resultava em erro
+                // fatal sempre que uma ação "Abrir Tela" já executada era
+                // renderizada.
+                $mod = new \App\Models\Config\ConfigTelaModel();
+                $opc = [];
+                foreach ($mod->getTelas() as $tel) {
+                    $opc[$tel->tel_id] = $tel->tel_nome;
+                }
 
-            $statModel = new ConfigStatusModel();
+                $tela = new MyCampo('', 'tel_id');
+                $tela->valor    = $opc[$dados->tel_id ?? null] ?? '';
+                $tela->label    = 'Tela';
+                $tela->leitura  = true;
+                $tela->dispForm = 'col-6';
+                $tela->size     = 60;
 
-            // Busca status completo no cfg_status
-            $stt = $statModel->getStatus($dados->stt_id);
+                $ret['tel_id'] = $tela->crInput();
+            } else {
+                $config = [];
+                $config['Label']    = 'Tela';
+                $config['DispForm'] = 'col-6';
+                $config['Ordem']    = $pos;
+                $config['Leitura']  = false;
 
-            $stat = new MyCampo();
-            $stat->id       = $stat->nome = 'stt_nome';
-            $stat->label    = 'Status';
-            $stat->leitura  = true;
-            $stat->dispForm = 'col-4';
-            $stat->size     = 50;
-            // debug($stt);
-            $stat->valor = $stt
-                // ? fmtEtiquetaClasse($stt->stt_cor, $stt->stt_nome)
-                ? fmtEtiquetaCor($stt->cor_valorrgb, $stt->stt_nome)
-                : '';
-            $ret['stt_nome'] = $stat->crShow();
+                $ret['tel_id'] = criaSelectRelativo(
+                    'cfg_tela',
+                    'tel_id',
+                    'tel_nome',
+                    $dados->tel_id ?? null,
+                    1,
+                    'oco_tipo_acao',
+                    [],
+                    $config,
+                );
+            }
         }
 
-        // TELA
-        if ((int)$dados->tpa_id === 2) {
+        // ALTERAR STATUS (tpa_tipo=4)
+        if ((int) $dados->tpa_tipo === 4) {
+            if ($readonly) {
+                $statModel = new ConfigStatusModel();
+                $stt       = $dados->stt_id ? $statModel->getStatus($dados->stt_id) : null;
 
-            $mod = new OcorreSubtOcorrenciaModel();
-            $opc = [];
+                $stat = new MyCampo();
+                $stat->id       = $stat->nome = 'stt_nome';
+                $stat->label    = 'Status';
+                $stat->leitura  = true;
+                $stat->dispForm = 'col-4';
+                $stat->size     = 50;
+                $stat->valor    = $stt ? fmtEtiquetaCor($stt->cor_valorrgb, $stt->stt_nome) : '';
+                $ret['stt_nome'] = $stat->crShow();
+            } else {
+                $config = [];
+                $config['Label']    = 'Status';
+                $config['DispForm'] = 'col-6';
+                $config['Ordem']    = $pos;
+                $config['Leitura']  = false;
 
-            foreach ($mod->getTelas() as $tel) {
-                $opc[$tel->tel_id] = $tel->tel_nome;
+                $ret['stt_id'] = criaSelectRelativo(
+                    'cfg_status',
+                    'stt_id',
+                    'stt_nome',
+                    $dados->stt_id ?? null,
+                    1,
+                    'oco_tipo_acao',
+                    [],
+                    $config,
+                );
             }
+        }
 
-            $tel_id = $mod->getTelaByTpoTpa(
-                $dados->tpo_id,
-                $dados->tpa_id
-            );
-
-            $tela = new MyCampo('', 'tel_id');
-            $tela->valor    = $opc[$tel_id] ?? '';
-            $tela->label    = 'Tela';
-            $tela->leitura  = true;
-            $tela->dispForm = 'col-6';
-            $tela->size     = 60;
-
-            $ret['tel_id'] = $tela->crInput();
+        // EXECUTAR AGORA — vem por último, na mesma ordem usada em
+        // addCampoAcao() (tpa_id, campos condicionais, executar, bt_del).
+        // Só existe para a linha pendente editável (não para executada nem
+        // para exibição forçada em somente-leitura).
+        if (!$executada && !$forcaLeitura) {
+            $ret['executar'] = $this->campoExecutar($pos);
         }
 
         return $ret;
+    }
+
+    /**
+     * Checkbox "Executar agora" (marcado por padrão) de uma linha pendente
+     * da aba Ações. `valor` = valor SUBMETIDO quando marcado (fixo 'S');
+     * `selecionado` = 'S' também, para nascer sempre marcado (comportamento
+     * padrão da tratativa: tudo que está pendente é executado, a menos que
+     * o usuário desmarque manualmente).
+     */
+    private function campoExecutar(int $pos): string
+    {
+        $simnao['S'] = 'Sim';
+        $simnao['N'] = 'Não';
+
+        $exec              = new MyCampo();
+        $exec->nome = $exec->id        = 'executar';
+        $exec->label       = 'Executar Agora';
+        $exec->opcoes      = $simnao;
+        $exec->dispForm    = 'col-2';
+        $exec->valor       = $exec->selecionado = 'S';
+        $exec->setOrdem($pos);
+
+        return $exec->cr2opcoes();
     }
 }

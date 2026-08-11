@@ -25,12 +25,13 @@ class OcorrenciaService
 
     public function processAfterSave(array $data): void
     {
-        $subtipo = $this->subtipoModel->getSubtOcorrencia($data['sut_id']);
-
-        if (!empty($subtipo) && $subtipo[0]->sut_fina === 'S') {
-            $controller = new OcoTrataOcorrencia();
-            $controller->store($data);
-        }
+        // sut_fina (nível subtipo) é legado morto — a decisão de execução
+        // automática agora é feita por ação (oco_subt_ocorrencia_acao.sta_fina),
+        // dentro de OcoTrataOcorrencia::store(). Por isso store() é sempre
+        // chamado aqui: ele semeia as ações da ocorrência (se ainda não
+        // existirem) e executa as que forem sta_fina='S'.
+        $controller = new OcoTrataOcorrencia();
+        $controller->store($data);
     }
 
     /**

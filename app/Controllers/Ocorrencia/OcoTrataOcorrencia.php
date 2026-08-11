@@ -9,6 +9,7 @@ use App\Entities\Ocorrencia\EntOcoOcorrencia;
 use App\Entities\Ocorrencia\EntOcoSubtOcorrencia;
 use App\Entities\Ocorrencia\EntOcoTratativa;
 use App\Models\Ocorre\OcorreOcorrenciaModel;
+use App\Models\Ocorre\OcorreOcorrenciaAcaoModel;
 use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
 use App\Models\Ocorre\OcorreTipoAcaoModel;
 use App\Models\Fornec\FornecNotifDesvioModel;
@@ -19,6 +20,7 @@ class OcoTrataOcorrencia extends BaseController
     public $data = [];
     public $permissao;
     public $ocorrencia;
+    public $ocorrenciaAcao;
     public $subtocorrencia;
     public $tipoacao;
 
@@ -29,6 +31,7 @@ class OcoTrataOcorrencia extends BaseController
 
         // Inicialização dos models auxiliares
         $this->ocorrencia     = new OcorreOcorrenciaModel();
+        $this->ocorrenciaAcao = new OcorreOcorrenciaAcaoModel();
         $this->subtocorrencia = new OcorreSubtOcorrenciaModel();
         $this->tipoacao       = new OcorreTipoAcaoModel();
 
@@ -161,12 +164,13 @@ class OcoTrataOcorrencia extends BaseController
         $html .= "<div class='col-4 float-start'>";
         $html .= $fields['tpa_id'];
         $html .= "</div>";
-        $html .= "<div class='col-8 float-start'>";
+        $html .= "<div class='col-6 float-start'>";
         $html .= "<div id='divjust[$ind]' class='d-none row col-12'>" . $fields['oco_justi'] . "</div>";
         $html .= "<div id='divmovi[$ind]' class='d-none row col-12'>" . $fields['tmo_id'] . "</div>";
         $html .= "<div id='divtela[$ind]' class='d-none row col-12'>" . $fields['mod_id'] . $fields['tel_id'] . "</div>";
         $html .= "<div id='divstat[$ind]' class='d-none row col-12'>" . $fields['stt_id'] . "</div>";
         $html .= "</div>";
+        $html .= $fields['executar'];
         $html .= "</div>";
         $html .= "<div class='col-1'>";
         $html .= $fields['bt_del'];
@@ -208,48 +212,32 @@ class OcoTrataOcorrencia extends BaseController
         // BLOCO TELAS APLICAVEIS
         $entity   = new EntOcoSubtOcorrencia((array) $dados);
         $sutModel = new OcorreSubtOcorrenciaModel();
-        // $telas    = $sutModel->getTOTelasAplicaveis($dados->sut_id);
-        // debug($telas, true);
 
-        // if (! empty($telas)) {
+        // BLOCO DAS AÇÕES — fonte passa a ser oco_ocorrencia_acao (semeada
+        // na criação/processAfterSave), não mais o catálogo
+        // oco_subt_ocorrencia_acao. Reflete TODAS as linhas da ocorrência
+        // (pendentes e já executadas, de qualquer rodada — automática ou
+        // manual). getAcoesComNome() já traz tpa_nome via join com
+        // oco_tipo_acao (sem isso a coluna "Ação" renderiza em branco).
+        // PASSO 0 — Seed idempotente: cobre a primeira abertura manual de
+        // uma ocorrência sem linhas ainda (ex.: criada antes desta feature
+        // existir), igual ao que store() já faz na gravação.
+        $this->seedAcoes((int) $dados->oco_id, (int) $dados->sut_id);
 
-        //     $telasResultado = [];
-        //     $total          = count($telas);
-
-        //     for ($c = 0; $c < $total; $c++) {
-        //         // debug($telas[$c]);
-        //         $fields = $entity->defCamposTelasAplicaveis(
-        //             $telas[$c],
-        //             $c,
-        //             true
-        //         );
-        //         $campos[1][$c][] = $fields['mod_id'];
-        //         $campos[1][$c][] = $fields['tel_id'];
-        //         $campos[1][$c][] = $fields['tof_campo'];
-        //     }
-        //     $telasResultado = $campos[1];
-        //     $campos[0][]    = view(
-        //         'partials/pw_telas_aplicaveis_ocorrencia',
-        //         [
-        //             'telas'  => $telasResultado,
-        //             'oco_id' => $id,
-        //         ]
-        //     );
-        // }
-        // debug($campos[0], true);
-        // BLOCO DAS AÇÕES
         $entity = new EntOcoTratativa($dados, true);
-        $acoes  = $this->ocorrencia->getAcoesFinalizar($id);
+        $acoes  = $this->ocorrenciaAcao->getAcoesComNome($id);
         $acoesResultado = [];
 
-        foreach ($acoes as $acao) {
-            $acao->somente_leitura = false;
-            $camposAcao            = $entity->defCamposAcao($acao);
+        foreach ($acoes as $pos => $acao) {
+            $acao                  = (object) $acao;
+            $acao->somente_leitura = ($acao->oac_executada === 'S');
+            $camposAcao            = $entity->defCamposAcao($acao, $pos);
             $acoesResultado[]      = $camposAcao;
         }
 
+        $secao[1]  = 'Ações';
         // RN03.15 — permite adicionar ação extra apenas na tratativa (edição)
-        $campos[0][] = view(
+        $campos[1][] = view(
             'partials/pw_acoes_ocorrencia',
             [
                 'acoes'            => $acoesResultado,
@@ -291,95 +279,37 @@ class OcoTrataOcorrencia extends BaseController
             $postado = $this->request->getPost();
         }
 
-        // Normaliza tpa_id para array — quando store() é chamado
-        // diretamente (via OcorrenciaService::processAfterSave -> $automatica),
-        // tpa_id vem como escalar (int|null), não array.
-        if (isset($postado['tpa_id']) && !is_array($postado['tpa_id'])) {
-            $postado['tpa_id'] = [$postado['tpa_id']];
-        }
+        // PASSO 0 — Seed idempotente: se a ocorrência ainda não tem nenhuma
+        // linha em oco_ocorrencia_acao, copia o catálogo de ações do
+        // subtipo (oco_subt_ocorrencia_acao) como pendentes. Cobre tanto a
+        // primeira chamada automática (criação) quanto uma eventual
+        // primeira abertura manual de uma ocorrência antiga sem linhas.
+        $this->seedAcoes((int) $postado['oco_id'], (int) $postado['sut_id']);
 
-        // Bloqueante 2 (revisão 01, decisão do byarq — alternativa b):
-        // monta o catálogo (tpa_tipo) de TODOS os tpa_id envolvidos — ações de
-        // origem (tpa_id[], vindas do subtipo) e ações extras (tpa_id_extra[],
-        // adicionadas manualmente pelo usuário em T12/RN03.15) — para poder
-        // executar cada uma pelo tipo correto, sem restringir a extra a
-        // "Justificar".
-        $todosTpaIds = array_filter(array_merge(
-            $postado['tpa_id'] ?? [],
-            $postado['tpa_id_extra'] ?? []
-        ));
-
-        $catalogo = [];
-        foreach ($this->tipoacao->getTipoAcao($todosTpaIds) as $tp) {
-            $catalogo[$tp->tpa_id] = $tp;
-        }
-
-        // Monta a lista de ações a executar, distinguindo origem x extra:
-        //  - origem:  dados (tmo_id/stt_id/tel_id) vêm de oco_subt_ocorrencia_acao
-        //             (getTOAcao()/getAcaoPorId()) — comportamento já existente.
-        //  - extra:   dados vêm da própria linha do POST (tmo_id_extra[]/
-        //             stt_id_extra[]/tel_id_extra[]) — não há registro em
-        //             oco_subt_ocorrencia_acao para elas; não é criada
-        //             nenhuma tabela/coluna nova, os dados trafegam só no
-        //             POST do formulário de tratativa.
-        //
-        // Bug encontrado pelo bytest: nada impedia o usuário de escolher, na
-        // "ação extra", o MESMO tpa_id que já é ação de origem do subtipo —
-        // ou o mesmo tpa_id em DUAS linhas de ação extra diferentes — gerando
-        // duas entradas para o mesmo tpa_id e, para tpa_tipo=3 (Gerar
-        // Movimentação), duas chamadas a gerarMovimentacao() no mesmo submit
-        // (movimentação de estoque duplicada). Correção: deduplica por
-        // tpa_id usando um conjunto único progressivo ($tpaIdsUsados), com
-        // precedência para a ação de origem — cobre origem×extra e
-        // extra×extra ao mesmo tempo.
-        $acoesExecutar = [];
-        $tpaIdsOrigem  = [];
-
-        foreach (($postado['tpa_id'] ?? []) as $tpa_id) {
-            if (!$tpa_id || !isset($catalogo[$tpa_id])) {
-                continue;
-            }
-            $tpaIdsOrigem[$tpa_id] = true;
-            $acoesExecutar[] = (object) [
-                'tpa_id'    => $tpa_id,
-                'tpa_tipo'  => $catalogo[$tpa_id]->tpa_tipo,
-                'origem'    => true,
-                'tmo_id'    => null,
-                'stt_id'    => null,
-                'tel_id'    => null,
-                'oco_justi' => $postado['oco_justi'] ?? null,
-            ];
-        }
-
-        $tpaIdsUsados = $tpaIdsOrigem; // reaproveita o que já existe (origem)
-
-        foreach (($postado['tpa_id_extra'] ?? []) as $i => $tpa_id) {
-            if (!$tpa_id || !isset($catalogo[$tpa_id])) {
-                continue;
-            }
-            // Já usado (origem OU outra linha extra) — ignora a entrada
-            // duplicada para não executar a mesma ação duas vezes.
-            if (isset($tpaIdsUsados[$tpa_id])) {
-                continue;
-            }
-            $tpaIdsUsados[$tpa_id] = true;
-            $acoesExecutar[] = (object) [
-                'tpa_id'    => $tpa_id,
-                'tpa_tipo'  => $catalogo[$tpa_id]->tpa_tipo,
-                'origem'    => false,
-                'tmo_id'    => $postado['tmo_id_extra'][$i] ?? null,
-                'stt_id'    => $postado['stt_id_extra'][$i] ?? null,
-                'tel_id'    => $postado['tel_id_extra'][$i] ?? null,
-                'oco_justi' => $postado['oco_justi_extra'][$i] ?? null,
-            ];
+        // PASSO 1 — Seleciona as ações a processar nesta rodada.
+        if ($automatica) {
+            $acoesExecutar = $this->montaAcoesAutomaticas((int) $postado['oco_id'], $postado);
+        } else {
+            $acoesExecutar = $this->montaAcoesManuais($postado);
         }
 
         // debug($postado, true);
         // debug($acoesExecutar, true);
 
-        $retTrat = [];
-        $retAcao = ['erro' => false];
+        // PASSO 2 — Execução (mesmo switch por tpa_tipo já existente) e
+        // persistência POR AÇÃO (B3), imediatamente após cada ação ser
+        // processada, FORA de qualquer transação agregada: cada ação grava
+        // seu próprio resultado (sucesso ou falha) na hora, e não fica
+        // pendente de rollback por causa de outra ação do mesmo lote. Isso
+        // garante idempotência em retry — uma ação com sucesso real (ex.:
+        // gerarMovimentacao() já gerou movimentação de estoque) fica marcada
+        // oac_executada='S' e não é reprocessada; só as que falharam (que
+        // continuam 'N') voltam a ser tentadas.
+        $erroExecucao = null;
         foreach ($acoesExecutar as $valor) {
+            $valor->erro = false;
+            $valor->msg  = null;
+
             switch ((int) $valor->tpa_tipo) {
                 case 1:
                     // RN03.19 — "Justificar" apenas resolve o texto (ver
@@ -392,14 +322,15 @@ class OcoTrataOcorrencia extends BaseController
                     break;
                 case 3:
                     // lógica para Gerar Movimentação
-                    $retAcao = $this->gerarMovimentacao($postado, $valor);
+                    $retAcao     = $this->gerarMovimentacao($postado, $valor);
+                    $valor->erro = $retAcao['erro'] ?? false;
+                    $valor->msg  = $retAcao['msg'] ?? null;
                     break;
                 case 4:
                     // RN03.18 — "Alterar Status" altera o status do PRODUTO
                     // (pro_sap_produto.stt_id, pelo pro_id da ocorrência), não
                     // o status da ocorrência. O stt_id alvo é resolvido em
                     // resolveStatusProduto() e gravado após o loop.
-                    $retAcao = ['erro' => false];
                     break;
                 case 5:
                     // RN02.3 de T42 — "Notificação do Fornecedor": cria
@@ -407,43 +338,86 @@ class OcoTrataOcorrencia extends BaseController
                     // oco_notif_desvio (Fornecedores > Desvio de Qualidade).
                     // Ver docs/desenvolvimento/fornecedores-t42-t43-dev.md,
                     // decisão 3.2.
-                    $retAcao = $this->gerarNotificacaoDesvio($postado);
+                    $retAcao     = $this->gerarNotificacaoDesvio($postado);
+                    $valor->erro = $retAcao['erro'] ?? false;
+                    $valor->msg  = $retAcao['msg'] ?? null;
                     break;
                 default:
                     // opcional: tratar valores inesperados
                     break;
             }
+
+            // Persistência por ação (B3) — UPDATE se a linha já existia
+            // (seed ou rodada anterior), INSERT se for ad-hoc (adicionada
+            // via botão "+", sem oac_id). Sucesso: marca oac_executada='S'
+            // (não reprocessa em retry futuro). Falha: mantém
+            // oac_executada='N' (continua elegível para nova tentativa).
+            $dadosLinha = [
+                'oco_id'    => $postado['oco_id'],
+                'tpa_id'    => $valor->tpa_id,
+                'tpa_tipo'  => $valor->tpa_tipo,
+                'tmo_id'    => $valor->tmo_id,
+                'stt_id'    => $valor->stt_id,
+                'tel_id'    => $valor->tel_id,
+                'oco_justi' => $valor->oco_justi,
+                'oac_erro'  => (int) $valor->erro,
+                'oac_msg'   => $valor->msg,
+            ];
+
+            if ($valor->erro) {
+                $dadosLinha['oac_executada'] = 'N';
+            } else {
+                $dadosLinha['oac_executada']    = 'S';
+                $dadosLinha['oac_executado_em'] = date('Y-m-d H:i:s');
+                $dadosLinha['usu_executou']     = $automatica ? null : session()->get('usu_id');
+                $dadosLinha['oac_automatica']   = $automatica ? 1 : 0;
+            }
+
+            if (!empty($valor->oac_id)) {
+                $this->ocorrenciaAcao->update($valor->oac_id, $dadosLinha);
+            } else {
+                // Ação ad-hoc (botão "+") — nunca é automática, não
+                // faz parte do catálogo do subtipo.
+                $dadosLinha['oac_auto']   = 'N';
+                $dadosLinha['oac_criado'] = date('Y-m-d H:i:s');
+                $this->ocorrenciaAcao->insert($dadosLinha);
+            }
+
+            if ($valor->erro && $erroExecucao === null) {
+                $erroExecucao = $valor->msg;
+            }
         }
-        if (! $retAcao['erro']) {
-            $db = \Config\Database::connect();
+
+        $retTrat = [];
+        if ($erroExecucao === null) {
+            // B4 — grupo dbOcorrencia (onde estão oco_ocorrencia/
+            // pro_sap_produto), não mais o grupo default. Cobre só o
+            // resumo/status final (Passos 4/5) — a persistência por ação do
+            // Passo 2 já foi commitada individualmente acima.
+            $db = \Config\Database::connect('dbOcorrencia');
             $db->transBegin();
             try {
-                // OCORRÊNCIA = SEMPRE FINALIZADA — o stt_id da ocorrência não
-                // depende mais da ação "Alterar Status" (RN03.18, revisão do
-                // Douglas: essa ação altera o status do PRODUTO, não o da
-                // ocorrência).
-                $sttIdFinal = $automatica ? 29 : 30;
+                // PASSO 4 — Resumo (compatibilidade): primeiro valor não
+                // vazio, entre as ações desta rodada, grava em
+                // oco_ocorrencia.oco_justi / pro_sap_produto.stt_id.
+                $justificativa = $this->resolveJustificativa($acoesExecutar);
+                $sttIdProduto  = $this->resolveStatusProduto($acoesExecutar);
+
+                // PASSO 5 — Status final da ocorrência, conforme execução
+                // real (não mais previsão fixa 29/30).
+                $sttIdFinal = $this->resolveStatusOcorrencia((int) $postado['oco_id'], $automatica);
 
                 $sql_save = [
                     'stt_id'       => $sttIdFinal,
                     'usu_fina'     => session()->get('usu_id'),
                     'oco_data_fim' => date('Y-m-d H:i:s'),
                 ];
-
-                // RN03.19 — se houver ação "Justificar" (tpa_tipo=1) entre
-                // as ações executadas, grava o texto em oco_ocorrencia.oco_justi.
-                $justificativa = $this->resolveJustificativa($acoesExecutar);
                 if ($justificativa !== null) {
                     $sql_save['oco_justi'] = $justificativa;
                 }
 
                 $this->ocorrencia->update($postado['oco_id'], $sql_save);
 
-                // RN03.18 — se houver ação "Alterar Status" (tpa_tipo=4)
-                // entre as ações executadas, usa o stt_id configurado para
-                // ela (no subtipo, se de origem; na própria linha, se extra)
-                // e grava em pro_sap_produto.stt_id (produto da ocorrência).
-                $sttIdProduto = $this->resolveStatusProduto($postado, $acoesExecutar);
                 if ($sttIdProduto !== null) {
                     (new ProdutProdutoModel())->update($postado['pro_id'], ['stt_id' => $sttIdProduto]);
                 }
@@ -459,33 +433,241 @@ class OcoTrataOcorrencia extends BaseController
                 $retTrat['msg']  = $e->getMessage();
             }
         } else {
-            $retTrat = $retAcao;
+            $retTrat['erro'] = true;
+            $retTrat['msg']  = $erroExecucao;
         }
         return $retTrat;
     }
 
     /**
-     * RN03.18 — Resolve o stt_id do PRODUTO (pro_sap_produto.stt_id) ao
-     * concluir a tratativa: busca, entre as ações executadas, alguma do
-     * tipo "Alterar Status" (tpa_tipo=4); se for uma ação de origem, usa o
-     * stt_id configurado para ela em oco_subt_ocorrencia_acao
-     * (getAcaoPorId()); se for uma ação extra (Bloqueante 2), usa o stt_id
-     * informado na própria linha do POST. Retorna null se nenhuma ação
-     * "Alterar Status" foi executada (produto não é alterado).
+     * PASSO 0 do motor de execução — semeia oco_ocorrencia_acao com o
+     * catálogo de ações do subtipo (oco_subt_ocorrencia_acao), como
+     * pendentes, se a ocorrência ainda não tiver nenhuma linha. Idempotente
+     * (checa existência antes de inserir). Se o catálogo vier vazio, não
+     * insere nada (sem erro) — mesmo comportamento hoje coberto por
+     * getStatusInicial() para subtipo sem ações.
+     *
+     * B4 — checagem + insertBatch() rodam dentro de uma transação própria
+     * (grupo dbOcorrencia), fechando a janela de corrida entre duas
+     * chamadas concorrentes de store() para o mesmo oco_id (que antes podia
+     * duplicar o catálogo semeado).
      */
-    private function resolveStatusProduto(array $postado, array $acoesExecutar): ?int
+    private function seedAcoes(int $oco_id, int $sut_id): void
+    {
+        $db = \Config\Database::connect('dbOcorrencia');
+        $db->transBegin();
+
+        try {
+            $jaExiste = $this->ocorrenciaAcao->where('oco_id', $oco_id)->countAllResults();
+            if ($jaExiste > 0) {
+                $db->transCommit();
+                return;
+            }
+
+            $catalogo = $this->subtocorrencia->getTOAcao($sut_id);
+            if (empty($catalogo)) {
+                $db->transCommit();
+                return;
+            }
+
+            $tipos = [];
+            foreach ($this->tipoacao->getTipoAcao(array_column($catalogo, 'tpa_id')) as $tp) {
+                $tipos[$tp->tpa_id] = $tp->tpa_tipo;
+            }
+
+            $agora  = date('Y-m-d H:i:s');
+            $linhas = [];
+            foreach ($catalogo as $acao) {
+                $linhas[] = [
+                    'oco_id'        => $oco_id,
+                    'tpa_id'        => $acao->tpa_id,
+                    'tpa_tipo'      => $tipos[$acao->tpa_id] ?? 0,
+                    'oac_auto'      => $acao->sta_fina ?? 'N',
+                    'tmo_id'        => $acao->tmo_id ?? null,
+                    'stt_id'        => $acao->stt_id ?? null,
+                    'tel_id'        => $acao->tel_id ?? null,
+                    'oco_justi'     => null,
+                    'oac_executada' => 'N',
+                    'oac_criado'    => $agora,
+                ];
+            }
+
+            $this->ocorrenciaAcao->insertBatch($linhas);
+            $db->transCommit();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            throw $e;
+        }
+    }
+
+    /**
+     * PASSO 1 (execução automática) — todas as linhas de
+     * oco_ocorrencia_acao com oac_auto='S' e ainda não executadas.
+     */
+    private function montaAcoesAutomaticas(int $oco_id, array $postado): array
+    {
+        $linhas = $this->ocorrenciaAcao
+            ->where('oco_id', $oco_id)
+            ->where('oac_auto', 'S')
+            ->where('oac_executada', 'N')
+            ->findAll();
+
+        $acoesExecutar = [];
+        foreach ($linhas as $linha) {
+            $acoesExecutar[] = (object) [
+                'oac_id'    => $linha['oac_id'],
+                'tpa_id'    => $linha['tpa_id'],
+                'tpa_tipo'  => $linha['tpa_tipo'],
+                'tmo_id'    => $linha['tmo_id'],
+                'stt_id'    => $linha['stt_id'],
+                'tel_id'    => $linha['tel_id'],
+                'oco_justi' => $linha['oco_justi'] ?? ($postado['oco_justi'] ?? null),
+            ];
+        }
+
+        return $acoesExecutar;
+    }
+
+    /**
+     * PASSO 1 (tratativa manual) — monta as ações desta rodada a partir do
+     * POST: uma linha só entra na rodada se `executar[$pos]` veio marcado.
+     * Para linhas com `oac_id` (pendentes vindas do seed/rodada anterior),
+     * os dados AUTORITATIVOS de tpa_id/tpa_tipo vêm do próprio banco (não
+     * confia no POST para isso — só usa o POST para os campos realmente
+     * editáveis: oco_justi/tmo_id/stt_id/tel_id). Para linhas sem oac_id
+     * (ad-hoc, adicionadas via botão "+"), tpa_id vem do select livre do
+     * POST e o tpa_tipo é resolvido via catálogo (oco_tipo_acao).
+     */
+    private function montaAcoesManuais(array $postado): array
+    {
+        $executar = $postado['executar']  ?? [];
+        $oacIds   = $postado['oac_id']    ?? [];
+        $tpaIds   = $postado['tpa_id']    ?? [];
+        $justis   = $postado['oco_justi'] ?? [];
+        $tmoIds   = $postado['tmo_id']    ?? [];
+        $sttIds   = $postado['stt_id']    ?? [];
+        $telIds   = $postado['tel_id']    ?? [];
+
+        $acoesExecutar = [];
+        $tpaIdsUsados  = [];
+
+        foreach ($executar as $pos => $marcado) {
+            // Campo agora é cr2opcoes (Sim/Não) — sempre vem preenchido no
+            // POST (diferente do checkbox antigo, que só chegava quando
+            // marcado); só entra na rodada quem valer 'S'.
+            if ($marcado !== 'S') {
+                continue;
+            }
+
+            $oacId = $oacIds[$pos] ?? null;
+
+            if (!empty($oacId)) {
+                $linha = $this->ocorrenciaAcao->find($oacId);
+                if (!$linha || $linha['oac_executada'] === 'S') {
+                    continue; // linha inexistente ou já executada — ignora
+                }
+                $tpaId   = $linha['tpa_id'];
+                $tpaTipo = $linha['tpa_tipo'];
+            } else {
+                $tpaId = $tpaIds[$pos] ?? null;
+                if (empty($tpaId)) {
+                    continue;
+                }
+                $tipoInfo = $this->tipoacao->getTipoAcao((int) $tpaId);
+                $tpaTipo  = $tipoInfo[0]->tpa_tipo ?? null;
+                if ($tpaTipo === null) {
+                    continue;
+                }
+            }
+
+            // Defesa contra duplicidade de tpa_id na mesma rodada — com o
+            // seed, duplicar tpa_id não deveria mais ser estruturalmente
+            // possível, mas mantém a checagem por ser barata.
+            if (isset($tpaIdsUsados[$tpaId])) {
+                continue;
+            }
+            $tpaIdsUsados[$tpaId] = true;
+
+            $acoesExecutar[] = (object) [
+                'oac_id'    => $oacId ?: null,
+                'tpa_id'    => $tpaId,
+                'tpa_tipo'  => $tpaTipo,
+                'tmo_id'    => $tmoIds[$pos] ?? null,
+                'stt_id'    => $sttIds[$pos] ?? null,
+                'tel_id'    => $telIds[$pos] ?? null,
+                'oco_justi' => $justis[$pos] ?? null,
+            ];
+        }
+
+        return $acoesExecutar;
+    }
+
+    /**
+     * PASSO 5 — resolve o stt_id final da ocorrência conforme a execução
+     * real das ações (não mais uma previsão fixa 29/30):
+     *  - sem ações (ou nenhuma pendente sobrando) -> Finalizada (29 auto /
+     *    30 manual);
+     *  - nenhuma ação executada ainda -> Pendente (28);
+     *  - mistura (ao menos 1 executada, ao menos 1 pendente) ->
+     *    Parcialmente Tratada.
+     */
+    private function resolveStatusOcorrencia(int $oco_id, bool $automatica): int
+    {
+        $total      = $this->ocorrenciaAcao->where('oco_id', $oco_id)->countAllResults();
+        $executadas = $this->ocorrenciaAcao->where('oco_id', $oco_id)->where('oac_executada', 'S')->countAllResults();
+        $pendentes  = $total - $executadas;
+
+        if ($total === 0 || $pendentes === 0) {
+            return $automatica ? 29 : 30;
+        }
+        if ($executadas === 0) {
+            return 28;
+        }
+
+        return $this->getStatusParcialId();
+    }
+
+    /**
+     * Resolve dinamicamente o stt_id do status "Parcialmente Tratada"
+     * (inserido pela migration 2026-08-10-000001_OcoOcorrenciaAcao), sem
+     * hardcode de id numérico. Cacheado em memória por request.
+     */
+    private function getStatusParcialId(): int
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        $status = \Config\Database::connect('default')
+            ->table('cfg_status')
+            ->where('stt_nome', 'Parcialmente Tratada')
+            ->get()->getRow();
+
+        // Fallback defensivo (nunca deveria faltar após a migration rodar)
+        // — cai para Pendente (28) em vez de quebrar a tratativa.
+        $cache = $status ? (int) $status->stt_id : 28;
+
+        return $cache;
+    }
+
+    /**
+     * RN03.18 — Resolve o stt_id do PRODUTO (pro_sap_produto.stt_id) ao
+     * concluir a tratativa: busca, entre as ações desta rodada, alguma do
+     * tipo "Alterar Status" (tpa_tipo=4), e usa o stt_id já resolvido na
+     * própria ação (vindo do catálogo, no seed, ou editado pelo usuário na
+     * tratativa — ver montaAcoesManuais()/montaAcoesAutomaticas()). Retorna
+     * null se nenhuma ação "Alterar Status" foi processada nesta rodada
+     * (produto não é alterado).
+     */
+    private function resolveStatusProduto(array $acoesExecutar): ?int
     {
         foreach ($acoesExecutar as $acao) {
             if ((int) $acao->tpa_tipo !== 4) {
                 continue;
             }
 
-            if ($acao->origem) {
-                $acaoSubt = $this->subtocorrencia->getAcaoPorId($acao->tpa_id, $postado['sut_id']);
-                if ($acaoSubt && !empty($acaoSubt->stt_id)) {
-                    return (int) $acaoSubt->stt_id;
-                }
-            } elseif (!empty($acao->stt_id)) {
+            if (!empty($acao->stt_id)) {
                 return (int) $acao->stt_id;
             }
         }
@@ -495,12 +677,9 @@ class OcoTrataOcorrencia extends BaseController
 
     /**
      * RN03.19 — Resolve o texto de justificativa a gravar em
-     * oco_ocorrencia.oco_justi: busca, entre as ações executadas, alguma
-     * do tipo "Justificar" (tpa_tipo=1); se for uma ação de origem, usa o
-     * campo `oco_justi` digitado no formulário de finalizar; se for uma
-     * ação extra (Bloqueante 2), usa o `oco_justi_extra[]` da própria
-     * linha do POST. Retorna null se nenhuma ação "Justificar" foi
-     * executada ou o texto veio vazio.
+     * oco_ocorrencia.oco_justi: busca, entre as ações desta rodada, alguma
+     * do tipo "Justificar" (tpa_tipo=1). Retorna null se nenhuma ação
+     * "Justificar" foi processada nesta rodada ou o texto veio vazio.
      */
     private function resolveJustificativa(array $acoesExecutar): ?string
     {
@@ -519,22 +698,19 @@ class OcoTrataOcorrencia extends BaseController
 
     /**
      * Gera a movimentação de estoque para uma ação do tipo "Gerar
-     * Movimentação" (tpa_tipo=3). Para ação de origem, o tmo_id vem da
-     * configuração do subtipo (oco_subt_ocorrencia_acao, via getTOAcao());
-     * para ação extra (Bloqueante 2), o tmo_id vem da própria linha do POST
-     * (tmo_id_extra[]).
+     * Movimentação" (tpa_tipo=3). O tmo_id já vem resolvido na própria
+     * ação — do catálogo do subtipo (seed/execução automática) ou editado
+     * pelo usuário na tratativa manual (montaAcoesManuais()).
      */
     private function gerarMovimentacao($postado, $acao)
     {
         $retMov         = [];
         $retMov['erro'] = false;
 
-        if ($acao->origem ?? true) {
-            $acaosubt = $this->subtocorrencia->getTOAcao($postado['sut_id'], $acao->tpa_id)[0] ?? false;
-            $tmoId    = $acaosubt->tmo_id ?? null;
-        } else {
-            $tmoId = $acao->tmo_id ?? null;
-        }
+        // tmo_id já vem resolvido na própria ação (catálogo, no seed, ou
+        // editado pelo usuário na tratativa — ver
+        // montaAcoesManuais()/montaAcoesAutomaticas()).
+        $tmoId = $acao->tmo_id ?? null;
 
         if ($tmoId) {
             $movsOco[] = [

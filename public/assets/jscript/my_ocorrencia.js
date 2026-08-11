@@ -112,7 +112,7 @@ async function ativInativ(url, registro, ativo) {
  * fluxo de AJAX próprio, mais simples, já que a tela de finalizar() não usa
  * o mecanismo genérico de listas repetíveis (`vw_edicao.php`/`addCampo()`).
  *
- * @param {string} url - url base (OcoTrataOcorrencia/addCampoAcaoExtra/<oco_id>)
+ * @param {string} url - url base (OcoTrataOcorrencia/addCampoAcao/<oco_id>)
  * @param {object} btn - botão "+" que disparou a inclusão (mantém o índice atual)
  */
 async function adicionaAcaoExtra(url, btn) {
@@ -158,11 +158,20 @@ function removeAcaoExtra(btn) {
  * @returns {Promise<boolean>} true para prosseguir com o submit, false para cancelar
  */
 async function confirmaAcaoTratativa() {
-  const temGeraMovimentacao = jQuery('input[name="tpa_tipo_marca[]"]')
+  // Linhas pendentes existentes (tpa_tipo já conhecido no servidor).
+  const temGeraMovimentacaoPendente = jQuery('input[name="tpa_tipo_marca[]"]')
     .toArray()
     .some((el) => String(el.value) === "3");
 
-  if (!temGeraMovimentacao) {
+  // Linhas ad-hoc novas (botão "+"): tpa_tipo só é definido no client via
+  // verificaTipoAcao(), que revela o div 'divmovi[...]' quando a ação
+  // escolhida no select é "Gerar Movimentação" — sem isso, adicionar essa
+  // ação via "+" nunca disparava a confirmação (MSG 6).
+  const temGeraMovimentacaoAdhoc = jQuery('div[id^="divmovi"]')
+    .toArray()
+    .some((el) => !jQuery(el).hasClass("d-none"));
+
+  if (!temGeraMovimentacaoPendente && !temGeraMovimentacaoAdhoc) {
     return true;
   }
 

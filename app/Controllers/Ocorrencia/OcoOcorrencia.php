@@ -8,6 +8,7 @@ use App\Entities\Ocorrencia\EntOcoSubtOcorrencia;
 use App\Entities\Ocorrencia\EntOcoTratativa;
 use App\Libraries\MyCampo;
 use App\Models\CommonModel;
+use App\Models\Ocorre\OcorreOcorrenciaAcaoModel;
 use App\Models\Ocorre\OcorreOcorrenciaModel;
 use App\Models\Ocorre\OcorreSubtOcorrenciaModel;
 use App\Models\Ocorre\OcorreTipoOcorrenciaModel;
@@ -23,6 +24,7 @@ class OcoOcorrencia extends BaseController
     public $modelTipo;
     public $modelSubt;
     public $ocorrencia;
+    public $ocorrenciaAcao;
     public $lote;
     public $common;
     public $permissao = '';
@@ -34,8 +36,9 @@ class OcoOcorrencia extends BaseController
 
         $this->modelTipo  = new OcorreTipoOcorrenciaModel();
         $this->modelSubt  = new OcorreSubtOcorrenciaModel();
-        $this->ocorrencia = new OcorreOcorrenciaModel();
-        $this->lote       = new ProdutLoteModel();
+        $this->ocorrencia     = new OcorreOcorrenciaModel();
+        $this->ocorrenciaAcao = new OcorreOcorrenciaAcaoModel();
+        $this->lote           = new ProdutLoteModel();
         $this->common     = new CommonModel();
 
         if ($this->data['erromsg'] != '') {
@@ -234,17 +237,21 @@ class OcoOcorrencia extends BaseController
         $campos = $this->showCabecalho($dados);
         // debug($campos);
 
-        // BLOCO DAS AÇÕES
+        // BLOCO DAS AÇÕES — mesma fonte de finalizar() (oco_ocorrencia_acao,
+        // com tpa_nome via join), sempre somente-leitura (forcaLeitura=true)
+        // — tela de CONSULTA nunca pode renderizar checkbox/campo editável,
+        // mesmo para ação ainda pendente.
         $entity = new EntOcoTratativa($dados, true);
-        $acoes  = $this->ocorrencia->getAcoesFinalizar($id);
+        $acoes  = $this->ocorrenciaAcao->getAcoesComNome($id);
         // debug($acoes, true);
         if (! empty($acoes)) {
 
             $acoesResultado = [];
 
-            foreach ($acoes as $acao) {
+            foreach ($acoes as $pos => $acao) {
+                $acao                  = (object) $acao;
                 $acao->somente_leitura = true;
-                $camposAcao            = $entity->defCamposAcao($acao);
+                $camposAcao            = $entity->defCamposAcao($acao, $pos, true);
                 $acoesResultado[]      = $camposAcao;
             }
 
@@ -721,26 +728,33 @@ class OcoOcorrencia extends BaseController
             $entity = new EntOcoOcorrencia($postado);
             // debug($entity, true);
 
-            if (! $this->ocorrencia->save($entity)) {
+            $__saveret = $this->ocorrencia->save($entity);
+            if (! $__saveret) {
                 $ret['erro'] = false;
                 $ret['msg']  = $this->ocorrencia->errors();
             } else {
-                if ($postado['stt_id'] == 29) {
-                    if (! isset($postado['oco_id'])) {
-                        $idoco = $this->ocorrencia->getInsertID();
-                    } else {
-                        $idoco = $postado['oco_id'];
-                    }
-
-                    $data                 = $entity->toArray();
-                    $lote                 = $this->lote->getLoteId($postado['lot_lote'])[0];
-                    $data['oco_id']       = $idoco;
-                    $data['lot_lote']     = $lote->lot_lote;
-                    $data['lot_validade'] = $lote->lot_validade;
-                    // debug($data);
-                    $ocoService = service('ocorrenciaService');
-                    $ocoService->processAfterSave($data);
+                // $postado['stt_id'] aqui é só o palpite inicial calculado
+                // acima (getStatusInicial()/getAcaoConfigurada()) — quem
+                // decide o stt_id real, com base na execução de fato das
+                // ações (oco_ocorrencia_acao), é
+                // OcoTrataOcorrencia::store() (resolveStatusOcorrencia()),
+                // chamado sempre a seguir via processAfterSave(), e que
+                // sobrescreve o registro via update() logo depois.
+                if (! isset($postado['oco_id'])) {
+                    $idoco = $this->ocorrencia->getInsertID();
+                } else {
+                    $idoco = $postado['oco_id'];
                 }
+
+                $data                 = $entity->toArray();
+                $lote                 = $this->lote->getLoteId($postado['lot_lote'])[0];
+                $data['oco_id']       = $idoco;
+                $data['lot_lote']     = $lote->lot_lote;
+                $data['lot_validade'] = $lote->lot_validade;
+                // debug($data);
+                $ocoService = service('ocorrenciaService');
+                $ocoService->processAfterSave($data);
+
                 $ret['erro'] = false;
                 $ret['msg']  = 'Ocorrência gravada com sucesso!';
                 session()->setFlashdata('msg', $ret['msg']);
