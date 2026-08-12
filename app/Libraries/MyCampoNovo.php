@@ -940,9 +940,9 @@ class MyCampo
         if ($this->label !== '') {
             $html .= $this->crLabel();
         }
-        $html .= "<div class='border rounded bg-gradient-secondary input-group mb-lg-1 mb-2
-                    overflow-auto form-control'
-                    style='width: {$larg} !important; height: {$altu} !important'>";
+        $html .= "<div class='input-group mb-lg-1 mb-2
+                    overflow-auto form-control disabled text-break'
+                    style='height: {$altu} !important'>";
         $html .= $this->valor;
         $html .= '</div>';
         $html .= '</div>';

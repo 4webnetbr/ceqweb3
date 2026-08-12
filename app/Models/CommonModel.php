@@ -44,7 +44,7 @@ class CommonModel extends Model
             }
         }
 
-        (new LogMonModel())->insertLog($table, 'Incluído', (int) $data[$key], $data);
+        (new LogMonModel())->insertLog($table, 'Incluído', $key !== null ? (int) $data[$key] : (int) $insert_id, $data);
 
         return $insert_id;
     }
@@ -84,7 +84,7 @@ class CommonModel extends Model
         }
 
         // debug($key, true);
-        (new LogMonModel())->insertLog($table, 'Alteração', (int) $data[$key], $data);
+        (new LogMonModel())->insertLog($table, 'Alteração', $key !== null ? (int) $data[$key] : 0, $data);
 
         return $update_id;
     }

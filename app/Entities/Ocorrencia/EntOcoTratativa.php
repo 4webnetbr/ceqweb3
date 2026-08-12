@@ -319,61 +319,6 @@ class EntOcoTratativa extends Entity
         $acao->dispForm = 'col-4';
         $ret['tpa_nome'] = $acao->crInput();
 
-        if ($executada) {
-            // LINHA JÁ EXECUTADA — somente leitura, sem reenvio ao servidor
-            $ret['tpa_id'] = '';
-
-            $quando = !empty($dados->oac_executado_em)
-                ? toDataBr(new \DateTime($dados->oac_executado_em))
-                : '';
-            $status = 'Executada em ' . $quando . (!empty($dados->oac_automatica) ? ' (Automática)' : ' (Manual)');
-
-            $info            = new MyCampo();
-            $info->id        = $info->nome = 'oac_status_exec';
-            $info->label     = 'Status';
-            $info->leitura   = true;
-            $info->dispForm  = 'col-6';
-            $info->size      = 50;
-            $info->valor     = $status;
-            $ret['oac_status_exec'] = $info->crShow();
-        } elseif ($forcaLeitura) {
-            // LINHA PENDENTE, EXIBIDA EM TELA DE CONSULTA — somente
-            // informativa: sem reenvio ao servidor, sem checkbox.
-            $ret['tpa_id'] = '';
-
-            $info            = new MyCampo();
-            $info->id        = $info->nome = 'oac_status_exec';
-            $info->label     = 'Status';
-            $info->leitura   = true;
-            $info->dispForm  = 'col-6';
-            $info->size      = 50;
-            $info->valor     = 'Pendente';
-            $ret['oac_status_exec'] = $info->crShow();
-        } else {
-            // LINHA PENDENTE (do seed ou de rodada anterior) — oac_id
-            // oculto identifica o UPDATE; checkbox "Executar agora" marcado
-            // por padrão.
-            $oacHidden        = new MyCampo();
-            $oacHidden->nome  = 'oac_id';
-            $oacHidden->valor = $dados->oac_id ?? null;
-            $oacHidden->setOrdem($pos);
-            $ret['oac_id'] = $oacHidden->crOculto();
-
-            $tpaHidden        = new MyCampo();
-            $tpaHidden->nome  = 'tpa_id';
-            $tpaHidden->valor = $dados->tpa_id;
-            $tpaHidden->setOrdem($pos);
-            $ret['tpa_id'] = $tpaHidden->crOculto();
-
-            // RN03.18.2 — marca oculta com o tipo da ação (não é dado de
-            // negócio; usada apenas pelo front para saber se há ação
-            // "Gerar Movimentação" (tpa_tipo=3) marcada, e então pedir
-            // confirmação (MSG 6) antes de submeter a tratativa.
-            $tpaTipoHidden        = new MyCampo();
-            $tpaTipoHidden->nome  = 'tpa_tipo_marca[]';
-            $tpaTipoHidden->valor = $dados->tpa_tipo;
-            $ret['tpa_tipo_marca'] = $tpaTipoHidden->crOculto();
-        }
 
         // JUSTIFICAR (tpa_tipo=1)
         if ((int) $dados->tpa_tipo === 1) {
@@ -503,6 +448,61 @@ class EntOcoTratativa extends Entity
                     $config,
                 );
             }
+        }
+
+        if ($executada) {
+            // LINHA JÁ EXECUTADA — somente leitura, sem reenvio ao servidor
+            $ret['tpa_id'] = '';
+
+            $quando = !empty($dados->oac_executado_em)
+                ? toDataBr(new \DateTime($dados->oac_executado_em))
+                : '';
+            $status = 'Executada em ' . $quando . (!empty($dados->oac_automatica) ? ' (Automática)' : ' (Manual)');
+
+            $info            = new MyCampo();
+            $info->id        = $info->nome = 'oac_status_exec';
+            $info->label     = 'Status';
+            $info->dispForm  = 'col-4 float-end';
+            $info->valor     = $status;
+            $info->size     = 50;
+            $info->leitura     = true;
+            $ret['oac_status_exec'] = $info->crInput();
+        } elseif ($forcaLeitura) {
+            // LINHA PENDENTE, EXIBIDA EM TELA DE CONSULTA — somente
+            // informativa: sem reenvio ao servidor, sem checkbox.
+            $ret['tpa_id'] = '';
+
+            $info            = new MyCampo();
+            $info->id        = $info->nome = 'oac_status_exec';
+            $info->label     = 'Status';
+            $info->dispForm  = 'col-4 float-end';
+            $info->valor     = 'Pendente';
+            $info->leitura     = true;
+            $ret['oac_status_exec'] = $info->crInput();
+        } else {
+            // LINHA PENDENTE (do seed ou de rodada anterior) — oac_id
+            // oculto identifica o UPDATE; checkbox "Executar agora" marcado
+            // por padrão.
+            $oacHidden        = new MyCampo();
+            $oacHidden->nome  = 'oac_id';
+            $oacHidden->valor = $dados->oac_id ?? null;
+            $oacHidden->setOrdem($pos);
+            $ret['oac_id'] = $oacHidden->crOculto();
+
+            $tpaHidden        = new MyCampo();
+            $tpaHidden->nome  = 'tpa_id';
+            $tpaHidden->valor = $dados->tpa_id;
+            $tpaHidden->setOrdem($pos);
+            $ret['tpa_id'] = $tpaHidden->crOculto();
+
+            // RN03.18.2 — marca oculta com o tipo da ação (não é dado de
+            // negócio; usada apenas pelo front para saber se há ação
+            // "Gerar Movimentação" (tpa_tipo=3) marcada, e então pedir
+            // confirmação (MSG 6) antes de submeter a tratativa.
+            $tpaTipoHidden        = new MyCampo();
+            $tpaTipoHidden->nome  = 'tpa_tipo_marca[]';
+            $tpaTipoHidden->valor = $dados->tpa_tipo;
+            $ret['tpa_tipo_marca'] = $tpaTipoHidden->crOculto();
         }
 
         // EXECUTAR AGORA — vem por último, na mesma ordem usada em

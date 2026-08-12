@@ -119,7 +119,9 @@ class OcorreOcorrenciaModel extends Model
         $builder->orderBy('v.stt_ordem');
         $builder->orderBy('v.oco_id', 'DESC');
 
-        return $builder->get()->getResult();
+        $ret = $builder->get()->getResult();
+        // debug($db->getLastQuery());
+        return $ret;
     }
 
     public function getAcoesFinalizar($oco_id = false)

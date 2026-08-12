@@ -1,18 +1,18 @@
 <div class="accordion" id="accProdutos">
     <div class="accordion-item">
         <h2 class="accordion-header border border-bottom-1" id="headtela<?= $oco_id ?>">
-            <button class="accordion-button text-center collapsed"
+            <!-- <button class="accordion-button text-center collapsed"
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#collapsetela<?= $oco_id ?>"
                 aria-expanded="false"
                 aria-controls="collapsetela<?= $oco_id ?>">
                 <div class='col-12 text-center'>Telas Aplicáveis</div>
-            </button>
+            </button> -->
         </h2>
 
         <div id="collapsetela<?= $oco_id ?>"
-            class="accordion-collapse collapse"
+            class="accordion-collapse collapse show"
             aria-labelledby="headtela<?= $oco_id ?>"
             data-bs-parent="#accTelas">
 

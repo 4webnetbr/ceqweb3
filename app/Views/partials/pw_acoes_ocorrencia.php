@@ -2,6 +2,24 @@
     .tabela-pequena {
         font-size: 12px;
     }
+
+    /* Linha de uma ação da aba Ações: sempre em uma única linha — as
+       colunas Bootstrap (col-*) de cada campo perdem a largura fixa em %
+       e passam a se ajustar (encolher) ao espaço disponível, em vez de
+       quebrar para uma nova linha. */
+    #tbacoes .row-acoes-oneline {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: .5rem;
+        overflow-x: auto;
+    }
+
+    #tbacoes .row-acoes-oneline>[class*="col-"] {
+        flex: 0 1 auto;
+        width: auto;
+        max-width: none;
+    }
 </style>
 
 <div class="accordion" id="accProdutos">
@@ -30,7 +48,7 @@
                         <?php foreach ($acoes as $acao): ?>
                             <tr>
                                 <td>
-                                    <div class="row">
+                                    <div class="row row-acoes-oneline text-nowrap">
                                         <?php foreach ($acao as $campo): ?>
                                             <?= $campo ?>
                                         <?php endforeach; ?>

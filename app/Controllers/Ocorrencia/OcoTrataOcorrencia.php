@@ -75,7 +75,7 @@ class OcoTrataOcorrencia extends BaseController
     {
         // Monta definição dos campos da listagem
         $campos = montaColunasCampos($this->data, 'oco_id');
-        $dados  = $this->ocorrencia->getListaPendente([28]);
+        $dados  = $this->ocorrencia->getListaPendente([28, 37]);
 
         // Caso não existam registros
         if (! $dados) {
@@ -98,19 +98,19 @@ class OcoTrataOcorrencia extends BaseController
             $usuLog        = $logGeracao[$nov->oco_id]['usua_alterou'] ?? '';
             $nov->usu_nome = $usuLog;
 
-            // Define usuário de finalização se estiver finalizada
-            if ((int) $nov->stt_id === 30) {
-                $nov->usu_fina = $usuLog;
-            } else {
-                $nov->usu_fina = '';
-            }
+            // // Define usuário de finalização se estiver finalizada
+            // if ((int) $nov->stt_id === 30) {
+            //     $nov->usu_fina = $usuLog;
+            // } else {
+            //     $nov->usu_fina = '';
+            // }
 
             $nov->acao_person = [];
 
             // Botão de finalizar se estiver pendente
-            if (trim($nov->stt_nome ?? '') === 'Pendente') {
-                $url_finalizar      = $base_url . '/finalizar/' . $nov->oco_id;
-                $nov->acao_person[] = "
+            // if (trim($nov->stt_nome ?? '') === 'Pendente') {
+            $url_finalizar      = $base_url . '/finalizar/' . $nov->oco_id;
+            $nov->acao_person[] = "
                     <button class='btn btn-outline-success btn-sm border-0 mx-0 fs-0'
                         data-mdb-toggle='tooltip'
                         data-mdb-placement='top'
@@ -119,7 +119,7 @@ class OcoTrataOcorrencia extends BaseController
                         <i class='fas fa-check'></i>
                     </button>
                 ";
-            }
+            // }
         }
         // Retorna JSON formatado para DataTable
         return $this->response->setJSON([

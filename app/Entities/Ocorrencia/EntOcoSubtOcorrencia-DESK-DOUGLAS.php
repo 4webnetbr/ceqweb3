@@ -34,7 +34,7 @@ class EntOcoSubtOcorrencia extends Entity
         $dados = $this->toArray();
         $ret   = [];
 
-		// debug($dados, true);
+        // debug($dados, true);
         $mid            = new MyCampo('oco_subt_ocorrencia', 'sut_id');
         $mid->valor     = $dados['sut_id'] ?? '';
         $ret['sut_id']  = $mid->crOculto();

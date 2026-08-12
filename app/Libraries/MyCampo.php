@@ -1976,9 +1976,14 @@ class MyCampo
 
         $this->propriedades();
 
-        if ($this->place !== '') {
-            $this->opcoes = ['' => 'Escolha ' . $this->place] + $this->opcoes;
-        }
+        // Diferente de crDepende() (select simples), aqui NÃO se adiciona uma
+        // opção placeholder ('' => 'Escolha ...') — um <option value="">
+        // marcado selected dentro de um <select multiple> confunde o
+        // selectpicker (bootstrap-select), fazendo-o exibir como se todos os
+        // itens estivessem selecionados quando na verdade nenhum valor real
+        // foi escolhido ainda. O texto de placeholder já vem do atributo
+        // `placeholder` (setado por propriedades() a partir de $this->place),
+        // que o selectpicker usa nativamente para o estado "nada selecionado".
 
         $extras = 'size=1; data-actions-box="true"; data-size="2"; ' .
             'data-selected-text-format="count > 1"; ' .

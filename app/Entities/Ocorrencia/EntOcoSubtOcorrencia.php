@@ -75,12 +75,7 @@ class EntOcoSubtOcorrencia extends Entity
         $config['Urlbusca'] = base_url('Buscas/buscaClassePorTipo');
         $config['DispForm'] = 'col-8';
         $config['Leitura']  = $show;
-        $config['Todos']  = true;
         $filtro = [];
-        if (!empty($dados['cla_id'])) {
-            unset($config['Todos']);
-        }
-        // debug($dados['cla_id'], true);
 
         $ret['cla_id'] = criaSelectRelativo(
             '',
@@ -215,6 +210,13 @@ class EntOcoSubtOcorrencia extends Entity
         // $tpa = $dados['tpa_id'] ?? null;
         $ret = [];
 
+        // RN — cada linha só mostra (via divmovi/divtela/divstat, ver
+        // OcoSubtOcorrencia::edit()/addCampoTp()) o campo condizente com o
+        // tpa_id da própria linha; os outros ficam escondidos (d-none).
+        // Sem isto, os 3 campos SEMPRE nasciam obrigatórios (default de
+        // criaSelectRelativo()), inclusive os escondidos — bloqueando o
+        // salvamento por campo que nem aparece na tela.
+        $tpaIdLinha = (int) ($dados['tpa_id'] ?? 0);
 
         // tipo de ação
         $config = [];
@@ -237,10 +239,11 @@ class EntOcoSubtOcorrencia extends Entity
         );
 
         // tipo de movimentação
-        $config['Label']    = 'Tipo de Movimentação';
-        $config['Leitura']  = $somenteLeitura;
-        $config['FunChan']  = '';
-        $config['DispForm'] = 'col-12';
+        $config['Label']       = 'Tipo de Movimentação';
+        $config['Leitura']     = $somenteLeitura;
+        $config['FunChan']     = '';
+        $config['DispForm']    = 'col-12';
+        $config['Obrigatorio'] = $tpaIdLinha === 3; // Gerar Movimentação
         $ret['tmo_id'] = criaSelectRelativo(
             'est_tipo_movimentacao',
             'tmo_id',
@@ -254,10 +257,11 @@ class EntOcoSubtOcorrencia extends Entity
         );
 
         // modulo
-        $config['Label']    = 'Módulo';
-        $config['Leitura']  = $somenteLeitura;
-        $config['DispForm'] = 'col-6';
-        $config['Largura']  = 30;
+        $config['Label']       = 'Módulo';
+        $config['Leitura']     = $somenteLeitura;
+        $config['DispForm']    = 'col-6';
+        $config['Largura']     = 30;
+        $config['Obrigatorio'] = $tpaIdLinha === 2; // Abrir Tela
         $ret['mod_id'] = criaSelectRelativo(
             'cfg_modulo',
             'mod_id',
@@ -275,6 +279,7 @@ class EntOcoSubtOcorrencia extends Entity
         $config['Leitura']  = $somenteLeitura;
         $config['Pai']      = 'mod_id';
         $config['Urlbusca'] = base_url('buscas/busca_tela_modulo');
+        // 'Obrigatorio' já vem true/false do bloco de Módulo acima (mesmo tpa_id==2)
 
         $ret['tel_id'] = criaSelectRelativo(
             'cfg_tela',
@@ -289,10 +294,11 @@ class EntOcoSubtOcorrencia extends Entity
         );
 
         // status
-        $config['Label']    = 'Status';
-        $config['Leitura']  = $somenteLeitura;
-        $config['DispForm'] = 'col-12';
-        $config['Largura']  = 50;
+        $config['Label']       = 'Status';
+        $config['Leitura']     = $somenteLeitura;
+        $config['DispForm']    = 'col-12';
+        $config['Largura']     = 50;
+        $config['Obrigatorio'] = $tpaIdLinha === 4; // Alterar Status
         $ret['stt_id'] = criaSelectRelativo(
             'cfg_status',
             'stt_id',
@@ -422,12 +428,6 @@ class EntOcoSubtOcorrencia extends Entity
         $config['Leitura']  = $show;
         $config['Pai']      = 'tpo_id';
         $config['Urlbusca'] = base_url('Buscas/buscaPerfilPorTipo');
-        $config['Todos']    = true;
-        if (!empty($dados->prf_id)) {
-            unset($config['Todos']);
-        }
-
-        // debug($dados->prf_id, true);
 
         $ret['prf_id'] = criaSelectRelativo(
             'cfg_perfil',

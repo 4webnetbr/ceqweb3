@@ -233,16 +233,45 @@ class OcoOcorrencia extends BaseController
         // debug($dados, true);
 
         // dados gerais
-        $secao  = ['Dados Gerais'];
+        $secao[0]  = 'Dados Gerais';
+        $secao[1]  = 'Telas Aplicáveis';
+        $secao[2]  = 'Ações';
         $campos = $this->showCabecalho($dados);
         // debug($campos);
 
+        // BLOCO TELAS APLICÁVEIS
+        $entity = new EntOcoSubtOcorrencia((array) $dados);
+        $telas  = array_map(
+            fn($item) => (array) $item,
+            $this->modelSubt->getTOTelasAplicaveis($dados->sut_id)
+        );
+        // debug($telas, true);
+
+        $campos[1] = [];
+        if (! empty($telas)) {
+            $telasResultado = [];
+            $total          = count($telas);
+
+            for ($c = 0; $c < $total; $c++) {
+                $fields           = $entity->defCamposTelasAplicaveis($telas[$c], $c, $total, true);
+                $telasResultado[] = $fields;
+            }
+
+            $campos[1][] = view(
+                'partials/pw_telas_aplicaveis_ocorrencia',
+                [
+                    'telas'  => $telasResultado,
+                    'oco_id' => $id,
+                ]
+            );
+        }
         // BLOCO DAS AÇÕES — mesma fonte de finalizar() (oco_ocorrencia_acao,
         // com tpa_nome via join), sempre somente-leitura (forcaLeitura=true)
         // — tela de CONSULTA nunca pode renderizar checkbox/campo editável,
         // mesmo para ação ainda pendente.
         $entity = new EntOcoTratativa($dados, true);
         $acoes  = $this->ocorrenciaAcao->getAcoesComNome($id);
+        $campos[2] = [];
         // debug($acoes, true);
         if (! empty($acoes)) {
 
@@ -255,35 +284,10 @@ class OcoOcorrencia extends BaseController
                 $acoesResultado[]      = $camposAcao;
             }
 
-            $campos[0][] = view(
+            $campos[2][] = view(
                 'partials/pw_acoes_ocorrencia',
                 [
                     'acoes'  => $acoesResultado,
-                    'oco_id' => $id,
-                ]
-            );
-        }
-        // BLOCO TELAS APLICÁVEIS
-        $entity = new EntOcoSubtOcorrencia((array) $dados);
-        $telas  = array_map(
-            fn($item) => (array) $item,
-            $this->modelSubt->getTOTelasAplicaveis($dados->sut_id)
-        );
-        // debug($telas, true);
-
-        if (! empty($telas)) {
-            $telasResultado = [];
-            $total          = count($telas);
-
-            for ($c = 0; $c < $total; $c++) {
-                $fields           = $entity->defCamposTelasAplicaveis($telas[$c], $c, $total, true);
-                $telasResultado[] = $fields;
-            }
-
-            $campos[0][] = view(
-                'partials/pw_telas_aplicaveis_ocorrencia',
-                [
-                    'telas'  => $telasResultado,
                     'oco_id' => $id,
                 ]
             );
