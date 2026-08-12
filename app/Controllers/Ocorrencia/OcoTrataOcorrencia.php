@@ -436,7 +436,14 @@ class OcoTrataOcorrencia extends BaseController
             $retTrat['erro'] = true;
             $retTrat['msg']  = $erroExecucao;
         }
-        return $retTrat;
+
+        // Chamado via HTTP (tela de tratativa) precisa de uma Response de
+        // verdade — um array puro retornado aqui é descartado pelo
+        // CodeIgniter (CodeIgniter::gatherOutput() só usa o retorno quando é
+        // string ou ResponseInterface), resultando em corpo de resposta
+        // vazio. Chamada automática (OcorrenciaService::processAfterSave())
+        // ignora o retorno, então não há problema em sempre devolver JSON.
+        return $this->response->setJSON($retTrat);
     }
 
     /**
