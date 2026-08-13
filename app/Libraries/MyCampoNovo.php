@@ -22,7 +22,7 @@ use App\Models\Config\ConfigDicDadosModel;
  *   $campo->nome   = 'meu_campo';
  *   echo $campo->crInput();
  */
-class MyCampo
+class MyCampoNovo
 {
     // -------------------------------------------------------------------------
     // Constantes

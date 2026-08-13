@@ -938,17 +938,19 @@ class MyCampo
     public function crShow(): string
     {
         $altu = isset($this->alturashow) && $this->alturashow > 0
-            ? "{$this->alturashow}rem"
+            ? "{$this->alturashow}px"
             : '33.1px';
 
-        $larg = $this->largura > 0 ? "{$this->largura}ch" : '50%';
+        $larg = $this->largura > 0 ? "{$this->largura}ch" : '100%';
 
         $html  = "<div class='row {$this->dispForm} align-items-center float-start d-inline-flex'>";
         if ($this->label !== '') {
             $html .= $this->crLabel();
         }
-        $html .= "<div class='form-control disabled'
-                    style='width: {$larg} !important; height: {$altu} !important'>";
+        $html .= "<div class='form-control d-flex align-items-center'
+                    style='width: {$larg} !important; min-height: {$altu} !important;
+                    padding: 0.375rem 0.75rem !important;
+                    background-color: #e9ecef; opacity: 1; cursor: not-allowed;'>";
         $html .= $this->valor;
         $html .= '</div>';
         $html .= '</div>';

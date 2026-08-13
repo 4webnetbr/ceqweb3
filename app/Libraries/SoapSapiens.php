@@ -13,7 +13,7 @@ class SoapSapiens
     {
         if ($servico) {
             $options = [
-                'connection_timeout' => 20, // segundos
+                'connection_timeout' => 60, // segundos
                 'exceptions' => true,      // permite capturar falhas com try/catch
                 'trace' => true,            // útil para depuração (opcional)
                 'keep_alive'         => false,
@@ -21,7 +21,13 @@ class SoapSapiens
             ];
             $serv = 'http://hc170915cqn3007.cloudhialinx.com.br:12030/g5-senior-services/sapiens_Synccom_' . $servico . '?wsdl';
             // debug($serv, true);
-            $this->soapc = new SoapClient($serv, $options);
+            try {
+                $this->soapc = new SoapClient($serv, $options);
+            } catch (\SoapFault $e) {
+                debug('Falha ao instanciar SoapClient (' . $servico . '): ' . $e->getMessage() . ' | WSDL: ' . $serv, true);
+                log_message('critical', 'Falha ao instanciar SoapClient (' . $servico . '): ' . $e->getMessage() . ' | WSDL: ' . $serv);
+                throw $e;
+            }
             // debug($this->soapc);
         }
     }
@@ -393,6 +399,7 @@ class SoapSapiens
 
         try {
             $result = $this->soapc->__soapCall($function, $parameters);
+            log_message('info', 'produtosSapiens REQUEST: ' . $this->soapc->__getLastRequest());
             log_message('info', 'SOAP retorno OK');
             $this->soapc = null;
             return $result;
@@ -401,7 +408,7 @@ class SoapSapiens
 
         } catch (\SoapFault $e) {
             // falha de conexão ou erro na resposta
-            log_message('error', 'Erro SOAP: ' . $e->getMessage());
+            log_message('error', 'Erro SOAP: ' . $e->getMessage() . ' | REQUEST: ' . $this->soapc->__getLastRequest());
 
             // se quiser, pode lançar exceção ou retornar erro customizado
             $ret = [
@@ -469,7 +476,20 @@ class SoapSapiens
 
         try {
             $result = $this->soapc->__soapCall($function, $parameters);
-            log_message('info', 'SOAP retorno OK');
+            log_message('info', 'SOAP retorno OK ');
+            // $msg = 'Retornou OK ' . json_encode($result) . ' | ';
+            // $msg .= 'EstoqueporDeposito PARAMETROS: ' . json_encode($parameters) . ' | ';
+            // $msg .= 'EstoqueporDeposito REQUEST: ' . $this->soapc->__getLastRequest() . ' | ';
+            // $msg .= 'EstoqueporDeposito RESPONSE: ' . $this->soapc->__getLastResponse();
+            // $falha = "Falha: " . "\n\n";
+            // $falha .= "=== FUNCTION ===\n"       . $function . "\n\n";
+            // $falha .= "=== PARAMETROS ===\n"     . json_encode($parameters) . "\n\n";
+            // $falha .= "=== REQUEST HEADERS ===\n" . $this->soapc->__getLastRequestHeaders() . "\n\n";
+            // $falha .= "=== REQUEST ===\n"        . $this->soapc->__getLastRequest() . "\n\n";
+            // $falha .=  "=== RESPONSE HEADERS ===\n" . $this->soapc->__getLastResponseHeaders() . "\n\n";
+            // $falha .=  "=== RESPONSE ===\n"        . $this->soapc->__getLastResponse() . "\n";
+            // log_message('info', $falha);
+            // log_message('info', $msg);
             $this->soapc = null;
             return $result;
 
@@ -478,10 +498,13 @@ class SoapSapiens
         } catch (\SoapFault $e) {
             // falha de conexão ou erro na resposta
             $falha = "Falha: " . $e->getMessage() . "\n\n";
+            $falha .= "=== FUNCTION ===\n"       . $function . "\n\n";
+            $falha .= "=== PARAMETROS ===\n"     . json_encode($parameters) . "\n\n";
+            $falha .= "=== REQUEST HEADERS ===\n" . $this->soapc->__getLastRequestHeaders() . "\n\n";
             $falha .= "=== REQUEST ===\n"        . $this->soapc->__getLastRequest() . "\n\n";
             $falha .=  "=== RESPONSE HEADERS ===\n" . $this->soapc->__getLastResponseHeaders() . "\n\n";
             $falha .=  "=== RESPONSE ===\n"        . $this->soapc->__getLastResponse() . "\n";
-            log_message('error', 'Erro SOAP: ' . $falha);
+            log_message('info', 'Erro SOAP: ' . $falha);
 
             // se quiser, pode lançar exceção ou retornar erro customizado
             $ret = [
