@@ -81,6 +81,10 @@ class OcoTrataOcorrencia extends BaseController
         if (! $dados) {
             return $this->response->setJSON(['data' => []]);
         }
+        foreach ($dados as $item) {
+            unset($item->oco_ativo);
+        }
+        // debug($dados, true); 
 
         $oco_ids    = array_map(fn($o) => $o->oco_id, $dados);
         $logGeracao = buscaLogTabela('oco_ocorrencia', $oco_ids);
