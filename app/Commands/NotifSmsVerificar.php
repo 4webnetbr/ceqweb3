@@ -4,21 +4,29 @@ namespace App\Commands;
 
 use App\Models\Logis\LogisNotifSmsConfigModel;
 use App\Models\Logis\LogisNotifSmsEnviadasModel;
+use App\Models\Config\ConfigDicDadosModel;
 use App\Libraries\SmsService;
+use App\Libraries\Sms\SmsRegraExecutor;
 use CodeIgniter\CLI\CLI;
 use CodeIgniter\CLI\BaseCommand;
 
 /**
- * Varre as regras ativas de log_notif_sms_config e dispara SMS (entrega ou
- * saldo baixo) conforme a condição de cada regra. Execução única (sem
- * loop/daemon) — o agendamento periódico é responsabilidade do cron do SO
- * (a cada 5 minutos, ver docs/desenvolvimento/notificacoes-sms-servico-envio-dev.docx).
+ * Varre as regras ativas de log_notif_sms_config e dispara SMS (saldo
+ * baixo, API ou consulta) conforme a condição de cada regra. Execução
+ * única (sem loop/daemon) — o agendamento periódico é responsabilidade do
+ * cron do SO (a cada 5 minutos, ver
+ * docs/desenvolvimento/notificacoes-sms-servico-envio-dev.docx).
+ *
+ * Dispatch dos 3 tipos de alerta reformulado em
+ * docs/desenvolvimento/notificacoes-sms-tipos-alerta-dev.md (seção 7):
+ * 'saldo_baixo' (inalterado), 'api' e 'consulta' (novos, via
+ * SmsRegraExecutor compartilhado).
  */
 class NotifSmsVerificar extends BaseCommand
 {
     protected $group       = 'Logistica';
     protected $name        = 'notifsms:verificar';
-    protected $description = 'Varre as regras ativas de log_notif_sms_config e dispara SMS (entrega ou saldo baixo) conforme condição.';
+    protected $description = 'Varre as regras ativas de log_notif_sms_config e dispara SMS (saldo baixo, API ou consulta) conforme condição.';
     protected $usage       = 'notifsms:verificar';
 
     public function run(array $params)
@@ -29,13 +37,22 @@ class NotifSmsVerificar extends BaseCommand
         $configModel   = new LogisNotifSmsConfigModel();
         $enviadasModel = new LogisNotifSmsEnviadasModel();
         $smsService    = new SmsService();
+        $executor      = new SmsRegraExecutor($smsService, $enviadasModel);
 
         foreach ($configModel->getRegrasAtivas() as $regra) {
             try {
-                if ($regra->nsc_tipo_regra === 'saldo_baixo') {
-                    $this->processarRegraSaldo($regra, $smsService, $enviadasModel);
-                } else {
-                    $this->processarRegraEntrega($regra, $smsService, $enviadasModel);
+                switch ($regra->nsc_tipo_regra) {
+                    case 'saldo_baixo':
+                        $this->processarRegraSaldo($regra, $smsService, $enviadasModel);
+                        break;
+                    case 'api':
+                        $this->processarRegraApi($regra, $executor);
+                        break;
+                    case 'consulta':
+                        $this->processarRegraConsulta($regra, $executor);
+                        break;
+                    default:
+                        $logger->warning("notifsms:verificar - tipo de regra desconhecido '{$regra->nsc_tipo_regra}' (regra {$regra->nsc_id}).");
                 }
             } catch (\Throwable $e) {
                 $logger->error('notifsms:verificar - regra ' . $regra->nsc_id . ': ' . $e->getMessage());
@@ -72,69 +89,64 @@ class NotifSmsVerificar extends BaseCommand
         $enviadasModel->registrar($chave, $regra->nsc_id);
     }
 
-    private function processarRegraEntrega(object $regra, SmsService $smsService, LogisNotifSmsEnviadasModel $enviadasModel): void
+    /**
+     * Tipo 'api': revalida nsc_metodo_api contra
+     * SmsApiConsumer::metodosDisponiveis() (defesa em profundidade — nunca
+     * confia apenas na validação de cadastro), instancia o consumidor,
+     * chama o método sem argumentos e repassa o resultado ao
+     * SmsRegraExecutor. Ver seção 4.3/7 do documento.
+     */
+    private function processarRegraApi(object $regra, SmsRegraExecutor $executor): void
     {
         $logger = service('logger');
+        $classe = SMS_API_CONSUMER_CLASS;
 
-        $params = array_filter(
-            ['ren_status_max' => $regra->nsc_ren_status_max, 'ren_tipo' => $regra->nsc_ren_tipo],
-            fn($v) => $v !== null
-        );
-
-        $res = api_request(
-            LINK_LOGISTICA . 'renovacoes/pendentes',
-            $params,
-            'get',
-            ['Accept' => 'application/json', 'X-Api-Key' => getenv('LOGISTICA_API_KEY')],
-            10,
-            httpErrors: false
-        );
-
-        if ($res === null) {
-            $logger->warning('notifsms:verificar - falha ao consultar API do Logística para a regra ' . $regra->nsc_id);
+        $metodosDisponiveis = $classe::metodosDisponiveis();
+        if (!array_key_exists($regra->nsc_metodo_api, $metodosDisponiveis)) {
+            $logger->warning("notifsms:verificar - método de API '{$regra->nsc_metodo_api}' inválido (regra {$regra->nsc_id}).");
             return;
         }
 
-        if (!is_array($res) || !$this->ehListaDeRenovacoes($res)) {
-            $logger->warning('notifsms:verificar - resposta em formato inesperado da API do Logística para a regra ' . $regra->nsc_id);
+        $consumidor = new $classe();
+        $resultado  = $consumidor->{$regra->nsc_metodo_api}();
+
+        if (!is_array($resultado) || array_values($resultado) !== $resultado || empty($resultado)) {
             return;
         }
 
-        foreach ($res as $ren) {
-            if (!is_array($ren) || !isset($ren['ren_id'], $ren['ren_prev_chegada'])) {
-                $logger->warning('notifsms:verificar - item de renovação em formato inesperado (regra ' . $regra->nsc_id . ')');
-                continue;
-            }
-
-            $diffMin = (strtotime($ren['ren_prev_chegada']) - time()) / 60;
-
-            $dispara = ($regra->nsc_condicao === 'antes_chegada' && $diffMin > 0 && $diffMin <= $regra->nsc_minutos_limite)
-                    || ($regra->nsc_condicao === 'apos_chegada' && $diffMin <= 0);
-
-            if (!$dispara) continue;
-
-            $chave = 'REN:' . $ren['ren_id'];
-            if ($enviadasModel->jaEnviado($chave, $regra->nsc_id)) continue;
-
-            $msg = strtr($regra->nsc_mensagem_template, [
-                '{ren_id}'           => $ren['ren_id'],
-                '{ren_prev_chegada}' => $ren['ren_prev_chegada'],
-            ]);
-
-            foreach (explode(',', $regra->nsc_telefones) as $tel) {
-                $smsService->enviar(trim($tel), $msg);
-            }
-            $enviadasModel->registrar($chave, $regra->nsc_id);
-        }
+        $executor->processar($resultado, $regra->nsc_mensagem_template, $regra->nsc_telefones, $regra->nsc_id, 'API');
     }
 
     /**
-     * Confirma que $res é uma lista (array sequencial, vazia ou não) e não um
-     * objeto associativo (ex: {"message": "..."}) devolvido por um endpoint
-     * ainda instável/inexistente.
+     * Tipo 'consulta': revalida (nsc_view_dbgroup, nsc_view_consulta)
+     * contra ConfigDicDadosModel::getViewsPorPrefixo('vw_sms_'), roda o
+     * SELECT via Query Builder (nunca SQL concatenado) e repassa o
+     * resultado ao SmsRegraExecutor. Ver seção 4.4/7 do documento.
      */
-    private function ehListaDeRenovacoes(array $res): bool
+    private function processarRegraConsulta(object $regra, SmsRegraExecutor $executor): void
     {
-        return array_is_list($res);
+        $logger   = service('logger');
+        $admDados = new ConfigDicDadosModel();
+
+        $valida = false;
+        foreach ($admDados->getViewsPorPrefixo('vw_sms_') as $v) {
+            if ($v['dbGroup'] === $regra->nsc_view_dbgroup && $v['view'] === $regra->nsc_view_consulta) {
+                $valida = true;
+                break;
+            }
+        }
+        if (!$valida) {
+            $logger->warning("notifsms:verificar - view '{$regra->nsc_view_consulta}' não é mais válida (regra {$regra->nsc_id}).");
+            return;
+        }
+
+        $resultado = db_connect($regra->nsc_view_dbgroup)
+            ->table($regra->nsc_view_consulta)
+            ->get(SMS_CONSULTA_LIMITE_LINHAS)
+            ->getResultArray();
+
+        if (empty($resultado)) { return; }
+
+        $executor->processar($resultado, $regra->nsc_mensagem_template, $regra->nsc_telefones, $regra->nsc_id, 'CONSULTA');
     }
 }

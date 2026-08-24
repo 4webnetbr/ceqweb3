@@ -25,11 +25,10 @@ class LogisNotifSmsConfigModel extends Model
     protected $allowedFields = [
         'nsc_nome',
         'nsc_tipo_regra',
-        'nsc_ren_tipo',
-        'nsc_ren_status_max',
-        'nsc_condicao',
-        'nsc_minutos_limite',
         'nsc_saldo_minimo',
+        'nsc_metodo_api',
+        'nsc_view_consulta',
+        'nsc_view_dbgroup',
         'nsc_telefones',
         'nsc_mensagem_template',
         'nsc_ativo',
@@ -37,14 +36,15 @@ class LogisNotifSmsConfigModel extends Model
 
     protected $validationRules = [
         'nsc_nome'              => 'required|min_length[3]|max_length[100]',
-        'nsc_tipo_regra'        => 'required|in_list[entrega,saldo_baixo]',
+        'nsc_tipo_regra'        => 'required|in_list[saldo_baixo,api,consulta]',
         'nsc_telefones'         => 'required|max_length[255]',
         'nsc_mensagem_template' => 'required',
-        'nsc_ren_tipo'          => 'permit_empty|obrigatorioSeTipoRegraEntrega[nsc_tipo_regra]',
-        'nsc_ren_status_max'    => 'permit_empty|obrigatorioSeTipoRegraEntrega[nsc_tipo_regra]',
-        'nsc_condicao'          => 'permit_empty|in_list[antes_chegada,apos_chegada]|obrigatorioSeTipoRegraEntrega[nsc_tipo_regra]',
-        'nsc_minutos_limite'    => 'permit_empty|obrigatorioSeTipoRegraEntrega[nsc_tipo_regra]',
+        // nsc_saldo_minimo / obrigatorioSeTipoRegraSaldo — REGRA NÃO
+        // ALTERADA neste ciclo, permanece exatamente igual a antes.
         'nsc_saldo_minimo'      => 'permit_empty|obrigatorioSeTipoRegraSaldo[nsc_tipo_regra]',
+        // Entradas NOVAS deste ciclo (tipos 'api'/'consulta').
+        'nsc_metodo_api'        => 'permit_empty|obrigatorioSeTipoRegraApi[nsc_tipo_regra]',
+        'nsc_view_consulta'     => 'permit_empty|obrigatorioSeTipoRegraConsulta[nsc_tipo_regra]',
     ];
 
     protected $validationMessages = [
@@ -58,20 +58,15 @@ class LogisNotifSmsConfigModel extends Model
         'nsc_mensagem_template' => [
             'required' => 'O campo Mensagem é obrigatório',
         ],
-        'nsc_ren_tipo' => [
-            'obrigatorioSeTipoRegraEntrega' => 'O campo Tipo (Entrega) é obrigatório para regras do tipo Entrega',
-        ],
-        'nsc_ren_status_max' => [
-            'obrigatorioSeTipoRegraEntrega' => 'O campo Status Máximo é obrigatório para regras do tipo Entrega',
-        ],
-        'nsc_condicao' => [
-            'obrigatorioSeTipoRegraEntrega' => 'O campo Condição é obrigatório para regras do tipo Entrega',
-        ],
-        'nsc_minutos_limite' => [
-            'obrigatorioSeTipoRegraEntrega' => 'O campo Minutos Limite é obrigatório para regras do tipo Entrega',
-        ],
+        // Mensagem de nsc_saldo_minimo — NÃO ALTERADA neste ciclo.
         'nsc_saldo_minimo' => [
             'obrigatorioSeTipoRegraSaldo' => 'O campo Saldo Mínimo é obrigatório para regras do tipo Saldo Baixo',
+        ],
+        'nsc_metodo_api' => [
+            'obrigatorioSeTipoRegraApi' => 'O campo Método da API é obrigatório para regras do tipo API',
+        ],
+        'nsc_view_consulta' => [
+            'obrigatorioSeTipoRegraConsulta' => 'O campo View de Consulta é obrigatório para regras do tipo Consulta',
         ],
     ];
 

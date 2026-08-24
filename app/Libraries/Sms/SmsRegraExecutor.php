@@ -41,7 +41,7 @@ class SmsRegraExecutor
 
     private function extrairIdDedup(array $objeto): string
     {
-        return isset($objeto['id']) ? (string) $objeto['id'] : md5(json_encode($objeto));
+        return (isset($objeto['id']) && is_scalar($objeto['id'])) ? (string) $objeto['id'] : md5(json_encode($objeto));
     }
 
     private function substituiPlaceholders(string $template, array $objeto): string

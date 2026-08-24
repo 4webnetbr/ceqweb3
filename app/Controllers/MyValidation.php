@@ -80,14 +80,14 @@ class MyValidation
     }
 
     /**
-     * Notificações SMS (Logística): campos do grupo "Entrega"
-     * (nsc_ren_tipo, nsc_ren_status_max, nsc_condicao, nsc_minutos_limite)
-     * só são obrigatórios quando nsc_tipo_regra = 'entrega'.
-     * Uso: obrigatorioSeTipoRegraEntrega[nsc_tipo_regra]
+     * Notificações SMS (Logística): campo nsc_saldo_minimo (grupo "Saldo
+     * Baixo") só é obrigatório quando nsc_tipo_regra = 'saldo_baixo'.
+     * NÃO ALTERADO neste ciclo (ver seção 4.10 do documento).
+     * Uso: obrigatorioSeTipoRegraSaldo[nsc_tipo_regra]
      */
-    public function obrigatorioSeTipoRegraEntrega($value, ?string $params, array $data): bool
+    public function obrigatorioSeTipoRegraSaldo($value, ?string $params, array $data): bool
     {
-        if (($data['nsc_tipo_regra'] ?? '') !== 'entrega') {
+        if (($data['nsc_tipo_regra'] ?? '') !== 'saldo_baixo') {
             return true;
         }
 
@@ -95,13 +95,29 @@ class MyValidation
     }
 
     /**
-     * Notificações SMS (Logística): campo nsc_saldo_minimo (grupo "Saldo
-     * Baixo") só é obrigatório quando nsc_tipo_regra = 'saldo_baixo'.
-     * Uso: obrigatorioSeTipoRegraSaldo[nsc_tipo_regra]
+     * Notificações SMS (Logística): campo nsc_metodo_api (grupo "API") só
+     * é obrigatório quando nsc_tipo_regra = 'api'. Mesmo molde de
+     * obrigatorioSeTipoRegraSaldo, só troca o valor de comparação.
+     * Uso: obrigatorioSeTipoRegraApi[nsc_tipo_regra]
      */
-    public function obrigatorioSeTipoRegraSaldo($value, ?string $params, array $data): bool
+    public function obrigatorioSeTipoRegraApi($value, ?string $params, array $data): bool
     {
-        if (($data['nsc_tipo_regra'] ?? '') !== 'saldo_baixo') {
+        if (($data['nsc_tipo_regra'] ?? '') !== 'api') {
+            return true;
+        }
+
+        return trim((string) $value) !== '';
+    }
+
+    /**
+     * Notificações SMS (Logística): campo nsc_view_consulta (grupo
+     * "Consulta") só é obrigatório quando nsc_tipo_regra = 'consulta'.
+     * Mesmo molde de obrigatorioSeTipoRegraSaldo/Api.
+     * Uso: obrigatorioSeTipoRegraConsulta[nsc_tipo_regra]
+     */
+    public function obrigatorioSeTipoRegraConsulta($value, ?string $params, array $data): bool
+    {
+        if (($data['nsc_tipo_regra'] ?? '') !== 'consulta') {
             return true;
         }
 

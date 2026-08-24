@@ -170,18 +170,18 @@ class NotifSmsConfig extends BaseController
     /**
      * Monta o array de campos da seção "Dados Gerais", envolvendo os
      * campos condicionais por nsc_tipo_regra nos wrappers
-     * #divEntrega/#divSaldo (mesmo mecanismo de div manual já usado em
-     * app/Views/partials/pw_acoes_notif.php para os campos condicionais
-     * de tpa_tipo, ver rascunho de referência).
+     * #divSaldo/#divApi/#divConsulta (mesmo mecanismo de div manual já
+     * usado antes deste ciclo para #divEntrega/#divSaldo).
      *
-     * #divSaldo já nasce com a classe "d-none" porque o default de
-     * nsc_tipo_regra é 'entrega' (EntLogNotifSmsConfig::$attributes) — o
-     * estado HTML inicial já reflete isso tanto em add() quanto em
-     * edit(), sem depender de JS de inicialização. Em edit(), quando o
-     * registro salvo é 'saldo_baixo', o script disparado no carregamento
-     * da tela (ver edit()) corrige o toggle via
-     * alternaCamposTipoRegra(), que também usa a classe "d-none" (não
-     * jQuery.toggle()) para poder alternar livremente a partir daqui.
+     * #divSaldo já nasce SEM a classe "d-none" porque o novo default de
+     * nsc_tipo_regra é 'saldo_baixo' (EntLogNotifSmsConfig::$attributes,
+     * seção 4.5) — o estado HTML inicial já reflete isso tanto em add()
+     * quanto em edit(), sem depender de JS de inicialização. #divApi e
+     * #divConsulta nascem com "d-none". Em edit(), quando o registro salvo
+     * é 'api'/'consulta', o script disparado no carregamento da tela (ver
+     * edit()) corrige o toggle via alternaCamposTipoRegra() (seção 4.16),
+     * que também usa a classe "d-none" (não jQuery.toggle()) para poder
+     * alternar livremente a partir daqui.
      */
     private function montaCamposFormulario(EntLogNotifSmsConfig $regra): array
     {
@@ -189,14 +189,14 @@ class NotifSmsConfig extends BaseController
             $regra->campos['nsc_id'],
             $regra->campos['nsc_nome'],
             $regra->campos['nsc_tipo_regra'],
-            '<div id="divEntrega" class="row col-12 float-start">'
-                . $regra->campos['nsc_ren_tipo']
-                . $regra->campos['nsc_ren_status_max']
-                . $regra->campos['nsc_condicao']
-                . $regra->campos['nsc_minutos_limite']
-                . '</div>',
-            '<div id="divSaldo" class="row col-12 float-start d-none">'
+            '<div id="divSaldo" class="row col-12 float-start">'
                 . $regra->campos['nsc_saldo_minimo']
+                . '</div>',
+            '<div id="divApi" class="row col-12 float-start d-none">'
+                . $regra->campos['nsc_metodo_api']
+                . '</div>',
+            '<div id="divConsulta" class="row col-12 float-start d-none">'
+                . $regra->campos['nsc_view_consulta']
                 . '</div>',
             $regra->campos['nsc_telefones'],
             $regra->campos['nsc_mensagem_template'],
@@ -259,6 +259,57 @@ class NotifSmsConfig extends BaseController
         $ret         = [];
         $ret['erro'] = false;
         $postado     = $this->request->getPost();
+
+        // Revalidação da fonte de verdade corrente para os tipos 'api' e
+        // 'consulta' (defesa em profundidade — nunca confia apenas na
+        // validação de cadastro em LogisNotifSmsConfigModel, seção 4.14).
+        if (($postado['nsc_tipo_regra'] ?? '') === 'api') {
+            $classeApi          = SMS_API_CONSUMER_CLASS;
+            $metodosDisponiveis = $classeApi::metodosDisponiveis();
+
+            if (!array_key_exists($postado['nsc_metodo_api'] ?? '', $metodosDisponiveis)) {
+                $ret['erro'] = true;
+                $ret['msg']  = 'Método de API selecionado não é mais válido.';
+                echo json_encode($ret);
+                return;
+            }
+        }
+
+        if (($postado['nsc_tipo_regra'] ?? '') === 'consulta') {
+            // nsc_view_consulta chega do POST como valor composto
+            // "dbGroup|view" (select montado em
+            // EntLogNotifSmsConfig::defCampos(), seção 4.12). Faz o split
+            // e SÓ ENTÃO revalida contra a fonte de verdade corrente
+            // (getViewsPorPrefixo()) antes de gravar — nunca confia no
+            // valor bruto do POST para nsc_view_dbgroup (poderia ser
+            // manipulado no client).
+            $valorComposto = (string) ($postado['nsc_view_consulta'] ?? '');
+            $partes        = explode('|', $valorComposto, 2);
+            $dbGroupPost   = $partes[0] ?? '';
+            $viewPost      = $partes[1] ?? '';
+
+            $admDados = new \App\Models\Config\ConfigDicDadosModel();
+            $valido   = false;
+            foreach ($admDados->getViewsPorPrefixo('vw_sms_') as $v) {
+                if ($v['dbGroup'] === $dbGroupPost && $v['view'] === $viewPost) {
+                    $valido = true;
+                    break;
+                }
+            }
+
+            if (!$valido) {
+                $ret['erro'] = true;
+                $ret['msg']  = 'View de consulta selecionada não é mais válida.';
+                echo json_encode($ret);
+                return;
+            }
+
+            // Só grava nsc_view_dbgroup/nsc_view_consulta com os valores já
+            // revalidados acima, nunca com o valor bruto do POST.
+            $postado['nsc_view_dbgroup']  = $dbGroupPost;
+            $postado['nsc_view_consulta'] = $viewPost;
+        }
+
         $regra = new EntLogNotifSmsConfig($postado);
 
         $exists = $this->common->verificaUnico($this->regras, 'nsc_nome', $postado['nsc_nome'], 'nsc_id', $postado['nsc_id']);
